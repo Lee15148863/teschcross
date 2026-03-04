@@ -52,8 +52,6 @@ steps:
       - 'PORT=8080,DEPLOYED_AT=$BUILD_ID'
       - '--revision-suffix'
       - '$SHORT_SHA'
-      - '--traffic'
-      - 'LATEST=100'
   
   # 获取并显示Cloud Run URL
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
