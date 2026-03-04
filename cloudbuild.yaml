@@ -1,0 +1,15 @@
+steps:
+  # 部署到 Cloud Storage
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: ['-m', 'rsync', '-r', '-c', '-d', '.', 'gs://YOUR_BUCKET_NAME']
+    
+  # 设置缓存控制
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: ['setmeta', '-h', 'Cache-Control:public, max-age=3600', 'gs://YOUR_BUCKET_NAME/**']
+
+# 可选：设置超时
+timeout: '600s'
+
+# 可选：指定构建机器类型
+options:
+  machineType: 'N1_HIGHCPU_8'
