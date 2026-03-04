@@ -52,6 +52,28 @@ steps:
       - 'PORT=8080,DEPLOYED_AT=$BUILD_ID'
       - '--revision-suffix'
       - '$SHORT_SHA'
+      - '--traffic'
+      - 'LATEST=100'
+  
+  # 获取并显示Cloud Run URL
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        URL=$(gcloud run services describe teschcross --region=europe-west3 --format='value(status.url)')
+        echo "=========================================="
+        echo "🚀 Deployment Successful!"
+        echo "📍 Your website is live at:"
+        echo "   $URL"
+        echo "=========================================="
+        echo ""
+        echo "Tech Cross Repair Centre"
+        echo "Unit 4, Navan Shopping Centre"
+        echo "Navan, Co. Meath, Ireland"
+        echo "Phone: 046 905 9854"
+        echo "Email: techcrossnavan@gmail.com"
+        echo "=========================================="
 
 # 镜像列表
 images:
