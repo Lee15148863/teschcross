@@ -1,0 +1,60 @@
+steps:
+  # 复制所有文件到 Cloud Storage
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: 
+      - '-m'
+      - 'rsync'
+      - '-r'
+      - '-c'
+      - '-d'
+      - '.'
+      - 'gs://techcross-website'
+    
+  # 设置 HTML 文件的 Content-Type 和缓存
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: 
+      - '-m'
+      - 'setmeta'
+      - '-h'
+      - 'Content-Type:text/html'
+      - '-h'
+      - 'Cache-Control:public, max-age=3600'
+      - 'gs://techcross-website/*.html'
+    
+  # 设置 CSS 文件的 Content-Type 和缓存
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: 
+      - '-m'
+      - 'setmeta'
+      - '-h'
+      - 'Content-Type:text/css'
+      - '-h'
+      - 'Cache-Control:public, max-age=86400'
+      - 'gs://techcross-website/*.css'
+    
+  # 设置 JS 文件的 Content-Type 和缓存
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: 
+      - '-m'
+      - 'setmeta'
+      - '-h'
+      - 'Content-Type:application/javascript'
+      - '-h'
+      - 'Cache-Control:public, max-age=86400'
+      - 'gs://techcross-website/*.js'
+    
+  # 设置图片文件的缓存
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: 
+      - '-m'
+      - 'setmeta'
+      - '-h'
+      - 'Cache-Control:public, max-age=604800'
+      - 'gs://techcross-website/*.png'
+
+# 构建超时设置
+timeout: '600s'
+
+# 日志选项
+options:
+  logging: CLOUD_LOGGING_ONLY
