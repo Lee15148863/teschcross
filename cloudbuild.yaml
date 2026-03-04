@@ -49,7 +49,7 @@ steps:
       - '--timeout'
       - '300'
       - '--set-env-vars'
-      - 'PORT=8080,DEPLOYED_AT=$BUILD_ID'
+      - 'DEPLOYED_AT=$BUILD_ID'
       - '--revision-suffix'
       - '$SHORT_SHA'
   
