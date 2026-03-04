@@ -61,11 +61,11 @@ steps:
     args:
       - '-c'
       - |
-        URL=$(gcloud run services describe teschcross --region=europe-west3 --format='value(status.url)')
+        SERVICE_URL=$$(gcloud run services describe teschcross --region=europe-west3 --format='value(status.url)')
         echo "=========================================="
         echo "🚀 Deployment Successful!"
         echo "📍 Your website is live at:"
-        echo "   $URL"
+        echo "   $$SERVICE_URL"
         echo "=========================================="
         echo ""
         echo "Tech Cross Repair Centre"
