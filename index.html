@@ -3,258 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Tech Cross - Professional electronic device repair centre for phones, tablets, laptops, and game consoles">
-    <title>Tech Cross Repair Centre - Professional Device Repair</title>
+    <meta name="description" content="Tech Cross - Professional electronic device repair centre">
+    <title>Tech Cross - Repair Centre</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar" id="navbar">
-        <div class="container">
-            <div class="logo">
-                <img src="logo.png" alt="Tech Cross Logo" class="logo-img">
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <img src="logo.png" alt="Tech Cross">
             </div>
-            <div class="nav-right">
-                <button class="menu-toggle" id="menuToggle">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-            <ul class="nav-menu" id="navMenu">
-                <li><a href="#home" data-en="Home" data-ga="Baile">Home</a></li>
+            <ul class="nav-list">
+                <li><a href="#hero" data-en="Home" data-ga="Baile">Home</a></li>
                 <li><a href="#services" data-en="Services" data-ga="Seirbhísí">Services</a></li>
                 <li><a href="#devices" data-en="Devices" data-ga="Gléasanna">Devices</a></li>
                 <li><a href="#contact" data-en="Contact" data-ga="Teagmháil">Contact</a></li>
             </ul>
+            <button class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+            </button>
         </div>
     </nav>
 
-    <!-- Floating Language Toggle -->
-    <button class="lang-toggle-float" id="langToggle">
-        <span class="lang-icon">🇮🇪</span>
-        <span class="lang-text" data-en="GA" data-ga="EN">GA</span>
+    <!-- Language Toggle -->
+    <button class="lang-btn" id="langBtn">
+        <span data-en="GA" data-ga="EN">GA</span>
     </button>
 
-    <!-- Hero Section -->
-    <section class="hero" id="home">
-        <div class="hero-bg">
-            <div class="grid-overlay"></div>
-            <div class="circuit-pattern"></div>
-        </div>
-        <div class="hero-content">
-            <div class="glitch-wrapper">
-                <h1 class="hero-title glitch" data-text="TECH CROSS" data-en="TECH CROSS" data-ga="TECH CROSS">TECH CROSS</h1>
+    <!-- Hero Carousel -->
+    <section class="hero" id="hero">
+        <div class="carousel">
+            <div class="carousel-track">
+                <div class="carousel-slide active" style="background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1556656793-08538906a9f8?w=1600&h=900&fit=crop') center/cover;">
+                    <div class="slide-content">
+                        <h1 class="slide-headline" data-en="Screen Repair" data-ga="Deisiúchán Scáileáin">Screen Repair</h1>
+                        <p class="slide-subheadline" data-en="Professional screen replacement from €49" data-ga="Athsholáthar scáileáin gairmiúil ó €49">Professional screen replacement from €49</p>
+                        <a href="#services" class="btn-primary" data-en="Learn more" data-ga="Foghlaim níos mó">Learn more</a>
+                    </div>
+                </div>
+                <div class="carousel-slide" style="background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=1600&h=900&fit=crop') center/cover;">
+                    <div class="slide-content">
+                        <h1 class="slide-headline" data-en="Battery Replacement" data-ga="Athsholáthar Ceallraí">Battery Replacement</h1>
+                        <p class="slide-subheadline" data-en="Original quality batteries from €39" data-ga="Ceallraí cáilíochta bunaidh ó €39">Original quality batteries from €39</p>
+                        <a href="#services" class="btn-primary" data-en="Learn more" data-ga="Foghlaim níos mó">Learn more</a>
+                    </div>
+                </div>
+                <div class="carousel-slide" style="background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=1600&h=900&fit=crop') center/cover;">
+                    <div class="slide-content">
+                        <h1 class="slide-headline" data-en="Free Diagnostics" data-ga="Diagnóisic Saor">Free Diagnostics</h1>
+                        <p class="slide-subheadline" data-en="Get your device checked for free" data-ga="Faigh do ghléas seiceáilte saor in aisce">Get your device checked for free</p>
+                        <a href="#contact" class="btn-primary" data-en="Book now" data-ga="Cuir in áirithe anois">Book now</a>
+                    </div>
+                </div>
+                <div class="carousel-slide" style="background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1600&h=900&fit=crop') center/cover;">
+                    <div class="slide-content">
+                        <h1 class="slide-headline" data-en="Fast Turnaround" data-ga="Casadh Tapa">Fast Turnaround</h1>
+                        <p class="slide-subheadline" data-en="Most repairs completed within 24 hours" data-ga="Formhór na ndeisiúchán críochnaithe laistigh de 24 uair">Most repairs completed within 24 hours</p>
+                        <a href="#contact" class="btn-primary" data-en="Get a quote" data-ga="Faigh meastachán">Get a quote</a>
+                    </div>
+                </div>
             </div>
-            <p class="hero-subtitle" data-en="Expert Electronic Device Repair Centre" data-ga="Ionad Deisiúcháin Gléasanna Leictreonacha Saineolaithe">Expert Electronic Device Repair Centre</p>
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <span class="stat-number">5000+</span>
-                    <span class="stat-label" data-en="Repairs" data-ga="Deisiúcháin">Repairs</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">98%</span>
-                    <span class="stat-label" data-en="Success Rate" data-ga="Ráta Ratha">Success Rate</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">24h</span>
-                    <span class="stat-label" data-en="Avg. Turnaround" data-ga="Meán-Am">Avg. Turnaround</span>
-                </div>
-            </div>
-            <a href="#contact" class="cta-button" data-en="Get Free Quote" data-ga="Faigh Meastachán Saor">Get Free Quote</a>
-        </div>
-        <div class="hero-devices">
-            <div class="device-showcase">
-                <div class="device-item device-phone"></div>
-                <div class="device-item device-laptop"></div>
-                <div class="device-item device-tablet"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Repair Services Section -->
-    <section class="services" id="services">
-        <div class="container">
-            <h2 class="section-title" data-en="Repair Services" data-ga="Seirbhísí Deisiúcháin">Repair Services</h2>
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-icon-wrapper">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                            <line x1="12" y1="18" x2="12" y2="18"></line>
-                        </svg>
-                    </div>
-                    <h3 data-en="Screen Replacement" data-ga="Athsholáthar Scáileáin">Screen Replacement</h3>
-                    <p data-en="Cracked or damaged screens • LCD/OLED repair • Touch digitizer replacement" data-ga="Scáileáin scoilte nó damáiste • Deisiúchán LCD/OLED • Athsholáthar digitizer tadhaill">Cracked or damaged screens • LCD/OLED repair • Touch digitizer replacement</p>
-                    <div class="service-price" data-en="From €49" data-ga="Ó €49">From €49</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon-wrapper">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <rect x="1" y="3" width="15" height="13"></rect>
-                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                        </svg>
-                    </div>
-                    <h3 data-en="Battery Replacement" data-ga="Athsholáthar Ceallraí">Battery Replacement</h3>
-                    <p data-en="Fast draining battery • Won't charge • Swollen battery • Original quality parts" data-ga="Ceallra ag draenáil go tapa • Ní luchtóidh • Ceallra at • Páirteanna cáilíochta bunaidh">Fast draining battery • Won't charge • Swollen battery • Original quality parts</p>
-                    <div class="service-price" data-en="From €39" data-ga="Ó €39">From €39</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon-wrapper">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                        </svg>
-                    </div>
-                    <h3 data-en="Water Damage Repair" data-ga="Deisiúchán Damáiste Uisce">Water Damage Repair</h3>
-                    <p data-en="Liquid damage recovery • Corrosion cleaning • Component-level repair • Data recovery" data-ga="Aisghabháil damáiste leachtach • Glanadh creimthe • Deisiúchán leibhéal comhpháirte • Aisghabháil sonraí">Liquid damage recovery • Corrosion cleaning • Component-level repair • Data recovery</p>
-                    <div class="service-price" data-en="From €59" data-ga="Ó €59">From €59</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon-wrapper">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </div>
-                    <h3 data-en="Diagnostics & Repair" data-ga="Diagnóisic & Deisiúchán">Diagnostics & Repair</h3>
-                    <p data-en="Free diagnostics • Charging port repair • Speaker/microphone • Camera issues" data-ga="Diagnóisic saor in aisce • Deisiúchán port luchtaithe • Callaire/micreafón • Saincheisteanna ceamara">Free diagnostics • Charging port repair • Speaker/microphone • Camera issues</p>
-                    <div class="service-price" data-en="Free Check" data-ga="Seiceáil Saor">Free Check</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon-wrapper">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                            <polyline points="17 2 12 7 7 2"></polyline>
-                        </svg>
-                    </div>
-                    <h3 data-en="Laptop Repair" data-ga="Deisiúchán Ríomhaire Glúine">Laptop Repair</h3>
-                    <p data-en="Keyboard replacement • Hinge repair • SSD/RAM upgrade • Overheating fix" data-ga="Athsholáthar méarchláir • Deisiúchán insí • Uasghrádú SSD/RAM • Réiteach ró-théimh">Keyboard replacement • Hinge repair • SSD/RAM upgrade • Overheating fix</p>
-                    <div class="service-price" data-en="From €69" data-ga="Ó €69">From €69</div>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon-wrapper">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-                            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-                            <line x1="6" y1="6" x2="6" y2="6"></line>
-                            <line x1="6" y1="18" x2="6" y2="18"></line>
-                        </svg>
-                    </div>
-                    <h3 data-en="Gaming Console Repair" data-ga="Deisiúchán Consól Cluichí">Gaming Console Repair</h3>
-                    <p data-en="PS5/PS4/Xbox repair • HDMI port fix • Disc drive issues • Overheating solutions" data-ga="Deisiúchán PS5/PS4/Xbox • Réiteach port HDMI • Saincheisteanna tiomántán diosca • Réitigh ró-théimh">PS5/PS4/Xbox repair • HDMI port fix • Disc drive issues • Overheating solutions</p>
-                    <div class="service-price" data-en="From €79" data-ga="Ó €79">From €79</div>
-                </div>
+            <div class="carousel-dots">
+                <button class="dot active" data-slide="0"></button>
+                <button class="dot" data-slide="1"></button>
+                <button class="dot" data-slide="2"></button>
+                <button class="dot" data-slide="3"></button>
             </div>
         </div>
     </section>
 
-    <!-- Devices Section -->
-    <section class="devices" id="devices">
-        <div class="container">
-            <h2 class="section-title" data-en="Devices We Repair" data-ga="Gléasanna a Dhéanaimid a Dheisiú">Devices We Repair</h2>
-            <div class="devices-grid">
-                <div class="device-card">
-                    <div class="device-image">📱</div>
-                    <h3 data-en="Smartphones" data-ga="Fóin Chliste">Smartphones</h3>
-                    <p data-en="iPhone, Samsung, Huawei, Xiaomi & more" data-ga="iPhone, Samsung, Huawei, Xiaomi & níos mó">iPhone, Samsung, Huawei, Xiaomi & more</p>
-                </div>
-                <div class="device-card">
-                    <div class="device-image">💻</div>
-                    <h3 data-en="Laptops" data-ga="Ríomhairí Glúine">Laptops</h3>
-                    <p data-en="MacBook, Dell, HP, Lenovo & more" data-ga="MacBook, Dell, HP, Lenovo & níos mó">MacBook, Dell, HP, Lenovo & more</p>
-                </div>
-                <div class="device-card">
-                    <div class="device-image">🎮</div>
-                    <h3 data-en="Game Consoles" data-ga="Consóil Chluichí">Game Consoles</h3>
-                    <p data-en="PlayStation, Xbox, Nintendo Switch" data-ga="PlayStation, Xbox, Nintendo Switch">PlayStation, Xbox, Nintendo Switch</p>
-                </div>
-                <div class="device-card">
-                    <div class="device-image">📱</div>
-                    <h3 data-en="Tablets" data-ga="Táibléid">Tablets</h3>
-                    <p data-en="iPad, Samsung Tab, Huawei Tablets" data-ga="iPad, Samsung Tab, Táibléid Huawei">iPad, Samsung Tab, Huawei Tablets</p>
-                </div>
+    <!-- Stats -->
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat">
+                <div class="stat-number">5000+</div>
+                <div class="stat-label" data-en="Repairs completed" data-ga="Deisiúcháin críochnaithe">Repairs completed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">98%</div>
+                <div class="stat-label" data-en="Success rate" data-ga="Ráta ratha">Success rate</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">24h</div>
+                <div class="stat-label" data-en="Average turnaround" data-ga="Meán-am">Average turnaround</div>
             </div>
         </div>
     </section>
 
-    <!-- Contact Section -->
-    <section class="contact" id="contact">
-        <div class="container">
-            <h2 class="section-title" data-en="Contact Us" data-ga="Déan Teagmháil Linn">Contact Us</h2>
-            <div class="contact-content">
-                <div class="contact-info">
-                    <div class="info-item">
-                        <span class="info-icon">📍</span>
-                        <div>
-                            <h4 data-en="Address" data-ga="Seoladh">Address</h4>
-                            <p>Unit 4, Navan Shopping Centre<br>Navan, Co. Meath<br>Ireland</p>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-icon">📞</span>
-                        <div>
-                            <h4 data-en="Phone" data-ga="Fón">Phone</h4>
-                            <p><a href="tel:0469059854">046 905 9854</a></p>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-icon">📧</span>
-                        <div>
-                            <h4 data-en="Email" data-ga="Ríomhphost">Email</h4>
-                            <p><a href="mailto:techcrossnavan@gmail.com">techcrossnavan@gmail.com</a></p>
-                        </div>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-icon">⏰</span>
-                        <div>
-                            <h4 data-en="Opening Hours" data-ga="Uaireanta Oscailte">Opening Hours</h4>
-                            <p data-en="Mon-Wed: 9:30-18:00<br>Thu-Fri: 9:30-20:00<br>Sat: 9:30-18:00<br>Sun: 11:30-18:00" data-ga="Luan-Céad: 9:30-18:00<br>Déar-Aoine: 9:30-20:00<br>Sath: 9:30-18:00<br>Dom: 11:30-18:00">Mon-Wed: 9:30-18:00<br>Thu-Fri: 9:30-20:00<br>Sat: 9:30-18:00<br>Sun: 11:30-18:00</p>
-                        </div>
-                    </div>
+    <!-- Services -->
+    <section class="section" id="services">
+        <div class="section-header">
+            <h2 class="section-headline" data-en="Our services." data-ga="Ár seirbhísí.">Our services.</h2>
+            <p class="section-subheadline" data-en="Professional repair for every device." data-ga="Deisiúchán gairmiúil do gach gléas.">Professional repair for every device.</p>
+        </div>
+        <div class="services-grid">
+            <div class="service">
+                <div class="service-icon">📱</div>
+                <h3 class="service-title" data-en="Screen Replacement" data-ga="Athsholáthar Scáileáin">Screen Replacement</h3>
+                <p class="service-desc" data-en="Cracked or damaged screens, LCD/OLED repair, touch digitizer replacement." data-ga="Scáileáin scoilte nó damáiste, deisiúchán LCD/OLED, athsholáthar digitizer tadhaill.">Cracked or damaged screens, LCD/OLED repair, touch digitizer replacement.</p>
+                <div class="service-price" data-en="From €49" data-ga="Ó €49">From €49</div>
+            </div>
+            <div class="service">
+                <div class="service-icon">🔋</div>
+                <h3 class="service-title" data-en="Battery Replacement" data-ga="Athsholáthar Ceallraí">Battery Replacement</h3>
+                <p class="service-desc" data-en="Fast draining battery, won't charge, swollen battery, original quality parts." data-ga="Ceallra ag draenáil go tapa, ní luchtóidh, ceallra at, páirteanna cáilíochta bunaidh.">Fast draining battery, won't charge, swollen battery, original quality parts.</p>
+                <div class="service-price" data-en="From €39" data-ga="Ó €39">From €39</div>
+            </div>
+            <div class="service">
+                <div class="service-icon">💧</div>
+                <h3 class="service-title" data-en="Water Damage" data-ga="Damáiste Uisce">Water Damage</h3>
+                <p class="service-desc" data-en="Liquid damage recovery, corrosion cleaning, component-level repair, data recovery." data-ga="Aisghabháil damáiste leachtach, glanadh creimthe, deisiúchán leibhéal comhpháirte.">Liquid damage recovery, corrosion cleaning, component-level repair, data recovery.</p>
+                <div class="service-price" data-en="From €59" data-ga="Ó €59">From €59</div>
+            </div>
+            <div class="service">
+                <div class="service-icon">🔍</div>
+                <h3 class="service-title" data-en="Diagnostics" data-ga="Diagnóisic">Diagnostics</h3>
+                <p class="service-desc" data-en="Free diagnostics, charging port repair, speaker/microphone, camera issues." data-ga="Diagnóisic saor in aisce, deisiúchán port luchtaithe, callaire/micreafón.">Free diagnostics, charging port repair, speaker/microphone, camera issues.</p>
+                <div class="service-price" data-en="Free" data-ga="Saor">Free</div>
+            </div>
+            <div class="service">
+                <div class="service-icon">💻</div>
+                <h3 class="service-title" data-en="Laptop Repair" data-ga="Deisiúchán Ríomhaire Glúine">Laptop Repair</h3>
+                <p class="service-desc" data-en="Keyboard replacement, hinge repair, SSD/RAM upgrade, overheating fix." data-ga="Athsholáthar méarchláir, deisiúchán insí, uasghrádú SSD/RAM.">Keyboard replacement, hinge repair, SSD/RAM upgrade, overheating fix.</p>
+                <div class="service-price" data-en="From €69" data-ga="Ó €69">From €69</div>
+            </div>
+            <div class="service">
+                <div class="service-icon">🎮</div>
+                <h3 class="service-title" data-en="Gaming Console" data-ga="Consól Cluichí">Gaming Console</h3>
+                <p class="service-desc" data-en="PS5/PS4/Xbox repair, HDMI port fix, disc drive issues, overheating solutions." data-ga="Deisiúchán PS5/PS4/Xbox, réiteach port HDMI, saincheisteanna tiomántán diosca.">PS5/PS4/Xbox repair, HDMI port fix, disc drive issues, overheating solutions.</p>
+                <div class="service-price" data-en="From €79" data-ga="Ó €79">From €79</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Devices -->
+    <section class="section section-dark" id="devices">
+        <div class="section-header">
+            <h2 class="section-headline" data-en="We repair." data-ga="Déanaimid deisiúchán.">We repair.</h2>
+        </div>
+        <div class="devices-grid">
+            <div class="device">
+                <div class="device-icon">📱</div>
+                <h3 data-en="iPhone" data-ga="iPhone">iPhone</h3>
+                <p data-en="All models" data-ga="Gach múnla">All models</p>
+            </div>
+            <div class="device">
+                <div class="device-icon">📱</div>
+                <h3 data-en="Samsung" data-ga="Samsung">Samsung</h3>
+                <p data-en="Galaxy series" data-ga="Sraith Galaxy">Galaxy series</p>
+            </div>
+            <div class="device">
+                <div class="device-icon">💻</div>
+                <h3 data-en="MacBook" data-ga="MacBook">MacBook</h3>
+                <p data-en="Air & Pro" data-ga="Air & Pro">Air & Pro</p>
+            </div>
+            <div class="device">
+                <div class="device-icon">💻</div>
+                <h3 data-en="Laptops" data-ga="Ríomhairí Glúine">Laptops</h3>
+                <p data-en="Dell, HP, Lenovo" data-ga="Dell, HP, Lenovo">Dell, HP, Lenovo</p>
+            </div>
+            <div class="device">
+                <div class="device-icon">🎮</div>
+                <h3 data-en="PlayStation" data-ga="PlayStation">PlayStation</h3>
+                <p data-en="PS4 & PS5" data-ga="PS4 & PS5">PS4 & PS5</p>
+            </div>
+            <div class="device">
+                <div class="device-icon">🎮</div>
+                <h3 data-en="Xbox" data-ga="Xbox">Xbox</h3>
+                <p data-en="All models" data-ga="Gach múnla">All models</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section" id="contact">
+        <div class="section-header">
+            <h2 class="section-headline" data-en="Visit us." data-ga="Tabhair cuairt orainn.">Visit us.</h2>
+        </div>
+        <div class="contact-grid">
+            <div class="contact-info">
+                <div class="info-group">
+                    <h3 data-en="Address" data-ga="Seoladh">Address</h3>
+                    <p>Unit 4, Navan Shopping Centre<br>Navan, Co. Meath<br>Ireland</p>
                 </div>
-                <div class="contact-form-wrapper">
-                    <form class="contact-form" id="contactForm">
-                        <input type="text" placeholder="Name" data-placeholder-en="Name" data-placeholder-ga="Ainm" required>
-                        <input type="email" placeholder="Email" data-placeholder-en="Email" data-placeholder-ga="Ríomhphost" required>
-                        <input type="tel" placeholder="Phone" data-placeholder-en="Phone" data-placeholder-ga="Fón" required>
-                        <textarea placeholder="Describe your device issue" data-placeholder-en="Describe your device issue" data-placeholder-ga="Déan cur síos ar fhadhb do ghléis" rows="4" required></textarea>
-                        <button type="submit" class="submit-button" data-en="Submit Enquiry" data-ga="Seol Fiosrúchán">Submit Enquiry</button>
-                    </form>
+                <div class="info-group">
+                    <h3 data-en="Phone" data-ga="Fón">Phone</h3>
+                    <p><a href="tel:0469059854">046 905 9854</a></p>
+                </div>
+                <div class="info-group">
+                    <h3 data-en="Email" data-ga="Ríomhphost">Email</h3>
+                    <p><a href="mailto:techcrossnavan@gmail.com">techcrossnavan@gmail.com</a></p>
+                </div>
+                <div class="info-group">
+                    <h3 data-en="Hours" data-ga="Uaireanta">Hours</h3>
+                    <p data-en="Mon-Wed: 9:30-18:00<br>Thu-Fri: 9:30-20:00<br>Sat: 9:30-18:00<br>Sun: 11:30-18:00" data-ga="Luan-Céad: 9:30-18:00<br>Déar-Aoine: 9:30-20:00<br>Sath: 9:30-18:00<br>Dom: 11:30-18:00">Mon-Wed: 9:30-18:00<br>Thu-Fri: 9:30-20:00<br>Sat: 9:30-18:00<br>Sun: 11:30-18:00</p>
                 </div>
             </div>
-            
-            <!-- Google Map -->
-            <div class="map-container-full">
-                <h3 class="map-title" data-en="Find Us" data-ga="Faigh Sinn">Find Us</h3>
-                <div class="map-wrapper">
-                    <iframe 
-                        src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Tech+Cross+Repair+Centre+Navan+Ireland&language=en"
-                        width="100%" 
-                        height="450" 
-                        style="border:0;" 
-                        allowfullscreen="" 
-                        loading="lazy" 
-                        referrerpolicy="no-referrer-when-downgrade">
-                    </iframe>
-                </div>
-                <div class="map-link">
-                    <a href="https://www.google.com/maps/search/?api=1&query=Tech+Cross+Repair+Centre+Navan+Ireland&hl=en" target="_blank" rel="noopener noreferrer">
-                        <span data-en="Open in Google Maps" data-ga="Oscail i Google Maps">Open in Google Maps</span> →
-                    </a>
-                </div>
+            <div class="contact-form">
+                <form id="contactForm">
+                    <input type="text" placeholder="Name" data-placeholder-en="Name" data-placeholder-ga="Ainm" required>
+                    <input type="email" placeholder="Email" data-placeholder-en="Email" data-placeholder-ga="Ríomhphost" required>
+                    <input type="tel" placeholder="Phone" data-placeholder-en="Phone" data-placeholder-ga="Fón" required>
+                    <textarea placeholder="Message" data-placeholder-en="Message" data-placeholder-ga="Teachtaireacht" rows="4" required></textarea>
+                    <button type="submit" class="btn-primary" data-en="Send" data-ga="Seol">Send</button>
+                </form>
             </div>
+        </div>
+    </section>
+
+    <!-- Map -->
+    <section class="map-section">
+        <div class="map-container">
+            <iframe 
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Tech+Cross+Repair+Centre+Navan+Ireland&language=en"
+                allowfullscreen="" 
+                loading="lazy">
+            </iframe>
         </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <p data-en="&copy; 2026 Tech Cross Repair Centre. All rights reserved." data-ga="&copy; 2026 Ionad Deisiúcháin Tech Cross. Gach ceart ar cosaint.">&copy; 2026 Tech Cross Repair Centre. All rights reserved.</p>
-        </div>
+        <p data-en="© 2026 Tech Cross Repair Centre. All rights reserved." data-ga="© 2026 Ionad Deisiúcháin Tech Cross. Gach ceart ar cosaint.">© 2026 Tech Cross Repair Centre. All rights reserved.</p>
     </footer>
 
     <script src="script.js"></script>

@@ -1,15 +1,15 @@
 // Language toggle functionality
 let currentLang = 'en';
-const langToggle = document.getElementById('langToggle');
+const langBtn = document.getElementById('langBtn');
 
-langToggle.addEventListener('click', () => {
+langBtn.addEventListener('click', () => {
     currentLang = currentLang === 'en' ? 'ga' : 'en';
     updateLanguage();
     
     // Add animation
-    langToggle.style.transform = 'scale(0.9)';
+    langBtn.style.transform = 'scale(0.9)';
     setTimeout(() => {
-        langToggle.style.transform = 'scale(1)';
+        langBtn.style.transform = 'scale(1)';
     }, 150);
 });
 
@@ -26,8 +26,8 @@ function updateLanguage() {
         }
     });
     
-    // Update lang toggle button text
-    const langText = langToggle.querySelector('.lang-text');
+    // Update lang button text
+    const langText = langBtn.querySelector('span');
     langText.textContent = currentLang === 'en' ? 'GA' : 'EN';
     
     // Update HTML lang attribute
@@ -47,91 +47,80 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Mobile menu toggle
-const menuToggle = document.getElementById('menuToggle');
-const navMenu = document.getElementById('navMenu');
+const navToggle = document.getElementById('navToggle');
+const navList = document.querySelector('.nav-list');
 
-menuToggle.addEventListener('click', () => {
-    navMenu.classList.toggle('active');
-    menuToggle.classList.toggle('active');
+navToggle.addEventListener('click', () => {
+    navList.classList.toggle('active');
     
     // Hamburger menu animation
-    const spans = menuToggle.querySelectorAll('span');
-    if (navMenu.classList.contains('active')) {
-        spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+    const spans = navToggle.querySelectorAll('span');
+    if (navList.classList.contains('active')) {
+        spans[0].style.transform = 'rotate(45deg) translate(4px, 4px)';
         spans[1].style.opacity = '0';
-        spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
     } else {
         spans[0].style.transform = 'none';
         spans[1].style.opacity = '1';
-        spans[2].style.transform = 'none';
     }
 });
 
 // Click navigation links to close menu
-document.querySelectorAll('.nav-menu a').forEach(link => {
+document.querySelectorAll('.nav-list a').forEach(link => {
     link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
-        const spans = menuToggle.querySelectorAll('span');
+        navList.classList.remove('active');
+        const spans = navToggle.querySelectorAll('span');
         spans[0].style.transform = 'none';
         spans[1].style.opacity = '1';
-        spans[2].style.transform = 'none';
     });
 });
 
-// Smooth scrolling
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            const offsetTop = target.offsetTop - 60;
-            window.scrollTo({
-                top: offsetTop,
-                behavior: 'smooth'
-            });
-        }
-    });
-});
+// Carousel functionality
+let currentSlide = 0;
+const slides = document.querySelectorAll('.carousel-slide');
+const dots = document.querySelectorAll('.dot');
+const totalSlides = slides.length;
+let autoplayInterval;
 
-// Navbar scroll effect
-const navbar = document.getElementById('navbar');
-let lastScroll = 0;
-
-window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
+function showSlide(index) {
+    // Remove active class from all slides and dots
+    slides.forEach(slide => slide.classList.remove('active'));
+    dots.forEach(dot => dot.classList.remove('active'));
     
-    if (currentScroll > 100) {
-        navbar.classList.add('scrolled');
-    } else {
-        navbar.classList.remove('scrolled');
-    }
-    
-    lastScroll = currentScroll;
-});
+    // Add active class to current slide and dot
+    slides[index].classList.add('active');
+    dots[index].classList.add('active');
+}
 
-// Scroll animation observer
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    showSlide(currentSlide);
+}
 
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-        }
-    });
-}, observerOptions);
+function startAutoplay() {
+    autoplayInterval = setInterval(nextSlide, 5000); // Change slide every 5 seconds
+}
 
-// Add scroll animation to all cards
-document.addEventListener('DOMContentLoaded', () => {
-    const cards = document.querySelectorAll('.service-card, .device-card');
-    cards.forEach((card, index) => {
-        card.classList.add('fade-in');
-        card.style.transitionDelay = `${index * 0.1}s`;
-        observer.observe(card);
+function stopAutoplay() {
+    clearInterval(autoplayInterval);
+}
+
+// Dot click handlers
+dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+        currentSlide = index;
+        showSlide(currentSlide);
+        stopAutoplay();
+        startAutoplay(); // Restart autoplay after manual change
     });
 });
+
+// Start autoplay on page load
+startAutoplay();
+
+// Pause autoplay when user hovers over carousel
+const carousel = document.querySelector('.carousel');
+carousel.addEventListener('mouseenter', stopAutoplay);
+carousel.addEventListener('mouseleave', startAutoplay);
 
 // Form submission handling
 const contactForm = document.getElementById('contactForm');
@@ -139,9 +128,9 @@ contactForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
     // Show success message
-    const button = contactForm.querySelector('.submit-button');
+    const button = contactForm.querySelector('button[type="submit"]');
     const originalText = button.textContent;
-    const successText = currentLang === 'en' ? 'Submitted Successfully!' : 'Curtha isteach go rathúil!';
+    const successText = currentLang === 'en' ? 'Sent!' : 'Seolta!';
     
     button.textContent = successText;
     button.style.background = '#10b981';
@@ -152,49 +141,4 @@ contactForm.addEventListener('submit', (e) => {
         button.textContent = originalText;
         button.style.background = '';
     }, 2000);
-});
-
-// Add mouse follow effect (desktop only)
-if (window.innerWidth > 768) {
-    document.addEventListener('mousemove', (e) => {
-        const icons = document.querySelectorAll('.floating-icon');
-        const x = e.clientX / window.innerWidth;
-        const y = e.clientY / window.innerHeight;
-        
-        icons.forEach((icon, index) => {
-            const speed = (index + 1) * 20;
-            const xMove = (x - 0.5) * speed;
-            const yMove = (y - 0.5) * speed;
-            icon.style.transform = `translate(${xMove}px, ${yMove}px)`;
-        });
-    });
-}
-
-// Service card click effect
-document.querySelectorAll('.service-card').forEach(card => {
-    card.addEventListener('click', function() {
-        this.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            this.style.transform = '';
-        }, 200);
-    });
-});
-
-// Device card click effect
-document.querySelectorAll('.device-card').forEach(card => {
-    card.addEventListener('click', function() {
-        this.style.transform = 'scale(1.1) rotate(5deg)';
-        setTimeout(() => {
-            this.style.transform = '';
-        }, 300);
-    });
-});
-
-// Page load animation
-window.addEventListener('load', () => {
-    document.body.style.opacity = '0';
-    setTimeout(() => {
-        document.body.style.transition = 'opacity 0.5s ease';
-        document.body.style.opacity = '1';
-    }, 100);
 });
