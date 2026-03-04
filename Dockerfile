@@ -13,8 +13,13 @@ COPY styles.css /usr/share/nginx/html/
 COPY script.js /usr/share/nginx/html/
 COPY logo.png /usr/share/nginx/html/
 
-# 暴露 80 端口
-EXPOSE 80
+# 暴露 8080 端口（Cloud Run 要求）
+EXPOSE 8080
 
-# 启动 nginx
-CMD ["nginx", "-g", "daemon off;"]
+# 使用环境变量设置端口，默认为 8080
+ENV PORT=8080
+
+# 启动脚本：使用 envsubst 替换端口变量
+CMD sed -i "s/listen 80;/listen $PORT;/g" /etc/nginx/conf.d/nginx.conf && \
+    nginx -g "daemon off;"
+
