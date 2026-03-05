@@ -4,6 +4,7 @@ class SearchEngine {
         this.searchInput = document.getElementById('searchInput');
         this.modalSearchInput = document.getElementById('modalSearchInput');
         this.searchBtn = document.getElementById('searchBtn');
+        this.mobileSearchBtn = document.getElementById('mobileSearchBtn');
         this.searchModal = document.getElementById('searchModal');
         this.searchResults = document.getElementById('searchResults');
         this.searchDropdown = document.getElementById('searchDropdown');
@@ -34,6 +35,10 @@ class SearchEngine {
         
         if (this.searchBtn) {
             this.searchBtn.addEventListener('click', () => this.openModal());
+        }
+        
+        if (this.mobileSearchBtn) {
+            this.mobileSearchBtn.addEventListener('click', () => this.openModal());
         }
         
         // Click outside to close
