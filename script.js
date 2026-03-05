@@ -126,8 +126,15 @@ carousel.addEventListener('mouseleave', startAutoplay);
 const contactForm = document.getElementById('contactForm');
 const formMessage = document.getElementById('form-message');
 
+console.log('=== Tech Cross Website ===');
+console.log('Version: 1.0.0');
+console.log('Build Date:', new Date().toISOString());
+console.log('Form initialized');
+
 contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    console.log('Form submission started');
     
     const button = contactForm.querySelector('button[type="submit"]');
     const originalText = button.textContent;
@@ -141,14 +148,29 @@ contactForm.addEventListener('submit', async (e) => {
     
     try {
         const formData = new FormData(contactForm);
+        
+        // Log form data
+        console.log('Form data:');
+        for (let [key, value] of formData.entries()) {
+            if (key !== 'access_key') {
+                console.log(`  ${key}: ${value}`);
+            }
+        }
+        
+        console.log('Sending request to Web3Forms API...');
         const response = await fetch('https://api.web3forms.com/submit', {
             method: 'POST',
             body: formData
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (data.success) {
+            console.log('Form submitted successfully!');
             formMessage.textContent = successText;
             formMessage.style.background = '#d4edda';
             formMessage.style.color = '#155724';
@@ -156,9 +178,11 @@ contactForm.addEventListener('submit', async (e) => {
             formMessage.style.display = 'block';
             contactForm.reset();
         } else {
+            console.error('Form submission failed:', data.message || 'Unknown error');
             throw new Error('Form submission failed');
         }
     } catch (error) {
+        console.error('Error submitting form:', error);
         formMessage.textContent = errorText;
         formMessage.style.background = '#f8d7da';
         formMessage.style.color = '#721c24';
