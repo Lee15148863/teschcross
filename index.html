@@ -8,11 +8,16 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Announcement Banner -->
+    <div id="announcementBanner" class="announcement-banner" style="display: none;">
+        <div class="announcement-text" id="announcementText"></div>
+    </div>
+
     <!-- Navigation -->
     <nav class="nav">
         <div class="nav-content">
             <div class="nav-logo">
-                <img src="logo.png" alt="Tech Cross">
+                <img src="logo.png" alt="Tech Cross" ondblclick="openAnnouncementAdmin()">
             </div>
             <ul class="nav-list">
                 <li><a href="#hero" data-en="Home" data-ga="Baile">Home</a></li>
@@ -313,7 +318,7 @@
                 </div>
                 <div class="info-group">
                     <h3 data-en="Hours" data-ga="Uaireanta">Hours</h3>
-                    <p data-en="Mon-Wed: 9:30-18:00<br>Thu-Fri: 9:30-20:00<br>Sat: 9:30-18:00<br>Sun: 11:30-18:00" data-ga="Luan-Céad: 9:30-18:00<br>Déar-Aoine: 9:30-20:00<br>Sath: 9:30-18:00<br>Dom: 11:30-18:00">Mon-Wed: 9:30-18:00<br>Thu-Fri: 9:30-20:00<br>Sat: 9:30-18:00<br>Sun: 11:30-18:00</p>
+                    <p data-en="Mon-Wed: 9:30-18:00<br>Thu-Fri: 9:30-20:00<br>Sat: 9:30-18:00<br>Sun & Bank Holiday: 11:30-18:00" data-ga="Luan-Céad: 9:30-18:00<br>Déar-Aoine: 9:30-20:00<br>Sath: 9:30-18:00<br>Dom & Saoire Bainc: 11:30-18:00">Mon-Wed: 9:30-18:00<br>Thu-Fri: 9:30-20:00<br>Sat: 9:30-18:00<br>Sun & Bank Holiday: 11:30-18:00</p>
                 </div>
             </div>
             <div class="contact-form">

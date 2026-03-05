@@ -15,6 +15,34 @@ body {
     background: #fff;
 }
 
+/* Announcement Banner */
+.announcement-banner {
+    background: #000;
+    color: #D4E157;
+    padding: 12px 0;
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+    z-index: 9998;
+}
+
+.announcement-text {
+    display: inline-block;
+    white-space: nowrap;
+    animation: scroll-announcement 20s linear infinite;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+@keyframes scroll-announcement {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
 /* Navigation */
 .nav {
     position: sticky;
@@ -39,6 +67,12 @@ body {
 .nav-logo img {
     height: 85px;
     display: block;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.nav-logo img:hover {
+    transform: scale(1.05);
 }
 
 .nav-list {

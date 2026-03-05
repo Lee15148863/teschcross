@@ -193,3 +193,62 @@ contactForm.addEventListener('submit', async (e) => {
         button.disabled = false;
     }
 });
+
+// Announcement Banner Management
+function loadAnnouncement() {
+    const STORAGE_KEY = 'techcross_announcement';
+    const stored = localStorage.getItem(STORAGE_KEY);
+    
+    if (!stored) return;
+    
+    try {
+        const data = JSON.parse(stored);
+        
+        if (!data.enabled) {
+            document.getElementById('announcementBanner').style.display = 'none';
+            return;
+        }
+        
+        const banner = document.getElementById('announcementBanner');
+        const textElement = document.getElementById('announcementText');
+        
+        // Get text based on current language
+        const text = currentLang === 'en' ? data.textEn : data.textGa;
+        
+        // Apply styles
+        banner.style.backgroundColor = data.bgColor || '#000000';
+        banner.style.display = 'block';
+        
+        textElement.textContent = text;
+        textElement.style.color = data.textColor || '#D4E157';
+        textElement.style.fontSize = (data.fontSize || 15) + 'px';
+        textElement.style.fontWeight = data.fontWeight || '500';
+        textElement.style.animationDuration = (data.scrollSpeed || 20) + 's';
+        
+    } catch (e) {
+        console.error('Error loading announcement:', e);
+    }
+}
+
+// Update announcement when language changes
+const originalUpdateLanguage = updateLanguage;
+updateLanguage = function() {
+    originalUpdateLanguage();
+    loadAnnouncement();
+};
+
+// Listen for announcement updates
+window.addEventListener('announcementUpdated', loadAnnouncement);
+window.addEventListener('storage', (e) => {
+    if (e.key === 'techcross_announcement') {
+        loadAnnouncement();
+    }
+});
+
+// Load announcement on page load
+loadAnnouncement();
+
+// Hidden admin entrance (double-click logo)
+function openAnnouncementAdmin() {
+    window.location.href = 'announcement-admin.html';
+}
