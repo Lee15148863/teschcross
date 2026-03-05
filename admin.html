@@ -259,7 +259,7 @@
                 <div class="login-error" id="loginError">Incorrect username or password. Please try again.</div>
                 <button type="submit" class="btn-primary" style="width: 100%;">Login</button>
             </form>
-            <p style="margin-top: 24px; font-size: 12px;">Default: 0876676466 / 0876676466</p>
+            <p style="margin-top: 24px; font-size: 12px;">Default: 0876676466 / 0870019999</p>
         </div>
     </div>
 
@@ -287,6 +287,8 @@
         <div class="admin-tabs">
             <button class="admin-tab active" data-tab="edit">Edit Pricing</button>
             <button class="admin-tab" data-tab="add">Add New Model</button>
+            <button class="admin-tab" data-tab="brand">Add New Brand</button>
+            <button class="admin-tab" data-tab="services">Manage Services</button>
         </div>
 
         <!-- Edit Pricing Tab -->
@@ -304,10 +306,7 @@
                 <div class="form-group">
                     <label>Brand</label>
                     <select id="new-brand">
-                        <option value="apple">Apple</option>
-                        <option value="samsung">Samsung</option>
-                        <option value="xiaomi">Xiaomi</option>
-                        <option value="other">Other</option>
+                        <!-- Brands will be dynamically loaded -->
                     </select>
                 </div>
 
@@ -322,35 +321,75 @@
                 </div>
 
                 <h4 style="margin: 24px 0 16px;">Service Pricing (€)</h4>
-                <div class="service-inputs">
-                    <div class="form-group">
-                        <label>Screen</label>
-                        <input type="number" id="new-screen" value="99">
-                    </div>
-                    <div class="form-group">
-                        <label>Battery</label>
-                        <input type="number" id="new-battery" value="49">
-                    </div>
-                    <div class="form-group">
-                        <label>Water/Board (N/A)</label>
-                        <input type="number" id="new-water" value="0" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label>Diagnostic</label>
-                        <input type="number" id="new-diagnostic" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Charging Port</label>
-                        <input type="number" id="new-charging" value="39">
-                    </div>
-                    <div class="form-group">
-                        <label>Camera</label>
-                        <input type="number" id="new-camera" value="69">
-                    </div>
+                <div class="service-inputs" id="new-model-services">
+                    <!-- Services will be dynamically loaded -->
                 </div>
 
                 <button class="btn-save" onclick="addNewModel()">Add Model</button>
                 <div class="success-message" id="add-message">Model added successfully!</div>
+            </div>
+        </div>
+        
+        <!-- Add Brand Tab -->
+        <div class="admin-content" id="brand-tab">
+            <div class="add-model-form">
+                <h3 style="margin-bottom: 24px;">Add New Brand</h3>
+                
+                <div style="background: #fff; border-radius: 18px; padding: 24px; margin-bottom: 24px;">
+                    <h4 style="margin-bottom: 16px;">Current Brands</h4>
+                    <div id="current-brands-list"></div>
+                </div>
+                
+                <div style="background: #f5f5f7; border-radius: 18px; padding: 24px;">
+                    <h4 style="margin-bottom: 16px;">Add New Brand</h4>
+                    
+                    <div class="form-group">
+                        <label>Brand ID (lowercase, use hyphens)</label>
+                        <input type="text" id="new-brand-id" placeholder="e.g., google">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Brand Name (display name)</label>
+                        <input type="text" id="new-brand-name" placeholder="e.g., Google">
+                    </div>
+                    
+                    <button class="btn-save" onclick="addNewBrand()">Add Brand</button>
+                    <div class="success-message" id="brand-message">Brand added successfully!</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Manage Services Tab -->
+        <div class="admin-content" id="services-tab">
+            <div class="add-model-form">
+                <h3 style="margin-bottom: 24px;">Manage Service Types</h3>
+                
+                <div style="background: #fff; border-radius: 18px; padding: 24px; margin-bottom: 24px;">
+                    <h4 style="margin-bottom: 16px;">Current Services</h4>
+                    <div id="current-services-list"></div>
+                </div>
+                
+                <div style="background: #f5f5f7; border-radius: 18px; padding: 24px;">
+                    <h4 style="margin-bottom: 16px;">Add New Service Type</h4>
+                    
+                    <div class="form-group">
+                        <label>Service ID (lowercase, use hyphens)</label>
+                        <input type="text" id="new-service-id" placeholder="e.g., back-glass">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Service Name (display name)</label>
+                        <input type="text" id="new-service-name" placeholder="e.g., Back Glass Replacement">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Service Description</label>
+                        <input type="text" id="new-service-desc" placeholder="e.g., Fix cracked back glass">
+                    </div>
+                    
+                    <button class="btn-save" onclick="addNewService()">Add Service Type</button>
+                    <div class="success-message" id="service-message">Service type added successfully!</div>
+                </div>
             </div>
         </div>
     </div>
