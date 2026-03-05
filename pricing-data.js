@@ -32,7 +32,20 @@ const defaultPricingData = {
             'iphone-xs-max': { name: 'iPhone XS Max', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
             'iphone-xs': { name: 'iPhone XS', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
             'iphone-xr': { name: 'iPhone XR', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
-            'iphone-x': { name: 'iPhone X', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() }
+            'iphone-x': { name: 'iPhone X', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-13-m4': { name: 'iPad Pro 13" M4 (2024)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-11-m4': { name: 'iPad Pro 11" M4 (2024)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-air-13-m2': { name: 'iPad Air 13" M2 (2024)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-air-11-m2': { name: 'iPad Air 11" M2 (2024)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-10': { name: 'iPad 10th Gen (2022)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-9': { name: 'iPad 9th Gen (2021)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-mini-6': { name: 'iPad Mini 6th Gen (2021)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-12-9-5': { name: 'iPad Pro 12.9" 5th Gen (2021)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-11-3': { name: 'iPad Pro 11" 3rd Gen (2021)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-air-4': { name: 'iPad Air 4th Gen (2020)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-8': { name: 'iPad 8th Gen (2020)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-12-9-4': { name: 'iPad Pro 12.9" 4th Gen (2020)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-11-2': { name: 'iPad Pro 11" 2nd Gen (2020)', services: { screen: 9999, battery: 9999, water: 9999, diagnostic: 0, charging: 9999, camera: 9999 }, lastUpdated: new Date().toISOString() }
         }
     },
     samsung: {

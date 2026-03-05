@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computer Admin - Tech Cross</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f7;
+        }
+        
+        .login-box {
+            background: #fff;
+            padding: 48px;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            max-width: 400px;
+            width: 100%;
+            margin: 0 22px;
+        }
+        
+        .login-box h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .login-box p {
+            color: #6e6e73;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .login-form input {
+            padding: 14px 16px;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            font-size: 17px;
+            font-family: inherit;
+        }
+        
+        .login-form input:focus {
+            outline: none;
+            border-color: #0071e3;
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+        }
+        
+        .login-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .login-error.show {
+            display: block;
+        }
+        
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 120px 22px 80px;
+            display: none;
+        }
+        
+        .admin-container.show {
+            display: block;
+        }
+        
+        .admin-header {
+            margin-bottom: 40px;
+        }
+        
+        .admin-header h1 {
+            font-size: 48px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .admin-tabs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid #d2d2d7;
+        }
+        
+        .admin-tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-size: 17px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .admin-tab.active {
+            border-bottom-color: #0071e3;
+            color: #0071e3;
+        }
+        
+        .admin-content {
+            display: none;
+        }
+        
+        .admin-content.active {
+            display: block;
+        }
+        
+        .pricing-table {
+            background: #fff;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+        
+        .pricing-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .pricing-table th {
+            background: #f5f5f7;
+            padding: 16px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+        
+        .pricing-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f5f5f7;
+            font-size: 14px;
+        }
+        
+        .pricing-table input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .type-section {
+            margin-bottom: 40px;
+        }
+        
+        .type-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #f5f5f7;
+            border-radius: 12px 12px 0 0;
+            cursor: pointer;
+        }
+        
+        .type-header h3 {
+            font-size: 21px;
+            font-weight: 600;
+        }
+        
+        .type-content {
+            display: none;
+        }
+        
+        .type-content.show {
+            display: block;
+        }
+        
+        .btn-save {
+            background: #0071e3;
+            color: #fff;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 980px;
+            font-size: 17px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 24px;
+        }
+        
+        .btn-save:hover {
+            background: #0077ed;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            display: none;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1>Computer Admin Login</h1>
+            <p>Enter username and password to access admin panel</p>
+            <form class="login-form" id="loginForm">
+                <input type="text" id="usernameInput" placeholder="Username" required autofocus>
+                <input type="password" id="passwordInput" placeholder="Password" required>
+                <div class="login-error" id="loginError">Incorrect username or password. Please try again.</div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Login</button>
+            </form>
+            <p style="margin-top: 24px; font-size: 12px;">Default: 0876676466 / 0876676466</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav" id="adminNav" style="display: none;">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <a href="index.html"><img src="logo.png" alt="Tech Cross"></a>
+            </div>
+            <ul class="nav-list">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="computer-pricing.html">Computer Pricing</a></li>
+                <li><a href="computer-admin.html">Admin</a></li>
+                <li><button onclick="logout()" style="background: none; border: none; color: #1d1d1f; font-size: 14px; cursor: pointer; opacity: 0.8;">Logout</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="admin-container" id="adminContainer">
+        <div class="admin-header">
+            <h1>Computer & Console Pricing Management</h1>
+            <p style="color: #6e6e73; font-size: 17px;">Manage laptop and gaming console repair pricing</p>
+        </div>
+
+        <div id="pricing-editor"></div>
+        <button class="btn-save" onclick="savePricing()">Save All Changes</button>
+        <div class="success-message" id="save-message">Pricing updated successfully!</div>
+    </div>
+
+    <script src="computer-pricing-data.js"></script>
+    <script src="computer-admin.js"></script>
+</body>
+</html>

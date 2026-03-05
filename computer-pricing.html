@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Tech Cross - Repair Pricing">
-    <title>Pricing - Tech Cross</title>
+    <meta name="description" content="Tech Cross - Computer & Gaming Console Repair Pricing">
+    <title>Computer & Gaming Pricing - Tech Cross</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .pricing-container {
@@ -126,7 +126,8 @@
             <ul class="nav-list">
                 <li><a href="index.html#hero">Home</a></li>
                 <li><a href="index.html#services">Services</a></li>
-                <li><a href="pricing.html">Pricing</a></li>
+                <li><a href="pricing.html">Phone Pricing</a></li>
+                <li><a href="computer-pricing.html">Computer Pricing</a></li>
                 <li><a href="index.html#contact">Contact</a></li>
             </ul>
         </div>
@@ -135,7 +136,7 @@
     <!-- Pricing Content -->
     <div class="pricing-container">
         <div class="pricing-header">
-            <h1>Repair Pricing</h1>
+            <h1>Computer & Gaming Console Pricing</h1>
             <p>Select your device and service to get an instant quote</p>
         </div>
 
@@ -151,13 +152,11 @@
 
         <div class="pricing-filters">
             <div class="filter-group">
-                <label for="deviceBrand">Device Brand</label>
-                <select id="deviceBrand">
-                    <option value="">Select Brand</option>
-                    <option value="apple">Apple</option>
-                    <option value="samsung">Samsung</option>
-                    <option value="xiaomi">Xiaomi</option>
-                    <option value="other">Other</option>
+                <label for="deviceType">Device Type</label>
+                <select id="deviceType">
+                    <option value="">Select Type</option>
+                    <option value="laptop">Laptop</option>
+                    <option value="console">Gaming Console</option>
                 </select>
             </div>
 
@@ -195,9 +194,9 @@
     </div>
 
     <!-- Hidden Admin Link -->
-    <a href="admin.html" style="position: fixed; bottom: 12px; right: 12px; opacity: 0.3; font-size: 14px; color: #999; text-decoration: none; z-index: 999; transition: opacity 0.3s; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.05);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.3'">©</a>
+    <a href="computer-admin.html" style="position: fixed; bottom: 12px; right: 12px; opacity: 0.3; font-size: 14px; color: #999; text-decoration: none; z-index: 999; transition: opacity 0.3s; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.05);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.3'">©</a>
 
-    <script src="pricing-data.js"></script>
-    <script src="pricing.js"></script>
+    <script src="computer-pricing-data.js"></script>
+    <script src="computer-pricing.js"></script>
 </body>
 </html>
