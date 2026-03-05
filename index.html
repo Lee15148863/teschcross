@@ -194,7 +194,7 @@
                 </div>
                 <div class="info-group">
                     <h3 data-en="Email" data-ga="Ríomhphost">Email</h3>
-                    <p><a href="mailto:techcrossnavan@gmail.com">techcrossnavan@gmail.com</a></p>
+                    <p><a href="mailto:navantechcross@gmail.com">navantechcross@gmail.com</a></p>
                 </div>
                 <div class="info-group">
                     <h3 data-en="Hours" data-ga="Uaireanta">Hours</h3>
@@ -202,13 +202,18 @@
                 </div>
             </div>
             <div class="contact-form">
-                <form id="contactForm">
-                    <input type="text" placeholder="Name" data-placeholder-en="Name" data-placeholder-ga="Ainm" required>
-                    <input type="email" placeholder="Email" data-placeholder-en="Email" data-placeholder-ga="Ríomhphost" required>
-                    <input type="tel" placeholder="Phone" data-placeholder-en="Phone" data-placeholder-ga="Fón" required>
-                    <textarea placeholder="Message" data-placeholder-en="Message" data-placeholder-ga="Teachtaireacht" rows="4" required></textarea>
+                <form id="contactForm" action="https://api.web3forms.com/submit" method="POST">
+                    <input type="hidden" name="access_key" value="273320af-85b0-421a-872d-f68fd87a53a1">
+                    <input type="hidden" name="subject" value="New Contact Form Submission from Tech Cross Website">
+                    <input type="hidden" name="from_name" value="Tech Cross Website">
+                    <input type="email" name="email" value="navantechcross@gmail.com" style="display:none;">
+                    <input type="text" name="name" placeholder="Name" data-placeholder-en="Name" data-placeholder-ga="Ainm" required>
+                    <input type="email" name="customer_email" placeholder="Email" data-placeholder-en="Email" data-placeholder-ga="Ríomhphost" required>
+                    <input type="tel" name="phone" placeholder="Phone" data-placeholder-en="Phone" data-placeholder-ga="Fón" required>
+                    <textarea name="message" placeholder="Message" data-placeholder-en="Message" data-placeholder-ga="Teachtaireacht" rows="4" required></textarea>
                     <button type="submit" class="btn-primary" data-en="Send" data-ga="Seol">Send</button>
                 </form>
+                <div id="form-message" style="display:none; margin-top: 16px; padding: 16px; border-radius: 12px; text-align: center;"></div>
             </div>
         </div>
     </section>

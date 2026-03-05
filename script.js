@@ -124,21 +124,48 @@ carousel.addEventListener('mouseleave', startAutoplay);
 
 // Form submission handling
 const contactForm = document.getElementById('contactForm');
-contactForm.addEventListener('submit', (e) => {
+const formMessage = document.getElementById('form-message');
+
+contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Show success message
     const button = contactForm.querySelector('button[type="submit"]');
     const originalText = button.textContent;
-    const successText = currentLang === 'en' ? 'Sent!' : 'Seolta!';
+    const sendingText = currentLang === 'en' ? 'Sending...' : 'Ag seoladh...';
+    const successText = currentLang === 'en' ? 'Message sent successfully!' : 'Teachtaireacht seolta go rathúil!';
+    const errorText = currentLang === 'en' ? 'Failed to send. Please try again.' : 'Theip ar sheoladh. Bain triail eile as.';
     
-    button.textContent = successText;
-    button.style.background = '#10b981';
+    button.textContent = sendingText;
+    button.disabled = true;
+    formMessage.style.display = 'none';
     
-    // Reset form
-    setTimeout(() => {
-        contactForm.reset();
+    try {
+        const formData = new FormData(contactForm);
+        const response = await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            formMessage.textContent = successText;
+            formMessage.style.background = '#d4edda';
+            formMessage.style.color = '#155724';
+            formMessage.style.border = '1px solid #c3e6cb';
+            formMessage.style.display = 'block';
+            contactForm.reset();
+        } else {
+            throw new Error('Form submission failed');
+        }
+    } catch (error) {
+        formMessage.textContent = errorText;
+        formMessage.style.background = '#f8d7da';
+        formMessage.style.color = '#721c24';
+        formMessage.style.border = '1px solid #f5c6cb';
+        formMessage.style.display = 'block';
+    } finally {
         button.textContent = originalText;
-        button.style.background = '';
-    }, 2000);
+        button.disabled = false;
+    }
 });
