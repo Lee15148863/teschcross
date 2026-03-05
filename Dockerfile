@@ -17,6 +17,7 @@ COPY data-transfer.html /usr/share/nginx/html/
 COPY shop-coming-soon.html /usr/share/nginx/html/
 COPY styles.css /usr/share/nginx/html/
 COPY script.js /usr/share/nginx/html/
+COPY search-engine.js /usr/share/nginx/html/
 COPY pricing.js /usr/share/nginx/html/
 COPY pricing-data.js /usr/share/nginx/html/
 COPY admin.js /usr/share/nginx/html/
