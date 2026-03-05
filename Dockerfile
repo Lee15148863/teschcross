@@ -9,8 +9,13 @@ COPY nginx.conf /etc/nginx/conf.d/
 
 # 复制网站文件到 nginx 的 html 目录
 COPY index.html /usr/share/nginx/html/
+COPY pricing.html /usr/share/nginx/html/
+COPY admin.html /usr/share/nginx/html/
 COPY styles.css /usr/share/nginx/html/
 COPY script.js /usr/share/nginx/html/
+COPY pricing.js /usr/share/nginx/html/
+COPY pricing-data.js /usr/share/nginx/html/
+COPY admin.js /usr/share/nginx/html/
 COPY logo.png /usr/share/nginx/html/
 
 # 暴露 8080 端口（Cloud Run 要求）
