@@ -20,12 +20,47 @@
                 <li><a href="#shop" data-en="Shop" data-ga="Siopa">Shop</a></li>
                 <li><a href="#contact" data-en="Contact" data-ga="Teagmháil">Contact</a></li>
             </ul>
+            <div class="nav-search">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search devices... (Ctrl+K)" autocomplete="off" />
+                    <button id="searchBtn" aria-label="Search">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <div id="searchDropdown" class="search-dropdown"></div>
+                </div>
+            </div>
             <button class="nav-toggle" id="navToggle">
                 <span></span>
                 <span></span>
             </button>
         </div>
     </nav>
+
+    <!-- Advanced Search Modal -->
+    <div id="searchModal" class="search-modal">
+        <div class="search-modal-overlay"></div>
+        <div class="search-modal-content">
+            <div class="search-modal-header">
+                <div class="search-modal-input-wrapper">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+                        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" id="modalSearchInput" placeholder="Search for iPhone, MacBook, Samsung..." autocomplete="off" />
+                    <kbd class="search-kbd">ESC</kbd>
+                </div>
+            </div>
+            <div id="searchResults" class="search-results"></div>
+            <div class="search-footer">
+                <div class="search-footer-tips">
+                    <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                    <span><kbd>Enter</kbd> Select</span>
+                    <span><kbd>ESC</kbd> Close</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Language Toggle -->
     <button class="lang-btn" id="langBtn">
@@ -308,6 +343,9 @@
         <p data-en="© 2026 Tech Cross Repair Centre. All rights reserved." data-ga="© 2026 Ionad Deisiúcháin Tech Cross. Gach ceart ar cosaint.">© 2026 Tech Cross Repair Centre. All rights reserved.</p>
     </footer>
 
+    <script src="pricing-data.js"></script>
+    <script src="computer-pricing-data.js"></script>
+    <script src="search-engine.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
