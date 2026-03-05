@@ -57,12 +57,27 @@ serviceTypeSelect.addEventListener('change', function() {
     const service = this.value;
     
     if (brand && model && service) {
-        const price = pricingData[brand].models[model].services[service];
+        const modelData = pricingData[brand].models[model];
+        const price = modelData.services[service];
         const serviceName = serviceTypes[service].name;
-        const modelName = pricingData[brand].models[model].name;
+        const serviceInfo = serviceTypes[service];
+        const modelName = modelData.name;
+        const lastUpdated = modelData.lastUpdated ? new Date(modelData.lastUpdated).toLocaleString('en-IE', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'Not available';
         
-        priceDisplay.textContent = price === 0 ? 'Free' : `€${price}`;
-        serviceDescription.textContent = `${serviceName} for ${modelName}`;
+        // Check if this service requires contacting customer service
+        if (serviceInfo.noPrice) {
+            priceDisplay.textContent = 'Contact Us';
+            serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Please call us for a quote: <a href="tel:0469059854" style="color: #0071e3; text-decoration: none; font-weight: 600;">046 905 9854</a></small>`;
+        } else {
+            priceDisplay.textContent = price === 0 ? 'Free' : `€${price}`;
+            serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Last updated: ${lastUpdated}</small>`;
+        }
         pricingResult.classList.add('show');
     } else {
         pricingResult.classList.remove('show');

@@ -127,7 +127,7 @@ function renderPricingEditor() {
                         <th>Model</th>
                         <th>Screen</th>
                         <th>Battery</th>
-                        <th>Water</th>
+                        <th>Water/Board</th>
                         <th>Diagnostic</th>
                         <th>Charging</th>
                         <th>Camera</th>
@@ -152,7 +152,7 @@ function renderPricingEditor() {
                 <td><strong>${model.name}</strong></td>
                 <td><input type="number" value="${model.services.screen}" data-brand="${brandKey}" data-model="${modelKey}" data-service="screen"></td>
                 <td><input type="number" value="${model.services.battery}" data-brand="${brandKey}" data-model="${modelKey}" data-service="battery"></td>
-                <td><input type="number" value="${model.services.water}" data-brand="${brandKey}" data-model="${modelKey}" data-service="water"></td>
+                <td><input type="number" value="${model.services.water}" data-brand="${brandKey}" data-model="${modelKey}" data-service="water" disabled style="background: #f5f5f7; cursor: not-allowed;"></td>
                 <td><input type="number" value="${model.services.diagnostic}" data-brand="${brandKey}" data-model="${modelKey}" data-service="diagnostic"></td>
                 <td><input type="number" value="${model.services.charging}" data-brand="${brandKey}" data-model="${modelKey}" data-service="charging"></td>
                 <td><input type="number" value="${model.services.camera}" data-brand="${brandKey}" data-model="${modelKey}" data-service="camera"></td>
@@ -175,6 +175,8 @@ function savePricing() {
         
         if (pricingData[brand]?.models[model]?.services) {
             pricingData[brand].models[model].services[service] = value;
+            // Update timestamp when price changes
+            pricingData[brand].models[model].lastUpdated = new Date().toISOString();
         }
     });
     
@@ -214,7 +216,8 @@ function addNewModel() {
     
     pricingData[brand].models[modelId] = {
         name: modelName,
-        services: services
+        services: services,
+        lastUpdated: new Date().toISOString()
     };
     
     savePricingData(pricingData);
