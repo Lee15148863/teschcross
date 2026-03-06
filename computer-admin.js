@@ -149,12 +149,17 @@ function savePricing() {
         const type = input.dataset.type;
         const model = input.dataset.model;
         const service = input.dataset.service;
-        const value = parseInt(input.value) || 0;
+        const newValue = parseInt(input.value) || 0;
         
         if (computerPricingData[type]?.models[model]?.services) {
-            computerPricingData[type].models[model].services[service] = value;
-            // Update timestamp when price changes
-            computerPricingData[type].models[model].lastUpdated = new Date().toISOString();
+            const oldValue = computerPricingData[type].models[model].services[service];
+            
+            // Only update timestamp if the price actually changed
+            if (oldValue !== newValue) {
+                computerPricingData[type].models[model].services[service] = newValue;
+                computerPricingData[type].models[model].lastUpdated = new Date().toISOString();
+                console.log(`Price updated for ${model} - ${service}: ${oldValue} -> ${newValue}`);
+            }
         }
     });
     
