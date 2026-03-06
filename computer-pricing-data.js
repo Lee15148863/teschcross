@@ -1,46 +1,269 @@
 // Computer & Gaming Console Pricing database - stored in localStorage
 const COMPUTER_PRICING_STORAGE_KEY = 'techcross_computer_pricing_data';
 
-// Default pricing data
+// Default pricing data based on CSV files
 const defaultComputerPricingData = {
-    laptop: {
-        name: 'Laptop',
+    computer: {
+        name: 'Computer / Laptop',
         models: {
-            'macbook-air': { name: 'MacBook Air', services: { screen: 9999, battery: 9999, keyboard: 9999, diagnostic: 0, hinge: 9999, upgrade: 9999 }, lastUpdated: new Date().toISOString() },
-            'macbook-pro': { name: 'MacBook Pro', services: { screen: 9999, battery: 9999, keyboard: 9999, diagnostic: 0, hinge: 9999, upgrade: 9999 }, lastUpdated: new Date().toISOString() },
-            'dell-laptop': { name: 'Dell Laptop', services: { screen: 9999, battery: 9999, keyboard: 9999, diagnostic: 0, hinge: 9999, upgrade: 9999 }, lastUpdated: new Date().toISOString() },
-            'hp-laptop': { name: 'HP Laptop', services: { screen: 9999, battery: 9999, keyboard: 9999, diagnostic: 0, hinge: 9999, upgrade: 9999 }, lastUpdated: new Date().toISOString() },
-            'lenovo-laptop': { name: 'Lenovo Laptop', services: { screen: 9999, battery: 9999, keyboard: 9999, diagnostic: 0, hinge: 9999, upgrade: 9999 }, lastUpdated: new Date().toISOString() },
-            'asus-laptop': { name: 'ASUS Laptop', services: { screen: 9999, battery: 9999, keyboard: 9999, diagnostic: 0, hinge: 9999, upgrade: 9999 }, lastUpdated: new Date().toISOString() },
-            'other-laptop': { name: 'Other Laptop', services: { screen: 9999, battery: 9999, keyboard: 9999, diagnostic: 0, hinge: 9999, upgrade: 9999 }, lastUpdated: new Date().toISOString() }
+            'standard-laptop': { 
+                name: 'Standard Laptop (Dell, HP, Lenovo, ASUS, etc.)', 
+                services: { 
+                    diagnostic: 30,
+                    screen: 125,
+                    battery: 9999,
+                    dcjack: 95,
+                    keyboard: 115,
+                    cooling: 75,
+                    ssd: 9999,
+                    ram: 9999,
+                    liquid: 225,
+                    software: 65,
+                    data: 140,
+                    hinge: 105
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'macbook-air': { 
+                name: 'MacBook Air', 
+                services: { 
+                    diagnostic: 30,
+                    screen: 350,
+                    battery: 150,
+                    dcjack: 95,
+                    keyboard: 115,
+                    cooling: 75,
+                    ssd: 9999,
+                    ram: 9999,
+                    liquid: 225,
+                    software: 65,
+                    data: 140,
+                    hinge: 105
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'macbook-pro': { 
+                name: 'MacBook Pro', 
+                services: { 
+                    diagnostic: 30,
+                    screen: 350,
+                    battery: 150,
+                    dcjack: 95,
+                    keyboard: 115,
+                    cooling: 75,
+                    ssd: 9999,
+                    ram: 9999,
+                    liquid: 225,
+                    software: 65,
+                    data: 140,
+                    hinge: 105
+                }, 
+                lastUpdated: new Date().toISOString() 
+            }
         }
     },
     console: {
         name: 'Gaming Console',
         models: {
-            'ps5': { name: 'PlayStation 5', services: { hdmi: 9999, disc: 9999, overheating: 9999, diagnostic: 0, power: 9999, controller: 9999 }, lastUpdated: new Date().toISOString() },
-            'ps4': { name: 'PlayStation 4', services: { hdmi: 9999, disc: 9999, overheating: 9999, diagnostic: 0, power: 9999, controller: 9999 }, lastUpdated: new Date().toISOString() },
-            'xbox-series': { name: 'Xbox Series X/S', services: { hdmi: 9999, disc: 9999, overheating: 9999, diagnostic: 0, power: 9999, controller: 9999 }, lastUpdated: new Date().toISOString() },
-            'xbox-one': { name: 'Xbox One', services: { hdmi: 9999, disc: 9999, overheating: 9999, diagnostic: 0, power: 9999, controller: 9999 }, lastUpdated: new Date().toISOString() },
-            'nintendo-switch': { name: 'Nintendo Switch', services: { hdmi: 9999, disc: 9999, overheating: 9999, diagnostic: 0, power: 9999, controller: 9999 }, lastUpdated: new Date().toISOString() }
+            // PlayStation 5 Series
+            'ps5-disc': { 
+                name: 'PlayStation 5 (Disc Edition)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 9999,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'ps5-digital': { 
+                name: 'PlayStation 5 (Digital Edition)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 0,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'ps5-slim-disc': { 
+                name: 'PlayStation 5 Slim (Disc Edition)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 9999,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'ps5-slim-digital': { 
+                name: 'PlayStation 5 Slim (Digital Edition)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 0,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'ps5-pro': { 
+                name: 'PlayStation 5 Pro', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 9999,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            
+            // Xbox Series
+            'xbox-series-x': { 
+                name: 'Xbox Series X (1TB Black)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 9999,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'xbox-series-s': { 
+                name: 'Xbox Series S (512GB White)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 0,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'xbox-series-s-1tb': { 
+                name: 'Xbox Series S (1TB Carbon Black)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 0,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'xbox-series-x-digital': { 
+                name: 'Xbox Series X Digital (1TB Robot White)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 0,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'xbox-series-x-galaxy': { 
+                name: 'Xbox Series X Galaxy (2TB Special Edition)', 
+                services: { 
+                    hdmi: 85,
+                    motherboard: 120,
+                    cleaning: 60,
+                    disc: 9999,
+                    controller: 0,
+                    screen_console: 0
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            
+            // Nintendo Switch Series
+            'switch-original': { 
+                name: 'Nintendo Switch (HAC-001)', 
+                services: { 
+                    hdmi: 100,
+                    motherboard: 120,
+                    cleaning: 0,
+                    disc: 100,
+                    controller: 75,
+                    screen_console: 125
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'switch-lite': { 
+                name: 'Nintendo Switch Lite (HDH-001)', 
+                services: { 
+                    hdmi: 100,
+                    motherboard: 120,
+                    cleaning: 0,
+                    disc: 100,
+                    controller: 75,
+                    screen_console: 120
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'switch-oled': { 
+                name: 'Nintendo Switch OLED (HEG-001)', 
+                services: { 
+                    hdmi: 100,
+                    motherboard: 120,
+                    cleaning: 0,
+                    disc: 100,
+                    controller: 75,
+                    screen_console: 190
+                }, 
+                lastUpdated: new Date().toISOString() 
+            },
+            'switch-2': { 
+                name: 'Nintendo Switch 2 (BEE-001)', 
+                services: { 
+                    hdmi: 9999,
+                    motherboard: 9999,
+                    cleaning: 9999,
+                    disc: 9999,
+                    controller: 9999,
+                    screen_console: 9999
+                }, 
+                lastUpdated: new Date().toISOString() 
+            }
         }
     }
 };
 
 const computerServiceTypes = {
-    // Laptop services
-    screen: { name: 'Screen Replacement', description: 'LCD/LED screen repair' },
-    battery: { name: 'Battery Replacement', description: 'Original quality battery' },
-    keyboard: { name: 'Keyboard Replacement', description: 'Full keyboard replacement' },
-    diagnostic: { name: 'Free Diagnostics', description: 'Complete device check-up' },
-    hinge: { name: 'Hinge Repair', description: 'Fix broken hinges' },
-    upgrade: { name: 'SSD/RAM Upgrade', description: 'Performance upgrade' },
+    // Computer/Laptop services
+    diagnostic: { name: 'Diagnostic Fee / Assessment', description: 'Applied to repair cost', category: 'computer' },
+    screen: { name: 'Screen Replacement', description: 'LCD/LED screen repair (MacBook: Full Assembly)', category: 'computer' },
+    battery: { name: 'Battery Replacement', description: 'Original quality battery', category: 'computer' },
+    dcjack: { name: 'DC Jack / Charging Port Repair', description: 'Fix charging port issues', category: 'computer' },
+    keyboard: { name: 'Keyboard / Palmrest Replacement', description: 'Full keyboard replacement', category: 'computer' },
+    cooling: { name: 'Fan Replacement & Thermal Paste', description: 'Cooling system maintenance', category: 'computer' },
+    ssd: { name: 'SSD Upgrade & OS Install', description: 'Storage upgrade with OS installation', category: 'computer' },
+    ram: { name: 'RAM Upgrade', description: 'Memory upgrade', category: 'computer' },
+    liquid: { name: 'Liquid Damage Repair / Cleaning', description: 'No Fix No Fee', category: 'computer' },
+    software: { name: 'OS Reinstallation / Virus Removal', description: 'Software troubleshooting', category: 'computer' },
+    data: { name: 'Data Recovery (Logical)', description: 'Recover lost data', category: 'computer' },
+    hinge: { name: 'Screen Hinge / Cover Repair', description: 'Fix broken hinges', category: 'computer' },
+    
     // Console services
-    hdmi: { name: 'HDMI Port Repair', description: 'Fix HDMI connection issues' },
-    disc: { name: 'Disc Drive Repair', description: 'Fix disc reading issues' },
-    overheating: { name: 'Overheating Fix', description: 'Cooling system repair' },
-    power: { name: 'Power Supply Repair', description: 'Fix power issues' },
-    controller: { name: 'Controller Repair', description: 'Fix controller issues' }
+    hdmi: { name: 'HDMI Port Repair', description: 'Fix HDMI connection issues', category: 'console' },
+    motherboard: { name: 'Motherboard/PSU Repair', description: 'Motherboard or power supply repair', category: 'console' },
+    cleaning: { name: 'Deep Cleaning (Overheating)', description: 'Cooling system cleaning', category: 'console' },
+    disc: { name: 'Disc Drive/Card Reader', description: 'Fix disc reading or card reader issues', category: 'console' },
+    controller: { name: 'Analog Stick Drift/Joy Connection', description: 'Controller repair', category: 'console' },
+    screen_console: { name: 'LCD/OLED Screen', description: 'Screen replacement for handheld consoles', category: 'console' }
 };
 
 // Load pricing data from localStorage or use default
@@ -48,21 +271,44 @@ function loadComputerPricingData() {
     const stored = localStorage.getItem(COMPUTER_PRICING_STORAGE_KEY);
     if (stored) {
         try {
-            return JSON.parse(stored);
+            const data = JSON.parse(stored);
+            // Check if old structure exists (laptop instead of computer)
+            if (data.laptop && !data.computer) {
+                console.warn('Old data structure detected (laptop), migrating to new structure (computer)');
+                // Migrate old data
+                data.computer = data.laptop;
+                delete data.laptop;
+                saveComputerPricingData(data);
+                return data;
+            }
+            // Validate data structure
+            if (data.computer && data.console) {
+                console.log('Loaded computer pricing data from localStorage');
+                return data;
+            } else {
+                console.warn('Invalid data structure in localStorage, using default');
+                localStorage.removeItem(COMPUTER_PRICING_STORAGE_KEY);
+                return defaultComputerPricingData;
+            }
         } catch (e) {
             console.error('Error loading computer pricing data:', e);
+            localStorage.removeItem(COMPUTER_PRICING_STORAGE_KEY);
             return defaultComputerPricingData;
         }
     }
+    console.log('No stored data found, using default');
     return defaultComputerPricingData;
 }
 
 // Save pricing data to localStorage
 function saveComputerPricingData(data) {
     localStorage.setItem(COMPUTER_PRICING_STORAGE_KEY, JSON.stringify(data));
+    console.log('Computer pricing data saved to localStorage');
 }
 
-// Initialize with default data if not exists
-if (!localStorage.getItem(COMPUTER_PRICING_STORAGE_KEY)) {
+// Initialize with default data if not exists or invalid
+const currentData = loadComputerPricingData();
+if (!localStorage.getItem(COMPUTER_PRICING_STORAGE_KEY) || !currentData.computer || !currentData.console) {
+    console.log('Initializing computer pricing data...');
     saveComputerPricingData(defaultComputerPricingData);
 }

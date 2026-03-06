@@ -16,6 +16,7 @@ COPY computer-admin.html /usr/share/nginx/html/
 COPY data-transfer.html /usr/share/nginx/html/
 COPY shop-coming-soon.html /usr/share/nginx/html/
 COPY announcement-admin.html /usr/share/nginx/html/
+COPY reset-computer-data.html /usr/share/nginx/html/
 COPY styles.css /usr/share/nginx/html/
 COPY script.js /usr/share/nginx/html/
 COPY search-engine.js /usr/share/nginx/html/

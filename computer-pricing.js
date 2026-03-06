@@ -1,12 +1,22 @@
 // Computer & Gaming Console Pricing page functionality
+let computerPricingData = null;
+
+// Wait for data to be loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Load pricing data
+    computerPricingData = loadComputerPricingData();
+    console.log('Computer pricing page loaded');
+    console.log('Available device types:', Object.keys(computerPricingData));
+    console.log('Computer models:', computerPricingData.computer ? Object.keys(computerPricingData.computer.models) : 'none');
+    console.log('Console models:', computerPricingData.console ? Object.keys(computerPricingData.console.models) : 'none');
+});
+
 const deviceTypeSelect = document.getElementById('deviceType');
 const deviceModelSelect = document.getElementById('deviceModel');
 const serviceTypeSelect = document.getElementById('serviceType');
 const pricingResult = document.getElementById('pricingResult');
 const priceDisplay = document.getElementById('priceDisplay');
 const serviceDescription = document.getElementById('serviceDescription');
-
-let computerPricingData = loadComputerPricingData();
 
 // Device type selection handler
 deviceTypeSelect.addEventListener('change', function() {
@@ -17,16 +27,29 @@ deviceTypeSelect.addEventListener('change', function() {
     serviceTypeSelect.disabled = true;
     pricingResult.classList.remove('show');
     
+    console.log('Selected type:', type);
+    console.log('Pricing data available:', computerPricingData !== null);
+    
+    if (!computerPricingData) {
+        console.error('Pricing data not loaded yet');
+        return;
+    }
+    
     if (type && computerPricingData[type]) {
+        console.log('Type data found:', computerPricingData[type].name);
         deviceModelSelect.disabled = false;
         const models = computerPricingData[type].models;
+        console.log('Models found:', Object.keys(models).length);
         
         for (const [key, model] of Object.entries(models)) {
             const option = document.createElement('option');
             option.value = key;
             option.textContent = model.name;
             deviceModelSelect.appendChild(option);
+            console.log('Added model:', model.name);
         }
+    } else {
+        console.error('Type not found in pricing data:', type);
     }
 });
 
@@ -73,13 +96,33 @@ serviceTypeSelect.addEventListener('change', function() {
             minute: '2-digit'
         }) : 'Not available';
         
-        priceDisplay.textContent = price === 0 ? 'Free' : `€${price}`;
-        serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Last updated: ${lastUpdated}</small>`;
+        // Handle different price types
+        let priceText = '';
+        if (price === 0) {
+            priceText = 'N/A';
+        } else if (price === 9999) {
+            priceText = 'ASK';
+        } else if (price === 30) {
+            priceText = '€30*';
+        } else {
+            priceText = `€${price}`;
+        }
+        
+        priceDisplay.textContent = priceText;
+        
+        // Add note for diagnostic fee
+        let additionalNote = '';
+        if (service === 'diagnostic') {
+            additionalNote = '<br><small style="font-size: 13px; color: #856404;">*Applied to repair cost</small>';
+        } else if (service === 'liquid') {
+            additionalNote = '<br><small style="font-size: 13px; color: #856404;">*No Fix No Fee</small>';
+        } else if (price === 9999) {
+            additionalNote = '<br><small style="font-size: 13px; color: #856404;">*Please contact us for pricing</small>';
+        }
+        
+        serviceDescription.innerHTML = `${serviceName} for ${modelName}${additionalNote}<br><small style="font-size: 14px; color: #6e6e73;">Last updated: ${lastUpdated}</small>`;
         pricingResult.classList.add('show');
     } else {
         pricingResult.classList.remove('show');
     }
 });
-
-console.log('Computer pricing page loaded');
-console.log('Available device types:', Object.keys(computerPricingData));

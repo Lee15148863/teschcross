@@ -63,6 +63,14 @@ checkAuth();
 
 let computerPricingData = loadComputerPricingData();
 
+// Check if migration is needed
+if (computerPricingData.laptop && !computerPricingData.computer) {
+    console.warn('Migrating old data structure from laptop to computer');
+    computerPricingData.computer = computerPricingData.laptop;
+    delete computerPricingData.laptop;
+    saveComputerPricingData(computerPricingData);
+}
+
 // Render pricing editor
 function renderPricingEditor() {
     const editor = document.getElementById('pricing-editor');
@@ -185,6 +193,7 @@ function deleteModel(type, modelKey) {
 // Initialize
 renderPricingEditor();
 console.log('Computer admin page loaded');
+console.log('Available types:', Object.keys(computerPricingData));
 
 
 // Tab switching
@@ -402,7 +411,7 @@ function renderCurrentTypes() {
         const div = document.createElement('div');
         div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f5f5f7;';
         
-        const isCoreType = ['laptop', 'console'].includes(key);
+        const isCoreType = ['computer', 'console'].includes(key);
         div.innerHTML = `
             <div>
                 <strong>${type.name}</strong>
@@ -457,7 +466,7 @@ function addNewType() {
 
 // Delete type
 function deleteType(typeKey) {
-    const coreTypes = ['laptop', 'console'];
+    const coreTypes = ['computer', 'console'];
     if (coreTypes.includes(typeKey)) {
         alert('Cannot delete core types');
         return;
