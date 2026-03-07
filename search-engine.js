@@ -133,68 +133,29 @@ class SearchEngine {
         const results = [];
         
         try {
-            // Load data
-            const phonePricingData = loadPricingData();
-            const computerPricingData = loadComputerPricingData();
+            // Get all search data
+            const allData = typeof getAllSearchData === 'function' ? getAllSearchData() : [];
             
-            // Search phones/tablets
-            if (phonePricingData) {
-                Object.keys(phonePricingData).forEach(brandKey => {
-                    const brand = phonePricingData[brandKey];
-                    if (brand && brand.models) {
-                        Object.keys(brand.models).forEach(modelKey => {
-                            const model = brand.models[modelKey];
-                            if (model && model.name) {
-                                const nameMatch = this.fuzzyMatch(model.name, query);
-                                const brandMatch = this.fuzzyMatch(brand.name, query);
-                                
-                                if (nameMatch.match || brandMatch.match) {
-                                    results.push({
-                                        name: model.name,
-                                        brand: brand.name,
-                                        type: 'Phone/Tablet',
-                                        icon: '📱',
-                                        services: model.services || {},
-                                        link: 'pricing.html',
-                                        category: 'phone',
-                                        score: Math.max(nameMatch.score, brandMatch.score)
-                                    });
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-            
-            // Search computers/consoles
-            if (computerPricingData) {
-                Object.keys(computerPricingData).forEach(typeKey => {
-                    const type = computerPricingData[typeKey];
-                    if (type && type.models) {
-                        Object.keys(type.models).forEach(modelKey => {
-                            const model = type.models[modelKey];
-                            if (model && model.name) {
-                                const nameMatch = this.fuzzyMatch(model.name, query);
-                                const typeMatch = this.fuzzyMatch(type.name, query);
-                                
-                                if (nameMatch.match || typeMatch.match) {
-                                    const icon = typeKey === 'console' ? '🎮' : '💻';
-                                    results.push({
-                                        name: model.name,
-                                        brand: type.name,
-                                        type: type.name,
-                                        icon: icon,
-                                        services: model.services || {},
-                                        link: 'computer-pricing.html',
-                                        category: 'computer',
-                                        score: Math.max(nameMatch.score, typeMatch.score)
-                                    });
-                                }
-                            }
-                        });
-                    }
-                });
-            }
+            allData.forEach(item => {
+                const nameMatch = this.fuzzyMatch(item.name, query);
+                const categoryMatch = item.category ? this.fuzzyMatch(item.category, query) : { match: false, score: 0 };
+                const brandMatch = item.brand ? this.fuzzyMatch(item.brand, query) : { match: false, score: 0 };
+                const typeMatch = item.type ? this.fuzzyMatch(item.type, query) : { match: false, score: 0 };
+                
+                if (nameMatch.match || categoryMatch.match || brandMatch.match || typeMatch.match) {
+                    results.push({
+                        name: item.name,
+                        brand: item.brand || item.category,
+                        type: item.type || item.category,
+                        icon: item.icon,
+                        price: item.price,
+                        services: item.services,
+                        link: item.link,
+                        category: item.category.toLowerCase().includes('phone') ? 'phone' : 'other',
+                        score: Math.max(nameMatch.score, categoryMatch.score, brandMatch.score, typeMatch.score)
+                    });
+                }
+            });
         } catch (error) {
             console.error('Search error:', error);
         }
@@ -286,7 +247,7 @@ class SearchEngine {
             this.searchResults.innerHTML = `
                 <div class="search-no-results">
                     <p>Start typing to search</p>
-                    <small>Try searching for "iPhone 11", "MacBook Pro", "Samsung S24", "PS5"</small>
+                    <small>Try searching for "iPhone 11", "MacBook", "PS5", "Xbox", "Switch"</small>
                 </div>
             `;
             return;
@@ -310,18 +271,17 @@ class SearchEngine {
         let html = `<div style="margin-bottom: 16px; padding: 0 12px; color: #86868b; font-size: 13px;">Found ${results.length} result${results.length > 1 ? 's' : ''}</div>`;
         
         results.forEach((result, index) => {
-            const services = result.services || {};
-            const serviceKeys = Object.keys(services);
-            
-            if (serviceKeys.length === 0) return;
-            
             const highlightedName = this.highlightMatch(result.name, query);
             
-            const servicesList = serviceKeys.map(serviceKey => {
-                let serviceName = '';
-                let price = services[serviceKey];
+            // For phone/tablet with services
+            if (result.services && Object.keys(result.services).length > 0) {
+                const services = result.services;
+                const serviceKeys = Object.keys(services);
                 
-                if (result.category === 'phone') {
+                const servicesList = serviceKeys.map(serviceKey => {
+                    let serviceName = '';
+                    let price = services[serviceKey];
+                    
                     serviceName = (typeof serviceTypes !== 'undefined' && serviceTypes[serviceKey]) 
                         ? serviceTypes[serviceKey].name 
                         : serviceKey.charAt(0).toUpperCase() + serviceKey.slice(1);
@@ -333,38 +293,45 @@ class SearchEngine {
                     } else {
                         price = `€${price}`;
                     }
-                } else {
-                    serviceName = (typeof computerServiceTypes !== 'undefined' && computerServiceTypes[serviceKey])
-                        ? computerServiceTypes[serviceKey].name
-                        : serviceKey.charAt(0).toUpperCase() + serviceKey.slice(1);
                     
-                    if (price === 0) {
-                        price = 'Free';
-                    } else {
-                        price = `€${price}`;
-                    }
-                }
+                    return `
+                        <div class="search-result-service">
+                            <span class="service-name">${serviceName}</span>
+                            <span class="service-price">${price}</span>
+                        </div>
+                    `;
+                }).join('');
                 
-                return `
-                    <div class="search-result-service">
-                        <span class="service-name">${serviceName}</span>
-                        <span class="service-price">${price}</span>
+                html += `
+                    <div class="search-result-item" data-index="${index}" data-link="${result.link}">
+                        <h3>
+                            <span class="device-type">${result.icon} ${result.type}</span>
+                            <span>${highlightedName}</span>
+                        </h3>
+                        <div class="search-result-services">
+                            ${servicesList}
+                        </div>
+                        <a href="${result.link}" class="search-result-link">View pricing page →</a>
                     </div>
                 `;
-            }).join('');
-            
-            html += `
-                <div class="search-result-item" data-index="${index}" data-link="${result.link}">
-                    <h3>
-                        <span class="device-type">${result.icon} ${result.type}</span>
-                        <span>${highlightedName}</span>
-                    </h3>
-                    <div class="search-result-services">
-                        ${servicesList}
+            } else {
+                // For computer/console services with direct price
+                html += `
+                    <div class="search-result-item" data-index="${index}" data-link="${result.link}">
+                        <h3>
+                            <span class="device-type">${result.icon} ${result.type}</span>
+                            <span>${highlightedName}</span>
+                        </h3>
+                        <div class="search-result-services">
+                            <div class="search-result-service">
+                                <span class="service-name">${result.brand || result.type}</span>
+                                <span class="service-price">${result.price || 'See pricing'}</span>
+                            </div>
+                        </div>
+                        <a href="${result.link}" class="search-result-link">View pricing page →</a>
                     </div>
-                    <a href="${result.link}" class="search-result-link">View pricing page →</a>
-                </div>
-            `;
+                `;
+            }
         });
         
         this.searchResults.innerHTML = html;

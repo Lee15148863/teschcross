@@ -12,20 +12,16 @@ COPY index.html /usr/share/nginx/html/
 COPY pricing.html /usr/share/nginx/html/
 COPY admin.html /usr/share/nginx/html/
 COPY computer-pricing.html /usr/share/nginx/html/
-COPY computer-admin.html /usr/share/nginx/html/
 COPY data-transfer.html /usr/share/nginx/html/
 COPY shop-coming-soon.html /usr/share/nginx/html/
 COPY announcement-admin.html /usr/share/nginx/html/
-COPY reset-computer-data.html /usr/share/nginx/html/
 COPY styles.css /usr/share/nginx/html/
 COPY script.js /usr/share/nginx/html/
 COPY search-engine.js /usr/share/nginx/html/
+COPY search-data.js /usr/share/nginx/html/
 COPY pricing.js /usr/share/nginx/html/
 COPY pricing-data.js /usr/share/nginx/html/
 COPY admin.js /usr/share/nginx/html/
-COPY computer-pricing.js /usr/share/nginx/html/
-COPY computer-pricing-data.js /usr/share/nginx/html/
-COPY computer-admin.js /usr/share/nginx/html/
 COPY announcement-admin.js /usr/share/nginx/html/
 COPY logo.png /usr/share/nginx/html/
 

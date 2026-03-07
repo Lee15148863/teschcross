@@ -451,9 +451,6 @@
         </div>
     </div>
 
-    <!-- Hidden Admin Link -->
-    <a href="computer-admin.html" style="position: fixed; bottom: 12px; right: 12px; opacity: 0.3; font-size: 14px; color: #999; text-decoration: none; z-index: 999; transition: opacity 0.3s; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.05);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.3'">©</a>
-
     <script>
         function showTab(tabName) {
             // Hide all content
@@ -470,8 +467,30 @@
             document.getElementById(tabName + '-pricing').classList.add('active');
 
             // Add active class to clicked tab
-            event.target.classList.add('active');
+            document.querySelectorAll('.pricing-tab').forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(tabName)) {
+                    tab.classList.add('active');
+                }
+            });
         }
+
+        // Check URL hash on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.substring(1); // Remove the #
+            if (hash === 'console') {
+                showTab('console');
+            }
+        });
+
+        // Handle hash changes
+        window.addEventListener('hashchange', function() {
+            const hash = window.location.hash.substring(1);
+            if (hash === 'console') {
+                showTab('console');
+            } else if (hash === 'computer') {
+                showTab('computer');
+            }
+        });
     </script>
 </body>
 </html>
