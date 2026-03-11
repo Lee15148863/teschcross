@@ -101,22 +101,53 @@ function renderPricingEditor() {
     const editor = document.getElementById('pricing-editor');
     editor.innerHTML = '';
     
+    // Add filter/search controls
+    const filterSection = document.createElement('div');
+    filterSection.style.cssText = 'background: #f5f5f7; padding: 20px; border-radius: 12px; margin-bottom: 24px;';
+    filterSection.innerHTML = `
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Search Model</label>
+                <input type="text" id="model-search" placeholder="Type to search models..." 
+                       style="width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px;"
+                       oninput="filterModels()">
+            </div>
+            <div>
+                <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Filter by Brand</label>
+                <select id="brand-filter" onchange="filterModels()" 
+                        style="padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px;">
+                    <option value="">All Brands</option>
+                    ${Object.entries(pricingData).map(([key, brand]) => `<option value="${key}">${brand.name}</option>`).join('')}
+                </select>
+            </div>
+            <div style="margin-top: 24px;">
+                <button onclick="expandAll()" style="padding: 10px 20px; background: #0071e3; color: white; border: none; border-radius: 8px; cursor: pointer; margin-right: 8px;">Expand All</button>
+                <button onclick="collapseAll()" style="padding: 10px 20px; background: #6e6e73; color: white; border: none; border-radius: 8px; cursor: pointer;">Collapse All</button>
+            </div>
+        </div>
+    `;
+    editor.appendChild(filterSection);
+    
     for (const [brandKey, brand] of Object.entries(pricingData)) {
         const brandSection = document.createElement('div');
         brandSection.className = 'brand-section';
+        brandSection.dataset.brand = brandKey;
         
+        const modelCount = Object.keys(brand.models).length;
         const brandHeader = document.createElement('div');
         brandHeader.className = 'brand-header';
         brandHeader.innerHTML = `
-            <h3>${brand.name}</h3>
-            <span>▼</span>
+            <h3>${brand.name} <span style="font-size: 14px; color: #86868b; font-weight: normal;">(${modelCount} models)</span></h3>
+            <span class="toggle-icon">▼</span>
         `;
         brandHeader.onclick = function() {
             brandContent.classList.toggle('show');
+            const icon = this.querySelector('.toggle-icon');
+            icon.textContent = brandContent.classList.contains('show') ? '▼' : '▶';
         };
         
         const brandContent = document.createElement('div');
-        brandContent.className = 'brand-content show';
+        brandContent.className = 'brand-content';
         
         // Create table with all service columns
         let serviceHeaders = '';
@@ -131,7 +162,7 @@ function renderPricingEditor() {
             <table style="min-width: 2000px;">
                 <thead>
                     <tr>
-                        <th style="position: sticky; left: 0; background: #1d1d1f; z-index: 10; min-width: 200px;">Model</th>
+                        <th style="position: sticky; left: 0; background: #1d1d1f; z-index: 10; min-width: 200px; color: white;">Model</th>
                         ${serviceHeaders}
                         <th style="min-width: 100px;">Action</th>
                     </tr>
@@ -150,6 +181,8 @@ function renderPricingEditor() {
         const tbody = document.getElementById(`tbody-${brandKey}`);
         for (const [modelKey, model] of Object.entries(brand.models)) {
             const row = document.createElement('tr');
+            row.dataset.modelKey = modelKey;
+            row.dataset.modelName = model.name.toLowerCase();
             
             let serviceCells = '';
             for (const serviceKey in serviceTypes) {
@@ -175,6 +208,60 @@ function renderPricingEditor() {
             tbody.appendChild(row);
         }
     }
+}
+
+// Filter models based on search and brand filter
+function filterModels() {
+    const searchTerm = document.getElementById('model-search').value.toLowerCase();
+    const brandFilter = document.getElementById('brand-filter').value;
+    
+    document.querySelectorAll('.brand-section').forEach(section => {
+        const brandKey = section.dataset.brand;
+        const shouldShowBrand = !brandFilter || brandKey === brandFilter;
+        
+        if (!shouldShowBrand) {
+            section.style.display = 'none';
+            return;
+        }
+        
+        section.style.display = 'block';
+        const tbody = section.querySelector('tbody');
+        let visibleCount = 0;
+        
+        tbody.querySelectorAll('tr').forEach(row => {
+            const modelName = row.dataset.modelName;
+            const matches = !searchTerm || modelName.includes(searchTerm);
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount++;
+        });
+        
+        // Auto-expand if filtered
+        if (searchTerm || brandFilter) {
+            const content = section.querySelector('.brand-content');
+            content.classList.add('show');
+            section.querySelector('.toggle-icon').textContent = '▼';
+        }
+    });
+}
+
+// Expand all brand sections
+function expandAll() {
+    document.querySelectorAll('.brand-content').forEach(content => {
+        content.classList.add('show');
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.textContent = '▼';
+    });
+}
+
+// Collapse all brand sections
+function collapseAll() {
+    document.querySelectorAll('.brand-content').forEach(content => {
+        content.classList.remove('show');
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.textContent = '▶';
+    });
 }
 
 // Save pricing changes

@@ -252,3 +252,49 @@ loadAnnouncement();
 function openAnnouncementAdmin() {
     window.location.href = 'announcement-admin.html';
 }
+
+// Clear Cache Button Functionality
+const clearCacheBtn = document.getElementById('clearCacheBtn');
+
+if (clearCacheBtn) {
+    clearCacheBtn.addEventListener('click', function() {
+        // Add clearing animation
+        this.classList.add('clearing');
+        
+        // Clear localStorage
+        const keysToKeep = ['preferredLang', 'admin_logged_in']; // Keep language preference and admin login
+        const tempStorage = {};
+        
+        keysToKeep.forEach(key => {
+            const value = localStorage.getItem(key);
+            if (value) tempStorage[key] = value;
+        });
+        
+        localStorage.clear();
+        
+        // Restore kept items
+        Object.keys(tempStorage).forEach(key => {
+            localStorage.setItem(key, tempStorage[key]);
+        });
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        // Show success message
+        const originalTitle = this.getAttribute('title');
+        this.setAttribute('title', 'Cache Cleared! ✓');
+        
+        // Visual feedback
+        setTimeout(() => {
+            this.classList.remove('clearing');
+            this.setAttribute('title', originalTitle);
+            
+            // Show confirmation alert
+            const confirmReload = confirm('Cache cleared successfully!\n\nReload the page to see the latest updates?');
+            if (confirmReload) {
+                // Force reload from server, bypassing cache
+                window.location.reload(true);
+            }
+        }, 600);
+    });
+}

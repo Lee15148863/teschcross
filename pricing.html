@@ -30,89 +30,151 @@
             color: #6e6e73;
         }
         
-        .pricing-filters {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+        /* Important Notice */
+        .notice-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 40px;
+            text-align: center;
         }
         
-        .filter-group {
+        .notice-box p {
+            font-size: 15px;
+            color: #856404;
+            margin: 0;
+            line-height: 1.6;
+        }
+        
+        /* Brand Cards Grid */
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-top: 40px;
+        }
+        
+        .brand-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 24px;
+            padding: 48px 36px;
+            text-align: center;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 2px solid transparent;
+            min-height: 240px;
         }
         
-        .filter-group label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1d1d1f;
+        .brand-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 24px;
+            padding: 2px;
+            background: linear-gradient(135deg, #0071e3, #00c6ff);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s;
         }
         
-        .filter-group select {
-            padding: 14px 16px;
-            border: 1px solid #d2d2d7;
-            border-radius: 12px;
-            font-size: 17px;
-            font-family: inherit;
-            background: #fff;
-            cursor: pointer;
+        .brand-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 113, 227, 0.15);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
         }
         
-        .pricing-result {
-            background: #f5f5f7;
-            border-radius: 18px;
-            padding: 40px;
-            text-align: center;
-            margin-top: 40px;
-            display: none;
+        .brand-card:hover::before {
+            opacity: 1;
         }
         
-        .pricing-result.show {
-            display: block;
-        }
-        
-        .pricing-result h2 {
-            font-size: 56px;
-            font-weight: 600;
-            color: #1d1d1f;
-            margin-bottom: 8px;
-        }
-        
-        .pricing-result p {
-            font-size: 17px;
-            color: #6e6e73;
-            margin-bottom: 24px;
-        }
-        
-        .pricing-details {
-            background: #fff;
-            border-radius: 12px;
-            padding: 24px;
-            margin-top: 24px;
-            text-align: left;
-        }
-        
-        .pricing-details h3 {
-            font-size: 21px;
-            font-weight: 600;
+        .brand-card h3 {
+            font-size: 36px;
+            font-weight: 700;
             margin-bottom: 16px;
+            color: #1d1d1f;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #1d1d1f 0%, #4a4a4a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
-        .pricing-details ul {
-            list-style: none;
-            padding: 0;
+        .brand-card:hover h3 {
+            background: linear-gradient(135deg, #0071e3 0%, #00c6ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
-        .pricing-details li {
-            padding: 12px 0;
-            border-bottom: 1px solid #f5f5f7;
-            font-size: 14px;
+        .brand-card p {
+            font-size: 15px;
             color: #6e6e73;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            font-weight: 400;
         }
         
-        .pricing-details li:last-child {
-            border-bottom: none;
+        .brand-card .model-count {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+        
+        .brand-card:hover .model-count {
+            background: linear-gradient(135deg, #0071e3 0%, #00c6ff 100%);
+            color: #fff;
+            transform: scale(1.05);
+        }
+        
+        .brand-card .arrow {
+            margin-top: 8px;
+            font-size: 28px;
+            color: #0071e3;
+            font-weight: 300;
+            transition: transform 0.3s;
+        }
+        
+        .brand-card:hover .arrow {
+            transform: translateX(8px);
+            color: #00c6ff;
+        }
+        
+        @media (max-width: 768px) {
+            .brand-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+            
+            .brand-card {
+                padding: 40px 28px;
+                min-height: 200px;
+            }
+            
+            .brand-card h3 {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
@@ -136,78 +198,97 @@
     <div class="pricing-container">
         <div class="pricing-header">
             <h1>Repair Pricing</h1>
-            <p>Select your device and service to get an instant quote</p>
+            <p>Select your device brand to view pricing</p>
         </div>
 
-        <!-- Update Notice -->
-        <div style="background: #e3f2fd; border: 2px solid #2196f3; border-radius: 12px; padding: 20px; margin-bottom: 24px; text-align: center;">
-            <p style="font-size: 18px; color: #0d47a1; margin: 0; line-height: 1.5; font-weight: 600;">
-                📱 Phone & Tablet Repair Prices Are Being Updated
-            </p>
-            <p style="font-size: 15px; color: #1565c0; margin: 8px 0 0 0;">
-                We're currently updating our pricing to reflect the latest market rates. Please call us for the most accurate quote.
+        <div class="pricing-update-notice">
+            <p>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Pricing is continuously being updated. Please excuse any errors.</span>
             </p>
         </div>
 
         <!-- Important Notice -->
-        <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px; padding: 20px; margin-bottom: 32px; text-align: center;">
-            <p style="font-size: 17px; color: #856404; margin: 0; line-height: 1.5;">
-                <strong>⚠️ Please Note:</strong><br>
-                As replacement part prices fluctuate, all listed prices are estimates and subject to final in-store confirmation—with absolutely no hidden fees.<br>
+        <div class="notice-box">
+            <p>
+                <strong>⚠️ Please Note:</strong> As replacement part prices fluctuate, all listed prices are estimates and subject to final in-store confirmation—with absolutely no hidden fees.<br>
                 If you cannot find your specific device model or issue listed, we are still here to help!<br>
                 Call us for a quick and accurate quote: <a href="tel:0469059854" style="color: #0071e3; text-decoration: none; font-weight: 600;">046 905 9854</a> or <a href="tel:0894825300" style="color: #0071e3; text-decoration: none; font-weight: 600;">089 482 5300</a>
             </p>
         </div>
 
-        <div class="pricing-filters">
-            <div class="filter-group">
-                <label for="deviceBrand">Device Brand</label>
-                <select id="deviceBrand">
-                    <option value="">Select Brand</option>
-                    <option value="apple">Apple</option>
-                    <option value="samsung">Samsung</option>
-                    <option value="xiaomi">Xiaomi</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
+        <!-- Brand Selection Grid -->
+        <div class="brand-grid">
+            <a href="pricing-apple.html" class="brand-card">
+                <h3>Apple</h3>
+                <p>iPhone, iPad & more</p>
+                <span class="model-count">37 models</span>
+                <div class="arrow">→</div>
+            </a>
 
-            <div class="filter-group">
-                <label for="deviceModel">Device Model</label>
-                <select id="deviceModel" disabled>
-                    <option value="">Select Model</option>
-                </select>
-            </div>
+            <a href="pricing-samsung.html" class="brand-card">
+                <h3>Samsung</h3>
+                <p>Galaxy S, Note, Fold, A-Series & Tablets</p>
+                <span class="model-count">115 models</span>
+                <div class="arrow">→</div>
+            </a>
 
-            <div class="filter-group">
-                <label for="serviceType">Service Type</label>
-                <select id="serviceType" disabled>
-                    <option value="">Select Service</option>
-                </select>
-            </div>
-        </div>
+            <a href="pricing-xiaomi.html" class="brand-card">
+                <h3>Xiaomi</h3>
+                <p>Mi, Redmi, POCO series</p>
+                <span class="model-count">60 models</span>
+                <div class="arrow">→</div>
+            </a>
 
-        <div class="pricing-result" id="pricingResult">
-            <h2 id="priceDisplay">€0</h2>
-            <p id="serviceDescription">Select options above to see pricing</p>
-            
-            <div class="pricing-details">
-                <h3>What's included:</h3>
-                <ul id="includedItems">
-                    <li>Professional diagnosis</li>
-                    <li>Original quality parts</li>
-                    <li>90-day warranty</li>
-                    <li>Free cleaning service</li>
-                </ul>
-            </div>
+            <a href="pricing-google.html" class="brand-card">
+                <h3>Google</h3>
+                <p>Pixel series</p>
+                <span class="model-count">17 models</span>
+                <div class="arrow">→</div>
+            </a>
 
-            <a href="index.html#contact" class="btn-primary" style="margin-top: 24px; display: inline-block;">Book Repair</a>
+            <a href="pricing-oneplus.html" class="brand-card">
+                <h3>OnePlus</h3>
+                <p>OnePlus & Nord series</p>
+                <span class="model-count">18 models</span>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="pricing-oppo.html" class="brand-card">
+                <h3>OPPO</h3>
+                <p>Find, Reno & A series</p>
+                <span class="model-count">24 models</span>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="pricing-huawei.html" class="brand-card">
+                <h3>Huawei</h3>
+                <p>P series</p>
+                <span class="model-count">4 models</span>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="pricing-honor.html" class="brand-card">
+                <h3>Honor</h3>
+                <p>Magic & numbered series</p>
+                <span class="model-count">20 models</span>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="pricing-other.html" class="brand-card">
+                <h3>Other Brands</h3>
+                <p>Motorola, Nokia, Sony, ASUS, Realme</p>
+                <span class="model-count">11 models</span>
+                <div class="arrow">→</div>
+            </a>
         </div>
     </div>
 
-    <!-- Hidden Admin Link -->
-    <a href="admin.html" style="position: fixed; bottom: 12px; right: 12px; opacity: 0.3; font-size: 14px; color: #999; text-decoration: none; z-index: 999; transition: opacity 0.3s; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,0.05);" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='0.3'">©</a>
-
-    <script src="pricing-data.js"></script>
-    <script src="pricing.js"></script>
+    <!-- Hidden Admin Link - Double click to access -->
+    <div style="position: fixed; bottom: 12px; right: 12px; opacity: 0.15; font-size: 12px; color: #999; z-index: 999; cursor: default; user-select: none;" ondblclick="window.location.href='admin-brands.html'" title="">©</div>
 </body>
 </html>

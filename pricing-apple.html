@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Repair Pricing - Tech Cross</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .pricing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 120px 22px 80px;
+        }
+        
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .pricing-header h1 {
+            font-size: clamp(40px, 6vw, 64px);
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .pricing-header p {
+            font-size: 21px;
+            color: #6e6e73;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #0071e3;
+            text-decoration: none;
+            font-size: 17px;
+            margin-bottom: 32px;
+            transition: opacity 0.3s;
+        }
+        
+        .back-link:hover {
+            opacity: 0.7;
+        }
+        
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 32px;
+            margin-top: 40px;
+        }
+        
+        .device-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 24px;
+            padding: 60px 40px;
+            text-align: center;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 2px solid transparent;
+            min-height: 300px;
+        }
+        
+        .device-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 24px;
+            padding: 2px;
+            background: linear-gradient(135deg, #0071e3, #00c6ff);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        
+        .device-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 113, 227, 0.15);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+        }
+        
+        .device-card:hover::before {
+            opacity: 1;
+        }
+        
+        .device-icon {
+            font-size: 72px;
+            margin-bottom: 24px;
+        }
+        
+        .device-card h2 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #1d1d1f 0%, #4a4a4a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .device-card:hover h2 {
+            background: linear-gradient(135deg, #0071e3 0%, #00c6ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .device-card p {
+            font-size: 17px;
+            color: #6e6e73;
+            margin-bottom: 24px;
+        }
+        
+        .device-card .model-count {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1d1d1f;
+            transition: all 0.3s;
+        }
+        
+        .device-card:hover .model-count {
+            background: linear-gradient(135deg, #0071e3 0%, #00c6ff 100%);
+            color: #fff;
+            transform: scale(1.05);
+        }
+        
+        .device-card .arrow {
+            margin-top: 20px;
+            font-size: 32px;
+            color: #0071e3;
+            transition: transform 0.3s;
+        }
+        
+        .device-card:hover .arrow {
+            transform: translateX(8px);
+            color: #00c6ff;
+        }
+        
+        @media (max-width: 768px) {
+            .device-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .device-card {
+                min-height: 250px;
+                padding: 50px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <a href="index.html"><img src="logo.png" alt="Tech Cross"></a>
+            </div>
+            <ul class="nav-list">
+                <li><a href="index.html#hero">Home</a></li>
+                <li><a href="index.html#services">Services</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="pricing-container">
+        <a href="pricing.html" class="back-link">← Back to Brands</a>
+        
+        <div class="pricing-header">
+            <h1>Apple Repair Pricing</h1>
+            <p>Select your device type</p>
+        </div>
+
+        <div class="pricing-update-notice">
+            <p>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Pricing is continuously being updated. Please excuse any errors.</span>
+            </p>
+        </div>
+
+        <div class="device-grid">
+            <a href="pricing-apple-iphone.html" class="device-card">
+                <div class="device-icon">📱</div>
+                <h2>iPhone</h2>
+                <p>All iPhone models</p>
+                <span class="model-count">37 models</span>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="pricing-apple-ipad.html" class="device-card">
+                <div class="device-icon">📲</div>
+                <h2>iPad</h2>
+                <p>All iPad models</p>
+                <span class="model-count">5 models</span>
+                <div class="arrow">→</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

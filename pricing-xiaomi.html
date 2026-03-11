@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Xiaomi Repair Pricing - Tech Cross">
+    <title>Xiaomi Repair Pricing - Tech Cross</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .pricing-container { max-width: 1200px; margin: 0 auto; padding: 120px 22px 80px; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: #0071e3; text-decoration: none; font-size: 17px; margin-bottom: 24px; transition: opacity 0.3s; }
+        .back-link:hover { opacity: 0.7; }
+        .pricing-header { text-align: center; margin-bottom: 40px; }
+        .pricing-header h1 { font-size: clamp(40px, 6vw, 64px); font-weight: 600; letter-spacing: -0.015em; margin-bottom: 8px; }
+        .pricing-header .brand-icon { width: 80px; height: 80px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+        .pricing-header .brand-icon img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .pricing-header p { font-size: 21px; color: #6e6e73; }
+        .pricing-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .filter-group { display: flex; flex-direction: column; gap: 8px; }
+        .filter-group label { font-size: 14px; font-weight: 600; color: #1d1d1f; }
+        .filter-group select { padding: 14px 16px; border: 1px solid #d2d2d7; border-radius: 12px; font-size: 17px; font-family: inherit; background: #fff; cursor: pointer; }
+        .pricing-result { background: #f5f5f7; border-radius: 18px; padding: 40px; text-align: center; margin-top: 40px; display: none; }
+        .pricing-result.show { display: block; }
+        .pricing-result h2 { font-size: 56px; font-weight: 600; color: #1d1d1f; margin-bottom: 8px; }
+        .pricing-result p { font-size: 17px; color: #6e6e73; margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-logo"><a href="index.html"><img src="logo.png" alt="Tech Cross"></a></div>
+            <ul class="nav-list">
+                <li><a href="index.html#hero">Home</a></li>
+                <li><a href="index.html#services">Services</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="pricing-container">
+        <a href="pricing.html" class="back-link">← Back to All Brands</a>
+        <div class="pricing-header">
+            <div class="brand-icon">
+                <img src="logos/xiaomi.svg" alt="Xiaomi">
+            </div>
+            <h1>Xiaomi Repair Pricing</h1>
+            <p>Mi, Redmi, POCO series</p>
+        </div>
+
+        <div class="pricing-update-notice">
+            <p>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Pricing is continuously being updated. Please excuse any errors.</span>
+            </p>
+        </div>
+
+        <div class="pricing-filters">
+            <div class="filter-group">
+                <label for="deviceModel">Device Model</label>
+                <select id="deviceModel"><option value="">Select Model</option></select>
+            </div>
+            <div class="filter-group">
+                <label for="serviceType">Service Type</label>
+                <select id="serviceType" disabled><option value="">Select Service</option></select>
+            </div>
+        </div>
+
+        <div class="pricing-result" id="pricingResult">
+            <h2 id="priceDisplay">€0</h2>
+            <p id="serviceDescription">Select options above to see pricing</p>
+            <a href="index.html#contact" class="btn-primary" style="margin-top: 24px; display: inline-block;">Book Repair</a>
+        </div>
+    </div>
+
+    <script src="pricing-data.js"></script>
+    <script>
+        const BRAND_KEY = 'xiaomi';
+        const deviceModelSelect = document.getElementById('deviceModel');
+        const serviceTypeSelect = document.getElementById('serviceType');
+        const pricingResult = document.getElementById('pricingResult');
+        const priceDisplay = document.getElementById('priceDisplay');
+        const serviceDescription = document.getElementById('serviceDescription');
+        let pricingData = loadPricingData();
+        const models = pricingData[BRAND_KEY].models;
+        const modelEntries = Object.entries(models).reverse();
+        for (const [key, model] of modelEntries) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = model.name;
+            deviceModelSelect.appendChild(option);
+        }
+        deviceModelSelect.addEventListener('change', function() {
+            const model = this.value;
+            serviceTypeSelect.innerHTML = '<option value="">Select Service</option>';
+            serviceTypeSelect.disabled = true;
+            pricingResult.classList.remove('show');
+            if (model && pricingData[BRAND_KEY]?.models[model]) {
+                serviceTypeSelect.disabled = false;
+                for (const [key, service] of Object.entries(serviceTypes)) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = service.name;
+                    serviceTypeSelect.appendChild(option);
+                }
+            }
+        });
+        serviceTypeSelect.addEventListener('change', function() {
+            const model = deviceModelSelect.value;
+            const service = this.value;
+            if (model && service) {
+                const modelData = pricingData[BRAND_KEY].models[model];
+                const price = modelData.services[service];
+                const serviceName = serviceTypes[service].name;
+                const modelName = modelData.name;
+                const lastUpdated = modelData.lastUpdated ? new Date(modelData.lastUpdated).toLocaleString('en-IE', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Not available';
+                if (price === 0) {
+                    priceDisplay.textContent = 'Please Contact Us';
+                    serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Please call us for a quote: <a href="tel:0469059854" style="color: #0071e3;">046 905 9854</a> or <a href="tel:0894825300" style="color: #0071e3;">089 482 5300</a></small>`;
+                } else if (price === 9999) {
+                    priceDisplay.textContent = 'Please Contact Us';
+                    serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Please call us: <a href="tel:0469059854" style="color: #0071e3;">046 905 9854</a></small>`;
+                } else {
+                    priceDisplay.textContent = `€${price}`;
+                    serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Last updated: ${lastUpdated}</small>`;
+                }
+                pricingResult.classList.add('show');
+            } else {
+                pricingResult.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

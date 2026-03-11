@@ -169,6 +169,11 @@
             background: #f5f5f7;
             border-radius: 12px 12px 0 0;
             cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .brand-header:hover {
+            background: #e8e8ed;
         }
         
         .brand-header h3 {
@@ -176,8 +181,15 @@
             font-weight: 600;
         }
         
+        .toggle-icon {
+            font-size: 14px;
+            color: #86868b;
+        }
+        
         .brand-content {
             display: none;
+            border: 1px solid #f5f5f7;
+            border-top: none;
         }
         
         .brand-content.show {
@@ -281,6 +293,12 @@
         <div class="admin-header">
             <h1>Pricing Management</h1>
             <p style="color: #6e6e73; font-size: 17px;">Manage device models and repair pricing</p>
+            <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin-top: 16px;">
+                <p style="margin: 0; font-size: 14px; color: #856404;">
+                    ⚠️ <strong>Data Issues?</strong> If you see old data or missing models, 
+                    <a href="clear-cache.html" style="color: #0071e3; text-decoration: underline;">click here to clear cache</a> and reload.
+                </p>
+            </div>
         </div>
 
         <div class="admin-tabs">

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Tech Cross</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background: #f5f5f7;
+        }
+        
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .login-box {
+            background: #fff;
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-box h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .login-form input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            font-size: 17px;
+            margin-bottom: 16px;
+        }
+        
+        .login-error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .login-error.show {
+            display: block;
+        }
+        
+        .btn-primary {
+            background: #0071e3;
+            color: #fff;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 980px;
+            font-size: 17px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 120px 22px 80px;
+            display: none;
+        }
+        
+        .admin-container.show {
+            display: block;
+        }
+        
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-top: 40px;
+        }
+        
+        .brand-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 24px;
+            padding: 48px 36px;
+            text-align: center;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+            transition: all 0.4s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 200px;
+        }
+        
+        .brand-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 113, 227, 0.15);
+        }
+        
+        .brand-card h3 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .brand-card p {
+            color: #6e6e73;
+            margin-bottom: 16px;
+        }
+        
+        .brand-card .arrow {
+            font-size: 24px;
+            color: #0071e3;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1>Admin Login</h1>
+            <p style="color: #6e6e73; margin-bottom: 32px;">Manage all brand pricing</p>
+            <form class="login-form" id="loginForm">
+                <input type="text" id="usernameInput" placeholder="Username" required autofocus>
+                <input type="password" id="passwordInput" placeholder="Password" required>
+                <div class="login-error" id="loginError">Incorrect credentials</div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <nav class="nav" id="adminNav" style="display: none;">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <a href="index.html"><img src="logo.png" alt="Tech Cross"></a>
+            </div>
+            <ul class="nav-list">
+                <li><a href="pricing.html">Back to Pricing</a></li>
+                <li><button onclick="logout()" style="background: none; border: none; color: #1d1d1f; font-size: 14px; cursor: pointer;">Logout</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="admin-container" id="adminContainer">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h1 style="font-size: 48px; margin-bottom: 16px;">Admin Panel</h1>
+            <p style="font-size: 21px; color: #6e6e73;">Select a brand to manage</p>
+        </div>
+
+        <div class="brand-grid">
+            <a href="admin-apple.html" class="brand-card">
+                <h3>Apple</h3>
+                <p>Manage iPhone & iPad pricing</p>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="admin-samsung.html" class="brand-card">
+                <h3>Samsung</h3>
+                <p>Manage Samsung pricing</p>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="admin-xiaomi.html" class="brand-card">
+                <h3>Xiaomi</h3>
+                <p>Manage Xiaomi pricing</p>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="admin-google.html" class="brand-card">
+                <h3>Google</h3>
+                <p>Manage Google Pixel pricing</p>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="admin-oneplus.html" class="brand-card">
+                <h3>OnePlus</h3>
+                <p>Manage OnePlus pricing</p>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="admin-oppo.html" class="brand-card">
+                <h3>OPPO</h3>
+                <p>Manage OPPO pricing</p>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="admin-huawei.html" class="brand-card">
+                <h3>Huawei</h3>
+                <p>Manage Huawei pricing</p>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="admin-honor.html" class="brand-card">
+                <h3>Honor</h3>
+                <p>Manage Honor pricing</p>
+                <div class="arrow">→</div>
+            </a>
+
+            <a href="admin-other.html" class="brand-card">
+                <h3>Other Brands</h3>
+                <p>Manage other brands pricing</p>
+                <div class="arrow">→</div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_USERNAME = '0876676466';
+        const DEFAULT_PASSWORD = '0870019999';
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+            
+            if (username === DEFAULT_USERNAME && password === DEFAULT_PASSWORD) {
+                sessionStorage.setItem('admin_logged_in', 'true');
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('adminNav').style.display = 'block';
+                document.getElementById('adminContainer').classList.add('show');
+            } else {
+                document.getElementById('loginError').classList.add('show');
+            }
+        });
+
+        // Check if already logged in
+        if (sessionStorage.getItem('admin_logged_in') === 'true') {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('adminNav').style.display = 'block';
+            document.getElementById('adminContainer').classList.add('show');
+        }
+
+        // Logout
+        function logout() {
+            sessionStorage.removeItem('admin_logged_in');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
