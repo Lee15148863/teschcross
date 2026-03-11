@@ -21,7 +21,10 @@ deviceBrandSelect.addEventListener('change', function() {
         deviceModelSelect.disabled = false;
         const models = pricingData[brand].models;
         
-        for (const [key, model] of Object.entries(models)) {
+        // Reverse the order so newest models appear first
+        const modelEntries = Object.entries(models).reverse();
+        
+        for (const [key, model] of modelEntries) {
             const option = document.createElement('option');
             option.value = key;
             option.textContent = model.name;
