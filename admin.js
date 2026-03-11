@@ -118,20 +118,22 @@ function renderPricingEditor() {
         const brandContent = document.createElement('div');
         brandContent.className = 'brand-content show';
         
+        // Create table with all service columns
+        let serviceHeaders = '';
+        for (const [key, service] of Object.entries(serviceTypes)) {
+            serviceHeaders += `<th style="min-width: 120px;">${service.name}</th>`;
+        }
+        
         const table = document.createElement('div');
         table.className = 'pricing-table';
+        table.style.overflowX = 'auto';
         table.innerHTML = `
-            <table>
+            <table style="min-width: 2000px;">
                 <thead>
                     <tr>
-                        <th>Model</th>
-                        <th>Screen</th>
-                        <th>Battery</th>
-                        <th>Water/Board</th>
-                        <th>Diagnostic</th>
-                        <th>Charging</th>
-                        <th>Camera</th>
-                        <th>Action</th>
+                        <th style="position: sticky; left: 0; background: #1d1d1f; z-index: 10; min-width: 200px;">Model</th>
+                        ${serviceHeaders}
+                        <th style="min-width: 100px;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="tbody-${brandKey}">
@@ -148,20 +150,26 @@ function renderPricingEditor() {
         const tbody = document.getElementById(`tbody-${brandKey}`);
         for (const [modelKey, model] of Object.entries(brand.models)) {
             const row = document.createElement('tr');
+            
+            let serviceCells = '';
+            for (const serviceKey in serviceTypes) {
+                const price = model.services[serviceKey] || 0;
+                const isNetworkUnlock = serviceKey === 'network_unlock';
+                serviceCells += `<td><input type="number" value="${price}" data-brand="${brandKey}" data-model="${modelKey}" data-service="${serviceKey}" ${isNetworkUnlock ? 'disabled style="background: #f5f5f7; cursor: not-allowed;"' : ''}></td>`;
+            }
+            
             row.innerHTML = `
-                <td>
+                <td style="position: sticky; left: 0; background: #fff; z-index: 5;">
                     <strong id="model-name-${brandKey}-${modelKey}">${model.name}</strong>
                     <button onclick="editModelName('${brandKey}', '${modelKey}')" 
                             style="margin-left: 8px; color: #0071e3; background: none; border: none; cursor: pointer; font-size: 12px;">
                         ✏️ Edit
                     </button>
+                    <div style="font-size: 11px; color: #86868b; margin-top: 4px;">
+                        Last updated: ${model.lastUpdated ? new Date(model.lastUpdated).toLocaleString('en-IE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                    </div>
                 </td>
-                <td><input type="number" value="${model.services.screen}" data-brand="${brandKey}" data-model="${modelKey}" data-service="screen"></td>
-                <td><input type="number" value="${model.services.battery}" data-brand="${brandKey}" data-model="${modelKey}" data-service="battery"></td>
-                <td><input type="number" value="${model.services.water}" data-brand="${brandKey}" data-model="${modelKey}" data-service="water" disabled style="background: #f5f5f7; cursor: not-allowed;"></td>
-                <td><input type="number" value="${model.services.diagnostic}" data-brand="${brandKey}" data-model="${modelKey}" data-service="diagnostic"></td>
-                <td><input type="number" value="${model.services.charging}" data-brand="${brandKey}" data-model="${modelKey}" data-service="charging"></td>
-                <td><input type="number" value="${model.services.camera}" data-brand="${brandKey}" data-model="${modelKey}" data-service="camera"></td>
+                ${serviceCells}
                 <td><button onclick="deleteModel('${brandKey}', '${modelKey}')" style="color: #ff3b30; background: none; border: none; cursor: pointer; font-size: 14px;">Delete</button></td>
             `;
             tbody.appendChild(row);
@@ -253,10 +261,12 @@ function renderNewModelServices() {
         const div = document.createElement('div');
         div.className = 'form-group';
         
-        const isWater = key === 'water';
+        const isNetworkUnlock = key === 'network_unlock';
+        const defaultValue = isNetworkUnlock ? 9999 : (key.includes('screen') && key !== 'screen_compatible' ? 0 : 99);
+        
         div.innerHTML = `
             <label>${service.name}</label>
-            <input type="number" id="new-${key}" value="${isWater ? 0 : 99}" ${isWater ? 'disabled' : ''}>
+            <input type="number" id="new-${key}" value="${defaultValue}" ${isNetworkUnlock ? 'disabled' : ''}>
         `;
         container.appendChild(div);
     }
@@ -386,16 +396,16 @@ function renderCurrentServices() {
         const div = document.createElement('div');
         div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f5f5f7;';
         
-        const isWater = key === 'water';
+        const isNetworkUnlock = key === 'network_unlock';
         div.innerHTML = `
             <div>
                 <strong>${service.name}</strong>
                 <p style="font-size: 12px; color: #6e6e73; margin: 4px 0 0 0;">${service.description}</p>
-                ${service.noPrice ? '<span style="font-size: 11px; color: #ff3b30;">No pricing (contact required)</span>' : ''}
+                ${isNetworkUnlock ? '<span style="font-size: 11px; color: #ff3b30;">Fixed price (contact required)</span>' : ''}
             </div>
             <button onclick="deleteService('${key}')" 
                     style="color: #ff3b30; background: none; border: none; cursor: pointer; font-size: 14px; padding: 8px 16px;"
-                    ${isWater || key === 'diagnostic' ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
+                    ${isNetworkUnlock ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
                 Delete
             </button>
         `;
@@ -452,8 +462,8 @@ function addNewService() {
 
 // Delete service type
 function deleteService(serviceKey) {
-    if (serviceKey === 'water' || serviceKey === 'diagnostic') {
-        alert('Cannot delete core services');
+    if (serviceKey === 'network_unlock') {
+        alert('Cannot delete network unlock service');
         return;
     }
     

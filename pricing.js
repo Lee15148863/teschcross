@@ -74,8 +74,14 @@ serviceTypeSelect.addEventListener('change', function() {
         if (serviceInfo.noPrice) {
             priceDisplay.textContent = 'Contact Us';
             serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Please call us for a quote: <a href="tel:0469059854" style="color: #0071e3; text-decoration: none; font-weight: 600;">046 905 9854</a></small>`;
+        } else if (price === 0) {
+            priceDisplay.textContent = 'Please Contact Us';
+            serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Please call us for a quote: <a href="tel:0469059854" style="color: #0071e3; text-decoration: none; font-weight: 600;">046 905 9854</a> or <a href="tel:0894825300" style="color: #0071e3; text-decoration: none; font-weight: 600;">089 482 5300</a></small>`;
+        } else if (price === 9999) {
+            priceDisplay.textContent = 'Please Contact Us';
+            serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Irish Network iPhone can only be unlocked by the network provider. Please call us: <a href="tel:0469059854" style="color: #0071e3; text-decoration: none; font-weight: 600;">046 905 9854</a></small>`;
         } else {
-            priceDisplay.textContent = price === 0 ? 'Free' : `€${price}`;
+            priceDisplay.textContent = `€${price}`;
             serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Last updated: ${lastUpdated}</small>`;
         }
         pricingResult.classList.add('show');
