@@ -1,7 +1,7 @@
 // Samsung Pricing Database - Independent
 const SAMSUNG_STORAGE_KEY = 'techcross_pricing_samsung';
 const SAMSUNG_VERSION_KEY = 'techcross_pricing_samsung_version';
-const SAMSUNG_CURRENT_VERSION = '3.7';
+const SAMSUNG_CURRENT_VERSION = '3.8';
 
 // Samsung Phone Service Types
 const samsungPhoneServiceTypes = {
@@ -137,7 +137,8 @@ const samsungPhoneModels_Part5 = {
     'a25-5g': { name: 'Galaxy A25 5G (SM-A256)',           services: { screen: { compatible: -1,  original: 115 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0, camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() },
     'a35-5g': { name: 'Galaxy A35 5G (SM-A356)',           services: { screen: { compatible: -1,  original: 120 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0, camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() },
     'a55-5g': { name: 'Galaxy A55 5G (SM-A556)',           services: { screen: { compatible: -1,  original: 150 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 120, camera: 0, camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() },
-    'a16':    { name: 'Galaxy A16/A16 5G (SM-A165/SM-A166)',services:{ screen: { compatible: -1,  original: 105 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0, camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() },
+    'a17':    { name: 'Galaxy A17/A17 5G (SM-A175/SM-A176)', services: { screen: { compatible: -1,  original: 100 }, battery: 50, charging_port: 55, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 110, camera: 0, camera_lens: 30, microphone: 50, earpiece: 55, loudspeaker: 55, power_button: 50 }, lastUpdated: new Date().toISOString() },
+    'a16':    { name: 'Galaxy A16/A16 5G (SM-A165/SM-A166)',services:{ screen: { compatible: -1,  original: 100 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0, camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() },
     'a36-5g': { name: 'Galaxy A36 5G (SM-A366)',           services: { screen: { compatible: 135, original: 150 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0, camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() },
     'a56-5g': { name: 'Galaxy A56 5G (SM-A566)',           services: { screen: { compatible: 135, original: 150 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 120, camera: 0, camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() }
 };
