@@ -175,7 +175,25 @@ const samsungPhoneModels_Part6 = {
     'xcover-all': { name: 'Galaxy Xcover (All)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() }
 };
 
-// Default Samsung pricing data - Combine all parts
+// Part 7: Foldables and Xcover (at the end of list)
+const samsungPhoneModels_Part7 = {
+    'fold': { name: 'Galaxy Fold (SM-F900/SM-F907)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-flip': { name: 'Galaxy Z Flip (SM-F700/SM-F707)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-fold2': { name: 'Galaxy Z Fold2 (SM-F916)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-flip3': { name: 'Galaxy Z Flip3 (SM-F711)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-fold3': { name: 'Galaxy Z Fold3 (SM-F926)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-flip4': { name: 'Galaxy Z Flip4 (SM-F721)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-fold4': { name: 'Galaxy Z Fold4 (SM-F936)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-flip5': { name: 'Galaxy Z Flip5 (SM-F731)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-fold5': { name: 'Galaxy Z Fold5 (SM-F946)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-flip6': { name: 'Galaxy Z Flip6 (SM-F741)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-fold6': { name: 'Galaxy Z Fold6 (SM-F956)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-flip7': { name: 'Galaxy Z Flip7 (SM-F751 Series)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'z-fold7': { name: 'Galaxy Z Fold7 (SM-F966 Series)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    'xcover-all': { name: 'Galaxy Xcover (All)', services: { screen: { compatible: 0, original: 0 }, battery: 0, charging_port: 0, software: 0, network_unlock: 0, frp_reset: 0, motherboard: 0, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() }
+};
+
+// Default Samsung pricing data - Combine all parts (S, Note, A series first, then Foldables/Xcover at end)
 const defaultSamsungPricingData = {
     phone: {
         name: 'Samsung Phone',
@@ -186,7 +204,8 @@ const defaultSamsungPricingData = {
             ...samsungPhoneModels_Part3,
             ...samsungPhoneModels_Part4,
             ...samsungPhoneModels_Part5,
-            ...samsungPhoneModels_Part6
+            ...samsungPhoneModels_Part6,
+            ...samsungPhoneModels_Part7
         }
     },
     tablet: {
