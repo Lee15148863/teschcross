@@ -1,7 +1,7 @@
 // Apple Pricing Database - Independent
 const APPLE_STORAGE_KEY = 'techcross_pricing_apple';
 const APPLE_VERSION_KEY = 'techcross_pricing_apple_version';
-const APPLE_CURRENT_VERSION = '3.0';
+const APPLE_CURRENT_VERSION = '4.0';
 
 // iPhone Service Types
 const iphoneServiceTypes = {
@@ -24,16 +24,15 @@ const iphoneServiceTypes = {
 
 // iPad Service Types (different from iPhone)
 const ipadServiceTypes = {
-    screen_compatible: { name: 'Screen (Compatible)', description: 'Compatible quality screen replacement' },
-    screen_original: { name: 'Original Screen', description: 'Original manufacturer screen' },
-    battery: { name: 'Battery Replacement', description: 'Battery replacement' },
+    screen_full: { name: 'Screen (Full Screen only/Both)', description: 'Full screen assembly replacement' },
+    touch_screen: { name: 'Touch Screen', description: 'Touch screen digitizer replacement' },
+    display_screen: { name: 'Display Screen', description: 'Display screen replacement' },
+    home_button: { name: 'Home button (No Touch ID)', description: 'Home button repair without Touch ID' },
+    battery: { name: 'Battery (High Quality/Premium)', description: 'Premium quality battery replacement' },
     charging_port: { name: 'Charging Port', description: 'Charging port repair/replacement' },
-    software: { name: 'Software Flash/Restore', description: 'Software repair and restoration' },
-    motherboard: { name: 'Motherboard/Liquid Damage Repair', description: 'Motherboard repairs' },
-    camera: { name: 'Camera Replacement', description: 'Camera replacement' },
-    speaker: { name: 'Speaker Repair', description: 'Speaker repair/replacement' },
-    power_button: { name: 'Power Button Repair', description: 'Power button repair' },
-    home_button: { name: 'Home Button Repair', description: 'Home button repair' }
+    motherboard: { name: 'Motherboard/Liquid Damage/Audio/Touch IC Repair', description: 'Complex motherboard and IC repairs' },
+    software: { name: 'Software Flash/Restore (Apple ID required)', description: 'Software repair and restoration' },
+    other: { name: 'Any Other Please ASK', description: 'Other repairs - please contact us' }
 };
 
 // Default Apple pricing data
@@ -86,11 +85,34 @@ const defaultApplePricingData = {
         name: 'iPad',
         serviceTypes: ipadServiceTypes,
         models: {
-            'ipad-pro-12-9-2024': { name: 'iPad Pro 12.9" (2024)', services: { screen_compatible: 0, screen_original: 0, battery: 0, charging_port: 0, software: 20, motherboard: 0, camera: 0, speaker: 0, power_button: 0, home_button: 0 }, lastUpdated: new Date().toISOString() },
-            'ipad-pro-11-2024': { name: 'iPad Pro 11" (2024)', services: { screen_compatible: 0, screen_original: 0, battery: 0, charging_port: 0, software: 20, motherboard: 0, camera: 0, speaker: 0, power_button: 0, home_button: 0 }, lastUpdated: new Date().toISOString() },
-            'ipad-air-2024': { name: 'iPad Air (2024)', services: { screen_compatible: 0, screen_original: 0, battery: 0, charging_port: 0, software: 20, motherboard: 0, camera: 0, speaker: 0, power_button: 0, home_button: 0 }, lastUpdated: new Date().toISOString() },
-            'ipad-10': { name: 'iPad (10th gen)', services: { screen_compatible: 0, screen_original: 0, battery: 0, charging_port: 0, software: 20, motherboard: 0, camera: 0, speaker: 0, power_button: 0, home_button: 0 }, lastUpdated: new Date().toISOString() },
-            'ipad-mini-6': { name: 'iPad mini (6th gen)', services: { screen_compatible: 0, screen_original: 0, battery: 0, charging_port: 0, software: 20, motherboard: 0, camera: 0, speaker: 0, power_button: 0, home_button: 0 }, lastUpdated: new Date().toISOString() }
+            'ipad-a16-11th-gen': { name: 'iPad A16 (11th generation 11inch) (A3162)', services: { screen_full: 220, touch_screen: 85, display_screen: 185, home_button: 0, battery: 95, charging_port: 90, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-mini-a17-pro': { name: 'iPad mini (A17 Pro) (A2993, A2995)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-13-m4': { name: 'iPad Pro 13-inch (M4) (A2925, A2926)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-11-m4': { name: 'iPad Pro 11-inch (M4) (A2836, A2837)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-air-13-m2': { name: 'iPad Air 13-inch (M2) (A2898, A2899)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-air-11-m2': { name: 'iPad Air 11-inch (M2) (A2902, A2903)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-12-9-6th': { name: 'iPad Pro 12.9-inch (6th generation) (A2436, A2764, A2437)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-11-4th': { name: 'iPad Pro 11-inch (4th generation) (A2759, A2435, A2761)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-10th': { name: 'iPad (10th generation) (A2696, A2757, A2777)', services: { screen_full: 195, touch_screen: 80, display_screen: 160, home_button: 65, battery: 80, charging_port: 85, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-air-5th': { name: 'iPad Air (5th generation) (A2588, A2589, A2591)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 85, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-mini-6th': { name: 'iPad mini (6th generation) (A2567, A2568)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-9th': { name: 'iPad (9th generation) (A2602, A2604, A2603)', services: { screen_full: 135, touch_screen: 65, display_screen: 110, home_button: 65, battery: 90, charging_port: 70, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-12-9-5th': { name: 'iPad Pro 12.9-inch (5th generation) (A2378, A2461, A2379)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-11-3rd': { name: 'iPad Pro 11-inch (3rd generation) (A2377, A2459, A2301)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-air-4th': { name: 'iPad Air (4th generation) (A2316, A2324, A2325, A2072)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 70, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-8th': { name: 'iPad (8th generation) (A2270, A2428, A2429, A2430)', services: { screen_full: 135, touch_screen: 65, display_screen: 110, home_button: 65, battery: 90, charging_port: 70, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-12-9-4th': { name: 'iPad Pro 12.9-inch (4th generation) (A2229, A2069, A2232)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-11-2nd': { name: 'iPad Pro 11-inch (2nd generation) (A2228, A2068, A2230)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-7th': { name: 'iPad (7th generation) (A2197, A2198, A2200)', services: { screen_full: 130, touch_screen: 65, display_screen: 110, home_button: 65, battery: 90, charging_port: 70, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-air-3rd': { name: 'iPad Air (3rd generation) (A2152, A2123, A2153)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 70, charging_port: 80, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-mini-5th': { name: 'iPad mini (5th generation) (A2133, A2124, A2126)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 65, battery: 70, charging_port: 75, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-12-9-3rd': { name: 'iPad Pro 12.9-inch (3rd generation) (A1876, A1895, A2014)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-11-1st': { name: 'iPad Pro 11-inch (1st generation) (A1980, A1934, A2013)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 90, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-6th': { name: 'iPad (6th generation) (A1893, A1954)', services: { screen_full: 125, touch_screen: 60, display_screen: 95, home_button: 60, battery: 70, charging_port: 65, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-12-9-2nd': { name: 'iPad Pro 12.9-inch (2nd generation) (A1670, A1671)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 70, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-10-5': { name: 'iPad Pro 10.5-inch (A1701, A1709)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 0, battery: 70, charging_port: 80, motherboard: 145, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-5th': { name: 'iPad (5th generation) (A1822, A1823)', services: { screen_full: 125, touch_screen: 60, display_screen: 95, home_button: 60, battery: 70, charging_port: 65, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() },
+            'ipad-pro-9-7': { name: 'iPad Pro 9.7-inch (A1673, A1674, A1675)', services: { screen_full: 0, touch_screen: 0, display_screen: 0, home_button: 60, battery: 70, charging_port: 65, motherboard: 120, software: 20, other: 0 }, lastUpdated: new Date().toISOString() }
         }
     }
 };
