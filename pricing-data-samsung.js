@@ -1,7 +1,7 @@
 // Samsung Pricing Database - Independent
 const SAMSUNG_STORAGE_KEY = 'techcross_pricing_samsung';
 const SAMSUNG_VERSION_KEY = 'techcross_pricing_samsung_version';
-const SAMSUNG_CURRENT_VERSION = '3.2';
+const SAMSUNG_CURRENT_VERSION = '3.3';
 
 // Samsung Phone Service Types
 const samsungPhoneServiceTypes = {
@@ -61,7 +61,7 @@ const samsungPhoneModels_Part1 = {
     's8-plus': { name: 'Galaxy S8+ (SM-G955)', services: { screen: { compatible: 0, original: 150 }, battery: 50, charging_port: 60, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
     's9': { name: 'Galaxy S9 (SM-G960)', services: { screen: { compatible: 0, original: 130 }, battery: 50, charging_port: 60, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
     's9-plus': { name: 'Galaxy S9+ (SM-G965)', services: { screen: { compatible: 0, original: 155 }, battery: 50, charging_port: 60, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
-    's10e': { name: 'Galaxy S10e (SM-G970)', services: { screen: { compatible: 0, original: 0 }, battery: 50, charging_port: 60, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
+    's10e': { name: 'Galaxy S10e (SM-G970)', services: { screen: { compatible: 0, original: 165 }, battery: 50, charging_port: 60, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
     's10': { name: 'Galaxy S10 (SM-G973)', services: { screen: { compatible: 0, original: 200 }, battery: 50, charging_port: 60, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
     's10-plus': { name: 'Galaxy S10+ (SM-G975)', services: { screen: { compatible: 0, original: 220 }, battery: 50, charging_port: 60, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
     's10-5g': { name: 'Galaxy S10 5G (SM-G977)', services: { screen: { compatible: 0, original: 210 }, battery: 50, charging_port: 60, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, rear_camera: 0, front_camera: 0, camera_lens: 0, microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0 }, lastUpdated: new Date().toISOString() },
