@@ -21,6 +21,8 @@ COPY pricing-honor.html /usr/share/nginx/html/
 COPY pricing-other.html /usr/share/nginx/html/
 COPY pricing-apple-iphone.html /usr/share/nginx/html/
 COPY pricing-apple-ipad.html /usr/share/nginx/html/
+COPY pricing-samsung-phone.html /usr/share/nginx/html/
+COPY pricing-samsung-tablet.html /usr/share/nginx/html/
 COPY admin.html /usr/share/nginx/html/
 COPY admin-brands.html /usr/share/nginx/html/
 COPY admin-apple.html /usr/share/nginx/html/
