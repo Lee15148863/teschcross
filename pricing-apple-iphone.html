@@ -381,7 +381,7 @@
                 
                 // Add other services (skip the three screen types)
                 for (const [key, service] of Object.entries(serviceTypes)) {
-                    if (key !== 'screen_full' && key !== 'touch_screen' && key !== 'display_screen') {
+                    if (key !== 'screen_compatible' && key !== 'screen_high_quality' && key !== 'screen_original') {
                         const option = document.createElement('option');
                         option.value = key;
                         option.textContent = service.name;
@@ -410,9 +410,9 @@
                     
                     // Build screen options
                     const screenTypes = [
-                        { key: 'screen_full', name: 'Full Screen Assembly', desc: 'Complete screen replacement (LCD + Touch + Glass)' },
-                        { key: 'touch_screen', name: 'Touch Screen Only', desc: 'Touch digitizer replacement' },
-                        { key: 'display_screen', name: 'Display Screen Only', desc: 'LCD display replacement' }
+                        { key: 'screen_compatible', name: 'Screen (Compatible)', desc: 'Compatible quality screen replacement' },
+                        { key: 'screen_high_quality', name: 'Screen (High Quality/Premium)', desc: 'Premium quality screen replacement' },
+                        { key: 'screen_original', name: 'Original Screen', desc: 'Original manufacturer screen' }
                     ];
                     
                     screenOptions.innerHTML = '';
