@@ -364,8 +364,16 @@
             
             if (model && pricingData[DEVICE_TYPE]?.models[model]) {
                 serviceTypeSelect.disabled = false;
+                const modelServices = pricingData[DEVICE_TYPE].models[model].services;
                 
                 for (const [key, service] of Object.entries(serviceTypes)) {
+                    // Skip services with -1 (not available for this model)
+                    if (key === 'screen') {
+                        const hasScreen = modelServices.screen.compatible !== -1 || modelServices.screen.original !== -1;
+                        if (!hasScreen) continue;
+                    } else {
+                        if (modelServices[key] === -1) continue;
+                    }
                     const option = document.createElement('option');
                     option.value = key;
                     option.textContent = service.name;
@@ -385,13 +393,12 @@
                 const lastUpdated = modelData.lastUpdated ? new Date(modelData.lastUpdated).toLocaleString('en-IE', { 
                     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 }) : 'Not available';
+                const contactHtml = `Please call us: <a href="tel:0469059854" style="color:#0071e3;">046 905 9854</a> or <a href="tel:0894825300" style="color:#0071e3;">089 482 5300</a>`;
                 
-                // Handle Screen Repair (show 2 options: Compatible and Original)
                 if (service === 'screen') {
                     priceDisplay.style.display = 'none';
-                    serviceDescription.innerHTML = `Screen Repair Options for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Choose the screen quality that fits your budget</small>`;
+                    serviceDescription.innerHTML = `Screen Repair Options for ${modelName}<br><small style="font-size:14px;color:#6e6e73;">Choose the screen quality that fits your budget</small>`;
                     
-                    // Build screen options
                     const screenTypes = [
                         { key: 'compatible', name: 'Screen (Compatible)', desc: 'High-quality compatible screen (No Frame)' },
                         { key: 'original', name: 'Original Screen', desc: 'Samsung Services Pack with Frame' }
@@ -402,49 +409,39 @@
                     
                     screenTypes.forEach(type => {
                         const price = modelData.services.screen[type.key];
-                        
-                        // Skip if price is 0 (N/A - option not available)
-                        if (price === 0) {
-                            return;
-                        }
-                        
+                        if (price === -1) return; // Not available, skip
                         hasAnyOption = true;
                         const optionDiv = document.createElement('div');
                         optionDiv.className = 'screen-option';
-                        
                         optionDiv.innerHTML = `
                             <h3>${type.name}</h3>
-                            <div class="price">€${price}</div>
+                            <div class="price">${price === 0 ? 'Please Contact Us' : '€' + price}</div>
                             <div class="description">${type.desc}</div>
                         `;
                         screenOptions.appendChild(optionDiv);
                     });
                     
-                    // If no screen options available, show contact message
                     if (!hasAnyOption) {
                         priceDisplay.style.display = 'block';
                         priceDisplay.textContent = 'Please Contact Us';
-                        serviceDescription.innerHTML = `Screen Repair for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Please call us for a quote: <a href="tel:0469059854" style="color: #0071e3;">046 905 9854</a> or <a href="tel:0894825300" style="color: #0071e3;">089 482 5300</a></small>`;
+                        serviceDescription.innerHTML = `Screen Repair for ${modelName}<br><small style="font-size:14px;color:#6e6e73;">${contactHtml}</small>`;
                         screenOptions.style.display = 'none';
                     } else {
                         screenOptions.style.display = 'grid';
                     }
-                    
                     pricingResult.classList.add('show');
                 } else {
-                    // Handle other services (single price)
                     priceDisplay.style.display = 'block';
                     screenOptions.style.display = 'none';
-                    
                     const price = modelData.services[service];
                     const serviceName = serviceTypes[service].name;
                     
                     if (price === 0) {
                         priceDisplay.textContent = 'Please Contact Us';
-                        serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Please call us for a quote: <a href="tel:0469059854" style="color: #0071e3;">046 905 9854</a> or <a href="tel:0894825300" style="color: #0071e3;">089 482 5300</a></small>`;
+                        serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size:14px;color:#6e6e73;">${contactHtml}</small>`;
                     } else {
                         priceDisplay.textContent = `€${price}`;
-                        serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size: 14px; color: #6e6e73;">Last updated: ${lastUpdated}</small>`;
+                        serviceDescription.innerHTML = `${serviceName} for ${modelName}<br><small style="font-size:14px;color:#6e6e73;">Last updated: ${lastUpdated}</small>`;
                     }
                     pricingResult.classList.add('show');
                 }
