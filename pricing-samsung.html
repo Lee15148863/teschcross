@@ -119,56 +119,79 @@
             background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
             border: 2px solid #90caf9;
             border-radius: 18px;
-            padding: 32px;
-            margin-bottom: 40px;
+            padding: 40px;
+            margin: 40px auto;
+            max-width: 900px;
         }
         
         .model-help h3 {
-            font-size: 21px;
+            font-size: 24px;
             font-weight: 600;
             color: #1d1d1f;
-            margin-bottom: 20px;
+            margin-bottom: 32px;
+            text-align: center;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            gap: 12px;
         }
         
         .model-help-content {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
         }
         
         .model-help-method {
             background: #fff;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         
         .model-help-method h4 {
-            font-size: 17px;
+            font-size: 19px;
             font-weight: 600;
             color: #0071e3;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            text-align: center;
         }
         
         .model-help-method ol {
             margin: 0;
-            padding-left: 20px;
+            padding-left: 24px;
         }
         
         .model-help-method li {
-            font-size: 15px;
+            font-size: 16px;
             color: #1d1d1f;
-            margin-bottom: 8px;
-            line-height: 1.5;
+            margin-bottom: 12px;
+            line-height: 1.6;
         }
         
         .model-help-method .highlight {
             background: #fff3cd;
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
             font-weight: 600;
+            color: #1d1d1f;
+        }
+        
+        @media (max-width: 768px) {
+            .model-help {
+                padding: 28px 20px;
+            }
+            
+            .model-help h3 {
+                font-size: 20px;
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .model-help-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
         }
     </style>
 </head>
