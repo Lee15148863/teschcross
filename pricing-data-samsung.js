@@ -1,7 +1,7 @@
 // Samsung Pricing Database - Independent
 const SAMSUNG_STORAGE_KEY = 'techcross_pricing_samsung';
 const SAMSUNG_VERSION_KEY = 'techcross_pricing_samsung_version';
-const SAMSUNG_CURRENT_VERSION = '3.8';
+const SAMSUNG_CURRENT_VERSION = '3.9';
 
 // Samsung Phone Service Types
 const samsungPhoneServiceTypes = {
@@ -11,7 +11,7 @@ const samsungPhoneServiceTypes = {
     software: { name: 'Software Flash/Restore', description: 'Software repair and restoration (Forgot password but know Google Account)' },
     network_unlock: { name: 'Network Unlocking', description: 'Network unlock service' },
     frp_reset: { name: 'FRP Google Account Reset', description: 'Google account reset' },
-    motherboard: { name: 'Motherboard/Liquid Damage/Audio/Touch IC Repair', description: 'Motherboard and IC repairs' },
+    motherboard: { name: 'Motherboard/Liquid Damage/Audio/Touch IC Repair', description: 'Motherboard and IC repairs. Water damage repair includes motherboard repair only. Replacement of additional components (e.g., display, charging port, earpiece, microphone, etc.) is not included and will be charged separately at parts cost if needed.' },
     camera: { name: 'Front/Rear Camera Replacement', description: 'Front and rear camera replacement' },
     camera_lens: { name: 'Camera Lens/Back Cover Replacement', description: 'Camera lens and back cover replacement' },
     microphone: { name: 'Microphone Repair', description: 'Microphone repair/replacement' },
@@ -22,16 +22,18 @@ const samsungPhoneServiceTypes = {
 
 // Samsung Tablet Service Types
 const samsungTabletServiceTypes = {
-    screen_compatible: { name: 'Screen (Compatible)', description: 'Compatible quality screen replacement' },
-    screen_original: { name: 'Original Screen (Samsung Services Pack)', description: 'Original Samsung screen' },
-    battery: { name: 'Battery Replacement', description: 'Battery replacement' },
+    screen: { name: 'Screen (Full Screen)', description: 'Full screen replacement' },
+    battery: { name: 'Battery (High Quality/Premium)', description: 'Premium quality battery replacement' },
     charging_port: { name: 'Charging Port', description: 'Charging port repair/replacement' },
+    motherboard: { name: 'Motherboard/Liquid Damage/Audio/Touch IC Repair', description: 'Motherboard and IC repairs. Water damage repair includes motherboard repair only. Replacement of additional components (e.g., display, charging port, earpiece, microphone, etc.) is not included and will be charged separately at parts cost if needed.' },
     software: { name: 'Software Flash/Restore', description: 'Software repair and restoration (Forgot password but know Google Account)' },
-    motherboard: { name: 'Motherboard/Liquid Damage Repair', description: 'Motherboard repairs' },
-    camera: { name: 'Camera Replacement', description: 'Camera replacement' },
-    speaker: { name: 'Speaker Repair', description: 'Speaker repair/replacement' },
-    power_button: { name: 'Power Button Repair', description: 'Power button repair' },
-    home_button: { name: 'Home Button Repair', description: 'Home button repair' }
+    frp_reset: { name: 'FRP Google Account Reset', description: 'Google account reset' },
+    camera: { name: 'Front/Rear Camera Replacement', description: 'Front and rear camera replacement' },
+    camera_lens: { name: 'Camera Lens Replacement', description: 'Camera lens replacement' },
+    microphone: { name: 'Microphone Repair', description: 'Microphone repair/replacement' },
+    earpiece: { name: 'Earpiece Speaker Repair', description: 'Earpiece speaker repair' },
+    loudspeaker: { name: 'Loudspeaker Replacement', description: 'Loudspeaker replacement' },
+    power_button: { name: 'Power Button Repair', description: 'Power button repair' }
 };
 
 // Helper functions
@@ -47,10 +49,10 @@ function createDefaultSamsungPhoneServices() {
 
 function createDefaultSamsungTabletServices() {
     return {
-        screen_compatible: 0, screen_original: 0,
-        battery: 0, charging_port: 0, software: 0,
-        motherboard: 0, camera: 0, speaker: 0,
-        power_button: 0, home_button: 0
+        screen: 0, battery: 0, charging_port: 0,
+        motherboard: 0, software: 0, frp_reset: 0,
+        camera: 0, camera_lens: 0,
+        microphone: 0, earpiece: 0, loudspeaker: 0, power_button: 0
     };
 }
 
@@ -201,10 +203,48 @@ const defaultSamsungPricingData = {
         name: 'Samsung Tablet',
         serviceTypes: samsungTabletServiceTypes,
         models: {
-            'tab-s9-ultra': { name: 'Galaxy Tab S9 Ultra', services: createDefaultSamsungTabletServices(), lastUpdated: new Date().toISOString() },
-            'tab-s9-plus':  { name: 'Galaxy Tab S9+',      services: createDefaultSamsungTabletServices(), lastUpdated: new Date().toISOString() },
-            'tab-s9':       { name: 'Galaxy Tab S9',        services: createDefaultSamsungTabletServices(), lastUpdated: new Date().toISOString() },
-            'tab-a9-plus':  { name: 'Galaxy Tab A9+',       services: createDefaultSamsungTabletServices(), lastUpdated: new Date().toISOString() }
+            // Tab S10 series
+            'tab-s10-ultra': { name: 'Galaxy Tab S10 Ultra (SM-X920/SM-X926B)', services: { screen: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 90, earpiece: 90, loudspeaker: 90, power_button: 90 }, lastUpdated: new Date().toISOString() },
+            'tab-s10-plus':  { name: 'Galaxy Tab S10+ (SM-X820/SM-X826B)',      services: { screen: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 90, earpiece: 90, loudspeaker: 90, power_button: 90 }, lastUpdated: new Date().toISOString() },
+            // Tab S9 series
+            'tab-s9-ultra':  { name: 'Galaxy Tab S9 Ultra (SM-X910/SM-X916B)',  services: { screen: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 90, earpiece: 90, loudspeaker: 90, power_button: 90 }, lastUpdated: new Date().toISOString() },
+            'tab-s9-plus':   { name: 'Galaxy Tab S9+ (SM-X810/SM-X816B)',       services: { screen: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 90, earpiece: 90, loudspeaker: 90, power_button: 90 }, lastUpdated: new Date().toISOString() },
+            'tab-s9':        { name: 'Galaxy Tab S9 (SM-X710/SM-X716B)',        services: { screen: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 90, earpiece: 90, loudspeaker: 90, power_button: 90 }, lastUpdated: new Date().toISOString() },
+            'tab-s9-fe-plus':{ name: 'Galaxy Tab S9 FE+ (SM-X610/SM-X616B)',   services: { screen: 105, battery: 70, charging_port: 70, motherboard: 120, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            'tab-s9-fe':     { name: 'Galaxy Tab S9 FE (SM-X510/SM-X516B)',    services: { screen: 105, battery: 70, charging_port: 70, motherboard: 120, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            // Tab S8 series
+            'tab-s8-ultra':  { name: 'Galaxy Tab S8 Ultra (SM-X900/SM-X906B)', services: { screen: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 90, earpiece: 90, loudspeaker: 90, power_button: 90 }, lastUpdated: new Date().toISOString() },
+            'tab-s8-plus':   { name: 'Galaxy Tab S8+ (SM-X800/SM-X806B)',      services: { screen: 0, battery: 90, charging_port: 90, motherboard: 145, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 90, earpiece: 90, loudspeaker: 90, power_button: 90 }, lastUpdated: new Date().toISOString() },
+            'tab-s8':        { name: 'Galaxy Tab S8 (SM-X700/SM-X706B)',       services: { screen: 105, battery: 70, charging_port: 70, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            // Tab S7 series
+            'tab-s7-plus':   { name: 'Galaxy Tab S7+ (SM-T970/SM-T976B)',      services: { screen: 0, battery: 80, charging_port: 70, motherboard: 120, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 80, earpiece: 80, loudspeaker: 80, power_button: 80 }, lastUpdated: new Date().toISOString() },
+            'tab-s7-fe':     { name: 'Galaxy Tab S7 FE (SM-T730/SM-T733/SM-T736B)', services: { screen: 105, battery: 70, charging_port: 65, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 65, earpiece: 65, loudspeaker: 65, power_button: 65 }, lastUpdated: new Date().toISOString() },
+            'tab-s7':        { name: 'Galaxy Tab S7 (SM-T870/SM-T875)',        services: { screen: 105, battery: 70, charging_port: 65, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 65, earpiece: 65, loudspeaker: 65, power_button: 65 }, lastUpdated: new Date().toISOString() },
+            // Tab S6 series
+            'tab-s6-lite-2024': { name: 'Galaxy Tab S6 Lite 2024 (SM-P620/SM-P625)', services: { screen: 100, battery: 70, charging_port: 70, motherboard: 120, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            'tab-s6-lite-2022': { name: 'Galaxy Tab S6 Lite 2022 (SM-P613/SM-P619)', services: { screen: 100, battery: 70, charging_port: 70, motherboard: 120, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            'tab-s6-lite':   { name: 'Galaxy Tab S6 Lite 2020 (SM-P610/SM-P615)', services: { screen: 100, battery: 70, charging_port: 70, motherboard: 120, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            'tab-s6':        { name: 'Galaxy Tab S6 (SM-T860/SM-T865)',        services: { screen: 0, battery: 80, charging_port: 70, motherboard: 120, software: 20, frp_reset: 40, camera: 0, camera_lens: 45, microphone: 80, earpiece: 80, loudspeaker: 80, power_button: 80 }, lastUpdated: new Date().toISOString() },
+            // Tab Active series
+            'tab-active5':   { name: 'Galaxy Tab Active5 (SM-X300/SM-X306B)',  services: { screen: 105, battery: 80, charging_port: 70, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            'tab-active4-pro':{ name: 'Galaxy Tab Active4 Pro (SM-T630/SM-T636B)', services: { screen: 105, battery: 80, charging_port: 70, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            'tab-active3':   { name: 'Galaxy Tab Active3 (SM-T570/SM-T575)',   services: { screen: 105, battery: 80, charging_port: 70, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            'tab-active-pro':{ name: 'Galaxy Tab Active Pro (SM-T540/SM-T547)', services: { screen: 105, battery: 80, charging_port: 70, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 70, earpiece: 70, loudspeaker: 70, power_button: 70 }, lastUpdated: new Date().toISOString() },
+            // Tab A10 series
+            'tab-a10-plus':  { name: 'Galaxy Tab A10+ (SM-X220/SM-X226B)',     services: { screen: 105, battery: 70, charging_port: 60, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            'tab-a10':       { name: 'Galaxy Tab A10 (SM-X120/SM-X125)',       services: { screen: 105, battery: 70, charging_port: 60, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            // Tab A9 series
+            'tab-a9-plus':   { name: 'Galaxy Tab A9+ (SM-X210/SM-X216B)',      services: { screen: 100, battery: 70, charging_port: 60, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            'tab-a9':        { name: 'Galaxy Tab A9 (SM-X110/SM-X115)',        services: { screen: 100, battery: 70, charging_port: 60, motherboard: 110, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            // Tab A8
+            'tab-a8':        { name: 'Galaxy Tab A8 10.5 (SM-X200/SM-X205)',   services: { screen: 95, battery: 70, charging_port: 60, motherboard: 100, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            // Tab A7 series
+            'tab-a7-lite':   { name: 'Galaxy Tab A7 Lite (SM-T220/SM-T225)',   services: { screen: 95, battery: 60, charging_port: 60, motherboard: 100, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            'tab-a7':        { name: 'Galaxy Tab A7 10.4 (SM-T500/SM-T505)',   services: { screen: 95, battery: 60, charging_port: 60, motherboard: 100, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            // Tab A 2019 series
+            'tab-a8-spen-2019': { name: 'Galaxy Tab A 8.0 with S Pen 2019 (SM-P200/SM-P205)', services: { screen: 95, battery: 60, charging_port: 60, motherboard: 100, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            'tab-a8-2019':   { name: 'Galaxy Tab A 8.0 2019 (SM-T290/SM-T295)', services: { screen: 95, battery: 60, charging_port: 60, motherboard: 100, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() },
+            'tab-a10-1-2019':{ name: 'Galaxy Tab A 10.1 2019 (SM-T510/SM-T515)', services: { screen: 95, battery: 60, charging_port: 60, motherboard: 100, software: 20, frp_reset: 40, camera: 0, camera_lens: 35, microphone: 60, earpiece: 60, loudspeaker: 60, power_button: 60 }, lastUpdated: new Date().toISOString() }
         }
     }
 };

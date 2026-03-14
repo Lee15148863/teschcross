@@ -12,7 +12,7 @@ const iphoneServiceTypes = {
     charging_port: { name: 'Charging Port', description: 'Charging port repair/replacement' },
     software: { name: 'Software Flash/Restore', description: 'Software repair and restoration' },
     back_glass: { name: 'Back Glass Replacement', description: 'Back glass panel replacement' },
-    motherboard: { name: 'Motherboard/Liquid Damage/Audio/Touch IC Repair', description: 'Complex motherboard repairs' },
+    motherboard: { name: 'Motherboard/Liquid Damage/Audio/Touch IC Repair', description: 'Complex motherboard repairs. Water damage repair includes motherboard repair only. Replacement of additional components (e.g., display, charging port, earpiece, microphone, etc.) is not included and will be charged separately at parts cost if needed.' },
     rear_camera: { name: 'Rear Camera Replacement', description: 'Back camera replacement' },
     front_camera: { name: 'Front Camera Replacement', description: 'Front camera replacement' },
     camera_lens: { name: 'Camera Lens Replacement', description: 'Camera lens replacement' },
@@ -30,7 +30,7 @@ const ipadServiceTypes = {
     home_button: { name: 'Home button (No Touch ID)', description: 'Home button repair without Touch ID' },
     battery: { name: 'Battery (High Quality/Premium)', description: 'Premium quality battery replacement' },
     charging_port: { name: 'Charging Port', description: 'Charging port repair/replacement' },
-    motherboard: { name: 'Motherboard/Liquid Damage/Audio/Touch IC Repair', description: 'Complex motherboard and IC repairs' },
+    motherboard: { name: 'Motherboard/Liquid Damage/Audio/Touch IC Repair', description: 'Complex motherboard and IC repairs. Water damage repair includes motherboard repair only. Replacement of additional components (e.g., display, charging port, earpiece, microphone, etc.) is not included and will be charged separately at parts cost if needed.' },
     software: { name: 'Software Flash/Restore (Apple ID required)', description: 'Software repair and restoration' },
     other: { name: 'Any Other Please ASK', description: 'Other repairs - please contact us' }
 };

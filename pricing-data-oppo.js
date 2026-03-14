@@ -9,7 +9,7 @@ const oppoServiceTypes = {
     battery: { name: 'Battery Replacement', description: 'Battery replacement' },
     charging_port: { name: 'Charging Port', description: 'Charging port repair/replacement' },
     software: { name: 'Software Flash/Restore', description: 'Software repair and restoration' },
-    motherboard: { name: 'Motherboard/Liquid Damage Repair', description: 'Motherboard repairs' },
+    motherboard: { name: 'Motherboard/Liquid Damage Repair', description: 'Motherboard repairs. Water damage repair includes motherboard repair only. Replacement of additional components (e.g., display, charging port, earpiece, microphone, etc.) is not included and will be charged separately at parts cost if needed.' },
     camera: { name: 'Camera Replacement', description: 'Camera replacement' },
     speaker: { name: 'Speaker Repair', description: 'Speaker repair/replacement' },
     power_button: { name: 'Power Button Repair', description: 'Power button repair' },
