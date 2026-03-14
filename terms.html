@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Repair Warranty & Disclaimer - Tech Cross</title>
+    <title>Repair Terms & Conditions - Tech Cross</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .terms-container {
@@ -16,49 +16,70 @@
             margin-bottom: 48px;
         }
         .terms-header h1 {
-            font-size: clamp(28px, 5vw, 48px);
+            font-size: clamp(26px, 4vw, 42px);
             font-weight: 700;
             letter-spacing: -0.015em;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             color: #1d1d1f;
         }
-        .terms-header p {
-            font-size: 17px;
+        .terms-header .subtitle {
+            font-size: 16px;
             color: #6e6e73;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
         }
         .terms-body {
             background: #f5f5f7;
             border-radius: 18px;
             padding: 48px;
-            font-size: 16px;
+            font-size: 15px;
             color: #1d1d1f;
             line-height: 1.8;
         }
-        .terms-body h2 {
+        .terms-section {
+            margin-bottom: 32px;
+        }
+        .terms-section:last-child {
+            margin-bottom: 0;
+        }
+        .terms-section h2 {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin: 0 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #d2d2d7;
+        }
+        .terms-section h2 .num {
+            color: #0071e3;
+            margin-right: 6px;
+        }
+        .terms-section p {
+            margin: 0 0 8px;
+            color: #3a3a3c;
+        }
+        .terms-section ul {
+            margin: 4px 0 8px;
+            padding-left: 20px;
+        }
+        .terms-section ul li {
+            margin-bottom: 4px;
+            color: #3a3a3c;
+        }
+        .section-divider {
+            border: none;
+            border-top: 2px solid #d2d2d7;
+            margin: 40px 0;
+        }
+        .section-title {
             font-size: 20px;
             font-weight: 700;
-            margin: 32px 0 10px;
             color: #1d1d1f;
-        }
-        .terms-body h2:first-child {
-            margin-top: 0;
-        }
-        .terms-body p {
-            margin: 0 0 10px;
-            color: #3a3a3c;
-        }
-        .terms-body ul {
-            margin: 6px 0 10px;
-            padding-left: 22px;
-        }
-        .terms-body ul li {
-            margin-bottom: 6px;
-            color: #3a3a3c;
-        }
-        .terms-divider {
-            border: none;
-            border-top: 1px solid #d2d2d7;
-            margin: 32px 0;
+            margin: 0 0 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         .back-link {
             display: inline-flex;
@@ -66,13 +87,13 @@
             gap: 8px;
             color: #0071e3;
             text-decoration: none;
-            font-size: 17px;
+            font-size: 16px;
             margin-bottom: 32px;
-            transition: opacity 0.3s;
+            transition: opacity 0.2s;
         }
         .back-link:hover { opacity: 0.7; }
         @media (max-width: 768px) {
-            .terms-body { padding: 28px 20px; }
+            .terms-body { padding: 28px 18px; }
         }
     </style>
 </head>
@@ -95,80 +116,207 @@
         <a href="pricing.html" class="back-link">← Back to Pricing</a>
 
         <div class="terms-header">
-            <h1>📱 Mobile Repair Warranty &amp; Disclaimer</h1>
-            <p>Please read carefully before submitting your device for repair.</p>
+            <h1>📱 Mobile Device Repair<br>Terms &amp; Conditions</h1>
+            <p class="subtitle">Thank you for choosing our repair service. We aim to provide professional, transparent, and reliable repair services.<br>Please read the following terms carefully before submitting your device.<br><strong>By submitting your device, you acknowledge and agree to the terms outlined below.</strong></p>
         </div>
 
         <div class="terms-body">
 
-            <h2>1. Repair Warranty</h2>
-            <p>Repaired or replaced parts are covered under a <strong>90-day warranty</strong> (industry standard).</p>
-            <p>Warranty covers only the specific part repaired or replaced and does <strong>not</strong> include:</p>
-            <ul>
-                <li>Other unrelated faults</li>
-                <li>Accidental or physical damage after repair</li>
-                <li>Liquid damage after repair</li>
-                <li>Any other external damage</li>
-            </ul>
+            <!-- Section 1 -->
+            <div class="terms-section">
+                <h2><span class="num">1.</span> Repair Warranty (90 Days)</h2>
+                <p>All repaired or replaced parts are covered by a 90-day limited warranty from the date the device is collected.</p>
+                <p>This warranty applies only to the specific parts repaired or replaced. The warranty does not cover:</p>
+                <ul>
+                    <li>Accidental or physical damage after repair</li>
+                    <li>Liquid damage occurring after repair</li>
+                    <li>Software issues or operating system errors</li>
+                    <li>Unrelated faults not previously repaired</li>
+                    <li>Damage caused by misuse or third-party repair attempts</li>
+                </ul>
+                <p>The original receipt or repair invoice must be presented for warranty claims. Warranty inspections may require 5–10 working days.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 2 -->
+            <div class="terms-section">
+                <h2><span class="num">2.</span> Diagnostic &amp; Repair Assessment</h2>
+                <p>Some devices require diagnostic testing to identify faults before repair. During inspection, additional faults may be discovered and additional parts may be required.</p>
+                <p>Customers will be notified before any additional repairs proceed whenever possible. Repair quotations are generally valid for 7 days, subject to parts availability.</p>
+            </div>
 
-            <h2>2. Water Damage Repair</h2>
-            <p>Devices with water damage are complex, and repairs <strong>cannot be guaranteed</strong>.</p>
-            <p>Certain sensitive components (e.g., Face ID, fingerprint sensors, cameras) may be permanently damaged and unrecoverable.</p>
+            <!-- Section 3 -->
+            <div class="terms-section">
+                <h2><span class="num">3.</span> Data Responsibility</h2>
+                <p>While we handle devices carefully, data preservation cannot be guaranteed during repair. Repair procedures may involve hardware replacement, system updates, software restoration, or factory reset.</p>
+                <p><strong>Customers are strongly advised to back up all important data before submitting their device.</strong></p>
+                <p>We are not responsible for loss of photos, contacts, messages, documents, or application data.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 4 -->
+            <div class="terms-section">
+                <h2><span class="num">4.</span> Software &amp; System Issues</h2>
+                <p>Our repair services mainly address hardware-related faults. Software-related problems such as operating system errors, app crashes, malware, or account/login issues may require separate troubleshooting.</p>
+                <p>Software behaviour may change after repair due to system updates or manufacturer restrictions.</p>
+            </div>
 
-            <h2>3. Hidden or Additional Faults</h2>
-            <p>Liquid damage, internal faults, or damage caused by drops/impact may result in additional faults during or after repair.</p>
-            <p>Some issues may not be detectable before opening the device; repair may reveal hidden faults or cause new failures.</p>
+            <!-- Section 5 -->
+            <div class="terms-section">
+                <h2><span class="num">5.</span> Water Damage Repairs</h2>
+                <p>Devices affected by liquid or water damage can be unpredictable. Even after repair, internal corrosion may continue to affect components. Repairs on water-damaged devices cannot be fully guaranteed, and certain components may remain permanently damaged.</p>
+                <p>Our technicians will attempt to restore functionality where possible.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 6 -->
+            <div class="terms-section">
+                <h2><span class="num">6.</span> Hidden or Additional Faults</h2>
+                <p>Devices that have experienced impact damage, water exposure, or electrical faults may contain hidden issues. During repair, additional faults may be discovered and previously working components may fail. These faults may not be visible until the device is opened or tested.</p>
+            </div>
 
-            <h2>4. Motherboard Repair Scope &amp; Additional Costs</h2>
-            <p>Quoted prices for water-damaged devices cover <strong>motherboard repair only</strong>.</p>
-            <p>Other faulty components (screen, charging port, microphone, speaker, battery, etc.) require separate charges, including parts costs.</p>
+            <!-- Section 7 -->
+            <div class="terms-section">
+                <h2><span class="num">7.</span> Device Condition</h2>
+                <p>Devices that are cracked, bent, previously repaired, or heavily worn may carry additional repair risks. Technicians will handle all devices carefully; however, existing structural damage may affect repair outcomes.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 8 -->
+            <div class="terms-section">
+                <h2><span class="num">8.</span> Waterproofing &amp; Sealing</h2>
+                <p>Most modern smartphones have water-resistant seals. Once a device is opened, the original seal is broken and replacement adhesive may be applied. However, the original water resistance rating cannot be guaranteed after repair.</p>
+            </div>
 
-            <h2>5. Data Responsibility</h2>
-            <p>Most data may remain intact, but data loss can occur.</p>
-            <p>Customers are <strong>strongly advised to back up important data</strong> before submitting their device.</p>
-            <p>We cannot guarantee data preservation.</p>
+            <!-- Section 9 -->
+            <div class="terms-section">
+                <h2><span class="num">9.</span> Replacement Parts</h2>
+                <p>Parts used in repairs may include original manufacturer parts (when available), OEM-quality components, or high-quality aftermarket parts. Minor variations in brightness, colour tone, or sensitivity may occur and are considered normal.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 10 -->
+            <div class="terms-section">
+                <h2><span class="num">10.</span> Sensitive Features</h2>
+                <p>Some device features are paired to the motherboard by the manufacturer, including facial recognition, fingerprint sensors, and certain cameras and sensors. If these components are already damaged, full functionality may not always be recoverable.</p>
+            </div>
 
-            <h2>6. Waterproofing</h2>
-            <p>Opening or repairing a device <strong>voids its original water resistance</strong>.</p>
+            <!-- Section 11 -->
+            <div class="terms-section">
+                <h2><span class="num">11.</span> Accounts &amp; Security Locks</h2>
+                <p>Customers should ensure the device is free from security restrictions when possible, including Apple ID / iCloud lock, Google account lock (FRP), and Samsung account lock. These locks may prevent full device testing.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 12 -->
+            <div class="terms-section">
+                <h2><span class="num">12.</span> Manufacturer Warranty</h2>
+                <p>Third-party repairs may void the original manufacturer warranty. Customers should be aware that manufacturers may decline warranty service once a device has been opened by an independent repair provider.</p>
+            </div>
 
-            <h2>7. Device Condition</h2>
-            <p>Fragile or previously damaged components may fail during repair.</p>
+            <!-- Section 13 -->
+            <div class="terms-section">
+                <h2><span class="num">13.</span> Repair Outcome</h2>
+                <p>Most repairs are successful; however, some devices may require additional parts, be beyond economical repair, or develop further faults due to internal damage. Repairs are performed as an attempt to restore functionality, but full recovery cannot always be guaranteed.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 14 -->
+            <div class="terms-section">
+                <h2><span class="num">14.</span> Repair Timeframes</h2>
+                <p>Repair times depend on device model, parts availability, and diagnostic complexity. Estimated repair times are guidelines only.</p>
+            </div>
 
-            <h2>8. Impact on Manufacturer Warranty</h2>
-            <p>Any inspection or repair by us will <strong>void the original manufacturer warranty</strong>.</p>
+            <!-- Section 15 -->
+            <div class="terms-section">
+                <h2><span class="num">15.</span> No Fix – No Fee</h2>
+                <p>If a device cannot be repaired, customers will generally not be charged for the repair. However, diagnostic fees may apply for complex inspections.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 16 -->
+            <div class="terms-section">
+                <h2><span class="num">16.</span> Device Collection</h2>
+                <p>Customers will be notified once the repair is completed. We recommend testing the device before leaving the store.</p>
+            </div>
 
-            <h2>9. Repair Outcome and Customer Agreement</h2>
-            <p>Some devices may not be repairable or may develop additional faults during the repair process.</p>
-            <p>By submitting your device for repair or diagnostic testing, you <strong>acknowledge and agree</strong> to all terms and conditions outlined in this warranty and disclaimer.</p>
+            <!-- Section 17 -->
+            <div class="terms-section">
+                <h2><span class="num">17.</span> Uncollected Devices</h2>
+                <p>Devices not collected within 60 days after notification may be considered abandoned and may be recycled, disposed of, or used for parts recovery.</p>
+            </div>
 
-            <hr class="terms-divider">
+            <!-- Section 18 -->
+            <div class="terms-section">
+                <h2><span class="num">18.</span> Privacy &amp; Data Respect</h2>
+                <p>We respect customer privacy. Technicians will only access device functions necessary for testing the repair. Personal data will not be intentionally accessed or copied.</p>
+            </div>
 
-            <h2>⚡ Additional Policies</h2>
+            <!-- Section 19 -->
+            <div class="terms-section">
+                <h2><span class="num">19.</span> Device Legitimacy</h2>
+                <p>We do not service devices reported as lost, stolen, or network blacklisted. If diagnostic work has already been completed, service charges may still apply.</p>
+            </div>
 
-            <h2>9.1 No Fix, No Fee</h2>
-            <p>If the device cannot be repaired, the customer will not be charged.</p>
+            <!-- Section 20 -->
+            <div class="terms-section">
+                <h2><span class="num">20.</span> Customer Agreement</h2>
+                <p>By submitting your device for repair you confirm that:</p>
+                <ul>
+                    <li>You are the owner or authorised user of the device</li>
+                    <li>You have read and understood these terms</li>
+                    <li>You agree to the repair conditions</li>
+                </ul>
+            </div>
 
-            <h2>9.2 Long-Term Unclaimed Devices (60 Days)</h2>
-            <p>Devices not collected within <strong>60 days</strong> may be disposed of or recycled. Customers are responsible for collecting their devices on time.</p>
+            <hr class="section-divider">
 
-            <h2>9.3 Potential Additional Issues</h2>
-            <p>Certain faults may appear after repair, beyond our control.</p>
+            <!-- Apple Additional Terms -->
+            <p class="section-title">🍎 Apple Device Repair – Additional Terms</p>
+            <p style="color:#3a3a3c;margin-bottom:24px;">Apple devices contain manufacturer security pairing systems. Because of this, some features may behave differently after repair.</p>
+
+            <div class="terms-section">
+                <h2>Face ID</h2>
+                <p>Face ID components are paired to the original motherboard. If the device has experienced impact damage, water damage, or previous repairs, Face ID functionality may not be recoverable.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>True Tone Display</h2>
+                <p>True Tone calibration is linked to the original display. After screen replacement, True Tone may not always be transferable. Display functionality will remain normal.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>Apple System Notifications</h2>
+                <p>After screen or battery replacement, the device may display system messages such as "Important Display Message" or "Important Battery Message". These are software notifications introduced by Apple and do not affect device functionality.</p>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Post-Repair Clarifications -->
+            <p class="section-title">🔧 Post-Repair Clarifications</p>
+            <p style="color:#3a3a3c;margin-bottom:24px;">To avoid misunderstandings, the following explains some behaviours that may occasionally occur after repair.</p>
+
+            <div class="terms-section">
+                <h2>Display Colour Differences</h2>
+                <p>Replacement screens may show slight differences in colour tone or brightness compared to the original display. This does not affect normal functionality.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>Face ID Behaviour</h2>
+                <p>Face ID sensors are extremely delicate. If the device previously experienced screen damage, drops, or water exposure, the sensors may already be compromised.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>Battery Performance</h2>
+                <p>New batteries may require several charging cycles to stabilise. Temporary battery fluctuations may occur during the first few days.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>Network Signal</h2>
+                <p>Signal strength may vary depending on network provider, location, and SIM card condition. Impact or water damage may also affect internal antennas.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>Future Device Faults</h2>
+                <p>Devices that have suffered impact or liquid damage may develop additional faults over time. These faults may not be related to the completed repair.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>Data Loss</h2>
+                <p>Customers are responsible for backing up data before repair. We cannot guarantee data preservation during hardware repair.</p>
+            </div>
 
         </div>
     </div>
