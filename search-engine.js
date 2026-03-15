@@ -71,50 +71,55 @@ class SearchEngine {
             .replace(/\s+/g, '')
             .replace(/[^\w\u4e00-\u9fa5]/g, '');
     }
-    
+
     // Highlight matching text
     highlightMatch(text, query) {
         if (!query) return text;
-        
-        const regex = new RegExp(`(${query.split('').join('.*?')})`, 'gi');
+        const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escaped})`, 'gi');
         return text.replace(regex, '<mark>$1</mark>');
     }
-    
-    // Fuzzy search algorithm
+
+    // Scoring: exact(1000) > starts-with(900) > all-words-exact(800) > partial(600) > substring(200)
     fuzzyMatch(text, query) {
-        const normalizedText = this.normalize(text);
-        const normalizedQuery = this.normalize(query);
-        
-        // Direct match
-        if (normalizedText.includes(normalizedQuery)) {
-            return { match: true, score: 100 };
-        }
-        
-        // Word-by-word match
-        const textWords = text.toLowerCase().split(/\s+/);
-        const queryWords = query.toLowerCase().split(/\s+/);
-        
-        let matchCount = 0;
-        for (const qWord of queryWords) {
-            for (const tWord of textWords) {
-                if (tWord.includes(qWord) || qWord.includes(tWord)) {
-                    matchCount++;
-                    break;
-                }
+        const t = text.toLowerCase().trim();
+        const q = query.toLowerCase().trim();
+        const tNorm = this.normalize(text);
+        const qNorm = this.normalize(query);
+
+        if (t === q) return { match: true, score: 1000 };
+        if (tNorm === qNorm) return { match: true, score: 950 };
+        if (t.startsWith(q)) return { match: true, score: 900 };
+        if (tNorm.startsWith(qNorm)) return { match: true, score: 850 };
+
+        // Split text and query into words
+        const textWords = t.split(/[\s\-\/\(\),\.]+/).filter(Boolean);
+        const queryWords = q.split(/\s+/).filter(Boolean);
+        const totalWords = queryWords.length;
+
+        let exactWordMatches = 0;
+        let partialWordMatches = 0;
+
+        for (const qw of queryWords) {
+            if (textWords.some(tw => tw === qw)) {
+                exactWordMatches++;
+            } else if (textWords.some(tw => tw.includes(qw))) {
+                // Only count if the TEXT word contains the QUERY word (not the reverse)
+                // This prevents "inch" matching "iphone" via qw.includes(tw)
+                partialWordMatches++;
             }
         }
-        
-        if (matchCount > 0) {
-            return { match: true, score: (matchCount / queryWords.length) * 80 };
+
+        if (exactWordMatches === totalWords) return { match: true, score: 800 };
+        if (exactWordMatches + partialWordMatches === totalWords) {
+            return { match: true, score: 600 + (exactWordMatches / totalWords) * 100 };
         }
-        
-        // Number matching (for iPhone 11, etc.)
-        const queryNum = query.match(/\d+/);
-        const textNum = text.match(/\d+/);
-        if (queryNum && textNum && queryNum[0] === textNum[0]) {
-            return { match: true, score: 60 };
+        if (exactWordMatches > 0 || partialWordMatches > 0) {
+            return { match: true, score: 300 + ((exactWordMatches + partialWordMatches) / totalWords) * 100 };
         }
-        
+
+        if (tNorm.includes(qNorm)) return { match: true, score: 200 };
+
         return { match: false, score: 0 };
     }
     
@@ -135,7 +140,8 @@ class SearchEngine {
         try {
             // Get all search data
             const allData = typeof getAllSearchData === 'function' ? getAllSearchData() : [];
-            
+            const queryWords = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+
             allData.forEach(item => {
                 const nameMatch = this.fuzzyMatch(item.name, query);
                 const categoryMatch = item.category ? this.fuzzyMatch(item.category, query) : { match: false, score: 0 };
@@ -143,6 +149,29 @@ class SearchEngine {
                 const typeMatch = item.type ? this.fuzzyMatch(item.type, query) : { match: false, score: 0 };
                 
                 if (nameMatch.match || categoryMatch.match || brandMatch.match || typeMatch.match) {
+                    let score = nameMatch.score;
+
+                    // Boost score when brand/type words appear in the query
+                    // e.g. searching "iphone 11" should heavily favour items whose type contains "iphone"
+                    const itemType = (item.type || '').toLowerCase();
+                    const itemBrand = (item.brand || '').toLowerCase();
+                    const itemCategory = (item.category || '').toLowerCase();
+
+                    let brandTypeBoost = 0;
+                    for (const qw of queryWords) {
+                        if (itemType.includes(qw) || itemBrand.includes(qw) || itemCategory.includes(qw)) {
+                            brandTypeBoost += 500;
+                        }
+                    }
+
+                    // Only apply boost when the name also matched (avoid surfacing wrong-brand items)
+                    if (nameMatch.match) {
+                        score += brandTypeBoost;
+                    } else {
+                        // Non-name matches (brand/category/type only) get lower base score
+                        score = Math.max(categoryMatch.score, brandMatch.score, typeMatch.score);
+                    }
+
                     results.push({
                         name: item.name,
                         brand: item.brand || item.category,
@@ -152,7 +181,7 @@ class SearchEngine {
                         services: item.services,
                         link: item.link,
                         category: item.category.toLowerCase().includes('phone') ? 'phone' : 'other',
-                        score: Math.max(nameMatch.score, categoryMatch.score, brandMatch.score, typeMatch.score)
+                        score
                     });
                 }
             });
@@ -164,7 +193,7 @@ class SearchEngine {
         results.sort((a, b) => b.score - a.score);
         
         // Limit results
-        const limitedResults = results.slice(0, 10);
+        const limitedResults = results.slice(0, 15);
         
         // Cache results
         this.cache.set(cacheKey, limitedResults);
@@ -288,8 +317,8 @@ class SearchEngine {
                     
                     if (serviceKey === 'water') {
                         price = 'Contact Us';
-                    } else if (price === 0) {
-                        price = 'Free';
+                    } else if (price === 0 || price === -1) {
+                        price = 'Contact Us';
                     } else {
                         price = `€${price}`;
                     }

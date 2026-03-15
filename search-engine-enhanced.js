@@ -97,106 +97,57 @@ class EnhancedSearchEngine {
     
     // Advanced fuzzy matching algorithm
     fuzzyMatch(item, query) {
-        const normalizedQuery = this.normalize(query);
-        const queryWords = normalizedQuery.split(/\s+/);
-        const queryNumbers = this.extractNumbers(query);
-        
-        let totalScore = 0;
-        let matchCount = 0;
-        
-        // 1. Exact name match (highest priority)
-        const normalizedName = this.normalize(item.name);
-        if (normalizedName === normalizedQuery) {
-            return { match: true, score: 100 };
-        }
-        
-        // 2. Name contains query
-        if (normalizedName.includes(normalizedQuery)) {
-            totalScore += 90;
-            matchCount++;
-        }
-        
-        // 3. Query contains in name (partial match)
-        if (normalizedQuery.includes(normalizedName)) {
-            totalScore += 85;
-            matchCount++;
-        }
-        
-        // 4. Word-by-word matching
-        const nameWords = normalizedName.split(/\s+/);
-        queryWords.forEach(qWord => {
-            nameWords.forEach(nWord => {
-                if (nWord.includes(qWord)) {
-                    totalScore += 70;
-                    matchCount++;
-                } else if (qWord.includes(nWord) && nWord.length > 2) {
-                    totalScore += 60;
-                    matchCount++;
-                }
-            });
-        });
-        
-        // 5. Number matching (important for models like iPhone 15, Galaxy S24)
-        const itemNumbers = this.extractNumbers(item.name);
-        if (queryNumbers.length > 0 && itemNumbers.length > 0) {
-            queryNumbers.forEach(qNum => {
-                if (itemNumbers.includes(qNum)) {
-                    totalScore += 80;
-                    matchCount++;
-                }
-            });
-        }
-        
-        // 6. Brand matching
-        if (item.brand) {
-            const normalizedBrand = this.normalize(item.brand);
-            if (normalizedQuery.includes(normalizedBrand) || normalizedBrand.includes(normalizedQuery)) {
-                totalScore += 50;
-                matchCount++;
+        const t = item.name.toLowerCase().trim();
+        const q = query.toLowerCase().trim();
+        const tNorm = this.normalize(item.name);
+        const qNorm = this.normalize(query);
+
+        // Exact match
+        if (t === q || tNorm === qNorm) return { match: true, score: 1000 };
+
+        // Name starts with query
+        if (t.startsWith(q) || tNorm.startsWith(qNorm)) return { match: true, score: 900 };
+
+        // Split into words for word-level matching
+        const textWords = t.split(/[\s\-\/\(\),\.]+/).filter(Boolean);
+        const queryWords = q.split(/\s+/).filter(Boolean);
+        const totalWords = queryWords.length;
+
+        let exactWordMatches = 0;
+        let partialWordMatches = 0;
+        for (const qw of queryWords) {
+            if (textWords.some(tw => tw === qw)) {
+                exactWordMatches++;
+            } else if (textWords.some(tw => tw.includes(qw))) {
+                // Only: text word contains query word (NOT reverse — prevents "inch" matching "iphone")
+                partialWordMatches++;
             }
         }
-        
-        // 7. Category matching
-        if (item.category) {
-            const normalizedCategory = this.normalize(item.category);
-            if (normalizedQuery.includes(normalizedCategory)) {
-                totalScore += 40;
-                matchCount++;
-            }
-        }
-        
-        // 8. Type matching
-        if (item.type) {
-            const normalizedType = this.normalize(item.type);
-            if (normalizedQuery.includes(normalizedType)) {
-                totalScore += 45;
-                matchCount++;
-            }
-        }
-        
-        // 9. Keywords matching
-        if (item.keywords && Array.isArray(item.keywords)) {
-            item.keywords.forEach(keyword => {
-                const normalizedKeyword = this.normalize(keyword);
-                if (normalizedQuery.includes(normalizedKeyword) || normalizedKeyword.includes(normalizedQuery)) {
-                    totalScore += 35;
-                    matchCount++;
-                }
-            });
-        }
-        
-        // Calculate final score
-        if (matchCount === 0) {
+
+        let score = 0;
+        if (exactWordMatches === totalWords) {
+            score = 800;
+        } else if (exactWordMatches + partialWordMatches === totalWords) {
+            score = 600 + (exactWordMatches / totalWords) * 100;
+        } else if (exactWordMatches > 0 || partialWordMatches > 0) {
+            score = 300 + ((exactWordMatches + partialWordMatches) / totalWords) * 100;
+        } else if (tNorm.includes(qNorm)) {
+            score = 200;
+        } else {
             return { match: false, score: 0 };
         }
-        
-        const avgScore = totalScore / matchCount;
-        
-        // Boost score based on popularity
-        const popularityBoost = (item.popularity || 50) * 0.2;
-        const finalScore = Math.min(avgScore + popularityBoost, 100);
-        
-        return { match: true, score: finalScore };
+
+        // Boost when query words match the item's type/brand (e.g. "iphone" → type "iPhone")
+        // This ensures "iPhone 11" ranks above "iPad Pro 11-inch" when searching "iphone 11"
+        const itemType = (item.type || '').toLowerCase();
+        const itemBrand = (item.brand || '').toLowerCase();
+        for (const qw of queryWords) {
+            if (qw.length > 2 && (itemType.includes(qw) || itemBrand.includes(qw))) {
+                score += 500;
+            }
+        }
+
+        return { match: true, score };
     }
     
     // Enhanced search with better ranking
@@ -220,7 +171,7 @@ class EnhancedSearchEngine {
             allData.forEach(item => {
                 const matchResult = this.fuzzyMatch(item, query);
                 
-                if (matchResult.match && matchResult.score > 30) {
+                if (matchResult.match && matchResult.score > 100) {
                     results.push({
                         ...item,
                         matchScore: matchResult.score
