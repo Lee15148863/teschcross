@@ -1,7 +1,7 @@
 // Samsung Pricing Database - Independent
 const SAMSUNG_STORAGE_KEY = 'techcross_pricing_samsung';
 const SAMSUNG_VERSION_KEY = 'techcross_pricing_samsung_version';
-const SAMSUNG_CURRENT_VERSION = '3.9';
+const SAMSUNG_CURRENT_VERSION = '4.0';
 
 // Samsung Phone Service Types
 const samsungPhoneServiceTypes = {
