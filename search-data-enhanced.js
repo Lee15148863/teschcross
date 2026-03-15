@@ -65,7 +65,7 @@ class SearchDataAggregator {
                             category: 'Phone',
                             type: 'iPhone',
                             icon: '📱',
-                            link: 'pricing-apple-iphone.html',
+                            link: `pricing-apple-iphone.html?model=${key}`,
                             services: model.services,
                             serviceTypes: data.iphone.serviceTypes,
                             keywords: ['apple', 'iphone', 'ios', model.name.toLowerCase()],
@@ -84,7 +84,7 @@ class SearchDataAggregator {
                             category: 'Tablet',
                             type: 'iPad',
                             icon: '📲',
-                            link: 'pricing-apple-ipad.html',
+                            link: `pricing-apple-ipad.html?model=${key}`,
                             services: model.services,
                             serviceTypes: data.ipad.serviceTypes,
                             keywords: ['apple', 'ipad', 'tablet', 'ios', model.name.toLowerCase()],
@@ -103,10 +103,18 @@ class SearchDataAggregator {
         try {
             if (typeof loadSamsungPricingData === 'function') {
                 const data = loadSamsungPricingData();
-                
+
+                // Determine which sub-page a phone model belongs to
+                function getSamsungPhonePage(key) {
+                    if (key.startsWith('s') || key.startsWith('fold') || key.startsWith('z-')) return 'pricing-samsung-s-series.html';
+                    if (key.startsWith('note')) return 'pricing-samsung-note-z.html';
+                    return 'pricing-samsung-a-series.html';
+                }
+
                 // Phone models
                 if (data.phone && data.phone.models) {
                     Object.entries(data.phone.models).forEach(([key, model]) => {
+                        const page = getSamsungPhonePage(key);
                         this.allDevices.push({
                             id: `samsung-phone-${key}`,
                             name: model.name,
@@ -114,7 +122,7 @@ class SearchDataAggregator {
                             category: 'Phone',
                             type: 'Samsung Phone',
                             icon: '📱',
-                            link: 'pricing-samsung.html',
+                            link: `${page}?model=${key}`,
                             services: model.services,
                             serviceTypes: data.phone.serviceTypes,
                             keywords: ['samsung', 'galaxy', 'android', model.name.toLowerCase()],
@@ -122,7 +130,7 @@ class SearchDataAggregator {
                         });
                     });
                 }
-                
+
                 // Tablet models
                 if (data.tablet && data.tablet.models) {
                     Object.entries(data.tablet.models).forEach(([key, model]) => {
@@ -133,7 +141,7 @@ class SearchDataAggregator {
                             category: 'Tablet',
                             type: 'Samsung Tablet',
                             icon: '📲',
-                            link: 'pricing-samsung.html',
+                            link: `pricing-samsung-tablet.html?model=${key}`,
                             services: model.services,
                             serviceTypes: data.tablet.serviceTypes,
                             keywords: ['samsung', 'galaxy', 'tab', 'tablet', 'android', model.name.toLowerCase()],
@@ -162,7 +170,7 @@ class SearchDataAggregator {
                             category: 'Phone',
                             type: `${brandName} Phone`,
                             icon: icon,
-                            link: link,
+                            link: `${link}?model=${key}`,
                             services: model.services,
                             serviceTypes: data.serviceTypes,
                             keywords: [brandName.toLowerCase(), 'android', model.name.toLowerCase()],
