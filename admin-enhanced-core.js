@@ -79,27 +79,43 @@ class EnhancedAdmin {
         const data = this.getCurrentData();
         const models = data.models;
         const serviceTypes = data.serviceTypes;
-        
+
+        // Check if any model uses screen as object {compatible, original}
+        const firstModel = Object.values(models)[0];
+        const screenIsObject = firstModel && typeof firstModel.services.screen === 'object' && firstModel.services.screen !== null;
+
         let html = '<div class="pricing-table"><table><thead><tr>';
         html += '<th>Model</th>';
-        
+
         for (const [key, service] of Object.entries(serviceTypes)) {
-            html += `<th>${service.name}</th>`;
+            if (key === 'screen' && screenIsObject) {
+                html += `<th>Screen (Compatible)</th><th>Screen (Original)</th>`;
+            } else {
+                html += `<th>${service.name}</th>`;
+            }
         }
-        
+
         html += '</tr></thead><tbody>';
-        
+
         for (const [modelKey, model] of Object.entries(models)) {
             html += `<tr><td><strong>${model.name}</strong></td>`;
-            
+
             for (const serviceKey of Object.keys(serviceTypes)) {
-                const price = model.services[serviceKey] || 0;
-                html += `<td><input type="number" value="${price}" data-model="${modelKey}" data-service="${serviceKey}" min="0"></td>`;
+                const val = model.services[serviceKey];
+                if (serviceKey === 'screen' && screenIsObject) {
+                    const comp = (val && typeof val === 'object') ? (val.compatible ?? 0) : 0;
+                    const orig = (val && typeof val === 'object') ? (val.original ?? 0) : 0;
+                    html += `<td><input type="number" value="${comp}" data-model="${modelKey}" data-service="screen" data-subkey="compatible" min="-1" style="width:70px;"></td>`;
+                    html += `<td><input type="number" value="${orig}" data-model="${modelKey}" data-service="screen" data-subkey="original" min="-1" style="width:70px;"></td>`;
+                } else {
+                    const price = (typeof val === 'number') ? val : 0;
+                    html += `<td><input type="number" value="${price}" data-model="${modelKey}" data-service="${serviceKey}" min="-1" style="width:70px;"></td>`;
+                }
             }
-            
+
             html += '</tr>';
         }
-        
+
         html += '</tbody></table></div>';
         editor.innerHTML = html;
     }
@@ -187,25 +203,37 @@ class EnhancedAdmin {
         const inputs = document.querySelectorAll('#pricing-editor input[type="number"]');
         const now = new Date().toISOString();
         const data = this.getCurrentData();
-        
+
         inputs.forEach(input => {
             const modelKey = input.dataset.model;
             const serviceKey = input.dataset.service;
-            const newPrice = parseInt(input.value) || 0;
-            const oldPrice = data.models[modelKey].services[serviceKey] || 0;
-            
-            // Only update timestamp if price changed
-            if (newPrice !== oldPrice) {
-                data.models[modelKey].services[serviceKey] = newPrice;
-                
-                // Track individual service update time
-                if (!data.models[modelKey].serviceUpdates) {
-                    data.models[modelKey].serviceUpdates = {};
+            const subKey = input.dataset.subkey; // 'compatible' or 'original' for screen
+            const newPrice = parseInt(input.value);
+            if (isNaN(newPrice)) return;
+
+            if (!data.models[modelKey].serviceUpdates) {
+                data.models[modelKey].serviceUpdates = {};
+            }
+
+            if (subKey) {
+                // screen object field
+                if (typeof data.models[modelKey].services[serviceKey] !== 'object') {
+                    data.models[modelKey].services[serviceKey] = { compatible: 0, original: 0 };
                 }
-                data.models[modelKey].serviceUpdates[serviceKey] = now;
+                const oldPrice = data.models[modelKey].services[serviceKey][subKey] ?? 0;
+                if (newPrice !== oldPrice) {
+                    data.models[modelKey].services[serviceKey][subKey] = newPrice;
+                    data.models[modelKey].serviceUpdates[serviceKey] = now;
+                }
+            } else {
+                const oldPrice = data.models[modelKey].services[serviceKey] ?? 0;
+                if (newPrice !== oldPrice) {
+                    data.models[modelKey].services[serviceKey] = newPrice;
+                    data.models[modelKey].serviceUpdates[serviceKey] = now;
+                }
             }
         });
-        
+
         this.saveDataFunc(this.pricingData);
         this.showMessage('save-message');
     }
