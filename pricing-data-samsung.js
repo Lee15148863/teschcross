@@ -1,7 +1,7 @@
 // Samsung Pricing Database - Independent
 const SAMSUNG_STORAGE_KEY = 'techcross_pricing_samsung';
 const SAMSUNG_VERSION_KEY = 'techcross_pricing_samsung_version';
-const SAMSUNG_CURRENT_VERSION = '4.0';
+const SAMSUNG_CURRENT_VERSION = '4.1';
 
 // Samsung Phone Service Types
 const samsungPhoneServiceTypes = {
@@ -122,7 +122,7 @@ const samsungPhoneModels_Part4 = {
     'a22-a32-4g': { name: 'Galaxy A22/A32 4G',                services: { screen: { compatible: 100, original: -1 }, battery: 45, charging_port: 45, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 80,  camera: 0,  camera_lens: 30, microphone: 45, earpiece: 45, loudspeaker: 45, power_button: 45 }, lastUpdated: new Date().toISOString() },
     'a22-a32-5g': { name: 'Galaxy A22/A32 5G',                services: { screen: { compatible: 65,  original: -1 }, battery: 45, charging_port: 45, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 80,  camera: 0,  camera_lens: 30, microphone: 45, earpiece: 45, loudspeaker: 45, power_button: 45 }, lastUpdated: new Date().toISOString() },
     'a42-5g':     { name: 'Galaxy A42 5G (SM-A426)',           services: { screen: { compatible: 100, original: -1 }, battery: 45, charging_port: 45, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0,  camera_lens: 30, microphone: 45, earpiece: 45, loudspeaker: 45, power_button: 45 }, lastUpdated: new Date().toISOString() },
-    'a52':        { name: 'Galaxy A52/A52s (SM-A525/A526/A528)',services: { screen: { compatible: -1, original: 130 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0,  camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() },
+    'a52':        { name: 'Galaxy A52/A52s (SM-A525/A526/A528)',services: { screen: { compatible: 125, original: 140 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0,  camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() },
     'a72':        { name: 'Galaxy A72 (SM-A725)',              services: { screen: { compatible: -1, original: 140 }, battery: 50, charging_port: 50, software: 20, network_unlock: 30, frp_reset: 40, motherboard: 100, camera: 0,  camera_lens: 30, microphone: 50, earpiece: 50, loudspeaker: 50, power_button: 50 }, lastUpdated: new Date().toISOString() }
 };
 
