@@ -194,7 +194,7 @@
 
         
 
-    <script src="pricing-data.js"></script>
+    <script src="/api-client.js"></script>
     <script>
         const BRAND_KEY = 'other';
         const deviceModelSelect = document.getElementById('deviceModel');
@@ -202,7 +202,21 @@
         const pricingResult = document.getElementById('pricingResult');
         const priceDisplay = document.getElementById('priceDisplay');
         const serviceDescription = document.getElementById('serviceDescription');
-        let pricingData = loadPricingData();
+        window.PAGE_CONFIG = {
+            brand: 'multi',
+            initFn: function(data) {
+                pricingData = data;
+                const models = pricingData[BRAND_KEY].models;
+                const modelEntries = Object.entries(models).reverse();
+                for (const [key, model] of modelEntries) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = model.name;
+                    deviceModelSelect.appendChild(option);
+                }
+            }
+        };
+        let pricingData = null;
         const models = pricingData[BRAND_KEY].models;
         const modelEntries = Object.entries(models).reverse();
         for (const [key, model] of modelEntries) {
@@ -272,6 +286,7 @@
             }
         })();
     </script>
+    <script src="/page-init.js"></script>
     <!-- Repair Disclaimer -->
     <div class="repair-disclaimer" style="max-width:900px;margin:60px auto 40px;padding:40px;background:#f5f5f7;border-radius:18px;font-size:15px;color:#1d1d1f;line-height:1.7;">
         <h2 style="font-size:20px;font-weight:700;margin-bottom:6px;color:#1d1d1f;">&#128241; Mobile Device Repair &#8211; Simplified Terms &amp; Conditions</h2>

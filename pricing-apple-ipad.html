@@ -301,7 +301,7 @@
             </div>
         </div>
 
-        <script src="pricing-data-apple.js"></script>
+        <script src="/api-client.js"></script>
     <script>
         const DEVICE_TYPE = 'ipad';
         const deviceModelSelect = document.getElementById('deviceModel');
@@ -311,18 +311,22 @@
         const serviceDescription = document.getElementById('serviceDescription');
         const screenOptions = document.getElementById('screenOptions');
 
-        let pricingData = loadApplePricingData();
+        let pricingData = null;
 
-        // Load iPad models (reversed to show newest first)
-        const models = pricingData[DEVICE_TYPE].models;
-        const modelEntries = Object.entries(models).reverse();
-        
-        for (const [key, model] of modelEntries) {
-            const option = document.createElement('option');
-            option.value = key;
-            option.textContent = model.name;
-            deviceModelSelect.appendChild(option);
-        }
+        window.PAGE_CONFIG = {
+            brand: 'apple',
+            initFn: function(data) {
+                pricingData = data;
+                const models = pricingData[DEVICE_TYPE].models;
+                const modelEntries = Object.entries(models).reverse();
+                for (const [key, model] of modelEntries) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = model.name;
+                    deviceModelSelect.appendChild(option);
+                }
+            }
+        };
 
         // Model selection handler
         deviceModelSelect.addEventListener('change', function() {
@@ -436,28 +440,9 @@
                 pricingResult.classList.remove('show');
             }
         });
-        // Auto-select model from URL parameter
-        (function() {
-            const params = new URLSearchParams(window.location.search);
-            const modelParam = params.get('model');
-            if (modelParam) {
-                const select = document.getElementById('deviceModel');
-                if (select) {
-                    const trySelect = setInterval(() => {
-                        if (select.options.length > 1) {
-                            clearInterval(trySelect);
-                            select.value = modelParam;
-                            if (select.value === modelParam) {
-                                select.dispatchEvent(new Event('change'));
-                                select.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                        }
-                    }, 50);
-                    setTimeout(() => clearInterval(trySelect), 3000);
-                }
-            }
-        })();
+        // Auto-select handled by page-init.js
     </script>
+    <script src="/page-init.js"></script>
     <!-- Repair Disclaimer -->
     <div class="repair-disclaimer" style="max-width:900px;margin:60px auto 40px;padding:40px;background:#f5f5f7;border-radius:18px;font-size:15px;color:#1d1d1f;line-height:1.7;">
         <h2 style="font-size:20px;font-weight:700;margin-bottom:6px;color:#1d1d1f;">&#127822; Apple Device Repair &#8211; Simplified Terms &amp; Conditions</h2>

@@ -50,6 +50,8 @@ steps:
       - '300'
       - '--set-env-vars'
       - 'DEPLOYED_AT=$BUILD_ID'
+      - '--update-secrets'
+      - 'DBCon=DBCon:latest,ADMIN_TOKEN=ADMIN_TOKEN:latest'
       - '--revision-suffix'
       - '$SHORT_SHA'
   

@@ -25,3 +25,10 @@ open-browser.bat
 
 # Logs
 *.log
+
+# Secrets
+.env
+.env.*
+
+# Node dev dependencies
+node_modules/

@@ -1,25 +1,16 @@
-# 使用 Nginx 作为 Web 服务器
-FROM nginx:alpine
+FROM node:20-alpine
 
-# 删除默认的 nginx 配置
-RUN rm /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# 复制自定义 nginx 配置
-COPY nginx.conf /etc/nginx/conf.d/
+# Install dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-# 复制所有网站文件到 nginx 的 html 目录
-COPY *.html /usr/share/nginx/html/
-COPY *.css /usr/share/nginx/html/
-COPY *.js /usr/share/nginx/html/
-COPY *.png /usr/share/nginx/html/
-COPY logos/ /usr/share/nginx/html/logos/
+# Copy all website files
+COPY . .
 
-# 暴露 8080 端口（Cloud Run 要求）
+# Expose port
 EXPOSE 8080
 
-# 使用环境变量设置端口，默认为 8080
-ENV PORT=8080
-
-# 启动脚本：使用 envsubst 替换端口变量
-CMD sed -i "s/listen 80;/listen $PORT;/g" /etc/nginx/conf.d/nginx.conf && \
-    nginx -g "daemon off;"
+# Start Node.js server
+CMD ["node", "server.js"]

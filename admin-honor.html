@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -112,6 +112,7 @@
     </div>
 
     <script src="pricing-data-honor.js"></script>
+    <script src="/api-client.js"></script>
     <script src="admin-enhanced-core.js"></script>
     <script>
         if (sessionStorage.getItem('admin_logged_in') !== 'true') {
@@ -120,6 +121,7 @@
 
         const admin = new EnhancedAdmin({
             brandName: 'Honor',
+            apiBrand: 'honor',
             loadDataFunc: loadHonorPricingData,
             saveDataFunc: saveHonorPricingData,
             hasDeviceTypes: false,

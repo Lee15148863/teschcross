@@ -294,16 +294,17 @@
 
         
 
-    <script src="pricing-data-samsung.js"></script>
+    <script src="/api-client.js"></script>
     <script>
         const DEVICE_TYPE = 'tablet';
+        window.PAGE_CONFIG = { brand: 'samsung', initFn: function(data) { pricingData = data; initModels(data); } };
         const deviceModelSelect = document.getElementById('deviceModel');
         const serviceTypeSelect = document.getElementById('serviceType');
         const pricingResult = document.getElementById('pricingResult');
         const priceDisplay = document.getElementById('priceDisplay');
         const serviceDescription = document.getElementById('serviceDescription');
 
-        let pricingData = loadSamsungPricingData();
+        let pricingData = null;
         const serviceTypes = pricingData[DEVICE_TYPE].serviceTypes;
 
         // Load phone models (reversed to show newest first)
@@ -328,7 +329,7 @@
                 serviceTypeSelect.disabled = false;
                 const modelServices = pricingData[DEVICE_TYPE].models[model].services;
                 
-                for (const [key, service] of Object.entries(serviceTypes)) {
+                for (const [key, service] of Object.entries(window._serviceTypes || {})) {
                     if (modelServices[key] === -1) continue;
                     const option = document.createElement('option');
                     option.value = key;

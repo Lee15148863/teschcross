@@ -1,0 +1,30 @@
+{
+  "name": "techcross",
+  "version": "1.0.0",
+  "description": "现代化的3C电子设备维修中心门户网站，专为移动设备优化。",
+  "main": "admin-enhanced-core.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "seed": "node scripts/seed.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lee15148863/teschcross.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Lee15148863/teschcross/issues"
+  },
+  "homepage": "https://github.com/Lee15148863/teschcross#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.3"
+  }
+}

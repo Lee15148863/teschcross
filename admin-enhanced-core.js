@@ -1,16 +1,51 @@
-// Enhanced Admin Core Functions
+﻿// Enhanced Admin Core Functions
 // This file provides common functionality for all brand admin pages
 
 class EnhancedAdmin {
     constructor(config) {
         this.brandName = config.brandName;
         this.loadDataFunc = config.loadDataFunc;
-        this.saveDataFunc = config.saveDataFunc;
+        this.saveDataFunc = config.saveDataFunc; // kept for fallback
+        this.apiBrand = config.apiBrand; // e.g. 'apple', 'samsung', 'multi'
         this.hasDeviceTypes = config.hasDeviceTypes || false;
         this.deviceTypes = config.deviceTypes || ['default'];
         this.currentDevice = this.deviceTypes[0];
-        this.pricingData = this.loadDataFunc();
+        this.pricingData = null;
         this.themeColor = config.themeColor || '#0071e3';
+        this._loadFromAPI();
+    }
+
+    async _loadFromAPI() {
+        if (typeof PricingAPI !== 'undefined' && this.apiBrand) {
+            try {
+                const data = await PricingAPI.get(this.apiBrand);
+                if (data) {
+                    this.pricingData = data;
+                    this.init();
+                    return;
+                }
+            } catch(e) { console.warn('API load failed, falling back to localStorage', e); }
+        }
+        // Fallback to localStorage
+        this.pricingData = this.loadDataFunc();
+        this.init();
+    }
+
+    async _saveToAPI() {
+        const token = localStorage.getItem('admin_token') || prompt('Enter admin token:');
+        if (!token) return false;
+        localStorage.setItem('admin_token', token);
+        try {
+            if (typeof PricingAPI !== 'undefined' && this.apiBrand) {
+                await PricingAPI.save(this.apiBrand, this.pricingData, token);
+                return true;
+            }
+        } catch(e) {
+            console.warn('API save failed, falling back to localStorage', e);
+        }
+        // Fallback
+        await this._saveToAPI();
+        return true;
     }
 
     // Initialize the admin interface
@@ -199,7 +234,7 @@ class EnhancedAdmin {
     }
 
     // Save pricing with smart timestamp updates
-    savePricing() {
+    async savePricing() {
         const inputs = document.querySelectorAll('#pricing-editor input[type="number"]');
         const now = new Date().toISOString();
         const data = this.getCurrentData();
@@ -207,7 +242,7 @@ class EnhancedAdmin {
         inputs.forEach(input => {
             const modelKey = input.dataset.model;
             const serviceKey = input.dataset.service;
-            const subKey = input.dataset.subkey; // 'compatible' or 'original' for screen
+            const subKey = input.dataset.subkey;
             const newPrice = parseInt(input.value);
             if (isNaN(newPrice)) return;
 
@@ -216,7 +251,6 @@ class EnhancedAdmin {
             }
 
             if (subKey) {
-                // screen object field
                 if (typeof data.models[modelKey].services[serviceKey] !== 'object') {
                     data.models[modelKey].services[serviceKey] = { compatible: 0, original: 0 };
                 }
@@ -234,8 +268,8 @@ class EnhancedAdmin {
             }
         });
 
-        this.saveDataFunc(this.pricingData);
-        this.showMessage('save-message');
+        const ok = await this._saveToAPI();
+        if (ok) this.showMessage('save-message');
     }
 
     // Save model names
@@ -248,7 +282,7 @@ class EnhancedAdmin {
             data.models[modelKey].name = input.value;
         });
         
-        this.saveDataFunc(this.pricingData);
+        await this._saveToAPI();
         alert('Model names saved successfully!');
     }
 
@@ -263,7 +297,7 @@ class EnhancedAdmin {
             data.serviceTypes[serviceKey][field] = input.value;
         });
         
-        this.saveDataFunc(this.pricingData);
+        await this._saveToAPI();
         this.showMessage('services-message');
     }
 
@@ -298,7 +332,7 @@ class EnhancedAdmin {
             lastUpdated: now
         };
         
-        this.saveDataFunc(this.pricingData);
+        await this._saveToAPI();
         this.renderModelsEditor();
         alert('Model added successfully!');
         return true;
@@ -310,7 +344,7 @@ class EnhancedAdmin {
         
         if (confirm(`Are you sure you want to delete ${data.models[modelKey].name}?`)) {
             delete data.models[modelKey];
-            this.saveDataFunc(this.pricingData);
+            await this._saveToAPI();
             this.renderModelsEditor();
             alert('Model deleted successfully!');
         }
@@ -345,7 +379,7 @@ class EnhancedAdmin {
             data.models[modelKey].serviceUpdates[serviceId] = now;
         }
         
-        this.saveDataFunc(this.pricingData);
+        await this._saveToAPI();
         this.renderServicesEditor();
         alert('Service added successfully!');
         return true;
@@ -366,7 +400,7 @@ class EnhancedAdmin {
                 }
             }
             
-            this.saveDataFunc(this.pricingData);
+            await this._saveToAPI();
             this.renderServicesEditor();
             alert('Service deleted successfully!');
         }
@@ -421,7 +455,7 @@ class EnhancedAdmin {
             }
         }
         
-        this.saveDataFunc(this.pricingData);
+        await this._saveToAPI();
         this.showMessage('batch-message');
         alert(`Batch update applied to ${count} models!`);
         this.renderPricingEditor();

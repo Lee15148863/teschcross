@@ -26,3 +26,8 @@ open-browser.bat
 
 # Node modules (if you add npm later)
 node_modules/
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*
