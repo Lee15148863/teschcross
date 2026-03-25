@@ -6,244 +6,532 @@
     <title>Admin Panel - Tech Cross</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        body {
-            background: #f5f5f7;
-        }
-        
-        .login-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .login-box {
-            background: #fff;
-            border-radius: 24px;
-            padding: 48px;
-            max-width: 400px;
-            width: 100%;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-        }
-        
-        .login-box h1 {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-        
-        .login-form input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #d2d2d7;
-            border-radius: 12px;
-            font-size: 17px;
-            margin-bottom: 16px;
-        }
-        
-        .login-error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            display: none;
-        }
-        
-        .login-error.show {
-            display: block;
-        }
-        
-        .btn-primary {
-            background: #0071e3;
-            color: #fff;
-            padding: 14px 32px;
-            border: none;
-            border-radius: 980px;
-            font-size: 17px;
-            cursor: pointer;
-            width: 100%;
-        }
-        
-        .admin-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 120px 22px 80px;
-            display: none;
-        }
-        
-        .admin-container.show {
-            display: block;
-        }
-        
-        .brand-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 32px;
-            margin-top: 40px;
-        }
-        
-        .brand-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 24px;
-            padding: 48px 36px;
-            text-align: center;
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-            transition: all 0.4s;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 200px;
-        }
-        
-        .brand-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(0, 113, 227, 0.15);
-        }
-        
-        .brand-card h3 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-        
-        .brand-card p {
-            color: #6e6e73;
-            margin-bottom: 16px;
-        }
-        
-        .brand-card .arrow {
-            font-size: 24px;
-            color: #0071e3;
-        }
+        body { background:#f5f5f7; }
+        .login-container { display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px; }
+        .login-box { background:#fff;border-radius:24px;padding:48px;max-width:400px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.1); }
+        .login-box h1 { font-size:32px;margin-bottom:8px; }
+        .login-form input { width:100%;padding:14px 16px;border:1px solid #d2d2d7;border-radius:12px;font-size:17px;margin-bottom:16px;box-sizing:border-box; }
+        .login-error { background:#ffebee;color:#c62828;padding:12px;border-radius:8px;margin-bottom:16px;display:none; }
+        .login-error.show { display:block; }
+
+        .admin-wrap { display:none;min-height:100vh;flex-direction:column; }
+        .admin-wrap.show { display:flex; }
+        .topbar { background:#fff;border-bottom:1px solid #e5e5ea;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100; }
+        .topbar h2 { font-size:18px;font-weight:700; }
+        .topbar-right { display:flex;gap:10px;align-items:center; }
+
+        .admin-body { display:flex;flex:1;overflow:hidden; }
+
+        /* Sidebar */
+        .sidebar { width:240px;background:#fff;border-right:1px solid #e5e5ea;overflow-y:auto;flex-shrink:0;padding:12px; }
+        .sidebar h4 { font-size:11px;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.5px;margin:8px 4px 6px; }
+        .nav-item { padding:9px 12px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px; }
+        .nav-item:hover { background:#f5f5f7; }
+        .nav-item.active { background:#e8f0fe;color:#0071e3; }
+        .nav-badge { font-size:11px;background:#f0f0f5;color:#86868b;padding:2px 7px;border-radius:20px; }
+        .nav-item.active .nav-badge { background:#c8dcff;color:#0071e3; }
+        .btn-add-sm { width:100%;padding:9px;border:1.5px dashed #d2d2d7;border-radius:10px;background:none;cursor:pointer;color:#0071e3;font-size:13px;font-weight:500;margin-top:6px; }
+        .btn-add-sm:hover { background:#f0f7ff; }
+
+        /* Main */
+        .main { flex:1;overflow-y:auto;padding:28px 32px; }
+        .main-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:20px; }
+        .main-header h3 { font-size:22px;font-weight:700; }
+
+        /* Breadcrumb */
+        .breadcrumb { display:flex;align-items:center;gap:6px;font-size:13px;color:#86868b;margin-bottom:16px; }
+        .breadcrumb span { cursor:pointer;color:#0071e3; }
+        .breadcrumb span:hover { text-decoration:underline; }
+        .breadcrumb .sep { color:#d2d2d7; }
+
+        /* Cards grid */
+        .cards { display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px; }
+        .card { background:#fff;border:1.5px solid #e5e5ea;border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center; }
+        .card:hover { border-color:#0071e3;background:#f0f7ff;transform:translateY(-2px); }
+        .card h4 { font-size:16px;font-weight:700;margin-bottom:4px; }
+        .card small { color:#86868b;font-size:12px; }
+        .card-add { border-style:dashed;color:#0071e3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:500; }
+        .card-add:hover { background:#f0f7ff; }
+
+        /* Table */
+        .data-table { width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06); }
+        .data-table th { background:#f5f5f7;padding:11px 16px;text-align:left;font-size:12px;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e5ea; }
+        .data-table td { padding:11px 16px;border-bottom:1px solid #f0f0f5;font-size:14px;vertical-align:middle; }
+        .data-table tr:last-child td { border-bottom:none; }
+        .data-table tr:hover td { background:#fafafa; }
+        .price-input { width:80px;padding:6px 10px;border:1px solid #d2d2d7;border-radius:8px;font-size:14px;text-align:right; }
+        .price-input:focus { outline:none;border-color:#0071e3; }
+
+        /* Buttons */
+        .btn-save { background:#0071e3;color:#fff;padding:9px 22px;border:none;border-radius:980px;font-size:14px;font-weight:600;cursor:pointer; }
+        .btn-save:hover { background:#0077ed; }
+        .btn-save:disabled { background:#86868b;cursor:not-allowed; }
+        .btn-danger { background:none;border:1px solid #ff3b30;color:#ff3b30;padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer; }
+        .btn-danger:hover { background:#ff3b30;color:#fff; }
+        .btn-ghost { background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:15px;color:#86868b; }
+        .btn-ghost:hover { background:#f0f0f5;color:#1d1d1f; }
+        .btn-secondary { background:#f5f5f7;color:#1d1d1f;padding:8px 18px;border:none;border-radius:980px;font-size:14px;font-weight:500;cursor:pointer; }
+        .btn-secondary:hover { background:#e5e5ea; }
+
+        /* Modal */
+        .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center; }
+        .modal-overlay.show { display:flex; }
+        .modal { background:#fff;border-radius:20px;padding:28px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2); }
+        .modal h3 { font-size:18px;font-weight:700;margin-bottom:18px; }
+        .modal input { width:100%;padding:11px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:15px;margin-bottom:12px;box-sizing:border-box; }
+        .modal-actions { display:flex;gap:10px;justify-content:flex-end;margin-top:6px; }
+        .field-hint { font-size:11px;color:#86868b;margin:-8px 0 12px 2px; }
+
+        /* Toast */
+        .toast { position:fixed;bottom:28px;right:28px;background:#1d1d1f;color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:500;z-index:2000;transform:translateY(60px);opacity:0;transition:all .3s; }
+        .toast.show { transform:translateY(0);opacity:1; }
+        .toast.success { background:#34c759; }
+        .toast.error { background:#ff3b30; }
+
+        .save-status { font-size:13px;color:#86868b; }
+        .empty { text-align:center;padding:40px;color:#86868b;font-size:15px; }
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div class="login-container" id="loginContainer">
-        <div class="login-box">
-            <h1>Admin Login</h1>
-            <p style="color: #6e6e73; margin-bottom: 32px;">Manage all brand pricing</p>
-            <form class="login-form" id="loginForm">
-                <input type="text" id="usernameInput" placeholder="Username" required autofocus>
-                <input type="password" id="passwordInput" placeholder="Password" required>
-                <div class="login-error" id="loginError">Incorrect credentials</div>
-                <button type="submit" class="btn-primary">Login</button>
-            </form>
+
+<!-- Login -->
+<div class="login-container" id="loginContainer">
+    <div class="login-box">
+        <h1>Admin Login</h1>
+        <p style="color:#6e6e73;margin-bottom:28px;">Manage all brand pricing</p>
+        <form class="login-form" id="loginForm">
+            <input type="text" id="usernameInput" placeholder="Username" required autofocus>
+            <input type="password" id="passwordInput" placeholder="Password" required>
+            <div class="login-error" id="loginError">Incorrect credentials</div>
+            <button type="submit" class="btn-save" style="width:100%;">Login</button>
+        </form>
+    </div>
+</div>
+
+<!-- Admin -->
+<div class="admin-wrap" id="adminWrap">
+    <div class="topbar">
+        <h2>⚙️ Tech Cross Admin</h2>
+        <div class="topbar-right">
+            <span class="save-status" id="saveStatus"></span>
+            <button class="btn-save" id="globalSaveBtn" onclick="saveCurrentBrand()" disabled>Save Changes</button>
+            <button class="btn-secondary" onclick="logout()">Logout</button>
         </div>
     </div>
 
-    <!-- Admin Panel -->
-    <nav class="nav" id="adminNav" style="display: none;">
-        <div class="nav-content">
-            <div class="nav-logo">
-                <a href="index.html"><img src="logo.png" alt="Tech Cross"></a>
+    <div class="admin-body">
+        <div class="sidebar">
+            <h4>Brands</h4>
+            <div id="brandList"></div>
+            <button class="btn-add-sm" onclick="openModal('addBrandModal')">+ Add Brand</button>
+        </div>
+        <div class="main" id="mainArea">
+            <div class="empty">← Select a brand from the sidebar</div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="addBrandModal">
+    <div class="modal">
+        <h3>Add Brand</h3>
+        <input id="mBrandId" placeholder="Brand ID (e.g. nokia)" />
+        <p class="field-hint">Lowercase, no spaces</p>
+        <input id="mBrandName" placeholder="Display Name (e.g. Nokia)" />
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('addBrandModal')">Cancel</button>
+            <button class="btn-save" onclick="addBrand()">Add</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="addTypeModal">
+    <div class="modal">
+        <h3>Add Device Type</h3>
+        <input id="mTypeId" placeholder="Type ID (e.g. ipad)" />
+        <p class="field-hint">Lowercase, no spaces</p>
+        <input id="mTypeName" placeholder="Display Name (e.g. iPad)" />
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('addTypeModal')">Cancel</button>
+            <button class="btn-save" onclick="addType()">Add</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="addModelModal">
+    <div class="modal">
+        <h3>Add Model</h3>
+        <input id="mModelId" placeholder="Model ID (e.g. iphone-15-pro)" />
+        <p class="field-hint">Lowercase, hyphens ok</p>
+        <input id="mModelName" placeholder="Display Name (e.g. iPhone 15 Pro)" />
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('addModelModal')">Cancel</button>
+            <button class="btn-save" onclick="addModel()">Add</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="addIssueModal">
+    <div class="modal">
+        <h3>Add Issue / Service</h3>
+        <input id="mIssueId" placeholder="Issue ID (e.g. screen_repair)" />
+        <p class="field-hint">Lowercase, underscores ok</p>
+        <input id="mIssueName" placeholder="Display Name (e.g. Screen Repair)" />
+        <input id="mIssuePrice" type="number" placeholder="Price (0 = Contact Us, -1 = Hidden)" min="-1" />
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('addIssueModal')">Cancel</button>
+            <button class="btn-save" onclick="addIssue()">Add</button>
+        </div>
+    </div>
+</div>
+
+<script src="/api-client.js"></script>
+<script>
+const ADMIN_TOKEN = 'techcross_admin_2026';
+const USERNAME = '0876676466';
+const PASSWORD = '0870019999';
+
+let allData = {};
+let currentBrand = null;
+let currentType = null;   // null = showing types, string = showing models of that type
+let dirty = false;
+
+// ── Auth ──────────────────────────────────────────────────
+document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (document.getElementById('usernameInput').value === USERNAME &&
+        document.getElementById('passwordInput').value === PASSWORD) {
+        sessionStorage.setItem('admin_logged_in', 'true');
+        showAdmin();
+    } else {
+        document.getElementById('loginError').classList.add('show');
+    }
+});
+if (sessionStorage.getItem('admin_logged_in') === 'true') showAdmin();
+function logout() { sessionStorage.removeItem('admin_logged_in'); location.reload(); }
+
+// ── Init ──────────────────────────────────────────────────
+async function showAdmin() {
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('adminWrap').classList.add('show');
+    const res = await fetch('/api/brands');
+    allData = res.ok ? await res.json() : {};
+    renderSidebar();
+}
+
+// ── Sidebar ───────────────────────────────────────────────
+function renderSidebar() {
+    const list = document.getElementById('brandList');
+    list.innerHTML = Object.entries(allData).map(([id, b]) => {
+        const typeCount = Object.keys(b.types || {}).length;
+        return `<div class="nav-item ${currentBrand===id?'active':''}" onclick="selectBrand('${id}')">
+            <span>${b.name}</span>
+            <span class="nav-badge">${typeCount}</span>
+        </div>`;
+    }).join('') || '<p style="font-size:13px;color:#86868b;padding:4px 8px;">No brands yet</p>';
+}
+
+// ── Brand select ──────────────────────────────────────────
+function selectBrand(brandId) {
+    if (dirty && !confirm('Unsaved changes. Discard?')) return;
+    syncPriceInputs();
+    dirty = false;
+    currentBrand = brandId;
+    currentType = null;
+    renderSidebar();
+    renderTypeView();
+}
+
+// ── Type view (Brand → Types) ─────────────────────────────
+function renderTypeView() {
+    const brand = allData[currentBrand];
+    const types = Object.entries(brand.types || {});
+    const main = document.getElementById('mainArea');
+
+    main.innerHTML = `
+        <div class="breadcrumb"><b>${brand.name}</b></div>
+        <div class="main-header">
+            <h3>${brand.name}</h3>
+            <button class="btn-danger" onclick="deleteBrand('${currentBrand}')">Delete Brand</button>
+        </div>
+        <div class="cards">
+            ${types.map(([tid, t]) => {
+                const mc = Object.keys(t.models||{}).length;
+                return `<div class="card" onclick="selectType('${tid}')">
+                    <h4>${t.name}</h4>
+                    <small>${mc} model${mc!==1?'s':''}</small>
+                </div>`;
+            }).join('')}
+            <div class="card card-add" onclick="openModal('addTypeModal')">
+                <span style="font-size:24px;">+</span>
+                <span>Add Type</span>
             </div>
-            <ul class="nav-list">
-                <li><a href="pricing.html">Back to Pricing</a></li>
-                <li><button onclick="logout()" style="background: none; border: none; color: #1d1d1f; font-size: 14px; cursor: pointer;">Logout</button></li>
-            </ul>
+        </div>`;
+}
+
+// ── Type select → Model view ──────────────────────────────
+function selectType(typeId) {
+    currentType = typeId;
+    renderModelView();
+}
+
+function renderModelView() {
+    const brand = allData[currentBrand];
+    const type  = brand.types[currentType];
+    const models = Object.entries(type.models || {});
+    const main = document.getElementById('mainArea');
+
+    main.innerHTML = `
+        <div class="breadcrumb">
+            <span onclick="renderTypeView(); currentType=null;">${brand.name}</span>
+            <span class="sep">›</span>
+            <b>${type.name}</b>
         </div>
-    </nav>
-
-    <div class="admin-container" id="adminContainer">
-        <div style="text-align: center; margin-bottom: 60px;">
-            <h1 style="font-size: 48px; margin-bottom: 16px;">Admin Panel</h1>
-            <p style="font-size: 21px; color: #6e6e73;">Select a brand to manage</p>
+        <div class="main-header">
+            <h3>${type.name}</h3>
+            <div style="display:flex;gap:8px;">
+                <button class="btn-secondary" onclick="openModal('addModelModal')">+ Add Model</button>
+                <button class="btn-danger" onclick="deleteType('${currentType}')">Delete Type</button>
+            </div>
         </div>
-
-        <div class="brand-grid">
-            <a href="admin-apple.html" class="brand-card">
-                <h3>Apple</h3>
-                <p>Manage iPhone & iPad pricing</p>
-                <div class="arrow">→</div>
-            </a>
-
-            <a href="admin-samsung.html" class="brand-card">
-                <h3>Samsung</h3>
-                <p>Manage Samsung pricing</p>
-                <div class="arrow">→</div>
-            </a>
-
-            <a href="admin-xiaomi.html" class="brand-card">
-                <h3>Xiaomi</h3>
-                <p>Manage Xiaomi pricing</p>
-                <div class="arrow">→</div>
-            </a>
-
-            <a href="admin-google.html" class="brand-card">
-                <h3>Google</h3>
-                <p>Manage Google Pixel pricing</p>
-                <div class="arrow">→</div>
-            </a>
-
-            <a href="admin-oneplus.html" class="brand-card">
-                <h3>OnePlus</h3>
-                <p>Manage OnePlus pricing</p>
-                <div class="arrow">→</div>
-            </a>
-
-            <a href="admin-oppo.html" class="brand-card">
-                <h3>OPPO</h3>
-                <p>Manage OPPO pricing</p>
-                <div class="arrow">→</div>
-            </a>
-
-            <a href="admin-huawei.html" class="brand-card">
-                <h3>Huawei</h3>
-                <p>Manage Huawei pricing</p>
-                <div class="arrow">→</div>
-            </a>
-
-            <a href="admin-honor.html" class="brand-card">
-                <h3>Honor</h3>
-                <p>Manage Honor pricing</p>
-                <div class="arrow">→</div>
-            </a>
-
-            <a href="admin-other.html" class="brand-card">
-                <h3>Other Brands</h3>
-                <p>Manage other brands pricing</p>
-                <div class="arrow">→</div>
-            </a>
-        </div>
-    </div>
-
-    <script>
-        const DEFAULT_USERNAME = '0876676466';
-        const DEFAULT_PASSWORD = '0870019999';
-
-        // Login
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = document.getElementById('usernameInput').value;
-            const password = document.getElementById('passwordInput').value;
-            
-            if (username === DEFAULT_USERNAME && password === DEFAULT_PASSWORD) {
-                sessionStorage.setItem('admin_logged_in', 'true');
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('adminNav').style.display = 'block';
-                document.getElementById('adminContainer').classList.add('show');
-            } else {
-                document.getElementById('loginError').classList.add('show');
+        <table class="data-table">
+            <thead><tr><th>Model</th><th>Issues</th><th style="width:100px;"></th></tr></thead>
+            <tbody>
+            ${models.length === 0
+                ? `<tr><td colspan="3" style="text-align:center;color:#86868b;padding:24px;">No models yet</td></tr>`
+                : models.map(([mid, model]) => {
+                    const ic = Object.keys(model.issues||{}).length;
+                    return `<tr>
+                        <td style="font-weight:600;cursor:pointer;" onclick="selectModel('${mid}')">${model.name}</td>
+                        <td style="color:#86868b;cursor:pointer;" onclick="selectModel('${mid}')">${ic} issue${ic!==1?'s':''}</td>
+                        <td>
+                            <button class="btn-ghost" onclick="selectModel('${mid}')" title="Edit issues">✏️</button>
+                            <button class="btn-ghost" onclick="deleteModel('${mid}')" title="Delete">🗑</button>
+                        </td>
+                    </tr>`;
+                }).join('')
             }
+            </tbody>
+        </table>`;
+}
+
+// ── Model select → Issue view ─────────────────────────────
+function selectModel(modelId) {
+    const brand = allData[currentBrand];
+    const type  = brand.types[currentType];
+    const model = type.models[modelId];
+    const issues = Object.entries(model.issues || {});
+    const main = document.getElementById('mainArea');
+
+    main.innerHTML = `
+        <div class="breadcrumb">
+            <span onclick="renderTypeView();currentType=null;">${brand.name}</span>
+            <span class="sep">›</span>
+            <span onclick="renderModelView()">${type.name}</span>
+            <span class="sep">›</span>
+            <b>${model.name}</b>
+        </div>
+        <div class="main-header">
+            <h3>${model.name}</h3>
+            <button class="btn-secondary" onclick="openAddIssue('${modelId}')">+ Add Issue</button>
+        </div>
+        <table class="data-table" id="issueTable">
+            <thead><tr><th>Issue / Service</th><th style="width:140px;">Price (€)</th><th style="width:60px;"></th></tr></thead>
+            <tbody>
+            ${issues.length === 0
+                ? `<tr><td colspan="3" style="text-align:center;color:#86868b;padding:24px;">No issues yet — click "+ Add Issue"</td></tr>`
+                : issues.map(([iid, issue]) => `
+                    <tr>
+                        <td>${issue.name}<br><small style="color:#aaa;font-size:11px;">${iid}</small></td>
+                        <td>
+                            <input class="price-input" type="number" min="-1"
+                                value="${issue.price}"
+                                data-brand="${currentBrand}"
+                                data-type="${currentType}"
+                                data-model="${modelId}"
+                                data-issue="${iid}"
+                                onchange="updatePrice('${modelId}','${iid}',this.value)" />
+                            <div style="font-size:10px;color:#aaa;margin-top:2px;">0=Contact Us &nbsp;-1=Hidden</div>
+                        </td>
+                        <td><button class="btn-ghost" onclick="deleteIssue('${modelId}','${iid}')">🗑</button></td>
+                    </tr>`).join('')
+            }
+            </tbody>
+        </table>`;
+
+    // Store current model context for add issue modal
+    document.getElementById('addIssueModal').dataset.modelId = modelId;
+}
+
+// ── CRUD ──────────────────────────────────────────────────
+function updatePrice(modelId, issueId, val) {
+    allData[currentBrand].types[currentType].models[modelId].issues[issueId].price = parseInt(val)||0;
+    markDirty();
+}
+
+function syncPriceInputs() {
+    document.querySelectorAll('.price-input[data-issue]').forEach(inp => {
+        const { brand, type, model, issue } = inp.dataset;
+        if (allData[brand]?.types[type]?.models[model]?.issues[issue] !== undefined) {
+            allData[brand].types[type].models[model].issues[issue].price = parseInt(inp.value)||0;
+        }
+    });
+}
+
+// Add Brand
+function addBrand() {
+    const id   = document.getElementById('mBrandId').value.trim().replace(/\s+/g,'-').toLowerCase();
+    const name = document.getElementById('mBrandName').value.trim();
+    if (!id||!name) return showToast('Fill in all fields','error');
+    if (allData[id]) return showToast('Brand ID already exists','error');
+    allData[id] = { name, types:{} };
+    closeModal('addBrandModal');
+    document.getElementById('mBrandId').value='';
+    document.getElementById('mBrandName').value='';
+    currentBrand = id; currentType = null;
+    renderSidebar();
+    renderTypeView();
+    saveBrand(id);
+}
+
+// Add Type
+function addType() {
+    const id   = document.getElementById('mTypeId').value.trim().replace(/\s+/g,'-').toLowerCase();
+    const name = document.getElementById('mTypeName').value.trim();
+    if (!id||!name) return showToast('Fill in all fields','error');
+    if (allData[currentBrand].types[id]) return showToast('Type ID already exists','error');
+    syncPriceInputs();
+    allData[currentBrand].types[id] = { name, models:{} };
+    closeModal('addTypeModal');
+    document.getElementById('mTypeId').value='';
+    document.getElementById('mTypeName').value='';
+    markDirty();
+    renderTypeView();
+}
+
+// Add Model
+function addModel() {
+    const id   = document.getElementById('mModelId').value.trim().replace(/\s+/g,'-').toLowerCase();
+    const name = document.getElementById('mModelName').value.trim();
+    if (!id||!name) return showToast('Fill in all fields','error');
+    if (allData[currentBrand].types[currentType].models[id]) return showToast('Model ID already exists','error');
+    syncPriceInputs();
+    allData[currentBrand].types[currentType].models[id] = { name, issues:{} };
+    closeModal('addModelModal');
+    document.getElementById('mModelId').value='';
+    document.getElementById('mModelName').value='';
+    markDirty();
+    renderModelView();
+}
+
+// Add Issue
+function openAddIssue(modelId) {
+    document.getElementById('addIssueModal').dataset.modelId = modelId;
+    document.getElementById('mIssueId').value='';
+    document.getElementById('mIssueName').value='';
+    document.getElementById('mIssuePrice').value='';
+    openModal('addIssueModal');
+}
+
+function addIssue() {
+    const modelId = document.getElementById('addIssueModal').dataset.modelId;
+    const id    = document.getElementById('mIssueId').value.trim().replace(/\s+/g,'_').toLowerCase();
+    const name  = document.getElementById('mIssueName').value.trim();
+    const price = parseInt(document.getElementById('mIssuePrice').value)||0;
+    if (!id||!name) return showToast('Fill in all fields','error');
+    if (allData[currentBrand].types[currentType].models[modelId].issues[id])
+        return showToast('Issue ID already exists','error');
+    syncPriceInputs();
+    allData[currentBrand].types[currentType].models[modelId].issues[id] = { name, price };
+    closeModal('addIssueModal');
+    document.getElementById('mIssueId').value='';
+    document.getElementById('mIssueName').value='';
+    document.getElementById('mIssuePrice').value='';
+    markDirty();
+    selectModel(modelId);
+}
+
+// Delete
+function deleteBrand(brandId) {
+    if (!confirm(`Delete brand "${allData[brandId].name}" and ALL data?`)) return;
+    fetch(`/api/brands/${brandId}`,{method:'DELETE',headers:{'x-admin-token':ADMIN_TOKEN}})
+        .then(()=>{ delete allData[brandId]; currentBrand=null; currentType=null; renderSidebar();
+            document.getElementById('mainArea').innerHTML='<div class="empty">← Select a brand</div>';
+            showToast('Brand deleted'); });
+}
+
+function deleteType(typeId) {
+    if (!confirm(`Delete type "${allData[currentBrand].types[typeId].name}"?`)) return;
+    syncPriceInputs();
+    delete allData[currentBrand].types[typeId];
+    currentType = null;
+    markDirty();
+    renderTypeView();
+}
+
+function deleteModel(modelId) {
+    const name = allData[currentBrand].types[currentType].models[modelId].name;
+    if (!confirm(`Delete model "${name}"?`)) return;
+    syncPriceInputs();
+    delete allData[currentBrand].types[currentType].models[modelId];
+    markDirty();
+    renderModelView();
+}
+
+function deleteIssue(modelId, issueId) {
+    if (!confirm(`Delete issue "${allData[currentBrand].types[currentType].models[modelId].issues[issueId].name}"?`)) return;
+    syncPriceInputs();
+    delete allData[currentBrand].types[currentType].models[modelId].issues[issueId];
+    markDirty();
+    selectModel(modelId);
+}
+
+// ── Save ──────────────────────────────────────────────────
+function markDirty() {
+    dirty = true;
+    document.getElementById('globalSaveBtn').disabled = false;
+    document.getElementById('saveStatus').textContent = '● Unsaved';
+}
+
+async function saveCurrentBrand() {
+    if (!currentBrand) return;
+    syncPriceInputs();
+    await saveBrand(currentBrand);
+}
+
+async function saveBrand(brandId) {
+    const btn = document.getElementById('globalSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+        const res = await fetch(`/api/brands/${brandId}`, {
+            method:'PUT',
+            headers:{'Content-Type':'application/json','x-admin-token':ADMIN_TOKEN},
+            body: JSON.stringify(allData[brandId])
         });
+        if (!res.ok) throw new Error(await res.text());
+        dirty = false;
+        document.getElementById('saveStatus').textContent = '✓ Saved';
+        showToast('Saved','success');
+        setTimeout(()=>document.getElementById('saveStatus').textContent='', 3000);
+    } catch(e) { showToast('Save failed: '+e.message,'error'); }
+    btn.textContent = 'Save Changes';
+    btn.disabled = dirty;
+}
 
-        // Check if already logged in
-        if (sessionStorage.getItem('admin_logged_in') === 'true') {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('adminNav').style.display = 'block';
-            document.getElementById('adminContainer').classList.add('show');
-        }
+// ── Modal helpers ─────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(m =>
+    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('show'); }));
 
-        // Logout
-        function logout() {
-            sessionStorage.removeItem('admin_logged_in');
-            location.reload();
-        }
-    </script>
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast show '+type;
+    setTimeout(()=>t.className='toast', 3000);
+}
+</script>
 </body>
 </html>

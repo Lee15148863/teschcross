@@ -18,6 +18,7 @@ mongoose.connect(process.env.DBCon, { dbName: 'techcross' })
 
 // Routes
 app.use('/api/pricing', require('./api/pricing'));
+app.use('/api/brands', require('./api/brands'));
 
 // Fallback: serve index.html for all non-API routes
 app.get('/{*splat}', (req, res) => {

@@ -389,7 +389,7 @@ class EnhancedSearchEngine {
             if (result.services && result.serviceTypes && Object.keys(result.services).length > 0) {
                 const services = result.services;
                 const serviceTypes = result.serviceTypes;
-                const serviceKeys = Object.keys(services).slice(0, 6); // Show first 6 services
+                const serviceKeys = Object.keys(services).slice(0, 6);
                 
                 const servicesList = serviceKeys.map(serviceKey => {
                     const serviceInfo = serviceTypes[serviceKey];
@@ -397,7 +397,9 @@ class EnhancedSearchEngine {
                     let price = services[serviceKey];
                     
                     if (price === 0) {
-                        price = '<span style="color: #ff3b30;">Contact Us</span>';
+                        price = '<span style="color: #ff9500;">Contact Us</span>';
+                    } else if (price === -1) {
+                        return ''; // hidden
                     } else {
                         price = `<span style="color: #34c759; font-weight: 600;">€${price}</span>`;
                     }
@@ -408,23 +410,20 @@ class EnhancedSearchEngine {
                             <span class="service-price">${price}</span>
                         </div>
                     `;
-                }).join('');
+                }).filter(Boolean).join('');
                 
+                const totalVisible = Object.values(services).filter(p => p !== -1).length;
+
                 html += `
                     <div class="search-result-item" data-index="${index}" data-link="${result.link}">
                         <h3>
                             <span class="device-type">${result.icon} ${result.type}</span>
                             <span>${highlightedName}</span>
-                            ${result.matchScore >= 90 ? '<span class="match-badge">Best Match</span>' : ''}
                         </h3>
                         <div class="search-result-services">
                             ${servicesList}
                         </div>
-                        ${Object.keys(services).length > 6 ? `
-                            <div style="text-align: center; margin-top: 8px; color: #86868b; font-size: 13px;">
-                                +${Object.keys(services).length - 6} more services
-                            </div>
-                        ` : ''}
+                        ${totalVisible > 6 ? `<div style="text-align:center;margin-top:8px;color:#86868b;font-size:13px;">+${totalVisible - 6} more services</div>` : ''}
                         <a href="${result.link}" class="search-result-link">View full pricing →</a>
                     </div>
                 `;
@@ -595,10 +594,16 @@ class EnhancedSearchEngine {
 }
 
 // Initialize enhanced search engine when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.enhancedSearchEngine = new EnhancedSearchEngine();
-    });
-} else {
+// If search-data-api.js is loaded, wait for the index to be built first
+async function initSearchEngine() {
+    if (window._searchIndexReady) {
+        await window._searchIndexReady;
+    }
     window.enhancedSearchEngine = new EnhancedSearchEngine();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSearchEngine);
+} else {
+    initSearchEngine();
 }
