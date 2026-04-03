@@ -23,6 +23,11 @@
         .brand-card:hover, .brand-card.active { border-color:#0071e3; background:#f0f7ff; transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,113,227,.12); }
         .brand-card h3 { font-size:22px; font-weight:700; margin-bottom:6px; }
         .brand-card small { color:#86868b; font-size:13px; }
+        .brand-card.coming-soon small { color:#ff9500; font-weight:600; }
+        .brand-card.coming-soon:hover { border-color:#e5e5ea; background:#fff; transform:none; box-shadow:none; }
+        .coming-soon-contact { margin-top:10px; font-size:12px; color:#6e6e73; line-height:1.5; }
+        .coming-soon-contact a { color:#0071e3; font-weight:600; text-decoration:none; }
+        .coming-soon-contact a:hover { text-decoration:underline; }
 
         /* ── Model list ── */
         .section-back { display:inline-flex; align-items:center; gap:6px; color:#0071e3; cursor:pointer; font-size:15px; font-weight:500; margin-bottom:20px; background:none; border:none; padding:0; }
@@ -142,10 +147,7 @@ async function init() {
 
 // ── Step 1: Brand grid ──────────────────────────────────
 function renderBrands() {
-    const entries = Object.entries(allBrands).filter(([, brand]) => {
-        // Only show brands that have at least one type with at least one model
-        return Object.values(brand.types || {}).some(t => Object.keys(t.models||{}).length > 0);
-    });
+    const entries = Object.entries(allBrands);
     if (entries.length === 0) {
         app.innerHTML = `<div class="empty">No pricing data available yet.</div>`;
         return;
@@ -153,9 +155,11 @@ function renderBrands() {
     app.innerHTML = `<div class="brand-grid">` +
         entries.map(([id, brand]) => {
             const modelCount = Object.values(brand.types||{}).reduce((s,t)=>s+Object.keys(t.models||{}).length,0);
-            return `<div class="brand-card" onclick="selectBrand('${id}')">
+            const comingSoon = modelCount === 0;
+            return `<div class="brand-card${comingSoon?' coming-soon':''}" onclick="${comingSoon?'':`selectBrand('${id}')`}" style="${comingSoon?'opacity:.7;cursor:default;':''}">
                 <h3>${brand.name}</h3>
-                <small>${modelCount} model${modelCount!==1?'s':''}</small>
+                <small>${comingSoon ? 'Coming Soon' : modelCount + ' model' + (modelCount!==1?'s':'')}</small>
+                ${comingSoon ? '<div class="coming-soon-contact">For enquiries please <a href="https://wa.me/353894825300?text=Hi%20I%20need%20a%20repair%20quote" target="_blank" rel="noopener">contact us</a></div>' : ''}
             </div>`;
         }).join('') +
     `</div>`;
