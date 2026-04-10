@@ -1342,6 +1342,31 @@ body {
     color: #6e6e73;
 }
 
+.footer-social {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #e5e5ea;
+    color: #1d1d1f;
+    transition: all 0.2s;
+}
+
+.social-link:hover {
+    background: #0071e3;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .services-grid {
