@@ -102,16 +102,31 @@ class EnhancedSearchEngine {
         const tNorm = this.normalize(item.name);
         const qNorm = this.normalize(query);
 
+        // Smart split: "iphone11" → "iphone 11", "ipad pro" stays as is
+        const smartSplit = (str) => {
+            return str
+                .replace(/([a-z])(\d)/gi, '$1 $2')   // "iphone11" → "iphone 11"
+                .replace(/(\d)([a-z])/gi, '$1 $2')   // "11pro" → "11 pro"
+                .trim();
+        };
+
+        const qSmart = smartSplit(q);
+        const tSmart = smartSplit(t);
+
         // Exact match
-        if (t === q || tNorm === qNorm) return { match: true, score: 1000 };
+        if (t === q || tNorm === qNorm || tSmart === qSmart) return { match: true, score: 1000 };
 
         // Name starts with query
-        if (t.startsWith(q) || tNorm.startsWith(qNorm)) return { match: true, score: 900 };
+        if (t.startsWith(q) || tNorm.startsWith(qNorm) || tSmart.startsWith(qSmart)) return { match: true, score: 900 };
 
         // Split into words for word-level matching
-        const textWords = t.split(/[\s\-\/\(\),\.]+/).filter(Boolean);
-        const queryWords = q.split(/\s+/).filter(Boolean);
+        const textWords = tSmart.split(/[\s\-\/\(\),\.]+/).filter(Boolean);
+        const queryWords = qSmart.split(/\s+/).filter(Boolean);
         const totalWords = queryWords.length;
+
+        // Extract numbers for precise number matching
+        const queryNums = this.extractNumbers(qSmart);
+        const textNums = this.extractNumbers(t);
 
         let exactWordMatches = 0;
         let partialWordMatches = 0;
@@ -119,7 +134,6 @@ class EnhancedSearchEngine {
             if (textWords.some(tw => tw === qw)) {
                 exactWordMatches++;
             } else if (textWords.some(tw => tw.includes(qw))) {
-                // Only: text word contains query word (NOT reverse — prevents "inch" matching "iphone")
                 partialWordMatches++;
             }
         }
@@ -131,20 +145,36 @@ class EnhancedSearchEngine {
             score = 600 + (exactWordMatches / totalWords) * 100;
         } else if (exactWordMatches > 0 || partialWordMatches > 0) {
             score = 300 + ((exactWordMatches + partialWordMatches) / totalWords) * 100;
-        } else if (tNorm.includes(qNorm)) {
+        } else if (tNorm.includes(qNorm) || tSmart.includes(qSmart)) {
             score = 200;
         } else {
             return { match: false, score: 0 };
         }
 
-        // Boost when query words match the item's type/brand (e.g. "iphone" → type "iPhone")
-        // This ensures "iPhone 11" ranks above "iPad Pro 11-inch" when searching "iphone 11"
+        // Boost: exact number match (e.g. searching "11" should boost iPhone 11 over iPhone 12)
+        if (queryNums.length > 0) {
+            const exactNumMatches = queryNums.filter(qn => textNums.includes(qn)).length;
+            if (exactNumMatches === queryNums.length) {
+                score += 300; // All numbers match exactly
+            } else if (exactNumMatches > 0) {
+                score += 100; // Some numbers match
+            } else {
+                score -= 200; // No number match, penalize
+            }
+        }
+
+        // Boost when query words match the item's type/brand
         const itemType = (item.type || '').toLowerCase();
         const itemBrand = (item.brand || '').toLowerCase();
         for (const qw of queryWords) {
             if (qw.length > 2 && (itemType.includes(qw) || itemBrand.includes(qw))) {
                 score += 500;
             }
+        }
+
+        // Boost shorter names (more specific match, e.g. "iPhone 11" over "iPhone 11 Pro Max")
+        if (score > 0) {
+            score += Math.max(0, 50 - t.length);
         }
 
         return { match: true, score };
