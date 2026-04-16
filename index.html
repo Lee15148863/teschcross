@@ -251,6 +251,87 @@
         </div>
     </section>
 
+    <!-- Reviews -->
+    <section class="section section-dark" id="reviews">
+        <div class="section-header">
+            <h2 class="section-headline" data-en="Customer Reviews." data-ga="Léirmheasanna Custaiméirí.">Customer Reviews.</h2>
+            <p class="section-subheadline" data-en="What our customers say about us." data-ga="Cad a deir ár gcustaiméirí fúinn.">What our customers say about us.</p>
+        </div>
+        <div id="reviewsList" style="max-width:900px;margin:0 auto;padding:0 22px;"></div>
+        <!-- Submit review form -->
+        <div style="max-width:500px;margin:32px auto 0;padding:0 22px;">
+            <div style="background:#fff;border:1.5px solid #e5e5ea;border-radius:16px;padding:24px;">
+                <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;">Leave a Review</h3>
+                <form id="reviewForm">
+                    <input type="text" id="revName" placeholder="Your name" required style="width:100%;padding:10px 14px;border:1.5px solid #e5e5ea;border-radius:10px;font-size:15px;margin-bottom:10px;box-sizing:border-box;">
+                    <div id="starPicker" style="margin-bottom:10px;font-size:28px;cursor:pointer;user-select:none;">
+                        <span data-star="1">☆</span><span data-star="2">☆</span><span data-star="3">☆</span><span data-star="4">☆</span><span data-star="5">☆</span>
+                    </div>
+                    <textarea id="revMsg" placeholder="Your experience..." required rows="3" style="width:100%;padding:10px 14px;border:1.5px solid #e5e5ea;border-radius:10px;font-size:15px;margin-bottom:10px;box-sizing:border-box;resize:vertical;"></textarea>
+                    <button type="submit" class="btn-primary" style="width:100%;">Submit Review</button>
+                </form>
+                <div id="reviewFormMsg" style="display:none;margin-top:12px;padding:12px;border-radius:10px;text-align:center;font-size:14px;"></div>
+            </div>
+        </div>
+        <script>
+        (function(){
+            let selectedRating = 0;
+            const stars = document.querySelectorAll('#starPicker span');
+            stars.forEach(s => {
+                s.addEventListener('click', () => {
+                    selectedRating = parseInt(s.dataset.star);
+                    stars.forEach((ss, i) => { ss.textContent = i < selectedRating ? '★' : '☆'; });
+                });
+                s.addEventListener('mouseenter', () => {
+                    const v = parseInt(s.dataset.star);
+                    stars.forEach((ss, i) => { ss.textContent = i < v ? '★' : '☆'; });
+                });
+            });
+            document.getElementById('starPicker').addEventListener('mouseleave', () => {
+                stars.forEach((ss, i) => { ss.textContent = i < selectedRating ? '★' : '☆'; });
+            });
+
+            // Load approved reviews
+            async function loadReviews() {
+                try {
+                    const res = await fetch('/api/reviews');
+                    const reviews = await res.json();
+                    const el = document.getElementById('reviewsList');
+                    if (!reviews.length) { el.innerHTML = '<p style="text-align:center;color:#86868b;">No reviews yet. Be the first!</p>'; return; }
+                    el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">' +
+                        reviews.map(r => `<div style="background:#fff;border:1.5px solid #e5e5ea;border-radius:14px;padding:20px;">
+                            <div style="color:#ff9500;font-size:18px;margin-bottom:6px;">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+                            <p style="font-size:15px;color:#1d1d1f;margin-bottom:10px;line-height:1.5;">${r.message}</p>
+                            <p style="font-size:13px;color:#86868b;font-weight:600;">— ${r.name}</p>
+                        </div>`).join('') + '</div>';
+                } catch(e) { console.error('Failed to load reviews'); }
+            }
+            loadReviews();
+
+            // Submit review
+            document.getElementById('reviewForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const msg = document.getElementById('reviewFormMsg');
+                if (!selectedRating) { msg.style.display='block'; msg.style.background='#fff3cd'; msg.style.color='#856404'; msg.textContent='Please select a rating'; return; }
+                try {
+                    const res = await fetch('/api/reviews', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: document.getElementById('revName').value, rating: selectedRating, message: document.getElementById('revMsg').value })
+                    });
+                    const data = await res.json();
+                    msg.style.display = 'block';
+                    msg.style.background = '#d4edda'; msg.style.color = '#155724';
+                    msg.textContent = data.message || 'Thank you!';
+                    document.getElementById('reviewForm').reset();
+                    selectedRating = 0;
+                    stars.forEach(ss => { ss.textContent = '☆'; });
+                } catch(err) { msg.style.display='block'; msg.style.background='#f8d7da'; msg.style.color='#721c24'; msg.textContent='Failed to submit. Please try again.'; }
+            });
+        })();
+        </script>
+    </section>
+
     <!-- Social Media Feed -->
     <section class="section" id="social">
         <div class="section-header">

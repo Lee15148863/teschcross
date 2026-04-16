@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Management - Tech Cross Admin</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .ar-container { max-width:900px; margin:0 auto; padding:120px 22px 80px; }
+        .ar-header { text-align:center; margin-bottom:32px; }
+        .ar-header h1 { font-size:28px; font-weight:700; }
+        .ar-tabs { display:flex; gap:12px; margin-bottom:24px; justify-content:center; }
+        .ar-tab { padding:8px 20px; border-radius:980px; border:1.5px solid #e5e5ea; background:#fff; cursor:pointer; font-size:14px; font-weight:600; }
+        .ar-tab.active { background:#0071e3; color:#fff; border-color:#0071e3; }
+        .ar-card { background:#fff; border:1.5px solid #e5e5ea; border-radius:14px; padding:20px; margin-bottom:12px; }
+        .ar-card.pending { border-left:4px solid #ff9500; }
+        .ar-card.approved { border-left:4px solid #34c759; }
+        .ar-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px; }
+        .ar-name { font-weight:700; font-size:15px; }
+        .ar-date { font-size:12px; color:#86868b; }
+        .ar-stars { color:#ff9500; font-size:16px; margin-bottom:8px; }
+        .ar-msg { font-size:14px; color:#1d1d1f; line-height:1.5; margin-bottom:12px; }
+        .ar-actions { display:flex; gap:8px; }
+        .ar-btn { padding:6px 16px; border-radius:8px; border:none; cursor:pointer; font-size:13px; font-weight:600; }
+        .ar-btn-approve { background:#34c759; color:#fff; }
+        .ar-btn-reject { background:#ff9500; color:#fff; }
+        .ar-btn-delete { background:#ff3b30; color:#fff; }
+        .ar-status { font-size:12px; padding:3px 10px; border-radius:980px; font-weight:600; }
+        .ar-status.approved { background:#d4edda; color:#155724; }
+        .ar-status.pending { background:#fff3cd; color:#856404; }
+        .ar-empty { text-align:center; color:#86868b; padding:40px; }
+    </style>
+</head>
+<body>
+<nav class="nav">
+    <div class="nav-content">
+        <div class="nav-logo"><a href="index.html"><img src="logo-sm.png" alt="Tech Cross"></a></div>
+        <ul class="nav-list">
+            <li><a href="admin-brands.html">Brands Admin</a></li>
+            <li><a href="admin-reviews.html" style="color:#0071e3;font-weight:700;">Reviews</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="ar-container">
+    <div class="ar-header">
+        <h1>Review Management</h1>
+    </div>
+    <div class="ar-tabs">
+        <div class="ar-tab active" data-filter="all">All</div>
+        <div class="ar-tab" data-filter="pending">Pending</div>
+        <div class="ar-tab" data-filter="approved">Approved</div>
+    </div>
+    <div id="reviewList"></div>
+</div>
+
+<script>
+const TOKEN = localStorage.getItem('admin_token') || prompt('Enter admin token:');
+if (TOKEN) localStorage.setItem('admin_token', TOKEN);
+let currentFilter = 'all';
+let allReviews = [];
+
+document.querySelectorAll('.ar-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.ar-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        renderReviews();
+    });
+});
+
+async function loadReviews() {
+    try {
+        const res = await fetch('/api/reviews/all', { headers: { 'x-admin-token': TOKEN } });
+        if (!res.ok) { alert('Unauthorized'); return; }
+        allReviews = await res.json();
+        renderReviews();
+    } catch(e) { alert('Failed to load reviews'); }
+}
+
+function renderReviews() {
+    const el = document.getElementById('reviewList');
+    let filtered = allReviews;
+    if (currentFilter === 'pending') filtered = allReviews.filter(r => !r.approved);
+    if (currentFilter === 'approved') filtered = allReviews.filter(r => r.approved);
+
+    if (!filtered.length) { el.innerHTML = '<div class="ar-empty">No reviews found.</div>'; return; }
+
+    el.innerHTML = filtered.map(r => `
+        <div class="ar-card ${r.approved ? 'approved' : 'pending'}">
+            <div class="ar-meta">
+                <span class="ar-name">${r.name}</span>
+                <span>
+                    <span class="ar-status ${r.approved ? 'approved' : 'pending'}">${r.approved ? 'Approved' : 'Pending'}</span>
+                    <span class="ar-date">${new Date(r.createdAt).toLocaleDateString()}</span>
+                </span>
+            </div>
+            <div class="ar-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+            <div class="ar-msg">${r.message}</div>
+            <div class="ar-actions">
+                ${!r.approved ? `<button class="ar-btn ar-btn-approve" onclick="approveReview('${r._id}')">Approve</button>` : `<button class="ar-btn ar-btn-reject" onclick="rejectReview('${r._id}')">Hide</button>`}
+                <button class="ar-btn ar-btn-delete" onclick="deleteReview('${r._id}')">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function approveReview(id) {
+    await fetch(`/api/reviews/${id}/approve`, { method: 'PUT', headers: { 'x-admin-token': TOKEN } });
+    loadReviews();
+}
+async function rejectReview(id) {
+    await fetch(`/api/reviews/${id}/reject`, { method: 'PUT', headers: { 'x-admin-token': TOKEN } });
+    loadReviews();
+}
+async function deleteReview(id) {
+    if (!confirm('Delete this review permanently?')) return;
+    await fetch(`/api/reviews/${id}`, { method: 'DELETE', headers: { 'x-admin-token': TOKEN } });
+    loadReviews();
+}
+
+loadReviews();
+</script>
+</body>
+</html>
