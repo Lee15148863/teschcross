@@ -11,6 +11,9 @@ const TransactionSchema = new mongoose.Schema({
     unitPrice:    { type: Number, required: true },
     costPrice:    { type: Number, required: true },
     isSecondHand: { type: Boolean, default: false },
+    purchasedFromCustomer: { type: Boolean, default: false },
+    marginScheme: { type: Boolean, default: false },
+    source:       { type: String, enum: ['customer', 'dealer', 'other', ''], default: '' },
     discount:     {
       type:  { type: String, enum: ['percentage', 'fixed'] },
       value: { type: Number }

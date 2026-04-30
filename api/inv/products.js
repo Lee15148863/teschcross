@@ -137,8 +137,8 @@ router.post('/', async (req, res) => {
   try {
     const {
       name, sku, category, costPrice, sellingPrice,
-      stock, isSecondHand, serialNumber, attributes,
-      lowStockThreshold
+      stock, isSecondHand, purchasedFromCustomer, source, marginScheme,
+      serialNumber, attributes, lowStockThreshold
     } = req.body;
 
     // Required fields validation
@@ -195,6 +195,9 @@ router.post('/', async (req, res) => {
       sellingPrice,
       stock: stock || 0,
       isSecondHand: !!isSecondHand,
+      purchasedFromCustomer: !!purchasedFromCustomer,
+      source: source || '',
+      marginScheme: !!marginScheme,
       active: true
     };
 
@@ -231,8 +234,8 @@ router.put('/:id', async (req, res) => {
   try {
     const {
       name, sku, category, costPrice, sellingPrice,
-      stock, isSecondHand, serialNumber, attributes,
-      lowStockThreshold, active
+      stock, isSecondHand, purchasedFromCustomer, source, marginScheme,
+      serialNumber, attributes, lowStockThreshold, active
     } = req.body;
 
     const updateFields = {};
@@ -248,6 +251,9 @@ router.put('/:id', async (req, res) => {
     if (sellingPrice !== undefined) updateFields.sellingPrice = sellingPrice;
     if (stock !== undefined) updateFields.stock = stock;
     if (isSecondHand !== undefined) updateFields.isSecondHand = isSecondHand;
+    if (purchasedFromCustomer !== undefined) updateFields.purchasedFromCustomer = purchasedFromCustomer;
+    if (source !== undefined) updateFields.source = source;
+    if (marginScheme !== undefined) updateFields.marginScheme = marginScheme;
     if (serialNumber !== undefined) updateFields.serialNumber = serialNumber.trim();
     if (attributes !== undefined) updateFields.attributes = attributes;
     if (lowStockThreshold !== undefined) updateFields.lowStockThreshold = lowStockThreshold;

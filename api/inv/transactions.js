@@ -111,16 +111,20 @@ router.post('/checkout', async (req, res) => {
         unitPrice: product.sellingPrice,
         costPrice: product.costPrice,
         isSecondHand: product.isSecondHand || false,
+        purchasedFromCustomer: product.purchasedFromCustomer || false,
+        marginScheme: product.marginScheme || false,
+        source: product.source || '',
         discount: item.discount || null
       });
     }
 
     // Calculate discounted cart using the discount engine
+    // Use marginScheme flag to determine VAT type (margin vs standard)
     const calcItems = cartItems.map(item => ({
       unitPrice: item.unitPrice,
       costPrice: item.costPrice,
       quantity: item.quantity,
-      isSecondHand: item.isSecondHand,
+      isSecondHand: item.marginScheme,  // discount engine uses isSecondHand to pick Margin VAT
       discount: item.discount
     }));
 
@@ -170,6 +174,9 @@ router.post('/checkout', async (req, res) => {
         unitPrice: item.unitPrice,
         costPrice: item.costPrice,
         isSecondHand: item.isSecondHand,
+        purchasedFromCustomer: item.purchasedFromCustomer,
+        marginScheme: item.marginScheme,
+        source: item.source,
         discount: item.discount || undefined,
         discountedPrice: calcItem.discountedPrice,
         subtotal: calcItem.subtotal,

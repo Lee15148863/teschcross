@@ -152,6 +152,14 @@
                 <label><input type="checkbox" id="fSecondHand" onchange="toggleSecondHand()"> 二手商品</label>
             </div>
             <div class="secondhand-fields" id="secondHandFields">
+                <div class="form-group"><label>来源</label>
+                    <select id="fSource" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;">
+                        <option value="customer">从客人收购</option>
+                        <option value="dealer">从其他二手商人进货</option>
+                        <option value="other">其他来源</option>
+                    </select>
+                </div>
+                <div class="form-group"><label><input type="checkbox" id="fMarginScheme" checked> 适用 Margin Scheme VAT（仅对利润差价缴税）</label><div class="hint">适用于从非 VAT 注册方（客人或其他二手商人）购入的商品</div></div>
                 <div class="form-group"><label>序列号 (IMEI/SN) <span style="color:#ff3b30;">*</span></label><input type="text" id="fSerial"></div>
                 <div class="margin-info" id="marginInfo"></div>
             </div>
@@ -265,10 +273,16 @@ function updateMarginInfo(){
     const cost=parseFloat(document.getElementById('fCost').value)||0;
     const price=parseFloat(document.getElementById('fPrice').value)||0;
     const margin=price-cost;
-    document.getElementById('marginInfo').textContent=`差价: €${margin.toFixed(2)} | Margin VAT: €${Math.max(0,margin*0.23/1.23).toFixed(2)}`;
+    const useMargin=document.getElementById('fMarginScheme').checked;
+    if(useMargin){
+        document.getElementById('marginInfo').textContent=`差价: €${margin.toFixed(2)} | Margin VAT: €${Math.max(0,margin*0.23/1.23).toFixed(2)}`;
+    }else{
+        document.getElementById('marginInfo').textContent=`Standard VAT: €${(price*0.23/1.23).toFixed(2)}（适用标准税率）`;
+    }
 }
 document.getElementById('fCost').addEventListener('input',updateMarginInfo);
 document.getElementById('fPrice').addEventListener('input',updateMarginInfo);
+document.getElementById('fMarginScheme').addEventListener('change',updateMarginInfo);
 
 // Category template auto-load
 document.getElementById('fCategory').addEventListener('change',async function(){
@@ -333,6 +347,8 @@ async function editProduct(id){
         document.getElementById('fStock').parentElement.style.display='none';
         document.getElementById('fSecondHand').checked=p.isSecondHand;
         document.getElementById('fSerial').value=p.serialNumber||'';
+        document.getElementById('fSource').value=p.source||'customer';
+        document.getElementById('fMarginScheme').checked=p.marginScheme!==false;
         document.getElementById('secondHandFields').classList.toggle('show',p.isSecondHand);
         updateMarginInfo();
         // Load attributes
@@ -355,7 +371,12 @@ async function saveProduct(){
         lowStockThreshold:parseInt(document.getElementById('fThreshold').value)||10,
         attributes:getAttributes()
     };
-    if(body.isSecondHand)body.serialNumber=document.getElementById('fSerial').value.trim();
+    if(body.isSecondHand){
+        body.serialNumber=document.getElementById('fSerial').value.trim();
+        body.purchasedFromCustomer=document.getElementById('fSource').value==='customer';
+        body.source=document.getElementById('fSource').value;
+        body.marginScheme=document.getElementById('fMarginScheme').checked;
+    }
     if(!id)body.stock=parseInt(document.getElementById('fStock').value)||0;
     if(!body.name||!body.sku||!body.category||isNaN(body.costPrice)||isNaN(body.sellingPrice)){showToast('请填写所有必填字段','error');return;}
     try{
