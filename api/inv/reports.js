@@ -77,8 +77,10 @@ router.get('/daily', async (req, res) => {
     let stdRate23Sales = 0, stdRate23Vat = 0;
     let marginSales = 0, marginVat = 0;
     let reducedRate135Sales = 0, reducedRate135Vat = 0;
-    let customerPurchaseCashOut = 0; // cash paid to buy from customers
+    let lycaSales = 0, lycaProfit = 0, lycaVat = 0, lycaCount = 0;
+    let customerPurchaseCashOut = 0;
     const marginItems = [];
+    const lycaItems = [];
 
     for (const txn of transactions) {
       totalSales += txn.totalAmount;
@@ -91,7 +93,26 @@ router.get('/daily', async (req, res) => {
 
       for (const item of txn.items) {
         const rate = item.vatRate || 0.23;
-        if (item.marginScheme || item.isSecondHand) {
+        const isLyca = (item.sku || '').toUpperCase().startsWith('LYCA-') || (item.name || '').toLowerCase().startsWith('lyca');
+
+        if (isLyca) {
+          // Lyca Credit: separate section
+          const qty = item.quantity || 1;
+          lycaSales += item.subtotal;
+          lycaProfit += (item.marginVat > 0 ? ((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)) * qty : 0);
+          lycaVat += item.marginVat || 0;
+          lycaCount += qty;
+          lycaItems.push({
+            receiptNumber: txn.receiptNumber,
+            name: item.name, sku: item.sku || '',
+            faceValue: item.unitPrice || 0,
+            costPrice: item.costPrice || 0,
+            profit: r((item.unitPrice || 0) - (item.costPrice || 0)),
+            vatPayable: r((item.marginVat || 0) / (item.quantity || 1)),
+            quantity: qty,
+            totalVat: item.marginVat || 0
+          });
+        } else if (item.marginScheme || item.isSecondHand) {
           marginSales += item.subtotal;
           marginVat += item.marginVat || 0;
           const isPurchasedFromCustomer = item.purchasedFromCustomer || item.source === 'customer';
@@ -100,8 +121,7 @@ router.get('/daily', async (req, res) => {
           }
           marginItems.push({
             receiptNumber: txn.receiptNumber,
-            name: item.name,
-            sku: item.sku || '',
+            name: item.name, sku: item.sku || '',
             source: item.source || '',
             costPrice: item.costPrice || 0,
             sellingPrice: item.unitPrice || 0,
@@ -135,9 +155,10 @@ router.get('/daily', async (req, res) => {
         vatBreakdown: {
           standard23: { sales: r(stdRate23Sales), vatPayable: r(stdRate23Vat) },
           margin: { sales: r(marginSales), vatPayable: r(marginVat), items: marginItems },
-          reduced135: { sales: r(reducedRate135Sales), vatPayable: r(reducedRate135Vat) }
+          reduced135: { sales: r(reducedRate135Sales), vatPayable: r(reducedRate135Vat) },
+          lycaCredit: { sales: r(lycaSales), profit: r(lycaProfit), vatPayable: r(lycaVat), count: lycaCount, items: lycaItems }
         },
-        totalVatPayable: r(stdRate23Vat + marginVat + reducedRate135Vat),
+        totalVatPayable: r(stdRate23Vat + marginVat + reducedRate135Vat + lycaVat),
         customerPurchaseCashOut: r(customerPurchaseCashOut)
       }
     });
@@ -178,6 +199,7 @@ router.get('/monthly', async (req, res) => {
     let monthCash = 0, monthCard = 0;
     let monthStd23Vat = 0, monthMarginVat = 0, monthReduced135Vat = 0;
     let monthCustomerCashOut = 0;
+    let monthLycaVat = 0;
 
     for (const txn of transactions) {
       const dayKey = txn.createdAt.toISOString().split('T')[0];
@@ -188,6 +210,7 @@ router.get('/monthly', async (req, res) => {
           std23Sales: 0, std23Vat: 0,
           marginSales: 0, marginVat: 0, marginItems: [],
           reduced135Sales: 0, reduced135Vat: 0,
+          lycaSales: 0, lycaProfit: 0, lycaVat: 0, lycaCount: 0, lycaItems: [],
           customerPurchaseCashOut: 0
         };
       }
@@ -205,7 +228,22 @@ router.get('/monthly', async (req, res) => {
 
       for (const item of txn.items) {
         const rate = item.vatRate || 0.23;
-        if (item.marginScheme || item.isSecondHand) {
+        const isLyca = (item.sku || '').toUpperCase().startsWith('LYCA-') || (item.name || '').toLowerCase().startsWith('lyca');
+
+        if (isLyca) {
+          const qty = item.quantity || 1;
+          d.lycaSales += item.subtotal;
+          d.lycaProfit += ((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)) * qty;
+          d.lycaVat += item.marginVat || 0;
+          d.lycaCount += qty;
+          d.lycaItems.push({
+            receiptNumber: txn.receiptNumber, name: item.name, sku: item.sku || '',
+            faceValue: item.unitPrice || 0, costPrice: item.costPrice || 0,
+            profit: r((item.unitPrice || 0) - (item.costPrice || 0)),
+            quantity: qty, totalVat: item.marginVat || 0
+          });
+          monthLycaVat += item.marginVat || 0;
+        } else if (item.marginScheme || item.isSecondHand) {
           d.marginSales += item.subtotal;
           d.marginVat += item.marginVat || 0;
           const isPurchasedFromCustomer = item.purchasedFromCustomer || item.source === 'customer';
@@ -249,7 +287,8 @@ router.get('/monthly', async (req, res) => {
       standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
       margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
       reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
-      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat),
+      lycaCredit: { sales: r(d.lycaSales), profit: r(d.lycaProfit), vatPayable: r(d.lycaVat), count: d.lycaCount, items: d.lycaItems },
+      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat + d.lycaVat),
       customerPurchaseCashOut: r(d.customerPurchaseCashOut)
     })).sort((a, b) => a.date.localeCompare(b.date));
 
@@ -264,7 +303,8 @@ router.get('/monthly', async (req, res) => {
           standard23VatTotal: r(monthStd23Vat),
           marginVatTotal: r(monthMarginVat),
           reduced135VatTotal: r(monthReduced135Vat),
-          totalVatPayable: r(monthStd23Vat + monthMarginVat + monthReduced135Vat),
+          lycaCreditVatTotal: r(monthLycaVat),
+          totalVatPayable: r(monthStd23Vat + monthMarginVat + monthReduced135Vat + monthLycaVat),
           customerPurchaseCashOut: r(monthCustomerCashOut)
         }
       }
@@ -329,6 +369,7 @@ router.get('/weekly', async (req, res) => {
     let weekCash = 0, weekCard = 0;
     let weekStd23Vat = 0, weekMarginVat = 0, weekReduced135Vat = 0;
     let weekCustomerCashOut = 0;
+    let weekLycaVat = 0;
 
     for (const txn of transactions) {
       const dayKey = txn.createdAt.toISOString().split('T')[0];
@@ -338,6 +379,7 @@ router.get('/weekly', async (req, res) => {
           std23Sales: 0, std23Vat: 0,
           marginSales: 0, marginVat: 0, marginItems: [],
           reduced135Sales: 0, reduced135Vat: 0,
+          lycaSales: 0, lycaProfit: 0, lycaVat: 0, lycaCount: 0, lycaItems: [],
           customerPurchaseCashOut: 0
         };
       }
@@ -355,7 +397,22 @@ router.get('/weekly', async (req, res) => {
 
       for (const item of txn.items) {
         const rate = item.vatRate || 0.23;
-        if (item.marginScheme || item.isSecondHand) {
+        const isLyca = (item.sku || '').toUpperCase().startsWith('LYCA-') || (item.name || '').toLowerCase().startsWith('lyca');
+
+        if (isLyca) {
+          const qty = item.quantity || 1;
+          d.lycaSales += item.subtotal;
+          d.lycaProfit += ((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)) * qty;
+          d.lycaVat += item.marginVat || 0;
+          d.lycaCount += qty;
+          d.lycaItems.push({
+            receiptNumber: txn.receiptNumber, name: item.name, sku: item.sku || '',
+            faceValue: item.unitPrice || 0, costPrice: item.costPrice || 0,
+            profit: r((item.unitPrice || 0) - (item.costPrice || 0)),
+            quantity: qty, totalVat: item.marginVat || 0
+          });
+          weekLycaVat += item.marginVat || 0;
+        } else if (item.marginScheme || item.isSecondHand) {
           d.marginSales += item.subtotal;
           d.marginVat += item.marginVat || 0;
           const isPFC = item.purchasedFromCustomer || item.source === 'customer';
@@ -391,7 +448,8 @@ router.get('/weekly', async (req, res) => {
       standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
       margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
       reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
-      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat),
+      lycaCredit: { sales: r(d.lycaSales), profit: r(d.lycaProfit), vatPayable: r(d.lycaVat), count: d.lycaCount, items: d.lycaItems },
+      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat + d.lycaVat),
       customerPurchaseCashOut: r(d.customerPurchaseCashOut)
     })).sort((a, b) => a.date.localeCompare(b.date));
 
@@ -407,7 +465,8 @@ router.get('/weekly', async (req, res) => {
           standard23VatTotal: r(weekStd23Vat),
           marginVatTotal: r(weekMarginVat),
           reduced135VatTotal: r(weekReduced135Vat),
-          totalVatPayable: r(weekStd23Vat + weekMarginVat + weekReduced135Vat),
+          lycaCreditVatTotal: r(weekLycaVat),
+          totalVatPayable: r(weekStd23Vat + weekMarginVat + weekReduced135Vat + weekLycaVat),
           customerPurchaseCashOut: r(weekCustomerCashOut)
         }
       }
