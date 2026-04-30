@@ -231,7 +231,7 @@ async function loadProducts(page){
                 <td><strong>${esc(p.name)}</strong>${p.isSecondHand?' <span class="badge badge-secondhand">二手</span>':''}</td>
                 <td style="font-family:monospace;font-size:13px;">${esc(p.sku)}</td>
                 <td>${esc(p.category||'-')}</td>
-                <td>${p.stock<=p.lowStockThreshold?'<span style="color:#ff3b30;font-weight:600;">'+p.stock+'</span>':p.stock}</td>
+                <td>${p.stock>0&&p.stock<=p.lowStockThreshold?'<span style="color:#ff3b30;font-weight:600;">'+p.stock+'</span>':p.stock}</td>
                 <td>€${Number(p.sellingPrice).toFixed(2)}</td>
                 <td>${p.active?'<span class="badge badge-active">启用</span>':'<span class="badge badge-inactive">停用</span>'}</td>
                 <td>

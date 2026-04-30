@@ -903,7 +903,7 @@
 
       var html = '';
       cart.forEach(function(item, idx) {
-        var stockWarn = item.quantity > item.stock ? '<div class="stock-warn">⚠ ' + (lang === 'zh' ? '库存不足' : 'Low stock') + '</div>' : '';
+        var stockWarn = (item.stock > 0 && item.quantity > item.stock) ? '<div class="stock-warn">⚠ ' + (lang === 'zh' ? '库存不足' : 'Low stock') + '</div>' : '';
         var taxBadge = item.marginScheme ? '<span class="cart-item-tax tax-margin">Margin</span>' : '<span class="cart-item-tax tax-standard">' + Math.round((item.vatRate||0.23)*100) + '%</span>';
         var discountInfo = '';
         var displayPrice = item.unitPrice;

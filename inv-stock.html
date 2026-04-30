@@ -83,7 +83,7 @@
         </div>
         <div class="content">
             <div class="tabs">
-                <div class="tab active" onclick="switchTab('entry')">手动入库/出库</div>
+                <div class="tab active admin-stock-tab" onclick="switchTab('entry')">手动入库/出库</div>
                 <div class="tab" onclick="switchTab('history')">库存流水</div>
                 <div class="tab" onclick="switchTab('alerts')">低库存预警</div>
                 <div class="tab" onclick="switchTab('reconcile')" id="reconcileTab" style="display:none;">库存核对</div>
@@ -155,6 +155,14 @@ if(!user){window.location.href='inv-login.html';return;}
 document.getElementById('displayName').textContent=user.displayName||user.username;
 document.getElementById('roleBadge').textContent=user.role==='admin'?'管理员':'员工';
 if(user.role==='admin'){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');document.getElementById('reconcileTab').style.display='';}
+else{
+    // Staff: hide entry/exit tab, default to history tab
+    document.querySelectorAll('.admin-stock-tab').forEach(el=>el.style.display='none');
+    document.getElementById('tab-entry').classList.remove('active');
+    document.getElementById('tab-entry').style.display='none';
+    document.querySelector('.tab[onclick="switchTab(\'history\')"]').classList.add('active');
+    document.getElementById('tab-history').classList.add('active');
+}
 
 const API='/api/inv';
 const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});

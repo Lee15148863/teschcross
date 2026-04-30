@@ -9,7 +9,8 @@ router.use(jwtAuth, requireRole('admin', 'staff'));
 
 // ─── POST /api/inv/stock/entry ──────────────────────────────────────────────
 // Manual stock entry: create StockMovement(type='entry'), increment product.stock
-router.post('/entry', async (req, res) => {
+// Admin only — staff cannot directly adjust stock
+router.post('/entry', requireRole('admin'), async (req, res) => {
   try {
     const { productId, quantity, note } = req.body;
 
@@ -64,7 +65,8 @@ router.post('/entry', async (req, res) => {
 
 // ─── POST /api/inv/stock/exit ───────────────────────────────────────────────
 // Manual stock exit: check stock sufficiency, create StockMovement(type='exit'), decrement product.stock
-router.post('/exit', async (req, res) => {
+// Admin only — staff cannot directly adjust stock
+router.post('/exit', requireRole('admin'), async (req, res) => {
   try {
     const { productId, quantity, note } = req.body;
 
@@ -189,11 +191,13 @@ router.get('/history/:productId', async (req, res) => {
 });
 
 // ─── GET /api/inv/stock/alerts ──────────────────────────────────────────────
-// Low stock alerts: find all active products where stock <= lowStockThreshold
+// Low stock alerts: find all active products where stock > 0 AND stock <= lowStockThreshold
+// Products with stock=0 are excluded (they may not track inventory)
 router.get('/alerts', async (req, res) => {
   try {
     const alerts = await Product.find({
       active: true,
+      stock: { $gt: 0 },
       $expr: { $lte: ['$stock', '$lowStockThreshold'] }
     }).select('name sku stock lowStockThreshold category').sort({ stock: 1 });
 

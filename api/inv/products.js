@@ -263,7 +263,13 @@ router.put('/:id', async (req, res) => {
       }
       updateFields.vatRate = vatRate;
     }
-    if (stock !== undefined) updateFields.stock = stock;
+    if (stock !== undefined) {
+      // Only admin can modify stock
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: '只有管理员可以修改库存数量', code: 'FORBIDDEN' });
+      }
+      updateFields.stock = stock;
+    }
     if (isSecondHand !== undefined) updateFields.isSecondHand = isSecondHand;
     if (purchasedFromCustomer !== undefined) updateFields.purchasedFromCustomer = purchasedFromCustomer;
     if (source !== undefined) updateFields.source = source;
