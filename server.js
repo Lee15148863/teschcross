@@ -21,6 +21,17 @@ app.use('/api/pricing', require('./api/pricing'));
 app.use('/api/brands', require('./api/brands'));
 app.use('/api/reviews', require('./api/reviews'));
 
+// Inventory & Till system routes
+app.use('/api/inv/auth', require('./api/inv/auth'));
+app.use('/api/inv/products', require('./api/inv/products'));
+app.use('/api/inv/stock', require('./api/inv/stock'));
+app.use('/api/inv/suppliers', require('./api/inv/suppliers'));
+app.use('/api/inv/purchases', require('./api/inv/purchases'));
+app.use('/api/inv/transactions', require('./api/inv/transactions'));
+app.use('/api/inv/reports', require('./api/inv/reports'));
+app.use('/api/inv/settings', require('./api/inv/settings'));
+app.use('/api/inv/invoices', require('./api/inv/invoices'));
+
 // Fallback: serve index.html for all non-API routes
 app.get('/{*splat}', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));

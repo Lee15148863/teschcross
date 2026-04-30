@@ -1,0 +1,179 @@
+/**
+ * Receipt Content Generator
+ * Generates structured receipt data for both Print Agent ESC/POS and browser print fallback.
+ * All receipt text output is in English only.
+ */
+
+/**
+ * Generate a receipt number from a Date object.
+ * Format: YYYYMMDDHHmmss (14-digit numeric string)
+ *
+ * @param {Date} date - The transaction date
+ * @returns {string} Receipt number in YYYYMMDDHHmmss format
+ */
+function generateReceiptNumber(date) {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    throw new Error('Invalid date provided');
+  }
+
+  const yyyy = date.getFullYear().toString();
+  const MM = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const HH = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+
+  return `${yyyy}${MM}${dd}${HH}${mm}${ss}`;
+}
+
+/**
+ * Format a Date object as DD/MM/YYYY HH:mm:ss for receipt display.
+ *
+ * @param {Date} date - The date to format
+ * @returns {string} Formatted date string
+ */
+function formatReceiptDate(date) {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    throw new Error('Invalid date provided');
+  }
+
+  const dd = String(date.getDate()).padStart(2, '0');
+  const MM = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear().toString();
+  const HH = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+
+  return `${dd}/${MM}/${yyyy} ${HH}:${mm}:${ss}`;
+}
+
+// Default company info (pulled from existing site data)
+const DEFAULT_COMPANY_INFO = {
+  name: 'Tech Cross',
+  logo: 'logo.png',
+  address: 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, Ireland',
+  phone: '046 905 9854',
+};
+
+// Fixed receipt terms text (English only)
+const TERMS_TEXT =
+  '7-day refund policy — items must be in resalable condition. No refund on damaged or used items. 3-month repair warranty on replaced parts. Keep receipt for all claims.';
+
+const SECOND_HAND_TERMS_TEXT =
+  'IMPORTANT: Please ensure all accounts (Apple ID / iCloud / Google Account / Samsung Account) ' +
+  'have been signed out before purchase. The seller is not responsible for any account locks after sale. ' +
+  'All second-hand devices are sold as seen. Warranty covers hardware defects only — ' +
+  'no coverage for software issues, water damage or physical damage.';
+
+const QR_CODE_URL = 'https://techcross.ie/receipt-terms.html';
+const REPAIR_TC_URL = 'https://techcross.ie/terms.html';
+
+/**
+ * Generate structured receipt content from a transaction record.
+ *
+ * @param {object} transaction - The transaction record (matching Transaction schema)
+ * @param {object} [companyInfo] - Optional company info override
+ * @param {string} [companyInfo.name] - Company name
+ * @param {string} [companyInfo.logo] - Company logo filename
+ * @param {string} [companyInfo.address] - Company address
+ * @param {string} [companyInfo.phone] - Company phone
+ * @returns {object} Structured receipt content
+ */
+function generateReceipt(transaction, companyInfo) {
+  if (!transaction || typeof transaction !== 'object') {
+    throw new Error('Transaction data is required');
+  }
+
+  const company = { ...DEFAULT_COMPANY_INFO, ...(companyInfo || {}) };
+
+  // Determine transaction date
+  const txDate = transaction.createdAt
+    ? new Date(transaction.createdAt)
+    : new Date();
+
+  // Build receipt number from transaction or generate from date
+  const receiptNumber = transaction.receiptNumber || generateReceiptNumber(txDate);
+
+  // Build items list
+  const items = (transaction.items || []).map((item) => {
+    const receiptItem = {
+      name: item.name || '',
+      quantity: item.quantity || 1,
+      unitPrice: item.unitPrice || 0,
+      discountedPrice: item.discountedPrice != null ? item.discountedPrice : item.unitPrice || 0,
+      subtotal: item.subtotal || 0,
+      isSecondHand: item.isSecondHand || false,
+    };
+
+    // Include serial number for second-hand items (IMEI/SN)
+    if (item.serialNumber) {
+      receiptItem.serialNumber = item.serialNumber;
+    }
+
+    return receiptItem;
+  });
+
+  // Check if any items are second-hand
+  const hasSecondHandItems = items.some((item) => item.isSecondHand);
+
+  // Build discount info
+  const itemDiscounts = (transaction.items || [])
+    .filter((item) => item.discount && item.discount.type && item.discount.value > 0)
+    .map((item) => ({
+      itemName: item.name || '',
+      discountType: item.discount.type,
+      discountValue: item.discount.value,
+      originalPrice: item.unitPrice || 0,
+      discountedPrice: item.discountedPrice != null ? item.discountedPrice : item.unitPrice || 0,
+    }));
+
+  const orderDiscount = transaction.orderDiscount &&
+    transaction.orderDiscount.type &&
+    transaction.orderDiscount.value > 0
+    ? {
+        discountType: transaction.orderDiscount.type,
+        discountValue: transaction.orderDiscount.value,
+      }
+    : null;
+
+  const discountInfo = {
+    itemDiscounts,
+    orderDiscount,
+  };
+
+  // Build the receipt object
+  const receipt = {
+    companyName: company.name,
+    companyLogo: company.logo,
+    companyAddress: company.address,
+    companyPhone: company.phone,
+    receiptNumber,
+    date: formatReceiptDate(txDate),
+    items,
+    discountInfo,
+    totalAmount: transaction.totalAmount || 0,
+    paymentMethod: transaction.paymentMethod || 'cash',
+    cashReceived: transaction.cashReceived != null ? transaction.cashReceived : null,
+    changeGiven: transaction.changeGiven != null ? transaction.changeGiven : null,
+    standardVatTotal: transaction.standardVatTotal || 0,
+    marginVatTotal: transaction.marginVatTotal || 0,
+    termsText: TERMS_TEXT,
+    secondHandTermsText: SECOND_HAND_TERMS_TEXT,
+    hasSecondHandItems,
+    qrCodeUrl: QR_CODE_URL,
+    repairTcUrl: REPAIR_TC_URL,
+  };
+
+  return receipt;
+}
+
+module.exports = {
+  generateReceipt,
+  generateReceiptNumber,
+  formatReceiptDate,
+  DEFAULT_COMPANY_INFO,
+  TERMS_TEXT,
+  SECOND_HAND_TERMS_TEXT,
+  QR_CODE_URL,
+  REPAIR_TC_URL,
+};

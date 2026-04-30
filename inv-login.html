@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进销存系统登录 - Tech Cross</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background: #f5f5f7;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 22px;
+        }
+
+        .login-logo {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .login-logo img {
+            height: 80px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .login-box {
+            background: #fff;
+            padding: 48px;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .login-box h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
+            color: #1d1d1f;
+        }
+
+        .login-box .login-subtitle {
+            color: #6e6e73;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 15px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-field label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1d1d1f;
+        }
+
+        .form-field input {
+            padding: 14px 16px;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            background: #fff;
+            transition: all 0.3s;
+            color: #1d1d1f;
+        }
+
+        .form-field input:focus {
+            outline: none;
+            border-color: #D4E157;
+            box-shadow: 0 0 0 4px rgba(212, 225, 87, 0.15);
+        }
+
+        .form-field input::placeholder {
+            color: #86868b;
+        }
+
+        .captcha-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .captcha-row .form-field {
+            flex: 1;
+        }
+
+        .captcha-question {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .captcha-text {
+            background: #f5f5f7;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1d1d1f;
+            white-space: nowrap;
+            text-align: center;
+            min-width: 120px;
+            user-select: none;
+            letter-spacing: 1px;
+        }
+
+        .captcha-refresh {
+            background: none;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            color: #6e6e73;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .captcha-refresh:hover {
+            background: #f5f5f7;
+            border-color: #D4E157;
+            color: #1d1d1f;
+        }
+
+        .captcha-refresh:active {
+            transform: scale(0.95);
+        }
+
+        .captcha-refresh svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .captcha-refresh.spinning svg {
+            animation: spin 0.5s ease-in-out;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .login-error {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+            border: 1px solid #fecaca;
+            line-height: 1.5;
+        }
+
+        .login-error.show {
+            display: block;
+            animation: shakeError 0.4s ease-in-out;
+        }
+
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        .btn-login {
+            background: #D4E157;
+            color: #000;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 980px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-login:hover {
+            background: #c5d148;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(212, 225, 87, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-login .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-top-color: #000;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin: 0 auto;
+        }
+
+        .btn-login.loading .btn-text {
+            display: none;
+        }
+
+        .btn-login.loading .spinner {
+            display: block;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+            color: #86868b;
+        }
+
+        @media (max-width: 480px) {
+            .login-box {
+                padding: 32px 24px;
+            }
+
+            .login-box h1 {
+                font-size: 24px;
+            }
+
+            .captcha-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .captcha-question {
+                justify-content: center;
+            }
+
+            .captcha-text {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-logo">
+            <img src="logo.png" alt="Tech Cross">
+        </div>
+
+        <div class="login-box">
+            <h1>进销存系统</h1>
+            <p class="login-subtitle">请登录以继续</p>
+
+            <form class="login-form" id="loginForm" autocomplete="off">
+                <div class="form-field">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" placeholder="请输入用户名" required autofocus autocomplete="username">
+                </div>
+
+                <div class="form-field">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码" required autocomplete="current-password">
+                </div>
+
+                <div class="form-field">
+                    <label for="captchaAnswer">验证码</label>
+                    <div class="captcha-row">
+                        <div class="captcha-question">
+                            <span class="captcha-text" id="captchaText">加载中...</span>
+                            <button type="button" class="captcha-refresh" id="captchaRefresh" title="刷新验证码" aria-label="刷新验证码">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="form-field" style="flex: 1;">
+                            <input type="text" id="captchaAnswer" placeholder="请输入答案" required inputmode="numeric" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="login-error" id="loginError" role="alert"></div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <span class="btn-text">登 录</span>
+                    <span class="spinner"></span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                Tech Cross 内部管理系统
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        // ─── State ──────────────────────────────────────────────────────
+        let captchaId = null;
+
+        // ─── DOM refs ───────────────────────────────────────────────────
+        const form = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const captchaAnswerInput = document.getElementById('captchaAnswer');
+        const captchaTextEl = document.getElementById('captchaText');
+        const captchaRefreshBtn = document.getElementById('captchaRefresh');
+        const loginError = document.getElementById('loginError');
+        const loginBtn = document.getElementById('loginBtn');
+
+        // ─── Check if already logged in ─────────────────────────────────
+        (function checkExistingSession() {
+            const token = localStorage.getItem('inv_token');
+            const user = localStorage.getItem('inv_user');
+            if (token && user) {
+                try {
+                    const userData = JSON.parse(user);
+                    redirectByRole(userData.role);
+                } catch (e) {
+                    // Invalid stored data, clear and stay on login
+                    localStorage.removeItem('inv_token');
+                    localStorage.removeItem('inv_user');
+                }
+            }
+        })();
+
+        // ─── Load CAPTCHA ───────────────────────────────────────────────
+        async function loadCaptcha() {
+            captchaTextEl.textContent = '加载中...';
+            captchaRefreshBtn.classList.add('spinning');
+
+            try {
+                const res = await fetch('/api/inv/auth/captcha', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!res.ok) {
+                    throw new Error('获取验证码失败');
+                }
+
+                const data = await res.json();
+                captchaId = data.captchaId;
+                captchaTextEl.textContent = data.question;
+                captchaAnswerInput.value = '';
+            } catch (err) {
+                captchaTextEl.textContent = '加载失败';
+                showError('无法获取验证码，请刷新页面重试');
+            } finally {
+                setTimeout(() => {
+                    captchaRefreshBtn.classList.remove('spinning');
+                }, 300);
+            }
+        }
+
+        // ─── Show / hide error ──────────────────────────────────────────
+        function showError(message) {
+            loginError.textContent = message;
+            loginError.classList.add('show');
+        }
+
+        function hideError() {
+            loginError.classList.remove('show');
+        }
+
+        // ─── Redirect by role ───────────────────────────────────────────
+        function redirectByRole(role) {
+            if (role === 'admin') {
+                window.location.href = 'inv-products.html';
+            } else {
+                window.location.href = 'inv-pos.html';
+            }
+        }
+
+        // ─── Set loading state ──────────────────────────────────────────
+        function setLoading(loading) {
+            if (loading) {
+                loginBtn.classList.add('loading');
+                loginBtn.disabled = true;
+            } else {
+                loginBtn.classList.remove('loading');
+                loginBtn.disabled = false;
+            }
+        }
+
+        // ─── Login handler ──────────────────────────────────────────────
+        async function handleLogin(e) {
+            e.preventDefault();
+            hideError();
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            const captchaAnswer = captchaAnswerInput.value.trim();
+
+            // Client-side validation
+            if (!username) {
+                showError('请输入用户名');
+                usernameInput.focus();
+                return;
+            }
+
+            if (!password) {
+                showError('请输入密码');
+                passwordInput.focus();
+                return;
+            }
+
+            if (!captchaAnswer) {
+                showError('请输入验证码答案');
+                captchaAnswerInput.focus();
+                return;
+            }
+
+            if (!captchaId) {
+                showError('验证码未加载，请点击刷新按钮');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const res = await fetch('/api/inv/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        captchaId,
+                        captchaAnswer: Number(captchaAnswer)
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    // Handle specific error cases
+                    if (res.status === 423) {
+                        // Account locked
+                        const minutes = data.remainingMinutes || 15;
+                        showError(`账号已锁定，请 ${minutes} 分钟后再试`);
+                    } else {
+                        showError(data.error || '登录失败，请重试');
+                    }
+
+                    // Refresh CAPTCHA after failed attempt
+                    await loadCaptcha();
+                    return;
+                }
+
+                // Success — store token and user info
+                localStorage.setItem('inv_token', data.token);
+                localStorage.setItem('inv_user', JSON.stringify(data.user));
+
+                // Redirect based on role
+                redirectByRole(data.user.role);
+
+            } catch (err) {
+                showError('网络错误，请检查网络连接后重试');
+                await loadCaptcha();
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // ─── Event listeners ────────────────────────────────────────────
+        form.addEventListener('submit', handleLogin);
+
+        captchaRefreshBtn.addEventListener('click', function() {
+            hideError();
+            loadCaptcha();
+        });
+
+        // Clear error on input
+        [usernameInput, passwordInput, captchaAnswerInput].forEach(function(input) {
+            input.addEventListener('input', hideError);
+        });
+
+        // Allow Enter in captcha field to submit
+        captchaAnswerInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        });
+
+        // ─── Init ───────────────────────────────────────────────────────
+        loadCaptcha();
+    })();
+    </script>
+</body>
+</html>

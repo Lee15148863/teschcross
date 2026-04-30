@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS 收银 - Tech Cross</title>
+    <style>
+        /* ─── Reset & Base ─────────────────────────────────────────── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            height: 100%; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background: #f5f5f7; color: #1d1d1f;
+        }
+
+        /* ─── Full-screen Layout ───────────────────────────────────── */
+        .pos-container {
+            display: flex; height: 100vh; width: 100vw;
+        }
+
+        /* ─── LEFT PANEL: Product Search ───────────────────────────── */
+        .left-panel {
+            width: 45%; min-width: 380px;
+            display: flex; flex-direction: column;
+            background: #fff; border-right: 1px solid #e5e5e7;
+        }
+        .left-header {
+            padding: 16px 20px; border-bottom: 1px solid #e5e5e7;
+            display: flex; align-items: center; gap: 12px;
+            background: #fafafa;
+        }
+        .left-header .logo { height: 36px; }
+        .left-header h1 { font-size: 20px; font-weight: 600; flex: 1; }
+        .lang-toggle {
+            padding: 6px 14px; border-radius: 980px; border: 1px solid #d2d2d7;
+            background: #fff; font-size: 13px; font-weight: 500; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-toggle:hover { background: #D4E157; border-color: #D4E157; }
+
+        .search-area { padding: 16px 20px; }
+        .search-input-wrap {
+            position: relative; display: flex; align-items: center;
+        }
+        .search-input-wrap input {
+            width: 100%; padding: 14px 44px 14px 16px;
+            border: 2px solid #d2d2d7; border-radius: 14px;
+            font-size: 18px; background: #f5f5f7;
+            transition: all 0.2s; color: #1d1d1f;
+        }
+        .search-input-wrap input:focus {
+            outline: none; border-color: #D4E157;
+            background: #fff; box-shadow: 0 0 0 4px rgba(212,225,87,0.15);
+        }
+        .search-input-wrap input::placeholder { color: #86868b; }
+        .search-icon {
+            position: absolute; right: 14px; color: #86868b;
+            pointer-events: none; width: 22px; height: 22px;
+        }
+
+        .product-results {
+            flex: 1; overflow-y: auto; padding: 8px 20px 20px;
+        }
+        .product-results::-webkit-scrollbar { width: 6px; }
+        .product-results::-webkit-scrollbar-thumb { background: #d2d2d7; border-radius: 3px; }
+
+        .product-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 16px; margin-bottom: 8px;
+            border-radius: 14px; border: 1px solid #e5e5e7;
+            cursor: pointer; transition: all 0.15s; background: #fff;
+        }
+        .product-card:hover {
+            border-color: #D4E157; background: #fafff0;
+            transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        .product-card .p-info { flex: 1; min-width: 0; }
+        .product-card .p-name {
+            font-size: 16px; font-weight: 600; margin-bottom: 3px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .product-card .p-meta { font-size: 13px; color: #6e6e73; }
+        .product-card .p-price {
+            font-size: 18px; font-weight: 700; color: #1d1d1f;
+            white-space: nowrap;
+        }
+        .product-card .p-stock {
+            font-size: 12px; color: #86868b; text-align: right;
+        }
+        .product-card .p-stock.low { color: #ff3b30; font-weight: 600; }
+        .product-card .p-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 6px;
+            font-size: 11px; font-weight: 600; margin-left: 6px;
+        }
+        .badge-secondhand { background: #fff3cd; color: #856404; }
+
+        .no-results {
+            text-align: center; padding: 60px 20px; color: #86868b;
+        }
+        .no-results .nr-icon { font-size: 48px; margin-bottom: 12px; }
+        .no-results p { font-size: 15px; }
+
+        .search-hint {
+            text-align: center; padding: 80px 20px; color: #86868b;
+        }
+        .search-hint .sh-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .search-hint p { font-size: 16px; line-height: 1.6; }
+
+        /* ─── RIGHT PANEL: Cart + Checkout ─────────────────────────── */
+        .right-panel {
+            flex: 1; display: flex; flex-direction: column;
+            min-width: 420px;
+        }
+        .right-header {
+            padding: 16px 20px; border-bottom: 1px solid #e5e5e7;
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fafafa;
+        }
+        .right-header h2 { font-size: 20px; font-weight: 600; }
+        .cart-count {
+            background: #D4E157; color: #000; padding: 2px 10px;
+            border-radius: 980px; font-size: 13px; font-weight: 600;
+            margin-left: 8px;
+        }
+        .btn-clear-cart {
+            padding: 6px 14px; border-radius: 980px; border: 1px solid #ff3b30;
+            background: #fff; color: #ff3b30; font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-clear-cart:hover { background: #ff3b30; color: #fff; }
+        .btn-clear-cart:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* Cart Table */
+        .cart-area {
+            flex: 1; overflow-y: auto; padding: 0;
+        }
+        .cart-area::-webkit-scrollbar { width: 6px; }
+        .cart-area::-webkit-scrollbar-thumb { background: #d2d2d7; border-radius: 3px; }
+
+        .cart-table {
+            width: 100%; border-collapse: collapse; font-size: 14px;
+        }
+        .cart-table thead th {
+            position: sticky; top: 0; background: #f5f5f7;
+            padding: 10px 12px; text-align: left; font-weight: 600;
+            font-size: 12px; color: #6e6e73; text-transform: uppercase;
+            letter-spacing: 0.5px; border-bottom: 1px solid #e5e5e7;
+        }
+        .cart-table tbody tr {
+            border-bottom: 1px solid #f0f0f2; transition: background 0.1s;
+        }
+        .cart-table tbody tr:hover { background: #fafafa; }
+        .cart-table tbody tr.selected { background: rgba(212,225,87,0.12); }
+        .cart-table tbody td { padding: 10px 12px; vertical-align: middle; }
+        .cart-item-name { font-weight: 500; font-size: 14px; }
+        .cart-item-sku { font-size: 11px; color: #86868b; }
+        .cart-item-serial { font-size: 11px; color: #0071e3; }
+        .cart-item-tax {
+            font-size: 11px; padding: 2px 6px; border-radius: 4px;
+            display: inline-block;
+        }
+        .tax-standard { background: #e8f5e9; color: #2e7d32; }
+        .tax-margin { background: #fff3cd; color: #856404; }
+
+        .qty-controls {
+            display: flex; align-items: center; gap: 4px;
+        }
+        .qty-btn {
+            width: 28px; height: 28px; border-radius: 8px;
+            border: 1px solid #d2d2d7; background: #fff;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s; color: #1d1d1f;
+        }
+        .qty-btn:hover { background: #D4E157; border-color: #D4E157; }
+        .qty-val {
+            min-width: 32px; text-align: center; font-size: 16px; font-weight: 600;
+        }
+        .stock-warn { color: #ff3b30; font-size: 11px; font-weight: 500; }
+
+        .cart-subtotal { font-weight: 600; font-size: 15px; white-space: nowrap; }
+        .cart-original-price {
+            text-decoration: line-through; color: #86868b; font-size: 12px;
+        }
+
+        .btn-remove {
+            background: none; border: none; color: #ff3b30; cursor: pointer;
+            font-size: 18px; padding: 4px; border-radius: 6px; transition: all 0.15s;
+        }
+        .btn-remove:hover { background: rgba(255,59,48,0.1); }
+
+        .cart-empty {
+            text-align: center; padding: 80px 20px; color: #86868b;
+        }
+        .cart-empty .ce-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.4; }
+        .cart-empty p { font-size: 16px; }
+
+        /* ─── Discount Area ────────────────────────────────────────── */
+        .discount-area {
+            padding: 12px 20px; border-top: 1px solid #e5e5e7;
+            background: #fafafa; display: flex; gap: 16px; flex-wrap: wrap;
+        }
+        .discount-group {
+            display: flex; align-items: center; gap: 8px; font-size: 13px;
+        }
+        .discount-group label { font-weight: 500; white-space: nowrap; color: #6e6e73; }
+        .discount-group select {
+            padding: 6px 8px; border: 1px solid #d2d2d7; border-radius: 8px;
+            font-size: 13px; background: #fff;
+        }
+        .discount-group input {
+            width: 80px; padding: 6px 8px; border: 1px solid #d2d2d7;
+            border-radius: 8px; font-size: 13px; text-align: right;
+        }
+        .discount-group input:focus, .discount-group select:focus {
+            outline: none; border-color: #D4E157;
+        }
+
+        /* ─── Checkout Area ────────────────────────────────────────── */
+        .checkout-area {
+            padding: 16px 20px; border-top: 2px solid #e5e5e7;
+            background: #fff;
+        }
+        .checkout-summary {
+            display: flex; flex-wrap: wrap; gap: 12px 24px;
+            margin-bottom: 12px; font-size: 14px;
+        }
+        .summary-item { display: flex; align-items: baseline; gap: 6px; }
+        .summary-label { color: #6e6e73; }
+        .summary-value { font-weight: 600; }
+        .summary-value.discount-val { color: #ff3b30; }
+
+        .checkout-total {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .total-label { font-size: 18px; font-weight: 500; color: #6e6e73; }
+        .total-amount { font-size: 36px; font-weight: 700; color: #1d1d1f; }
+
+        .vat-breakdown {
+            display: flex; gap: 16px; margin-bottom: 12px; font-size: 13px;
+        }
+        .vat-item { color: #6e6e73; }
+        .vat-item span { font-weight: 600; color: #1d1d1f; }
+
+        .payment-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .payment-toggle {
+            display: flex; border-radius: 10px; overflow: hidden;
+            border: 1px solid #d2d2d7;
+        }
+        .payment-toggle button {
+            padding: 10px 20px; border: none; background: #fff;
+            font-size: 15px; font-weight: 500; cursor: pointer;
+            transition: all 0.15s; color: #6e6e73;
+        }
+        .payment-toggle button.active {
+            background: #D4E157; color: #000; font-weight: 600;
+        }
+        .payment-toggle button:first-child { border-right: 1px solid #d2d2d7; }
+
+        .cash-input-group {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px;
+        }
+        .cash-input-group label { color: #6e6e73; white-space: nowrap; }
+        .cash-input-group input {
+            width: 120px; padding: 10px 12px; border: 1px solid #d2d2d7;
+            border-radius: 10px; font-size: 16px; font-weight: 600;
+            text-align: right;
+        }
+        .cash-input-group input:focus {
+            outline: none; border-color: #D4E157;
+            box-shadow: 0 0 0 3px rgba(212,225,87,0.15);
+        }
+        .change-display {
+            font-size: 16px; font-weight: 600; color: #34c759;
+            white-space: nowrap;
+        }
+        .change-display.negative { color: #ff3b30; }
+
+        .btn-checkout {
+            width: 100%; padding: 16px; border: none; border-radius: 14px;
+            background: #D4E157; color: #000; font-size: 20px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px;
+        }
+        .btn-checkout:hover:not(:disabled) {
+            background: #c5d148; transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(212,225,87,0.4);
+        }
+        .btn-checkout:active:not(:disabled) { transform: translateY(0); }
+        .btn-checkout:disabled {
+            opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none;
+        }
+
+        /* ─── Shortcut Hints ───────────────────────────────────────── */
+        .shortcut-bar {
+            padding: 8px 20px; background: #1d1d1f; color: #86868b;
+            display: flex; gap: 16px; flex-wrap: wrap; font-size: 11px;
+            align-items: center;
+        }
+        .shortcut-bar .sc {
+            display: flex; align-items: center; gap: 4px;
+        }
+        .shortcut-bar kbd {
+            padding: 2px 6px; background: #333; border: 1px solid #555;
+            border-radius: 4px; font-size: 10px; font-weight: 600;
+            color: #D4E157; font-family: inherit;
+        }
+
+        /* ─── Toast / Success Message ──────────────────────────────── */
+        .toast {
+            position: fixed; top: 20px; right: 20px; z-index: 10000;
+            padding: 16px 24px; border-radius: 14px;
+            font-size: 15px; font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            transform: translateX(120%); transition: transform 0.3s ease;
+            max-width: 400px;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background: #34c759; color: #fff; }
+        .toast.error { background: #ff3b30; color: #fff; }
+        .toast.info { background: #0071e3; color: #fff; }
+
+        /* ─── Confirm Dialog ───────────────────────────────────────── */
+        .confirm-overlay {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+        }
+        .confirm-overlay.show { display: flex; }
+        .confirm-box {
+            background: #fff; border-radius: 18px; padding: 32px;
+            max-width: 400px; width: 90%; text-align: center;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+        }
+        .confirm-box h3 { font-size: 20px; margin-bottom: 8px; }
+        .confirm-box p { font-size: 15px; color: #6e6e73; margin-bottom: 24px; }
+        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+        .confirm-actions button {
+            padding: 10px 24px; border-radius: 980px; font-size: 15px;
+            font-weight: 500; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-confirm-cancel {
+            background: #f5f5f7; border: 1px solid #d2d2d7; color: #1d1d1f;
+        }
+        .btn-confirm-cancel:hover { background: #e5e5e7; }
+        .btn-confirm-ok {
+            background: #ff3b30; border: none; color: #fff;
+        }
+        .btn-confirm-ok:hover { background: #e0342d; }
+
+        /* ─── Discount Modal ───────────────────────────────────────── */
+        .discount-modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 9998;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+        }
+        .discount-modal-overlay.show { display: flex; }
+        .discount-modal {
+            background: #fff; border-radius: 18px; padding: 32px;
+            max-width: 480px; width: 90%;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+        }
+        .discount-modal h3 { font-size: 20px; margin-bottom: 20px; }
+        .dm-section { margin-bottom: 16px; }
+        .dm-section label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #6e6e73; }
+        .dm-row { display: flex; gap: 8px; }
+        .dm-row select, .dm-row input {
+            padding: 10px 12px; border: 1px solid #d2d2d7; border-radius: 10px;
+            font-size: 15px; flex: 1;
+        }
+        .dm-row select:focus, .dm-row input:focus { outline: none; border-color: #D4E157; }
+        .dm-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+        .dm-actions button {
+            padding: 10px 24px; border-radius: 980px; font-size: 15px;
+            font-weight: 500; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-dm-cancel { background: #f5f5f7; border: 1px solid #d2d2d7; color: #1d1d1f; }
+        .btn-dm-cancel:hover { background: #e5e5e7; }
+        .btn-dm-apply { background: #D4E157; border: none; color: #000; font-weight: 600; }
+        .btn-dm-apply:hover { background: #c5d148; }
+    </style>
+</head>
+<body>
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Confirm Dialog -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <h3 id="confirmTitle"></h3>
+            <p id="confirmMsg"></p>
+            <div class="confirm-actions">
+                <button class="btn-confirm-cancel" id="confirmCancel"></button>
+                <button class="btn-confirm-ok" id="confirmOk"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discount Modal (F2) -->
+    <div class="discount-modal-overlay" id="discountModalOverlay">
+        <div class="discount-modal">
+            <h3 id="dmTitle">应用折扣</h3>
+            <div class="dm-section">
+                <label id="dmItemLabel">单品折扣（选中商品）</label>
+                <div class="dm-row">
+                    <select id="dmItemType">
+                        <option value="">无</option>
+                        <option value="percentage">百分比 %</option>
+                        <option value="fixed">固定金额 €</option>
+                    </select>
+                    <input type="number" id="dmItemValue" min="0" step="0.01" placeholder="0">
+                </div>
+            </div>
+            <div class="dm-section">
+                <label id="dmOrderLabel">整单折扣</label>
+                <div class="dm-row">
+                    <select id="dmOrderType">
+                        <option value="">无</option>
+                        <option value="percentage">百分比 %</option>
+                        <option value="fixed">固定金额 €</option>
+                    </select>
+                    <input type="number" id="dmOrderValue" min="0" step="0.01" placeholder="0">
+                </div>
+            </div>
+            <div class="dm-actions">
+                <button class="btn-dm-cancel" id="dmCancel">取消</button>
+                <button class="btn-dm-apply" id="dmApply">应用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="pos-container">
+        <!-- LEFT: Product Search -->
+        <div class="left-panel">
+            <div class="left-header">
+                <img src="logo.png" alt="Tech Cross" class="logo">
+                <h1 id="posTitle">POS 收银</h1>
+                <button class="lang-toggle" id="langToggle" title="Switch Language">中/EN</button>
+            </div>
+            <div class="search-area">
+                <div class="search-input-wrap">
+                    <input type="text" id="searchInput" autocomplete="off" autofocus>
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+            </div>
+            <div class="product-results" id="productResults">
+                <div class="search-hint" id="searchHint">
+                    <div class="sh-icon">🔍</div>
+                    <p id="hintText">输入商品名称、SKU 或 IMEI 搜索<br>或扫描条码添加商品</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Cart + Checkout -->
+        <div class="right-panel">
+            <div class="right-header">
+                <div style="display:flex;align-items:center;">
+                    <h2 id="cartTitle">购物车</h2>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+                <button class="btn-clear-cart" id="btnClearCart" disabled>
+                    <span id="clearCartText">清空</span>
+                </button>
+            </div>
+
+            <div class="cart-area" id="cartArea">
+                <div class="cart-empty" id="cartEmpty">
+                    <div class="ce-icon">🛒</div>
+                    <p id="emptyCartText">购物车为空，请搜索并添加商品</p>
+                </div>
+                <table class="cart-table" id="cartTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th id="thProduct">商品</th>
+                            <th id="thPrice">单价</th>
+                            <th id="thQty">数量</th>
+                            <th id="thTax">税率</th>
+                            <th id="thSubtotal">小计</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Checkout Area -->
+            <div class="checkout-area">
+                <div class="checkout-summary" id="checkoutSummary">
+                    <div class="summary-item">
+                        <span class="summary-label" id="lblSubtotal">小计:</span>
+                        <span class="summary-value" id="valSubtotal">€0.00</span>
+                    </div>
+                    <div class="summary-item" id="discountSummary" style="display:none;">
+                        <span class="summary-label" id="lblDiscount">折扣:</span>
+                        <span class="summary-value discount-val" id="valDiscount">-€0.00</span>
+                    </div>
+                </div>
+
+                <div class="vat-breakdown">
+                    <div class="vat-item">
+                        <span id="lblStdVat">Standard VAT:</span> <span id="valStdVat">€0.00</span>
+                    </div>
+                    <div class="vat-item">
+                        <span id="lblMarginVat">Margin VAT:</span> <span id="valMarginVat">€0.00</span>
+                    </div>
+                </div>
+
+                <div class="checkout-total">
+                    <span class="total-label" id="lblTotal">总计</span>
+                    <span class="total-amount" id="valTotal">€0.00</span>
+                </div>
+
+                <div class="payment-row">
+                    <div class="payment-toggle" id="paymentToggle">
+                        <button class="active" data-method="cash" id="btnCash">💵 现金</button>
+                        <button data-method="card" id="btnCard">💳 银行卡</button>
+                    </div>
+                    <div class="cash-input-group" id="cashGroup">
+                        <label id="lblReceived">实收:</label>
+                        <input type="number" id="cashReceived" min="0" step="0.01" placeholder="0.00">
+                        <span class="change-display" id="changeDisplay"></span>
+                    </div>
+                </div>
+
+                <button class="btn-checkout" id="btnCheckout" disabled>
+                    <span id="checkoutText">结 账</span>
+                </button>
+            </div>
+
+            <!-- Shortcut Bar -->
+            <div class="shortcut-bar" id="shortcutBar">
+                <div class="sc"><kbd>F1</kbd> <span id="scSearch">搜索</span></div>
+                <div class="sc"><kbd>F2</kbd> <span id="scDiscount">折扣</span></div>
+                <div class="sc"><kbd>F3</kbd> <span id="scPayment">切换支付</span></div>
+                <div class="sc"><kbd>F4</kbd> <span id="scReprint">重打小票</span></div>
+                <div class="sc"><kbd>Enter</kbd> <span id="scCheckout">结账</span></div>
+                <div class="sc"><kbd>Esc</kbd> <span id="scClear">清空</span></div>
+                <div class="sc"><kbd>Del</kbd> <span id="scRemove">移除</span></div>
+                <div class="sc"><kbd>↑↓</kbd> <span id="scNav">导航</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+    'use strict';
+    // Auth check
+    const token = localStorage.getItem('inv_token');
+    if (!token) { window.location.href = 'inv-login.html'; return; }
+    const API_BASE = '/api/inv';
+    const VAT_RATE = 0.23;
+    const headers = () => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token });
+
+    // State
+    let cart = [];
+    let selectedCartIndex = -1;
+    let paymentMethod = 'cash';
+    let lang = 'zh';
+    let lastTransaction = null;
+    let searchTimer = null;
+    let orderDiscount = null;
+
+    // i18n
+    const i18n = {
+      zh: {
+        posTitle: 'POS 收银', cartTitle: '购物车', clearCartText: '清空',
+        emptyCartText: '购物车为空，请搜索并添加商品', checkoutText: '结 账',
+        searchPlaceholder: '搜索商品名称、SKU 或 IMEI...', hintText: '输入商品名称、SKU 或 IMEI 搜索<br>或扫描条码添加商品',
+        thProduct: '商品', thPrice: '单价', thQty: '数量', thTax: '税率', thSubtotal: '小计',
+        lblSubtotal: '小计:', lblDiscount: '折扣:', lblTotal: '总计',
+        lblReceived: '实收:', btnCash: '💵 现金', btnCard: '💳 银行卡',
+        scSearch: '搜索', scDiscount: '折扣', scPayment: '切换支付', scReprint: '重打小票',
+        scCheckout: '结账', scClear: '清空', scRemove: '移除', scNav: '导航',
+        confirmClearTitle: '确认清空', confirmClearMsg: '确定要清空购物车吗？', confirmCancel: '取消', confirmOk: '确定',
+        dmTitle: '应用折扣', dmItemLabel: '单品折扣（选中商品）', dmOrderLabel: '整单折扣',
+        noResults: '未找到匹配商品', stock: '库存', secondHand: '二手',
+        lblStdVat: 'Standard VAT:', lblMarginVat: 'Margin VAT:',
+      },
+      en: {
+        posTitle: 'POS Checkout', cartTitle: 'Cart', clearCartText: 'Clear',
+        emptyCartText: 'Cart is empty. Search and add products.', checkoutText: 'Checkout',
+        searchPlaceholder: 'Search by name, SKU or IMEI...', hintText: 'Search by product name, SKU or IMEI<br>or scan barcode to add',
+        thProduct: 'Product', thPrice: 'Price', thQty: 'Qty', thTax: 'Tax', thSubtotal: 'Subtotal',
+        lblSubtotal: 'Subtotal:', lblDiscount: 'Discount:', lblTotal: 'Total',
+        lblReceived: 'Received:', btnCash: '💵 Cash', btnCard: '💳 Card',
+        scSearch: 'Search', scDiscount: 'Discount', scPayment: 'Payment', scReprint: 'Reprint',
+        scCheckout: 'Checkout', scClear: 'Clear', scRemove: 'Remove', scNav: 'Navigate',
+        confirmClearTitle: 'Confirm Clear', confirmClearMsg: 'Clear all items from cart?', confirmCancel: 'Cancel', confirmOk: 'Confirm',
+        dmTitle: 'Apply Discount', dmItemLabel: 'Item Discount (selected)', dmOrderLabel: 'Order Discount',
+        noResults: 'No matching products found', stock: 'Stock', secondHand: 'Used',
+        lblStdVat: 'Standard VAT:', lblMarginVat: 'Margin VAT:',
+      }
+    };
+
+    function t(key) { return (i18n[lang] || i18n.zh)[key] || key; }
+
+    function updateLang() {
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblReceived','btnCash','btnCard','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scNav','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.innerHTML = t(id);
+      });
+      document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+      document.getElementById('hintText').innerHTML = t('hintText');
+      renderCart();
+    }
+
+    // Toast
+    function showToast(msg, type) {
+      var toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast ' + (type || 'info');
+      setTimeout(function() { toast.classList.add('show'); }, 10);
+      setTimeout(function() { toast.classList.remove('show'); }, 3000);
+    }
+
+    // Confirm dialog
+    function showConfirm(title, msg, onOk) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMsg').textContent = msg;
+      document.getElementById('confirmCancel').textContent = t('confirmCancel');
+      document.getElementById('confirmOk').textContent = t('confirmOk');
+      var overlay = document.getElementById('confirmOverlay');
+      overlay.classList.add('show');
+      document.getElementById('confirmOk').onclick = function() { overlay.classList.remove('show'); onOk(); };
+      document.getElementById('confirmCancel').onclick = function() { overlay.classList.remove('show'); };
+    }
+
+    // API helper
+    async function apiFetch(url, opts) {
+      opts = opts || {};
+      opts.headers = headers();
+      var res = await fetch(API_BASE + url, opts);
+      if (res.status === 401) { localStorage.removeItem('inv_token'); window.location.href = 'inv-login.html'; return null; }
+      return res;
+    }
+
+    // Search
+    var searchInput = document.getElementById('searchInput');
+    var productResults = document.getElementById('productResults');
+
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimer);
+      var q = searchInput.value.trim();
+      if (!q) { showSearchHint(); return; }
+      searchTimer = setTimeout(function() { doSearch(q); }, 250);
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(searchTimer);
+        var q = searchInput.value.trim();
+        if (q) doSearch(q);
+      }
+    });
+
+    function showSearchHint() {
+      productResults.innerHTML = '<div class="search-hint" id="searchHint"><div class="sh-icon">🔍</div><p id="hintText">' + t('hintText') + '</p></div>';
+    }
+
+    async function doSearch(q) {
+      try {
+        var res = await apiFetch('/products/search?q=' + encodeURIComponent(q));
+        if (!res) return;
+        var products = await res.json();
+        if (!products || products.length === 0) {
+          productResults.innerHTML = '<div class="no-results"><div class="nr-icon">📦</div><p>' + t('noResults') + '</p></div>';
+          return;
+        }
+        var html = '';
+        products.forEach(function(p) {
+          var stockClass = p.stock <= (p.lowStockThreshold || 5) ? 'low' : '';
+          var badge = p.isSecondHand ? '<span class="p-badge badge-secondhand">' + t('secondHand') + '</span>' : '';
+          html += '<div class="product-card" data-id="' + p._id + '" onclick="window._addToCart(\'' + p._id + '\')">' +
+            '<div class="p-info"><div class="p-name">' + escHtml(p.name) + badge + '</div>' +
+            '<div class="p-meta">' + escHtml(p.sku) + (p.serialNumber ? ' · ' + escHtml(p.serialNumber) : '') + '</div></div>' +
+            '<div style="text-align:right"><div class="p-price">€' + p.sellingPrice.toFixed(2) + '</div>' +
+            '<div class="p-stock ' + stockClass + '">' + t('stock') + ': ' + p.stock + '</div></div></div>';
+        });
+        productResults.innerHTML = html;
+      } catch (err) {
+        showToast('Search error', 'error');
+      }
+    }
+
+    function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // Add to cart
+    window._addToCart = async function(productId) {
+      try {
+        var res = await apiFetch('/products/' + productId);
+        if (!res) return;
+        var p = await res.json();
+        var existing = cart.findIndex(function(c) { return c.product === p._id; });
+        if (existing >= 0) {
+          cart[existing].quantity += 1;
+        } else {
+          cart.push({
+            product: p._id, name: p.name, sku: p.sku, serialNumber: p.serialNumber || '',
+            unitPrice: p.sellingPrice, costPrice: p.costPrice, quantity: 1,
+            isSecondHand: p.isSecondHand || false, stock: p.stock, discount: null
+          });
+        }
+        renderCart();
+        showToast((lang === 'zh' ? '已添加: ' : 'Added: ') + p.name, 'success');
+      } catch (err) {
+        showToast('Error adding product', 'error');
+      }
+    };
+
+    // Render cart
+    function renderCart() {
+      var cartEmpty = document.getElementById('cartEmpty');
+      var cartTable = document.getElementById('cartTable');
+      var cartBody = document.getElementById('cartBody');
+      var cartCount = document.getElementById('cartCount');
+      var btnClear = document.getElementById('btnClearCart');
+      var totalItems = cart.reduce(function(s, c) { return s + c.quantity; }, 0);
+      cartCount.textContent = totalItems;
+      btnClear.disabled = cart.length === 0;
+
+      if (cart.length === 0) {
+        cartEmpty.style.display = '';
+        cartTable.style.display = 'none';
+        document.getElementById('emptyCartText').textContent = t('emptyCartText');
+        updateTotals();
+        return;
+      }
+      cartEmpty.style.display = 'none';
+      cartTable.style.display = '';
+
+      var html = '';
+      cart.forEach(function(item, idx) {
+        var stockWarn = item.quantity > item.stock ? '<div class="stock-warn">⚠ ' + (lang === 'zh' ? '库存不足' : 'Low stock') + '</div>' : '';
+        var taxBadge = item.isSecondHand ? '<span class="cart-item-tax tax-margin">Margin</span>' : '<span class="cart-item-tax tax-standard">Std 23%</span>';
+        var discountInfo = '';
+        var displayPrice = item.unitPrice;
+        if (item.discount && item.discount.type && item.discount.value > 0) {
+          var discAmt = 0;
+          if (item.discount.type === 'percentage') discAmt = item.unitPrice * Math.min(item.discount.value, 100) / 100;
+          else discAmt = Math.min(item.discount.value, item.unitPrice);
+          displayPrice = Math.round((item.unitPrice - discAmt) * 100) / 100;
+          discountInfo = '<div class="cart-original-price">€' + item.unitPrice.toFixed(2) + '</div>';
+        }
+        var subtotal = Math.round(displayPrice * item.quantity * 100) / 100;
+        var selected = idx === selectedCartIndex ? ' selected' : '';
+        var serial = item.serialNumber ? '<div class="cart-item-serial">SN: ' + escHtml(item.serialNumber) + '</div>' : '';
+
+        html += '<tr class="' + selected + '" data-idx="' + idx + '" onclick="window._selectCartItem(' + idx + ')">' +
+          '<td><div class="cart-item-name">' + escHtml(item.name) + '</div><div class="cart-item-sku">' + escHtml(item.sku) + '</div>' + serial + '</td>' +
+          '<td>' + discountInfo + '€' + displayPrice.toFixed(2) + '</td>' +
+          '<td><div class="qty-controls"><button class="qty-btn" onclick="event.stopPropagation();window._changeQty(' + idx + ',-1)">−</button>' +
+          '<span class="qty-val">' + item.quantity + '</span>' +
+          '<button class="qty-btn" onclick="event.stopPropagation();window._changeQty(' + idx + ',1)">+</button></div>' + stockWarn + '</td>' +
+          '<td>' + taxBadge + '</td>' +
+          '<td class="cart-subtotal">€' + subtotal.toFixed(2) + '</td>' +
+          '<td><button class="btn-remove" onclick="event.stopPropagation();window._removeItem(' + idx + ')" title="Remove">✕</button></td></tr>';
+      });
+      cartBody.innerHTML = html;
+      updateTotals();
+    }
+
+    window._selectCartItem = function(idx) { selectedCartIndex = idx; renderCart(); };
+    window._changeQty = function(idx, delta) {
+      cart[idx].quantity = Math.max(1, cart[idx].quantity + delta);
+      renderCart();
+    };
+    window._removeItem = function(idx) {
+      cart.splice(idx, 1);
+      if (selectedCartIndex >= cart.length) selectedCartIndex = cart.length - 1;
+      renderCart();
+    };
+
+    // Calculate totals
+    function updateTotals() {
+      var subtotal = 0, stdVat = 0, marginVat = 0, totalDiscount = 0;
+      cart.forEach(function(item) {
+        var price = item.unitPrice;
+        if (item.discount && item.discount.type && item.discount.value > 0) {
+          var d = 0;
+          if (item.discount.type === 'percentage') d = price * Math.min(item.discount.value, 100) / 100;
+          else d = Math.min(item.discount.value, price);
+          totalDiscount += Math.round(d * item.quantity * 100) / 100;
+          price = Math.round((price - d) * 100) / 100;
+        }
+        var itemSub = Math.round(price * item.quantity * 100) / 100;
+        subtotal += itemSub;
+        if (item.isSecondHand) {
+          var margin = price - item.costPrice;
+          if (margin > 0) marginVat += Math.round(margin * VAT_RATE / (1 + VAT_RATE) * item.quantity * 100) / 100;
+        } else {
+          stdVat += Math.round(price * VAT_RATE / (1 + VAT_RATE) * item.quantity * 100) / 100;
+        }
+      });
+
+      // Apply order discount
+      var orderDiscAmt = 0;
+      if (orderDiscount && orderDiscount.type && orderDiscount.value > 0) {
+        if (orderDiscount.type === 'percentage') orderDiscAmt = subtotal * Math.min(orderDiscount.value, 100) / 100;
+        else orderDiscAmt = Math.min(orderDiscount.value, subtotal);
+        orderDiscAmt = Math.round(orderDiscAmt * 100) / 100;
+        totalDiscount += orderDiscAmt;
+      }
+      var total = Math.round((subtotal - orderDiscAmt) * 100) / 100;
+      total = Math.max(0, total);
+
+      // Recalculate VAT after order discount if needed
+      if (orderDiscAmt > 0 && subtotal > 0) {
+        var ratio = (subtotal - orderDiscAmt) / subtotal;
+        stdVat = Math.round(stdVat * ratio * 100) / 100;
+        marginVat = Math.round(marginVat * ratio * 100) / 100;
+      }
+
+      document.getElementById('valSubtotal').textContent = '€' + subtotal.toFixed(2);
+      document.getElementById('valStdVat').textContent = '€' + stdVat.toFixed(2);
+      document.getElementById('valMarginVat').textContent = '€' + marginVat.toFixed(2);
+      document.getElementById('valTotal').textContent = '€' + total.toFixed(2);
+
+      var discSummary = document.getElementById('discountSummary');
+      if (totalDiscount > 0) {
+        discSummary.style.display = '';
+        document.getElementById('valDiscount').textContent = '-€' + totalDiscount.toFixed(2);
+      } else {
+        discSummary.style.display = 'none';
+      }
+
+      // Update change
+      updateChange();
+      // Update checkout button
+      document.getElementById('btnCheckout').disabled = cart.length === 0;
+    }
+
+    // Payment toggle
+    document.getElementById('paymentToggle').addEventListener('click', function(e) {
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      paymentMethod = btn.dataset.method;
+      document.querySelectorAll('#paymentToggle button').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('cashGroup').style.display = paymentMethod === 'cash' ? '' : 'none';
+      updateChange();
+    });
+
+    // Cash change
+    document.getElementById('cashReceived').addEventListener('input', updateChange);
+    function updateChange() {
+      if (paymentMethod !== 'cash') { document.getElementById('changeDisplay').textContent = ''; return; }
+      var received = parseFloat(document.getElementById('cashReceived').value) || 0;
+      var totalText = document.getElementById('valTotal').textContent.replace('€', '');
+      var total = parseFloat(totalText) || 0;
+      var change = Math.round((received - total) * 100) / 100;
+      var display = document.getElementById('changeDisplay');
+      if (received <= 0) { display.textContent = ''; return; }
+      display.textContent = (lang === 'zh' ? '找零: €' : 'Change: €') + change.toFixed(2);
+      display.className = 'change-display' + (change < 0 ? ' negative' : '');
+    }
+
+    // Clear cart
+    document.getElementById('btnClearCart').addEventListener('click', function() {
+      if (cart.length === 0) return;
+      showConfirm(t('confirmClearTitle'), t('confirmClearMsg'), function() {
+        cart = []; selectedCartIndex = -1; orderDiscount = null;
+        renderCart();
+      });
+    });
+
+    // Checkout
+    document.getElementById('btnCheckout').addEventListener('click', doCheckout);
+    async function doCheckout() {
+      if (cart.length === 0) return;
+      var totalText = document.getElementById('valTotal').textContent.replace('€', '');
+      var total = parseFloat(totalText) || 0;
+      if (paymentMethod === 'cash') {
+        var received = parseFloat(document.getElementById('cashReceived').value) || 0;
+        if (received < total) { showToast(lang === 'zh' ? '实收金额不足' : 'Insufficient cash received', 'error'); return; }
+      }
+      var btn = document.getElementById('btnCheckout');
+      btn.disabled = true;
+      btn.textContent = lang === 'zh' ? '处理中...' : 'Processing...';
+      try {
+        var body = {
+          items: cart.map(function(c) { return { product: c.product, quantity: c.quantity, discount: c.discount, serialNumber: c.serialNumber }; }),
+          paymentMethod: paymentMethod
+        };
+        if (orderDiscount && orderDiscount.type && orderDiscount.value > 0) body.orderDiscount = orderDiscount;
+        if (paymentMethod === 'cash') body.cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+
+        var res = await apiFetch('/transactions/checkout', { method: 'POST', body: JSON.stringify(body) });
+        if (!res) return;
+        var data = await res.json();
+        if (!res.ok) { showToast(data.error || 'Checkout failed', 'error'); return; }
+
+        lastTransaction = data;
+        showToast((lang === 'zh' ? '结账成功！小票号: ' : 'Success! Receipt: ') + (data.transaction||data).receiptNumber, 'success');
+
+        // Try print with formatted receipt data
+        printReceipt(data.receipt || data.transaction || data);
+
+        // Clear cart
+        cart = []; selectedCartIndex = -1; orderDiscount = null;
+        document.getElementById('cashReceived').value = '';
+        renderCart();
+        searchInput.value = '';
+        showSearchHint();
+        searchInput.focus();
+      } catch (err) {
+        showToast('Checkout error: ' + err.message, 'error');
+      } finally {
+        btn.disabled = cart.length === 0;
+        btn.textContent = t('checkoutText');
+      }
+    }
+
+    // Print receipt
+    async function printReceipt(transaction) {
+      try {
+        var res = await fetch('http://localhost:9100/print', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(transaction),
+          signal: AbortSignal.timeout(5000)
+        });
+        if (!res.ok) throw new Error('Print Agent error');
+      } catch (err) {
+        console.warn('Print Agent unavailable, falling back to window.print():', err.message);
+        window.print();
+      }
+    }
+
+    // Discount modal (F2)
+    function openDiscountModal() {
+      var overlay = document.getElementById('discountModalOverlay');
+      overlay.classList.add('show');
+      // Pre-fill item discount
+      if (selectedCartIndex >= 0 && cart[selectedCartIndex]) {
+        var d = cart[selectedCartIndex].discount;
+        if (d && d.type) { document.getElementById('dmItemType').value = d.type; document.getElementById('dmItemValue').value = d.value; }
+        else { document.getElementById('dmItemType').value = ''; document.getElementById('dmItemValue').value = ''; }
+      }
+      // Pre-fill order discount
+      if (orderDiscount && orderDiscount.type) { document.getElementById('dmOrderType').value = orderDiscount.type; document.getElementById('dmOrderValue').value = orderDiscount.value; }
+      else { document.getElementById('dmOrderType').value = ''; document.getElementById('dmOrderValue').value = ''; }
+    }
+    document.getElementById('dmCancel').addEventListener('click', function() { document.getElementById('discountModalOverlay').classList.remove('show'); });
+    document.getElementById('dmApply').addEventListener('click', function() {
+      // Item discount
+      if (selectedCartIndex >= 0 && cart[selectedCartIndex]) {
+        var iType = document.getElementById('dmItemType').value;
+        var iVal = parseFloat(document.getElementById('dmItemValue').value) || 0;
+        if (iType && iVal > 0) cart[selectedCartIndex].discount = { type: iType, value: iVal };
+        else cart[selectedCartIndex].discount = null;
+      }
+      // Order discount
+      var oType = document.getElementById('dmOrderType').value;
+      var oVal = parseFloat(document.getElementById('dmOrderValue').value) || 0;
+      if (oType && oVal > 0) orderDiscount = { type: oType, value: oVal };
+      else orderDiscount = null;
+
+      document.getElementById('discountModalOverlay').classList.remove('show');
+      renderCart();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Skip if in input/select
+      var tag = (e.target.tagName || '').toLowerCase();
+      var isInput = tag === 'input' || tag === 'select' || tag === 'textarea';
+
+      if (e.key === 'F1') { e.preventDefault(); searchInput.focus(); searchInput.select(); }
+      else if (e.key === 'F2') { e.preventDefault(); openDiscountModal(); }
+      else if (e.key === 'F3') {
+        e.preventDefault();
+        paymentMethod = paymentMethod === 'cash' ? 'card' : 'cash';
+        document.querySelectorAll('#paymentToggle button').forEach(function(b) { b.classList.toggle('active', b.dataset.method === paymentMethod); });
+        document.getElementById('cashGroup').style.display = paymentMethod === 'cash' ? '' : 'none';
+        updateChange();
+      }
+      else if (e.key === 'F4') { e.preventDefault(); if (lastTransaction) printReceipt(lastTransaction); else showToast(lang === 'zh' ? '没有上一张小票' : 'No last receipt', 'info'); }
+      else if (e.key === 'Enter' && !isInput) { e.preventDefault(); doCheckout(); }
+      else if (e.key === 'Escape') {
+        // Close modals first
+        var dm = document.getElementById('discountModalOverlay');
+        var cm = document.getElementById('confirmOverlay');
+        if (dm.classList.contains('show')) { dm.classList.remove('show'); return; }
+        if (cm.classList.contains('show')) { cm.classList.remove('show'); return; }
+        if (cart.length > 0) { e.preventDefault(); showConfirm(t('confirmClearTitle'), t('confirmClearMsg'), function() { cart = []; selectedCartIndex = -1; orderDiscount = null; renderCart(); }); }
+      }
+      else if ((e.key === 'Delete' || e.key === 'Backspace') && !isInput) {
+        e.preventDefault();
+        if (selectedCartIndex >= 0 && cart[selectedCartIndex]) { cart.splice(selectedCartIndex, 1); if (selectedCartIndex >= cart.length) selectedCartIndex = cart.length - 1; renderCart(); }
+      }
+      else if (e.key === 'ArrowUp' && !isInput) { e.preventDefault(); if (cart.length > 0) { selectedCartIndex = Math.max(0, selectedCartIndex - 1); renderCart(); } }
+      else if (e.key === 'ArrowDown' && !isInput) { e.preventDefault(); if (cart.length > 0) { selectedCartIndex = Math.min(cart.length - 1, selectedCartIndex + 1); renderCart(); } }
+    });
+
+    // Language toggle
+    document.getElementById('langToggle').addEventListener('click', function() {
+      lang = lang === 'zh' ? 'en' : 'zh';
+      updateLang();
+    });
+
+    // Barcode scanner: rapid input detection
+    var barcodeBuffer = '';
+    var barcodeTimer = null;
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && searchInput.value.trim().length > 3) {
+        clearTimeout(barcodeTimer);
+        var q = searchInput.value.trim();
+        // Treat as barcode scan - search and auto-add first result
+        doSearch(q).then(function() {
+          var firstCard = productResults.querySelector('.product-card');
+          if (firstCard) firstCard.click();
+          searchInput.value = '';
+          searchInput.focus();
+        });
+      }
+    });
+
+    // Init
+    updateLang();
+    renderCart();
+    searchInput.focus();
+    })();
+    </script>
+</body>
+</html>

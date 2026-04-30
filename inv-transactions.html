@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交易记录 - Tech Cross 进销存</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;background:#f5f5f7;color:#1d1d1f;}
+        .layout{display:flex;height:100vh;}
+        .sidebar{width:220px;background:#1d1d1f;color:#f5f5f7;display:flex;flex-direction:column;flex-shrink:0;}
+        .sidebar .logo{padding:20px;text-align:center;border-bottom:1px solid #333;}.sidebar .logo img{height:36px;}.sidebar .logo span{display:block;font-size:12px;color:#86868b;margin-top:4px;}
+        .sidebar nav{flex:1;overflow-y:auto;padding:12px 0;}
+        .sidebar nav a{display:flex;align-items:center;gap:10px;padding:10px 20px;color:#b0b0b5;text-decoration:none;font-size:14px;transition:all .15s;border-left:3px solid transparent;}
+        .sidebar nav a:hover{background:#2a2a2d;color:#f5f5f7;}.sidebar nav a.active{background:#2a2a2d;color:#D4E157;border-left-color:#D4E157;font-weight:600;}
+        .sidebar nav a .icon{width:20px;text-align:center;font-size:16px;}
+        .sidebar .nav-section{padding:16px 20px 6px;font-size:11px;color:#6e6e73;text-transform:uppercase;letter-spacing:1px;}
+        .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+        .topbar{height:56px;background:#fff;border-bottom:1px solid #e5e5e7;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+        .topbar h2{font-size:18px;font-weight:600;}.topbar .user-info{display:flex;align-items:center;gap:12px;font-size:14px;color:#6e6e73;}.topbar .user-info strong{color:#1d1d1f;}
+        .btn-logout{padding:6px 14px;border-radius:980px;border:1px solid #d2d2d7;background:#fff;font-size:13px;cursor:pointer;transition:all .2s;}.btn-logout:hover{background:#ff3b30;color:#fff;border-color:#ff3b30;}
+        .content{flex:1;overflow-y:auto;padding:24px;}
+        .card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:24px;margin-bottom:20px;}
+        .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;}
+        .toolbar input,.toolbar select{padding:8px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;background:#fff;}
+        .toolbar input:focus,.toolbar select:focus{outline:none;border-color:#D4E157;}
+        .btn{padding:8px 18px;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;}
+        .btn-primary{background:#D4E157;color:#000;}.btn-primary:hover{background:#c5d148;}
+        .btn-secondary{background:#f5f5f7;border:1px solid #d2d2d7;color:#1d1d1f;}.btn-secondary:hover{background:#e5e5e7;}
+        .btn-danger{background:#ff3b30;color:#fff;}.btn-danger:hover{background:#e0342d;}
+        .btn-success{background:#34c759;color:#fff;}.btn-success:hover{background:#2db84e;}
+        .btn-sm{padding:5px 12px;font-size:13px;}
+        table{width:100%;border-collapse:collapse;font-size:14px;}
+        thead th{background:#f5f5f7;padding:10px 12px;text-align:left;font-weight:600;font-size:12px;color:#6e6e73;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e5e7;}
+        tbody td{padding:10px 12px;border-bottom:1px solid #f0f0f2;vertical-align:middle;}
+        tbody tr:hover{background:#fafafa;}
+        .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;}
+        .badge-active{background:#e8f5e9;color:#2e7d32;}.badge-exported{background:#e3f2fd;color:#1565c0;}
+        .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+        .modal-overlay.show{display:flex;}
+        .modal{background:#fff;border-radius:18px;padding:32px;max-width:650px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);}
+        .modal h3{font-size:20px;margin-bottom:20px;}
+        .detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f2;font-size:14px;}
+        .detail-row .label{color:#6e6e73;}.detail-row .value{font-weight:500;}
+        .detail-items{margin-top:16px;}
+        .detail-items table{font-size:13px;}
+        .modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px;}
+        .toast{position:fixed;top:20px;right:20px;z-index:10000;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.15);transform:translateX(120%);transition:transform .3s ease;max-width:400px;}
+        .toast.show{transform:translateX(0);}.toast.success{background:#34c759;color:#fff;}.toast.error{background:#ff3b30;color:#fff;}
+    </style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
+        <nav>
+            <div class="nav-section">业务管理</div>
+            <a href="inv-pos.html"><span class="icon">💰</span>POS 收银</a>
+            <a href="inv-products.html"><span class="icon">📦</span>商品管理</a>
+            <a href="inv-stock.html"><span class="icon">🏭</span>库存管理</a>
+            <a href="inv-suppliers.html"><span class="icon">🤝</span>供应商管理</a>
+            <a href="inv-purchases.html"><span class="icon">🛒</span>采购管理</a>
+            <a href="inv-transactions.html" class="active"><span class="icon">📋</span>交易记录</a>
+            <div class="nav-section">报表与发票</div>
+            <a href="inv-reports.html"><span class="icon">📊</span>报表中心</a>
+            <a href="inv-invoices.html"><span class="icon">🧾</span>VAT Invoice</a>
+            <div class="nav-section" id="adminSection" style="display:none;">系统管理</div>
+            <a href="inv-settings.html" class="admin-only" style="display:none;"><span class="icon">⚙️</span>系统设置</a>
+            <a href="inv-users.html" class="admin-only" style="display:none;"><span class="icon">👥</span>用户管理</a>
+        </nav>
+    </aside>
+    <div class="main">
+        <div class="topbar">
+            <h2>交易记录</h2>
+            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()">退出登录</button></div>
+        </div>
+        <div class="content">
+            <div class="card">
+                <div class="toolbar">
+                    <input type="date" id="startDate">
+                    <span style="color:#86868b;">至</span>
+                    <input type="date" id="endDate">
+                    <button class="btn btn-primary" onclick="loadTransactions()">查询</button>
+                    <div style="flex:1;"></div>
+                    <button class="btn btn-secondary" onclick="exportTx('csv')">导出 CSV</button>
+                    <button class="btn btn-secondary" onclick="exportTx('json')">导出 JSON</button>
+                    <button class="btn btn-danger btn-sm admin-only" style="display:none;" onclick="batchDelete()">批量删除已导出</button>
+                </div>
+                <table>
+                    <thead><tr><th>单号</th><th>时间</th><th>商品数</th><th>总金额 (€)</th><th>支付方式</th><th>标记</th><th>操作</th></tr></thead>
+                    <tbody id="txTable"><tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">加载中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+    <div class="modal">
+        <h3>交易详情</h3>
+        <div id="detailContent"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="document.getElementById('detailModal').classList.remove('show')">关闭</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const token=localStorage.getItem('inv_token');
+if(!token){window.location.href='inv-login.html';return;}
+let user;try{user=JSON.parse(localStorage.getItem('inv_user'));}catch(e){window.location.href='inv-login.html';return;}
+if(!user){window.location.href='inv-login.html';return;}
+document.getElementById('displayName').textContent=user.displayName||user.username;
+document.getElementById('roleBadge').textContent=user.role==='admin'?'管理员':'员工';
+const isAdmin=user.role==='admin';
+if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
+
+const API='/api/inv';
+const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
+function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success');setTimeout(()=>t.classList.add('show'),10);setTimeout(()=>t.classList.remove('show'),3000);}
+function logout(){localStorage.removeItem('inv_token');localStorage.removeItem('inv_user');window.location.href='inv-login.html';}
+window.logout=logout;
+async function apiFetch(url,opts){opts=opts||{};opts.headers=headers();const r=await fetch(API+url,opts);if(r.status===401){logout();return null;}return r;}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// Set default dates
+const today=new Date();
+document.getElementById('endDate').value=today.toISOString().split('T')[0];
+const weekAgo=new Date(today);weekAgo.setDate(weekAgo.getDate()-30);
+document.getElementById('startDate').value=weekAgo.toISOString().split('T')[0];
+
+async function loadTransactions(){
+    const start=document.getElementById('startDate').value;
+    const end=document.getElementById('endDate').value;
+    let url='/transactions';
+    const params=[];if(start)params.push('startDate='+start);if(end)params.push('endDate='+end);
+    if(params.length)url+='?'+params.join('&');
+    try{
+        const r=await apiFetch(url);if(!r)return;
+        const list=await r.json();
+        const tb=document.getElementById('txTable');
+        if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">暂无交易记录</td></tr>';return;}
+        tb.innerHTML=list.map(tx=>`<tr>
+            <td style="font-family:monospace;font-size:13px;">${esc(tx.receiptNumber)}</td>
+            <td>${new Date(tx.createdAt).toLocaleString('zh-CN')}</td>
+            <td>${tx.items?tx.items.length:0}</td>
+            <td>€${Number(tx.totalAmount).toFixed(2)}</td>
+            <td>${tx.paymentMethod==='cash'?'💵 现金':'💳 银行卡'}</td>
+            <td>${tx.exported?'<span class="badge badge-exported">已导出</span>':''}</td>
+            <td>
+                <button class="btn btn-secondary btn-sm" onclick="viewDetail('${tx._id}')">详情</button>
+                <button class="btn btn-secondary btn-sm" onclick="reprintReceipt('${tx._id}')">🖨️ 重打</button>
+                ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="silentDelete('${tx._id}')">删除</button>`:''}
+            </td>
+        </tr>`).join('');
+    }catch(e){showToast('加载失败','error');}
+}
+
+async function viewDetail(id){
+    try{
+        const r=await apiFetch('/transactions/'+id);if(!r)return;
+        const tx=await r.json();
+        let html=`
+            <div class="detail-row"><span class="label">单号</span><span class="value">${esc(tx.receiptNumber)}</span></div>
+            <div class="detail-row"><span class="label">时间</span><span class="value">${new Date(tx.createdAt).toLocaleString('zh-CN')}</span></div>
+            <div class="detail-row"><span class="label">支付方式</span><span class="value">${tx.paymentMethod==='cash'?'现金':'银行卡'}</span></div>
+            <div class="detail-row"><span class="label">总金额</span><span class="value">€${Number(tx.totalAmount).toFixed(2)}</span></div>
+            <div class="detail-row"><span class="label">Standard VAT</span><span class="value">€${Number(tx.standardVatTotal||0).toFixed(2)}</span></div>
+            <div class="detail-row"><span class="label">Margin VAT</span><span class="value">€${Number(tx.marginVatTotal||0).toFixed(2)}</span></div>`;
+        if(tx.paymentMethod==='cash'){
+            html+=`<div class="detail-row"><span class="label">实收</span><span class="value">€${Number(tx.cashReceived||0).toFixed(2)}</span></div>`;
+            html+=`<div class="detail-row"><span class="label">找零</span><span class="value">€${Number(tx.changeGiven||0).toFixed(2)}</span></div>`;
+        }
+        if(tx.orderDiscount&&tx.orderDiscount.value){
+            html+=`<div class="detail-row"><span class="label">整单折扣</span><span class="value">${tx.orderDiscount.type==='percentage'?tx.orderDiscount.value+'%':'€'+tx.orderDiscount.value}</span></div>`;
+        }
+        html+=`<div class="detail-items"><h4 style="margin:12px 0 8px;">商品明细</h4><table>
+            <thead><tr><th>商品</th><th>数量</th><th>单价</th><th>小计</th></tr></thead>
+            <tbody>${(tx.items||[]).map(it=>`<tr>
+                <td>${esc(it.name)}${it.isSecondHand?' <span class="badge" style="background:#fff3cd;color:#856404;">二手</span>':''}${it.serialNumber?' <br><small style="color:#0071e3;">SN: '+esc(it.serialNumber)+'</small>':''}</td>
+                <td>${it.quantity}</td>
+                <td>€${Number(it.unitPrice).toFixed(2)}${it.discount&&it.discount.value?' <small style="color:#ff3b30;">(折扣: '+(it.discount.type==='percentage'?it.discount.value+'%':'€'+it.discount.value)+')</small>':''}</td>
+                <td>€${Number(it.subtotal).toFixed(2)}</td>
+            </tr>`).join('')}</tbody></table></div>`;
+        document.getElementById('detailContent').innerHTML=html;
+        document.getElementById('detailModal').classList.add('show');
+    }catch(e){showToast('加载详情失败','error');}
+}
+window.viewDetail=viewDetail;
+
+async function silentDelete(id){
+    if(!confirm('⚠️ 无痕删除\n\n此操作将永久删除该交易记录并恢复库存。\n确定要继续吗？'))return;
+    if(!confirm('再次确认：此操作不可撤销，确定删除？'))return;
+    try{const r=await apiFetch('/transactions/'+id+'/delete',{method:'DELETE'});if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}showToast('交易已删除');loadTransactions();}catch(e){showToast('删除失败','error');}
+}
+window.silentDelete=silentDelete;
+
+async function exportTx(format){
+    const start=document.getElementById('startDate').value;
+    const end=document.getElementById('endDate').value;
+    let url='/transactions/export?format='+format;
+    if(start)url+='&startDate='+start;
+    if(end)url+='&endDate='+end;
+    try{
+        const r=await apiFetch(url);if(!r)return;
+        if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}
+        const blob=await r.blob();
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download='transactions.'+format;
+        a.click();URL.revokeObjectURL(a.href);
+        showToast('导出成功');
+        loadTransactions();
+    }catch(e){showToast('导出失败','error');}
+}
+window.exportTx=exportTx;
+
+async function batchDelete(){
+    if(!confirm('⚠️ 批量删除已导出记录\n\n此操作将删除所有已标记为"已导出"的交易记录。\n确定要继续吗？'))return;
+    if(!confirm('再次确认：此操作不可撤销，确定批量删除？'))return;
+    try{
+        const r=await apiFetch('/transactions/batch-delete',{method:'DELETE',body:JSON.stringify({confirmed:true})});
+        if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}
+        const data=await r.json();showToast(`已删除 ${data.deletedCount||0} 条记录`);loadTransactions();
+    }catch(e){showToast('批量删除失败','error');}
+}
+window.batchDelete=batchDelete;
+
+async function reprintReceipt(id){
+    try{
+        const r=await apiFetch('/transactions/'+id);if(!r)return;
+        const tx=await r.json();
+        // Try Print Agent first, fallback to window.print
+        const receiptData={transaction:tx};
+        try{
+            const pr=await fetch('http://localhost:9100/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(receiptData),signal:AbortSignal.timeout(5000)});
+            if(pr.ok){showToast('小票已发送到打印机');return;}
+        }catch(e){}
+        // Fallback: open print window
+        const win=window.open('','_blank','width=400,height=600');
+        win.document.write('<html><head><title>小票</title><style>body{font-family:monospace;font-size:12px;width:280px;margin:0 auto;padding:20px;}h2{text-align:center;margin:0;}hr{border:none;border-top:1px dashed #000;}.right{text-align:right;}.center{text-align:center;}</style></head><body>');
+        win.document.write('<h2>Tech Cross</h2><p class="center">Receipt</p><hr>');
+        win.document.write('<p>单号: '+esc(tx.receiptNumber)+'</p>');
+        win.document.write('<p>时间: '+new Date(tx.createdAt).toLocaleString('zh-CN')+'</p><hr>');
+        (tx.items||[]).forEach(it=>{win.document.write('<p>'+esc(it.name)+' x'+it.quantity+' €'+Number(it.subtotal).toFixed(2)+'</p>');});
+        win.document.write('<hr><p class="right"><strong>总计: €'+Number(tx.totalAmount).toFixed(2)+'</strong></p>');
+        win.document.write('<p>支付: '+(tx.paymentMethod==='cash'?'现金':'银行卡')+'</p>');
+        if(tx.paymentMethod==='cash'){win.document.write('<p>实收: €'+Number(tx.cashReceived||0).toFixed(2)+'</p><p>找零: €'+Number(tx.changeGiven||0).toFixed(2)+'</p>');}
+        win.document.write('</body></html>');
+        win.document.close();
+        win.print();
+    }catch(e){showToast('重打失败','error');}
+}
+window.reprintReceipt=reprintReceipt;
+
+window.loadTransactions=loadTransactions;
+loadTransactions();
+})();
+</script>
+</body>
+</html>
