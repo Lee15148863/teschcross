@@ -511,6 +511,12 @@
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
                 <button onclick="openQuickAddModal()" style="margin-top:8px;padding:8px 16px;border:1px dashed #D4E157;border-radius:10px;background:none;color:#6e6e73;font-size:13px;cursor:pointer;width:100%;transition:all .15s;" onmouseover="this.style.background='#fafff0';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'" id="btnQuickAdd">+ <span id="quickAddText">快速新增商品</span></button>
+                <!-- Order Search -->
+                <div style="margin-top:8px;display:flex;gap:6px;">
+                    <input type="text" id="orderSearchInput" placeholder="Receipt # search..." style="flex:1;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" onkeydown="if(event.key==='Enter')searchOrder()">
+                    <button onclick="searchOrder()" style="padding:10px 14px;border:none;border-radius:10px;background:#0071e3;color:#fff;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;">🔎</button>
+                </div>
+                <div id="orderSearchResult" style="display:none;margin-top:8px;"></div>
             </div>
             <div class="product-results" id="productResults">
                 <div class="search-hint" id="searchHint">
@@ -637,6 +643,11 @@
                 <span class="action-label" id="scPrint">打印小票</span>
                 <kbd>F5</kbd>
             </button>
+            <button class="action-btn" onclick="document.getElementById('orderSearchInput').focus();document.getElementById('orderSearchInput').select();">
+                <span class="action-icon">📋</span>
+                <span class="action-label" id="scOrderSearch">查单</span>
+                <kbd>F6</kbd>
+            </button>
             <div class="sidebar-divider"></div>
             <button class="action-btn" onclick="window._removeSelectedItem()">
                 <span class="action-icon">🗑️</span>
@@ -703,6 +714,17 @@
         </div>
     </div>
 
+    <!-- Receipt Preview Modal -->
+    <div id="receiptPreviewOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:18px;padding:0;max-width:380px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.3);">
+            <div id="receiptPreviewContent" style="padding:24px;font-family:'Courier New',monospace;font-size:12px;line-height:1.5;color:#000;"></div>
+            <div style="display:flex;gap:12px;padding:16px 24px;border-top:1px solid #e5e5e7;justify-content:flex-end;">
+                <button onclick="document.getElementById('receiptPreviewOverlay').style.display='none'" style="padding:10px 20px;border-radius:980px;border:1px solid #d2d2d7;background:#f5f5f7;font-size:14px;cursor:pointer;">Close</button>
+                <button onclick="doPrintFromPreview()" style="padding:10px 20px;border-radius:980px;border:none;background:#D4E157;color:#000;font-size:14px;font-weight:600;cursor:pointer;">🖨️ Print</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     (function() {
     'use strict';
@@ -733,7 +755,7 @@
         lblCardAmount: '💳 卡:', lblCashAmount: '💵 现金:',
         scSearch: '搜索', scDiscount: '折扣', scPayment: '卡/现金', scReprint: '重打小票',
         scCheckout: '结账', scClear: '清空', scRemove: '移除', scNav: '导航',
-        scPrint: '打印小票', scNavUp: '上移', scNavDown: '下移', sidebarTitle: '操作',
+        scPrint: '打印小票', scNavUp: '上移', scNavDown: '下移', sidebarTitle: '操作', scOrderSearch: '查单',
         confirmClearTitle: '确认清空', confirmClearMsg: '确定要清空购物车吗？', confirmCancel: '取消', confirmOk: '确定',
         dmTitle: '应用折扣', dmItemLabel: '单品折扣（选中商品）', dmOrderLabel: '整单折扣',
         noResults: '未找到匹配商品', stock: '库存', secondHand: '二手',
@@ -751,7 +773,7 @@
         lblCardAmount: '💳 Card:', lblCashAmount: '💵 Cash:',
         scSearch: 'Search', scDiscount: 'Discount', scPayment: 'Card/Cash', scReprint: 'Reprint',
         scCheckout: 'Checkout', scClear: 'Clear', scRemove: 'Remove', scNav: 'Navigate',
-        scPrint: 'Print Receipt', scNavUp: 'Up', scNavDown: 'Down', sidebarTitle: 'Actions',
+        scPrint: 'Print Receipt', scNavUp: 'Up', scNavDown: 'Down', sidebarTitle: 'Actions', scOrderSearch: 'Orders',
         confirmClearTitle: 'Confirm Clear', confirmClearMsg: 'Clear all items from cart?', confirmCancel: 'Cancel', confirmOk: 'Confirm',
         dmTitle: 'Apply Discount', dmItemLabel: 'Item Discount (selected)', dmOrderLabel: 'Order Discount',
         noResults: 'No matching products found', stock: 'Stock', secondHand: 'Used',
@@ -766,7 +788,7 @@
 
     function updateLang() {
       document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thDisc','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin','qaLblVat'].forEach(function(id) {
+      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thDisc','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','scOrderSearch','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin','qaLblVat'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = t(id);
       });
@@ -1178,20 +1200,189 @@
       }
     }
 
-    // Print receipt
-    async function printReceipt(transaction) {
+    // Print receipt — show preview first
+    var _pendingReceiptData = null;
+
+    async function printReceipt(receiptData) {
+      _pendingReceiptData = receiptData;
+      var html = buildReceiptPreviewHtml(receiptData);
+      document.getElementById('receiptPreviewContent').innerHTML = html;
+      document.getElementById('receiptPreviewOverlay').style.display = 'flex';
+    }
+
+    window.doPrintFromPreview = async function() {
+      if (!_pendingReceiptData) return;
       try {
         var res = await fetch('http://localhost:9100/print', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(transaction),
+          body: JSON.stringify(_pendingReceiptData),
           signal: AbortSignal.timeout(5000)
         });
         if (!res.ok) throw new Error('Print Agent error');
+        showToast(lang === 'zh' ? '打印成功' : 'Printed', 'success');
       } catch (err) {
-        console.warn('Print Agent unavailable, falling back to window.print():', err.message);
-        window.print();
+        console.warn('Print Agent unavailable:', err.message);
+        // Fallback: browser print the preview
+        var printWin = window.open('', '_blank', 'width=380,height=600');
+        printWin.document.write('<html><head><title>Receipt</title><style>body{font-family:"Courier New",monospace;font-size:12px;padding:16px;max-width:300px;margin:0 auto;}</style></head><body>');
+        printWin.document.write(document.getElementById('receiptPreviewContent').innerHTML);
+        printWin.document.write('</body></html>');
+        printWin.document.close();
+        printWin.focus();
+        printWin.print();
       }
+      document.getElementById('receiptPreviewOverlay').style.display = 'none';
+    };
+
+    function buildReceiptPreviewHtml(r) {
+      if (!r) return '<p style="text-align:center;color:#86868b;">No receipt data</p>';
+      var h = '';
+      // Header
+      h += '<div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:12px;margin-bottom:12px;">';
+      h += '<div style="font-size:18px;font-weight:bold;">' + (r.companyName || 'Tech Cross Repair Centre') + '</div>';
+      h += '<div style="font-size:11px;margin-top:4px;">' + (r.companyAddress || 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658') + '</div>';
+      h += '<div style="font-size:11px;">Tel: ' + (r.companyPhone || '046 905 9854') + ' | Mob: 089 482 5300</div>';
+      h += '<div style="font-size:11px;">navantechcross@gmail.com | techcross.ie</div>';
+      h += '</div>';
+      // Receipt info
+      h += '<div style="margin-bottom:10px;">';
+      h += '<div><strong>Receipt #:</strong> ' + (r.receiptNumber || '-') + '</div>';
+      h += '<div><strong>Date:</strong> ' + (r.date || '-') + '</div>';
+      h += '</div>';
+      // Items
+      h += '<div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:8px 0;margin-bottom:8px;">';
+      if (r.items && r.items.length) {
+        r.items.forEach(function(item) {
+          var price = (item.discountedPrice != null ? item.discountedPrice : item.unitPrice) || 0;
+          h += '<div style="display:flex;justify-content:space-between;">';
+          h += '<span>' + (item.quantity > 1 ? item.quantity + 'x ' : '') + escHtml(item.name) + '</span>';
+          h += '<span>€' + (price * (item.quantity || 1)).toFixed(2) + '</span>';
+          h += '</div>';
+          if (item.serialNumber) h += '<div style="font-size:10px;color:#666;">  SN: ' + escHtml(item.serialNumber) + '</div>';
+          if (item.discountedPrice != null && item.discountedPrice < item.unitPrice) {
+            h += '<div style="font-size:10px;color:#999;">  Was €' + item.unitPrice.toFixed(2) + '</div>';
+          }
+        });
+      }
+      h += '</div>';
+      // Totals
+      h += '<div style="margin-bottom:8px;">';
+      h += '<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:bold;"><span>TOTAL</span><span>€' + (r.totalAmount || 0).toFixed(2) + '</span></div>';
+      h += '</div>';
+      // Payment
+      h += '<div style="margin-bottom:8px;font-size:11px;">';
+      var pm = r.paymentMethod || 'cash';
+      if (pm === 'split') {
+        h += '<div>Card: €' + (r.cardAmount || 0).toFixed(2) + '</div>';
+        h += '<div>Cash: €' + (r.cashReceived || 0).toFixed(2) + '</div>';
+      } else if (pm === 'cash') {
+        h += '<div>Cash: €' + (r.cashReceived || 0).toFixed(2) + '</div>';
+      } else {
+        h += '<div>Card Payment</div>';
+      }
+      if (r.changeGiven != null && r.changeGiven > 0) {
+        h += '<div><strong>Change: €' + r.changeGiven.toFixed(2) + '</strong></div>';
+      }
+      h += '</div>';
+      // VAT
+      h += '<div style="border-top:1px dashed #000;padding-top:6px;margin-bottom:8px;font-size:10px;">';
+      if (r.standardVatTotal > 0) h += '<div>Standard VAT (23%): €' + r.standardVatTotal.toFixed(2) + '</div>';
+      if (r.marginVatTotal > 0) h += '<div>Margin VAT: €' + r.marginVatTotal.toFixed(2) + '</div>';
+      h += '</div>';
+      // Terms
+      h += '<div style="border-top:1px dashed #000;padding-top:8px;font-size:9px;color:#666;text-align:center;">';
+      h += r.termsText || '';
+      if (r.hasSecondHandItems && r.secondHandTermsText) {
+        h += '<br><br>' + r.secondHandTermsText;
+      }
+      h += '</div>';
+      // QR codes hint
+      h += '<div style="text-align:center;margin-top:10px;font-size:9px;color:#999;">';
+      h += 'Sales T&C: techcross.ie/receipt-terms.html<br>';
+      h += 'Repair T&C: techcross.ie/terms.html';
+      h += '</div>';
+      // Thank you
+      h += '<div style="text-align:center;margin-top:12px;font-size:13px;font-weight:bold;">Thank you!</div>';
+      return h;
     }
+
+    // ─── Order Search ───────────────────────────────────────────
+    window.searchOrder = async function() {
+      var q = document.getElementById('orderSearchInput').value.trim();
+      var resultEl = document.getElementById('orderSearchResult');
+      if (!q) { resultEl.style.display = 'none'; return; }
+
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = '<div style="text-align:center;color:#86868b;padding:12px;">Searching...</div>';
+
+      try {
+        var res = await apiFetch('/transactions?q=' + encodeURIComponent(q) + '&limit=20');
+        if (!res) return;
+        var data = await res.json();
+        var matches = data.data || [];
+
+        if (!matches.length) {
+          resultEl.innerHTML = '<div style="text-align:center;color:#86868b;padding:12px;">' + (lang === 'zh' ? '未找到订单' : 'No orders found') + '</div>';
+          return;
+        }
+
+        resultEl.innerHTML = matches.map(function(t) {
+          var dateStr = new Date(t.createdAt).toLocaleString('en-IE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+          var pm = t.paymentMethod === 'split' ? '💳+💵' : (t.paymentMethod === 'card' ? '💳' : '💵');
+          return '<div style="padding:10px 12px;border:1px solid #e5e5e7;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:all .15s;background:#fff;" ' +
+            'onmouseover="this.style.borderColor=\'#0071e3\';this.style.background=\'#f0f7ff\'" ' +
+            'onmouseout="this.style.borderColor=\'#e5e5e7\';this.style.background=\'#fff\'" ' +
+            'onclick="viewOrderDetail(\'' + t._id + '\')">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+            '<div><strong style="font-size:14px;">#' + escHtml(t.receiptNumber) + '</strong>' +
+            '<div style="font-size:11px;color:#86868b;">' + dateStr + ' ' + pm + '</div></div>' +
+            '<div style="font-size:16px;font-weight:600;">€' + t.totalAmount.toFixed(2) + '</div>' +
+            '</div>' +
+            '<div style="font-size:11px;color:#86868b;margin-top:4px;">' + t.items.length + ' item(s)</div>' +
+            '</div>';
+        }).join('');
+      } catch(e) {
+        resultEl.innerHTML = '<div style="color:#ff3b30;padding:12px;">Error: ' + e.message + '</div>';
+      }
+    };
+
+    window.viewOrderDetail = async function(id) {
+      try {
+        var res = await apiFetch('/transactions/' + id);
+        if (!res) return;
+        var txn = await res.json();
+
+        // Build receipt data and show preview
+        var receiptData = {
+          companyName: 'Tech Cross Repair Centre',
+          companyAddress: 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658',
+          companyPhone: '046 905 9854',
+          receiptNumber: txn.receiptNumber,
+          date: new Date(txn.createdAt).toLocaleString('en-IE'),
+          items: (txn.items || []).map(function(item) {
+            return {
+              name: item.name, quantity: item.quantity, unitPrice: item.unitPrice,
+              discountedPrice: item.discountedPrice, subtotal: item.subtotal,
+              isSecondHand: item.isSecondHand, serialNumber: item.serialNumber
+            };
+          }),
+          totalAmount: txn.totalAmount,
+          paymentMethod: txn.paymentMethod,
+          cardAmount: txn.cardAmount,
+          cashReceived: txn.cashReceived,
+          changeGiven: txn.changeGiven,
+          standardVatTotal: txn.standardVatTotal || 0,
+          marginVatTotal: txn.marginVatTotal || 0,
+          termsText: '7-day refund policy — items must be in resalable condition.',
+          hasSecondHandItems: (txn.items || []).some(function(i) { return i.isSecondHand; }),
+          secondHandTermsText: 'All accounts (Apple ID/Google) must be signed out before purchase.'
+        };
+
+        printReceipt(receiptData);
+      } catch(e) {
+        showToast('Failed to load order: ' + e.message, 'error');
+      }
+    };
 
     // Discount modal (F2)
     function openDiscountModal() {
@@ -1244,6 +1435,7 @@
       }
       else if (e.key === 'F4') { e.preventDefault(); reprintLast(); }
       else if (e.key === 'F5') { e.preventDefault(); triggerPrint(); }
+      else if (e.key === 'F6') { e.preventDefault(); document.getElementById('orderSearchInput').focus(); document.getElementById('orderSearchInput').select(); }
       else if (e.key === 'Enter' && !isInput) { e.preventDefault(); doCheckout(); }
       else if (e.key === 'Escape') {
         // Close modals first

@@ -307,7 +307,12 @@ router.post('/checkout', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const filter = {};
-    const { startDate, endDate, page, limit } = req.query;
+    const { startDate, endDate, page, limit, q } = req.query;
+
+    // Receipt number search
+    if (q && typeof q === 'string' && q.trim()) {
+      filter.receiptNumber = { $regex: q.trim(), $options: 'i' };
+    }
 
     // Date range filter
     if (startDate || endDate) {

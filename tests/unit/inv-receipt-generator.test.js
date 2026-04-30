@@ -89,9 +89,9 @@ describe('generateReceipt', () => {
 
   it('should include company name, logo, address, and phone', () => {
     const receipt = generateReceipt(baseTransaction);
-    expect(receipt.companyName).toBe('Tech Cross');
+    expect(receipt.companyName).toBe('Tech Cross Repair Centre');
     expect(receipt.companyLogo).toBe('logo.png');
-    expect(receipt.companyAddress).toBe('Unit 4, Navan Shopping Centre, Navan, Co. Meath, Ireland');
+    expect(receipt.companyAddress).toBe('Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658, Ireland');
     expect(receipt.companyPhone).toBe('046 905 9854');
   });
 
@@ -102,7 +102,7 @@ describe('generateReceipt', () => {
     expect(receipt.companyPhone).toBe('123-456');
     // Non-overridden fields keep defaults
     expect(receipt.companyLogo).toBe('logo.png');
-    expect(receipt.companyAddress).toBe('Unit 4, Navan Shopping Centre, Navan, Co. Meath, Ireland');
+    expect(receipt.companyAddress).toBe('Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658, Ireland');
   });
 
   it('should include receipt number and formatted date', () => {

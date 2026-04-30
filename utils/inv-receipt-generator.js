@@ -49,10 +49,13 @@ function formatReceiptDate(date) {
 
 // Default company info (pulled from existing site data)
 const DEFAULT_COMPANY_INFO = {
-  name: 'Tech Cross',
+  name: 'Tech Cross Repair Centre',
   logo: 'logo.png',
-  address: 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, Ireland',
+  address: 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658, Ireland',
   phone: '046 905 9854',
+  mobile: '089 482 5300',
+  email: 'navantechcross@gmail.com',
+  website: 'https://techcross.ie',
 };
 
 // Fixed receipt terms text (English only)
