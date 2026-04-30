@@ -10,9 +10,11 @@ router.use(jwtAuth, requireRole('admin', 'staff'));
 
 // ─── Category attribute templates ───────────────────────────────────────────
 const CATEGORY_TEMPLATES = {
-  '二手手机': { '成色': '', '电池健康度': '', '维修记录': '' },
-  '配件': { '材质': '', '适配机型': '' },
-  '平板': { '成色': '', '存储容量': '' }
+  '销售': {},
+  '维修': {},
+  '服务': {},
+  '新机': { '品牌': '', '型号': '', '存储容量': '' },
+  '二手': { '成色': '', '电池健康度': '', '维修记录': '' }
 };
 
 // ─── GET /api/inv/products/search ───────────────────────────────────────────
@@ -136,7 +138,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const {
-      name, sku, category, costPrice, sellingPrice,
+      name, sku, category, costPrice, sellingPrice, vatRate,
       stock, isSecondHand, purchasedFromCustomer, source, marginScheme,
       serialNumber, attributes, lowStockThreshold
     } = req.body;
@@ -150,15 +152,20 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // costPrice is required (min 0)
-    if (costPrice === undefined || costPrice === null) {
-      return res.status(400).json({
-        error: '缺少必填字段：costPrice',
-        fields: ['costPrice']
-      });
+    // costPrice: required for second-hand (margin scheme), optional for others
+    if (costPrice !== undefined && costPrice !== null) {
+      if (typeof costPrice !== 'number' || costPrice < 0) {
+        return res.status(400).json({ error: '成本价必须为非负数' });
+      }
     }
-    if (typeof costPrice !== 'number' || costPrice < 0) {
-      return res.status(400).json({ error: '成本价必须为非负数' });
+
+    // vatRate validation (0-1 range, e.g. 0.23 for 23%)
+    let effectiveVatRate = 0.23; // default
+    if (vatRate !== undefined && vatRate !== null) {
+      if (typeof vatRate !== 'number' || vatRate < 0 || vatRate > 1) {
+        return res.status(400).json({ error: 'VAT 税率必须在 0-1 之间（如 0.23 表示 23%）' });
+      }
+      effectiveVatRate = vatRate;
     }
 
     // Category is required
@@ -191,8 +198,9 @@ router.post('/', async (req, res) => {
       name: name.trim(),
       sku: sku.trim(),
       category: category.trim(),
-      costPrice,
+      costPrice: costPrice || 0,
       sellingPrice,
+      vatRate: effectiveVatRate,
       stock: stock || 0,
       isSecondHand: !!isSecondHand,
       purchasedFromCustomer: !!purchasedFromCustomer,
@@ -233,7 +241,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const {
-      name, sku, category, costPrice, sellingPrice,
+      name, sku, category, costPrice, sellingPrice, vatRate,
       stock, isSecondHand, purchasedFromCustomer, source, marginScheme,
       serialNumber, attributes, lowStockThreshold, active
     } = req.body;
@@ -249,6 +257,12 @@ router.put('/:id', async (req, res) => {
       updateFields.costPrice = costPrice;
     }
     if (sellingPrice !== undefined) updateFields.sellingPrice = sellingPrice;
+    if (vatRate !== undefined) {
+      if (typeof vatRate !== 'number' || vatRate < 0 || vatRate > 1) {
+        return res.status(400).json({ error: 'VAT 税率必须在 0-1 之间' });
+      }
+      updateFields.vatRate = vatRate;
+    }
     if (stock !== undefined) updateFields.stock = stock;
     if (isSecondHand !== undefined) updateFields.isSecondHand = isSecondHand;
     if (purchasedFromCustomer !== undefined) updateFields.purchasedFromCustomer = purchasedFromCustomer;

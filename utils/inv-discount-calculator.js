@@ -176,6 +176,7 @@ function calculateDiscountedCart(items, orderDiscount, vatRate = DEFAULT_VAT_RAT
     const costPrice = item.costPrice || 0;
     const quantity = item.quantity || 1;
     const isSecondHand = item.isSecondHand || false;
+    const itemVatRate = item.vatRate || vatRate;
 
     const { discountedPrice, discountAmount: itemDiscountAmount } = applyItemDiscount(
       unitPrice,
@@ -184,15 +185,15 @@ function calculateDiscountedCart(items, orderDiscount, vatRate = DEFAULT_VAT_RAT
 
     const subtotal = Math.round(discountedPrice * quantity * 100) / 100;
 
-    // Calculate VAT based on discounted price
+    // Calculate VAT based on discounted price and per-item vatRate
     let vatAmount = 0;
     let marginVat = 0;
 
     if (isSecondHand) {
-      marginVat = calculateMarginVat(discountedPrice, costPrice, vatRate) * quantity;
+      marginVat = calculateMarginVat(discountedPrice, costPrice, itemVatRate) * quantity;
       marginVat = Math.round(marginVat * 100) / 100;
     } else {
-      vatAmount = calculateStandardVat(discountedPrice, vatRate) * quantity;
+      vatAmount = calculateStandardVat(discountedPrice, itemVatRate) * quantity;
       vatAmount = Math.round(vatAmount * 100) / 100;
     }
 
@@ -201,6 +202,7 @@ function calculateDiscountedCart(items, orderDiscount, vatRate = DEFAULT_VAT_RAT
       costPrice,
       quantity,
       isSecondHand,
+      vatRate: itemVatRate,
       discount: item.discount || null,
       discountedPrice,
       itemDiscountAmount,
@@ -240,12 +242,13 @@ function calculateDiscountedCart(items, orderDiscount, vatRate = DEFAULT_VAT_RAT
 
       let vatAmount = 0;
       let marginVat = 0;
+      const itemVatRate = item.vatRate || vatRate;
 
       if (item.isSecondHand) {
-        marginVat = calculateMarginVat(newDiscountedPrice, item.costPrice, vatRate) * item.quantity;
+        marginVat = calculateMarginVat(newDiscountedPrice, item.costPrice, itemVatRate) * item.quantity;
         marginVat = Math.round(marginVat * 100) / 100;
       } else {
-        vatAmount = calculateStandardVat(newDiscountedPrice, vatRate) * item.quantity;
+        vatAmount = calculateStandardVat(newDiscountedPrice, itemVatRate) * item.quantity;
         vatAmount = Math.round(vatAmount * 100) / 100;
       }
 

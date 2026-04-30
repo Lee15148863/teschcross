@@ -648,9 +648,17 @@
             <div style="display:flex;gap:12px;margin-bottom:12px;">
                 <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblSku">SKU/Barcode *</label><input type="text" id="qaSku" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="条码或自定义编号"></div>
                 <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCat">分类 *</label>
-                    <select id="qaCat" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"><option value="二手手机">二手手机</option><option value="配件">配件</option><option value="平板">平板</option><option value="新机">新机</option><option value="维修配件">维修配件</option><option value="其他">其他</option></select>
+                    <select id="qaCat" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" onchange="qaOnCategoryChange()"><option value="销售">销售</option><option value="维修">维修</option><option value="服务">服务</option><option value="新机">新手机平板等电器</option><option value="二手">二手手机平板等电器</option></select>
                 </div>
             </div>
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblVat">VAT %</label>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input type="number" id="qaVatRate" step="0.1" min="0" max="100" value="23" style="flex:1;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;">
+                        <button type="button" onclick="document.getElementById('qaVatRate').value='23'" style="padding:6px 10px;border:1px solid #d2d2d7;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;">23%</button>
+                        <button type="button" onclick="document.getElementById('qaVatRate').value='13.5'" style="padding:6px 10px;border:1px solid #d2d2d7;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;">13.5%</button>
+                    </div>
+                </div>
             <div style="display:flex;gap:12px;margin-bottom:12px;">
                 <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCost">成本价 € *</label><input type="number" id="qaCost" step="0.01" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
                 <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblPrice">售价 € *</label><input type="number" id="qaPrice" step="0.01" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
@@ -707,7 +715,7 @@
         lblStdVat: 'Standard VAT:', lblMarginVat: 'Margin VAT:',
         quickAddText: '快速新增商品', qaTitle: '快速新增商品', qaBtnSave: '创建并添加到购物车', qaBtnCancel: '取消',
         qaLblName: '商品名称 *', qaLblSku: 'SKU/Barcode *', qaLblCat: '分类 *', qaLblCost: '成本价 € *', qaLblPrice: '售价 € *', qaLblQty: '初始库存', qaLblSH: '二手商品',
-        qaLblSource: '来源', qaLblMargin: '适用 Margin Scheme VAT',
+        qaLblSource: '来源', qaLblMargin: '适用 Margin Scheme VAT', qaLblVat: 'VAT %',
       },
       en: {
         posTitle: 'POS Checkout', cartTitle: 'Cart', clearCartText: 'Clear',
@@ -725,7 +733,7 @@
         lblStdVat: 'Standard VAT:', lblMarginVat: 'Margin VAT:',
         quickAddText: 'Quick Add Product', qaTitle: 'Quick Add Product', qaBtnSave: 'Create & Add to Cart', qaBtnCancel: 'Cancel',
         qaLblName: 'Product Name *', qaLblSku: 'SKU/Barcode *', qaLblCat: 'Category *', qaLblCost: 'Cost € *', qaLblPrice: 'Price € *', qaLblQty: 'Initial Stock', qaLblSH: 'Second-hand',
-        qaLblSource: 'Source', qaLblMargin: 'Apply Margin Scheme VAT',
+        qaLblSource: 'Source', qaLblMargin: 'Apply Margin Scheme VAT', qaLblVat: 'VAT %',
       }
     };
 
@@ -733,7 +741,7 @@
 
     function updateLang() {
       document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin'].forEach(function(id) {
+      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin','qaLblVat'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = t(id);
       });
@@ -837,7 +845,7 @@
             product: p._id, name: p.name, sku: p.sku, serialNumber: p.serialNumber || '',
             unitPrice: p.sellingPrice, costPrice: p.costPrice, quantity: 1,
             isSecondHand: p.isSecondHand || false, marginScheme: p.marginScheme || false,
-            source: p.source || '', stock: p.stock, discount: null
+            vatRate: p.vatRate || 0.23, source: p.source || '', stock: p.stock, discount: null
           });
         }
         renderCart();
@@ -871,7 +879,7 @@
       var html = '';
       cart.forEach(function(item, idx) {
         var stockWarn = item.quantity > item.stock ? '<div class="stock-warn">⚠ ' + (lang === 'zh' ? '库存不足' : 'Low stock') + '</div>' : '';
-        var taxBadge = item.marginScheme ? '<span class="cart-item-tax tax-margin">Margin</span>' : '<span class="cart-item-tax tax-standard">Std 23%</span>';
+        var taxBadge = item.marginScheme ? '<span class="cart-item-tax tax-margin">Margin</span>' : '<span class="cart-item-tax tax-standard">' + Math.round((item.vatRate||0.23)*100) + '%</span>';
         var discountInfo = '';
         var displayPrice = item.unitPrice;
         if (item.discount && item.discount.type && item.discount.value > 0) {
@@ -926,9 +934,11 @@
         subtotal += itemSub;
         if (item.marginScheme) {
           var margin = price - item.costPrice;
-          if (margin > 0) marginVat += Math.round(margin * VAT_RATE / (1 + VAT_RATE) * item.quantity * 100) / 100;
+          var iVat = item.vatRate || 0.23;
+          if (margin > 0) marginVat += Math.round(margin * iVat / (1 + iVat) * item.quantity * 100) / 100;
         } else {
-          stdVat += Math.round(price * VAT_RATE / (1 + VAT_RATE) * item.quantity * 100) / 100;
+          var iVat2 = item.vatRate || 0.23;
+          stdVat += Math.round(price * iVat2 / (1 + iVat2) * item.quantity * 100) / 100;
         }
       });
 
@@ -1259,6 +1269,8 @@
       document.getElementById('qaSku').value = '';
       document.getElementById('qaCost').value = '';
       document.getElementById('qaPrice').value = '';
+      document.getElementById('qaVatRate').value = '23';
+      document.getElementById('qaCat').value = '销售';
       document.getElementById('qaStock').value = '1';
       document.getElementById('qaSecondHand').checked = false;
       document.getElementById('qaSerial').value = '';
@@ -1270,6 +1282,19 @@
     }
     window.openQuickAddModal = openQuickAddModal;
 
+    function qaOnCategoryChange() {
+      var cat = document.getElementById('qaCat').value;
+      var vatInput = document.getElementById('qaVatRate');
+      var shCheck = document.getElementById('qaSecondHand');
+      if (cat === '维修' || cat === '服务') { vatInput.value = '13.5'; }
+      else { vatInput.value = '23'; }
+      if (cat === '二手') {
+        shCheck.checked = true;
+        document.getElementById('qaSecondHandFields').style.display = 'block';
+      }
+    }
+    window.qaOnCategoryChange = qaOnCategoryChange;
+
     function closeQuickAddModal() {
       document.getElementById('quickAddOverlay').style.display = 'none';
     }
@@ -1278,12 +1303,14 @@
     async function submitQuickAdd() {
       var errEl = document.getElementById('qaError');
       errEl.style.display = 'none';
+      var qaVatVal = parseFloat(document.getElementById('qaVatRate').value);
       var body = {
         name: document.getElementById('qaName').value.trim(),
         sku: document.getElementById('qaSku').value.trim(),
         category: document.getElementById('qaCat').value,
-        costPrice: parseFloat(document.getElementById('qaCost').value),
+        costPrice: parseFloat(document.getElementById('qaCost').value) || 0,
         sellingPrice: parseFloat(document.getElementById('qaPrice').value),
+        vatRate: (!isNaN(qaVatVal) && qaVatVal >= 0) ? qaVatVal / 100 : 0.23,
         stock: parseInt(document.getElementById('qaStock').value) || 0,
         isSecondHand: document.getElementById('qaSecondHand').checked
       };
@@ -1293,8 +1320,13 @@
         body.marginScheme = document.getElementById('qaMarginScheme').checked;
         body.purchasedFromCustomer = body.source === 'customer';
       }
-      if (!body.name || !body.sku || !body.category || isNaN(body.costPrice) || isNaN(body.sellingPrice)) {
-        errEl.textContent = lang === 'zh' ? '请填写所有必填字段' : 'Please fill all required fields';
+      if (!body.name || !body.sku || !body.category || isNaN(body.sellingPrice)) {
+        errEl.textContent = lang === 'zh' ? '请填写商品名称、SKU、分类和售价' : 'Please fill name, SKU, category and price';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (body.isSecondHand && (!body.costPrice || body.costPrice <= 0)) {
+        errEl.textContent = lang === 'zh' ? '二手商品必须填写成本价' : 'Second-hand items require cost price';
         errEl.style.display = 'block';
         return;
       }

@@ -140,15 +140,23 @@
             </div>
             <div class="form-row">
                 <div class="form-group"><label>分类 <span style="color:#ff3b30;">*</span></label>
-                    <select id="fCategory"><option value="">请选择</option><option value="二手手机">二手手机</option><option value="配件">配件</option><option value="平板">平板</option><option value="新机">新机</option><option value="维修配件">维修配件</option><option value="其他">其他</option></select>
+                    <select id="fCategory" onchange="onCategoryChange()"><option value="">请选择</option><option value="销售">销售</option><option value="维修">维修</option><option value="服务">服务</option><option value="新机">新手机平板等电器</option><option value="二手">二手手机平板等电器</option></select>
                 </div>
-                <div class="form-group"><label>低库存阈值</label><input type="number" id="fThreshold" value="10" min="0"></div>
+                <div class="form-group"><label>VAT 税率 (%)</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="number" id="fVatRate" step="0.1" min="0" max="100" value="23" style="flex:1;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('fVatRate').value='23'">23%</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('fVatRate').value='13.5'">13.5%</button>
+                    </div>
+                    <div class="hint">不填默认 23%，维修/服务类默认 13.5%</div>
+                </div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>成本价 (€) <span style="color:#ff3b30;">*</span></label><input type="number" id="fCost" step="0.01" min="0" required></div>
+                <div class="form-group"><label>成本价 (€) <span id="costRequired" style="color:#ff3b30;">*</span></label><input type="number" id="fCost" step="0.01" min="0"><div class="hint" id="costHint">二手商品必填（用于 Margin VAT 计算）</div></div>
                 <div class="form-group"><label>售价 (€) <span style="color:#ff3b30;">*</span></label><input type="number" id="fPrice" step="0.01" min="0" required></div>
             </div>
-            <div class="form-group">
+            <div class="form-group"><label>低库存阈值</label><input type="number" id="fThreshold" value="10" min="0"></div>
+            <div class="form-group" id="secondHandCheckGroup">
                 <label><input type="checkbox" id="fSecondHand" onchange="toggleSecondHand()"> 二手商品</label>
             </div>
             <div class="secondhand-fields" id="secondHandFields">
@@ -262,6 +270,38 @@ document.getElementById('searchInput').addEventListener('input',()=>{clearTimeou
 document.getElementById('categoryFilter').addEventListener('change',()=>loadProducts(1));
 document.getElementById('activeFilter').addEventListener('change',()=>loadProducts(1));
 
+// Category change handler
+function onCategoryChange(){
+    const cat=document.getElementById('fCategory').value;
+    const vatInput=document.getElementById('fVatRate');
+    const secondHandCheck=document.getElementById('fSecondHand');
+    const secondHandGroup=document.getElementById('secondHandCheckGroup');
+    const costRequired=document.getElementById('costRequired');
+    
+    // Set default VAT rate based on category
+    if(cat==='维修'||cat==='服务'){
+        vatInput.value='13.5';
+    }else{
+        vatInput.value='23';
+    }
+    
+    // Auto-check second-hand for 二手 category
+    if(cat==='二手'){
+        secondHandCheck.checked=true;
+        secondHandGroup.style.display='none'; // hide checkbox, always second-hand
+        toggleSecondHand();
+        costRequired.style.display='';
+    }else{
+        secondHandGroup.style.display='';
+        if(cat==='新机'){
+            costRequired.style.display='none'; // not required for new electronics
+        }else{
+            costRequired.style.display='none'; // optional for all non-second-hand
+        }
+    }
+}
+window.onCategoryChange=onCategoryChange;
+
 // Second-hand toggle
 function toggleSecondHand(){
     const checked=document.getElementById('fSecondHand').checked;
@@ -341,6 +381,7 @@ async function editProduct(id){
         document.getElementById('fName').value=p.name;
         document.getElementById('fSku').value=p.sku;
         document.getElementById('fCategory').value=p.category||'';
+        document.getElementById('fVatRate').value=p.vatRate?Math.round(p.vatRate*1000)/10:23;
         document.getElementById('fCost').value=p.costPrice;
         document.getElementById('fPrice').value=p.sellingPrice;
         document.getElementById('fThreshold').value=p.lowStockThreshold||10;
@@ -362,12 +403,14 @@ window.editProduct=editProduct;
 
 async function saveProduct(){
     const id=document.getElementById('editId').value;
+    const vatRateVal=parseFloat(document.getElementById('fVatRate').value);
     const body={
         name:document.getElementById('fName').value.trim(),
         sku:document.getElementById('fSku').value.trim(),
         category:document.getElementById('fCategory').value,
-        costPrice:parseFloat(document.getElementById('fCost').value),
+        costPrice:parseFloat(document.getElementById('fCost').value)||0,
         sellingPrice:parseFloat(document.getElementById('fPrice').value),
+        vatRate:(!isNaN(vatRateVal)&&vatRateVal>=0)?vatRateVal/100:0.23,
         isSecondHand:document.getElementById('fSecondHand').checked,
         lowStockThreshold:parseInt(document.getElementById('fThreshold').value)||10,
         attributes:getAttributes()
@@ -379,7 +422,9 @@ async function saveProduct(){
         body.marginScheme=document.getElementById('fMarginScheme').checked;
     }
     if(!id)body.stock=parseInt(document.getElementById('fStock').value)||0;
-    if(!body.name||!body.sku||!body.category||isNaN(body.costPrice)||isNaN(body.sellingPrice)){showToast('请填写所有必填字段','error');return;}
+    if(!body.name||!body.sku||!body.category||isNaN(body.sellingPrice)){showToast('请填写商品名称、SKU、分类和售价','error');return;}
+    // Second-hand requires cost price
+    if(body.isSecondHand&&(!body.costPrice||body.costPrice<=0)){showToast('二手商品必须填写成本价','error');return;}
     try{
         const r=await apiFetch('/products'+(id?'/'+id:''),{method:id?'PUT':'POST',body:JSON.stringify(body)});
         if(!r)return;

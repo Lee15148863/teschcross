@@ -14,6 +14,7 @@ const TransactionSchema = new mongoose.Schema({
     purchasedFromCustomer: { type: Boolean, default: false },
     marginScheme: { type: Boolean, default: false },
     source:       { type: String, enum: ['customer', 'dealer', 'other', ''], default: '' },
+    vatRate:      { type: Number, default: 0.23 },
     discount:     {
       type:  { type: String, enum: ['percentage', 'fixed'] },
       value: { type: Number }
