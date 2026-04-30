@@ -48,8 +48,6 @@ steps:
       - '1'
       - '--timeout'
       - '300'
-      - '--update-env-vars'
-      - 'DEPLOYED_AT=$BUILD_ID,DBCon=mongodb+srv://leehou83_db_user:TbHHdSawQXMqSkcg@cluster0.m2fuodz.mongodb.net/?appName=Cluster0,ADMIN_TOKEN=techcross_admin_2026,INV_JWT_SECRET=techcross_inv_jwt_2026_secret,INV_AUDIT_KEY=techcross_inv_audit_2026_key'
       - '--revision-suffix'
       - '$SHORT_SHA'
   
