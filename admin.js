@@ -1,53 +1,53 @@
 // Admin page functionality
-const ADMIN_USERNAME_KEY = 'techcross_admin_username';
-const ADMIN_PASSWORD_KEY = 'techcross_admin_password';
 const ADMIN_SESSION_KEY = 'techcross_admin_session';
 
-// Default credentials removed for security — must be set via localStorage
-const DEFAULT_USERNAME = '';
-const DEFAULT_PASSWORD = '';
-
-// Check if custom credentials exist, otherwise use default
-function getAdminUsername() {
-    return localStorage.getItem(ADMIN_USERNAME_KEY) || DEFAULT_USERNAME;
-}
-
-function getAdminPassword() {
-    return localStorage.getItem(ADMIN_PASSWORD_KEY) || DEFAULT_PASSWORD;
-}
-
-// Set custom credentials
-function setAdminCredentials(username, password) {
-    localStorage.setItem(ADMIN_USERNAME_KEY, username);
-    localStorage.setItem(ADMIN_PASSWORD_KEY, password);
-}
-
-// Check if user is logged in
+// Check if user is logged in — supports inv system JWT admin
 function checkAuth() {
+    // Check session
     const session = sessionStorage.getItem(ADMIN_SESSION_KEY);
     if (session === 'authenticated') {
         showAdminPanel();
+        return;
     }
+    // Check if logged into inv system as admin
+    try {
+        const invUser = JSON.parse(localStorage.getItem('inv_user'));
+        const invToken = localStorage.getItem('inv_token');
+        if (invUser && invUser.role === 'admin' && invToken) {
+            sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
+            showAdminPanel();
+            return;
+        }
+    } catch(e) {}
 }
 
-// Login handler
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+// Login handler — verify against inv system API
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const username = document.getElementById('usernameInput').value;
     const password = document.getElementById('passwordInput').value;
-    const correctUsername = getAdminUsername();
-    const correctPassword = getAdminPassword();
-    
-    if (username === correctUsername && password === correctPassword) {
-        sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
-        showAdminPanel();
-    } else {
+
+    try {
+        const res = await fetch('/api/inv/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, humanCheck: true })
+        });
+        const data = await res.json();
+        if (res.ok && data.token && data.user && data.user.role === 'admin') {
+            localStorage.setItem('inv_token', data.token);
+            localStorage.setItem('inv_user', JSON.stringify(data.user));
+            sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
+            showAdminPanel();
+        } else {
+            document.getElementById('loginError').classList.add('show');
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('passwordInput').value = '';
+            setTimeout(() => { document.getElementById('loginError').classList.remove('show'); }, 3000);
+        }
+    } catch(err) {
         document.getElementById('loginError').classList.add('show');
-        document.getElementById('usernameInput').value = '';
-        document.getElementById('passwordInput').value = '';
-        setTimeout(() => {
-            document.getElementById('loginError').classList.remove('show');
-        }, 3000);
+        setTimeout(() => { document.getElementById('loginError').classList.remove('show'); }, 3000);
     }
 });
 
@@ -62,18 +62,6 @@ function showAdminPanel() {
 function logout() {
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
     location.reload();
-}
-
-// Change credentials function (can be called from console)
-function changeAdminCredentials(newUsername, newPassword) {
-    if (newUsername && newPassword && newPassword.length >= 6) {
-        setAdminCredentials(newUsername, newPassword);
-        console.log('Credentials changed successfully!');
-        alert('Credentials changed successfully! Please login again.');
-        logout();
-    } else {
-        console.error('Username and password are required. Password must be at least 6 characters long.');
-    }
 }
 
 // Check authentication on page load
