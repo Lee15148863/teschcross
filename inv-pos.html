@@ -554,7 +554,7 @@
             <h3 style="font-size:20px;margin-bottom:20px;" id="qaTitle">快速新增商品</h3>
             <div style="margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblName">商品名称 *</label><input type="text" id="qaName" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="iPhone 15 128GB"></div>
             <div style="display:flex;gap:12px;margin-bottom:12px;">
-                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblSku">SKU *</label><input type="text" id="qaSku" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="SJ-APP15-128G-2026"></div>
+                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblSku">SKU/Barcode *</label><input type="text" id="qaSku" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="条码或自定义编号"></div>
                 <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCat">分类 *</label>
                     <select id="qaCat" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"><option value="二手手机">二手手机</option><option value="配件">配件</option><option value="平板">平板</option><option value="新机">新机</option><option value="维修配件">维修配件</option><option value="其他">其他</option></select>
                 </div>
@@ -588,7 +588,7 @@
     let cart = [];
     let selectedCartIndex = -1;
     let paymentMethod = 'cash';
-    let lang = 'zh';
+    let lang = 'en';
     let lastTransaction = null;
     let searchTimer = null;
     let orderDiscount = null;
@@ -598,7 +598,7 @@
       zh: {
         posTitle: 'POS 收银', cartTitle: '购物车', clearCartText: '清空',
         emptyCartText: '购物车为空，请搜索并添加商品', checkoutText: '结 账',
-        searchPlaceholder: '搜索商品名称、SKU 或 IMEI...', hintText: '输入商品名称、SKU 或 IMEI 搜索<br>或扫描条码添加商品',
+        searchPlaceholder: '搜索商品名称、SKU/Barcode 或 IMEI...', hintText: '输入商品名称、SKU/Barcode 或 IMEI 搜索<br>或扫描条码添加商品',
         thProduct: '商品', thPrice: '单价', thQty: '数量', thTax: '税率', thSubtotal: '小计',
         lblSubtotal: '小计:', lblDiscount: '折扣:', lblTotal: '总计',
         lblReceived: '实收:', btnCash: '💵 现金', btnCard: '💳 银行卡',
@@ -608,11 +608,13 @@
         dmTitle: '应用折扣', dmItemLabel: '单品折扣（选中商品）', dmOrderLabel: '整单折扣',
         noResults: '未找到匹配商品', stock: '库存', secondHand: '二手',
         lblStdVat: 'Standard VAT:', lblMarginVat: 'Margin VAT:',
+        quickAddText: '快速新增商品', qaTitle: '快速新增商品', qaBtnSave: '创建并添加到购物车', qaBtnCancel: '取消',
+        qaLblName: '商品名称 *', qaLblSku: 'SKU/Barcode *', qaLblCat: '分类 *', qaLblCost: '成本价 € *', qaLblPrice: '售价 € *', qaLblQty: '初始库存', qaLblSH: '二手商品',
       },
       en: {
         posTitle: 'POS Checkout', cartTitle: 'Cart', clearCartText: 'Clear',
         emptyCartText: 'Cart is empty. Search and add products.', checkoutText: 'Checkout',
-        searchPlaceholder: 'Search by name, SKU or IMEI...', hintText: 'Search by product name, SKU or IMEI<br>or scan barcode to add',
+        searchPlaceholder: 'Search by name, SKU/Barcode or IMEI...', hintText: 'Search by product name, SKU/Barcode or IMEI<br>or scan barcode to add',
         thProduct: 'Product', thPrice: 'Price', thQty: 'Qty', thTax: 'Tax', thSubtotal: 'Subtotal',
         lblSubtotal: 'Subtotal:', lblDiscount: 'Discount:', lblTotal: 'Total',
         lblReceived: 'Received:', btnCash: '💵 Cash', btnCard: '💳 Card',
@@ -622,6 +624,8 @@
         dmTitle: 'Apply Discount', dmItemLabel: 'Item Discount (selected)', dmOrderLabel: 'Order Discount',
         noResults: 'No matching products found', stock: 'Stock', secondHand: 'Used',
         lblStdVat: 'Standard VAT:', lblMarginVat: 'Margin VAT:',
+        quickAddText: 'Quick Add Product', qaTitle: 'Quick Add Product', qaBtnSave: 'Create & Add to Cart', qaBtnCancel: 'Cancel',
+        qaLblName: 'Product Name *', qaLblSku: 'SKU/Barcode *', qaLblCat: 'Category *', qaLblCost: 'Cost € *', qaLblPrice: 'Price € *', qaLblQty: 'Initial Stock', qaLblSH: 'Second-hand',
       }
     };
 
@@ -629,7 +633,7 @@
 
     function updateLang() {
       document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblReceived','btnCash','btnCard','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scNav','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat'].forEach(function(id) {
+      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblReceived','btnCash','btnCard','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scNav','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = t(id);
       });

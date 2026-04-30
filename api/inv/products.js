@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../../models/inv/Product');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
-const { validateSku, validateRequiredFields } = require('../../utils/inv-validators');
+const { validateRequiredFields } = require('../../utils/inv-validators');
 const { calculateMarginVat } = require('../../utils/inv-vat-calculator');
 
 // All routes require Staff+ access
@@ -169,16 +169,10 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // SKU format validation
-    const skuCheck = validateSku(sku);
-    if (!skuCheck.valid) {
-      return res.status(400).json({ error: skuCheck.error });
-    }
-
-    // SKU uniqueness check
+    // SKU uniqueness check (no format validation - accept any string including barcodes)
     const existingSku = await Product.findOne({ sku });
     if (existingSku) {
-      return res.status(400).json({ error: 'SKU 已存在', code: 'SKU_DUPLICATE' });
+      return res.status(400).json({ error: 'SKU/Barcode 已存在', code: 'SKU_DUPLICATE' });
     }
 
     // Second-hand product: serialNumber is required
@@ -259,16 +253,12 @@ router.put('/:id', async (req, res) => {
     if (lowStockThreshold !== undefined) updateFields.lowStockThreshold = lowStockThreshold;
     if (active !== undefined) updateFields.active = active;
 
-    // SKU update with format validation and uniqueness check
+    // SKU update with uniqueness check (no format validation - accept any string including barcodes)
     if (sku !== undefined) {
-      const skuCheck = validateSku(sku);
-      if (!skuCheck.valid) {
-        return res.status(400).json({ error: skuCheck.error });
-      }
       // Check uniqueness (exclude current product)
       const existingSku = await Product.findOne({ sku, _id: { $ne: req.params.id } });
       if (existingSku) {
-        return res.status(400).json({ error: 'SKU 已存在', code: 'SKU_DUPLICATE' });
+        return res.status(400).json({ error: 'SKU/Barcode 已存在', code: 'SKU_DUPLICATE' });
       }
       updateFields.sku = sku.trim();
     }

@@ -112,14 +112,14 @@
         <div class="content">
             <div class="card">
                 <div class="toolbar">
-                    <input type="text" id="searchInput" placeholder="搜索商品名称/SKU..." style="width:260px;">
+                    <input type="text" id="searchInput" placeholder="搜索商品名称/SKU/Barcode..." style="width:260px;">
                     <select id="categoryFilter"><option value="">全部分类</option></select>
                     <select id="activeFilter"><option value="">全部状态</option><option value="true">启用</option><option value="false">停用</option></select>
                     <div style="flex:1;"></div>
                     <button class="btn btn-primary" onclick="showAddModal()">+ 新增商品</button>
                 </div>
                 <table>
-                    <thead><tr><th>商品名称</th><th>SKU</th><th>分类</th><th>库存</th><th>售价 (€)</th><th>状态</th><th>操作</th></tr></thead>
+                    <thead><tr><th>商品名称</th><th>SKU/Barcode</th><th>分类</th><th>库存</th><th>售价 (€)</th><th>状态</th><th>操作</th></tr></thead>
                     <tbody id="productTable"><tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">加载中...</td></tr></tbody>
                 </table>
                 <div class="pagination" id="pagination"></div>
@@ -136,7 +136,7 @@
             <input type="hidden" id="editId">
             <div class="form-row">
                 <div class="form-group"><label>商品名称 <span style="color:#ff3b30;">*</span></label><input type="text" id="fName" required></div>
-                <div class="form-group"><label>SKU <span style="color:#ff3b30;">*</span></label><input type="text" id="fSku" required><div class="hint">格式: 品类-型号-规格-年份, 如 SJ-APP15-128G-2026</div></div>
+                <div class="form-group"><label>SKU/Barcode <span style="color:#ff3b30;">*</span></label><input type="text" id="fSku" required><div class="hint">支持任意格式，如条码、自定义编号等</div></div>
             </div>
             <div class="form-row">
                 <div class="form-group"><label>分类 <span style="color:#ff3b30;">*</span></label>
