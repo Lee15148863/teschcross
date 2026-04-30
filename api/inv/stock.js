@@ -2,19 +2,18 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../../models/inv/Product');
 const StockMovement = require('../../models/inv/StockMovement');
+const StockRequest = require('../../models/inv/StockRequest');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require Staff+ access
 router.use(jwtAuth, requireRole('admin', 'staff'));
 
 // ─── POST /api/inv/stock/entry ──────────────────────────────────────────────
-// Manual stock entry: create StockMovement(type='entry'), increment product.stock
-// Admin only — staff cannot directly adjust stock
-router.post('/entry', requireRole('admin'), async (req, res) => {
+// Admin: direct entry. Staff: creates pending request for admin approval.
+router.post('/entry', async (req, res) => {
   try {
     const { productId, quantity, note } = req.body;
 
-    // Validate required fields
     if (!productId) {
       return res.status(400).json({ error: '缺少必填字段：productId', code: 'VALIDATION_ERROR' });
     }
@@ -25,13 +24,29 @@ router.post('/entry', requireRole('admin'), async (req, res) => {
       return res.status(400).json({ error: '入库数量必须为正整数', code: 'VALIDATION_ERROR' });
     }
 
-    // Find product
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ error: '商品不存在', code: 'NOT_FOUND' });
     }
 
-    // Create stock movement record
+    // Staff: create pending request
+    if (req.user.role !== 'admin') {
+      const request = await StockRequest.create({
+        product: productId,
+        type: 'entry',
+        quantity,
+        note: note || undefined,
+        status: 'pending',
+        requestedBy: req.user.userId
+      });
+      return res.status(201).json({
+        message: '入库申请已提交，等待管理员审批',
+        request,
+        pending: true
+      });
+    }
+
+    // Admin: direct entry
     const movement = await StockMovement.create({
       product: productId,
       type: 'entry',
@@ -41,19 +56,14 @@ router.post('/entry', requireRole('admin'), async (req, res) => {
       note: note || undefined
     });
 
-    // Increment product stock
     product.stock += quantity;
     product.updatedAt = new Date();
     await product.save();
 
     res.status(201).json({
       movement,
-      product: {
-        _id: product._id,
-        name: product.name,
-        sku: product.sku,
-        stock: product.stock
-      }
+      product: { _id: product._id, name: product.name, sku: product.sku, stock: product.stock },
+      pending: false
     });
   } catch (err) {
     if (err.name === 'CastError') {

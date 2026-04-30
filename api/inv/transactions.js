@@ -94,13 +94,8 @@ router.post('/checkout', async (req, res) => {
         });
       }
 
-      // Check stock
-      if (product.stock < quantity) {
-        return res.status(400).json({
-          error: `库存不足: ${product.name}（当前库存 ${product.stock}，需要 ${quantity}）`,
-          code: 'INSUFFICIENT_STOCK'
-        });
-      }
+      // Stock check: warn but don't block sale (stock can go negative)
+      // This allows selling items that aren't inventory-tracked (stock=0)
 
       cartItems.push({
         product: product._id,
