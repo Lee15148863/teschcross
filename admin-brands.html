@@ -189,30 +189,31 @@
 
 <script src="/api-client.js"></script>
 <script>
-// Auth: use inv system JWT if admin is logged in, otherwise ask for PIN
-function getAdminToken() {
+// Auth: inv admin auto-login, or secondary PIN only
+function checkAdminAuth() {
+    try {
+        var invUser = JSON.parse(localStorage.getItem('inv_user'));
+        var invToken = localStorage.getItem('inv_token');
+        if (invUser && invUser.role === 'admin' && invToken) return true;
+    } catch(e) {}
+    if (sessionStorage.getItem('admin_pin_ok')) return true;
+    var pin = prompt('Enter admin PIN:');
+    if (pin === '0331') { sessionStorage.setItem('admin_pin_ok', '1'); return true; }
+    alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return false;
+}
+if (!checkAdminAuth()) throw new Error('Not authorized');
+
+const ADMIN_TOKEN = '';
+function getBrandsAuthHeaders() {
     try {
         var invUser = JSON.parse(localStorage.getItem('inv_user'));
         var invToken = localStorage.getItem('inv_token');
         if (invUser && invUser.role === 'admin' && invToken) {
-            return { mode: 'jwt', token: invToken };
+            return { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + invToken };
         }
     } catch(e) {}
-    if (!sessionStorage.getItem('admin_pin_ok')) {
-        var pin = prompt('Enter admin PIN:');
-        if (pin !== '0331') { alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return null; }
-        sessionStorage.setItem('admin_pin_ok', '1');
-    }
-    var t = localStorage.getItem('admin_token');
-    if (!t) { t = prompt('Enter admin token:'); if (t) localStorage.setItem('admin_token', t); }
-    return { mode: 'legacy', token: t };
-}
-var AUTH_INFO = getAdminToken();
-if (!AUTH_INFO) throw new Error('Not authorized');
-var ADMIN_TOKEN = AUTH_INFO.token;
-function getAuthHeader() {
-    if (AUTH_INFO.mode === 'jwt') return { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + AUTH_INFO.token };
-    return { 'Content-Type':'application/json', 'x-admin-token': AUTH_INFO.token };
+    var t = localStorage.getItem('admin_token') || '';
+    return { 'Content-Type':'application/json', 'x-admin-token': t };
 }
 const USERNAME = '';
 const PASSWORD = '';
@@ -480,7 +481,7 @@ function addIssue() {
 // Delete
 function deleteBrand(brandId) {
     if (!confirm(`Delete brand "${allData[brandId].name}" and ALL data?`)) return;
-    fetch(`/api/brands/${brandId}`,{method:'DELETE',headers:getAuthHeader()})
+    fetch(`/api/brands/${brandId}`,{method:'DELETE',headers:getBrandsAuthHeaders()})
         .then(()=>{ delete allData[brandId]; currentBrand=null; currentType=null; renderSidebar();
             document.getElementById('mainArea').innerHTML='<div class="empty">← Select a brand</div>';
             showToast('Brand deleted'); });
@@ -531,7 +532,7 @@ async function saveBrand(brandId) {
     try {
         const res = await fetch(`/api/brands/${brandId}`, {
             method:'PUT',
-            headers:getAuthHeader(),
+            headers:getBrandsAuthHeaders(),
             body: JSON.stringify(allData[brandId])
         });
         if (!res.ok) throw new Error(await res.text());

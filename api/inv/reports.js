@@ -42,20 +42,17 @@ function aggregateProductRanking(transactions) {
 }
 
 // ─── GET /api/inv/reports/daily ─────────────────────────────────────────────
-// Daily report (English output)
+// Daily report (English output) — broken down by VAT category
 router.get('/daily', async (req, res) => {
   try {
     const { date, startDate, endDate } = req.query;
 
     let dateStart, dateEnd;
-
     if (startDate && endDate) {
-      // Date range mode
       dateStart = new Date(startDate);
       dateEnd = new Date(endDate);
       dateEnd.setHours(23, 59, 59, 999);
     } else {
-      // Single date mode (defaults to today)
       const targetDate = date ? new Date(date) : new Date();
       dateStart = new Date(targetDate);
       dateStart.setHours(0, 0, 0, 0);
@@ -63,7 +60,6 @@ router.get('/daily', async (req, res) => {
       dateEnd.setHours(23, 59, 59, 999);
     }
 
-    // Validate dates
     if (isNaN(dateStart.getTime()) || isNaN(dateEnd.getTime())) {
       return res.status(400).json({ error: 'Invalid date format', code: 'VALIDATION_ERROR' });
     }
@@ -76,39 +72,53 @@ router.get('/daily', async (req, res) => {
       return res.json({ message: 'No transactions for this date', data: null });
     }
 
-    // Aggregate totals
-    let totalSales = 0;
-    let cashTotal = 0;
-    let cardTotal = 0;
-    let standardVatTotal = 0;
-    let marginVatTotal = 0;
+    // Aggregate by VAT category
+    let totalSales = 0, cashTotal = 0, cardTotal = 0, splitCardTotal = 0, splitCashTotal = 0;
+    let stdRate23Sales = 0, stdRate23Vat = 0;
+    let marginSales = 0, marginVat = 0;
+    let reducedRate135Sales = 0, reducedRate135Vat = 0;
 
     for (const txn of transactions) {
       totalSales += txn.totalAmount;
-      if (txn.paymentMethod === 'cash') {
-        cashTotal += txn.totalAmount;
-      } else {
-        cardTotal += txn.totalAmount;
+      if (txn.paymentMethod === 'cash') cashTotal += txn.totalAmount;
+      else if (txn.paymentMethod === 'card') cardTotal += txn.totalAmount;
+      else if (txn.paymentMethod === 'split') {
+        splitCardTotal += txn.cardAmount || 0;
+        splitCashTotal += (txn.totalAmount - (txn.cardAmount || 0));
       }
-      standardVatTotal += txn.standardVatTotal || 0;
-      marginVatTotal += txn.marginVatTotal || 0;
+
+      for (const item of txn.items) {
+        const rate = item.vatRate || 0.23;
+        if (item.marginScheme || item.isSecondHand) {
+          marginSales += item.subtotal;
+          marginVat += item.marginVat || 0;
+        } else if (Math.abs(rate - 0.135) < 0.01) {
+          reducedRate135Sales += item.subtotal;
+          reducedRate135Vat += item.vatAmount || 0;
+        } else {
+          stdRate23Sales += item.subtotal;
+          stdRate23Vat += item.vatAmount || 0;
+        }
+      }
     }
 
-    // Product sales ranking
-    const productRanking = aggregateProductRanking(transactions);
+    const r = v => Math.round(v * 100) / 100;
 
     res.json({
       data: {
-        date: startDate && endDate
-          ? { startDate, endDate }
-          : (date || new Date().toISOString().split('T')[0]),
+        date: startDate && endDate ? { startDate, endDate } : (date || new Date().toISOString().split('T')[0]),
         totalTransactions: transactions.length,
-        totalSales: Math.round(totalSales * 100) / 100,
-        cashTotal: Math.round(cashTotal * 100) / 100,
-        cardTotal: Math.round(cardTotal * 100) / 100,
-        standardVatTotal: Math.round(standardVatTotal * 100) / 100,
-        marginVatTotal: Math.round(marginVatTotal * 100) / 100,
-        productRanking
+        totalSales: r(totalSales),
+        payment: {
+          cash: r(cashTotal + splitCashTotal),
+          card: r(cardTotal + splitCardTotal)
+        },
+        vatBreakdown: {
+          standard23: { sales: r(stdRate23Sales), vatPayable: r(stdRate23Vat) },
+          margin: { sales: r(marginSales), vatPayable: r(marginVat) },
+          reduced135: { sales: r(reducedRate135Sales), vatPayable: r(reducedRate135Vat) }
+        },
+        totalVatPayable: r(stdRate23Vat + marginVat + reducedRate135Vat)
       }
     });
   } catch (err) {
@@ -117,12 +127,11 @@ router.get('/daily', async (req, res) => {
 });
 
 // ─── GET /api/inv/reports/monthly ───────────────────────────────────────────
-// Monthly tax summary (English output)
+// Monthly tax summary (English output) — daily totals with VAT breakdown
 router.get('/monthly', async (req, res) => {
   try {
     const { month } = req.query;
 
-    // Parse month (defaults to current month)
     let year, mon;
     if (month) {
       const parts = month.split('-');
@@ -138,73 +147,83 @@ router.get('/monthly', async (req, res) => {
     }
 
     const startDate = new Date(year, mon - 1, 1, 0, 0, 0, 0);
-    const endDate = new Date(year, mon, 0, 23, 59, 59, 999); // last day of month
+    const endDate = new Date(year, mon, 0, 23, 59, 59, 999);
 
     const transactions = await Transaction.find({
       createdAt: { $gte: startDate, $lte: endDate }
     }).sort({ createdAt: 1 });
 
-    // Build daily aggregates
+    // Build daily aggregates with VAT breakdown
     const dailyMap = {};
-    let monthCashTotal = 0;
-    let monthCardTotal = 0;
-    let monthStandardVatTotal = 0;
-    let monthMarginVatTotal = 0;
+    let monthCash = 0, monthCard = 0;
+    let monthStd23Vat = 0, monthMarginVat = 0, monthReduced135Vat = 0;
 
     for (const txn of transactions) {
       const dayKey = txn.createdAt.toISOString().split('T')[0];
 
       if (!dailyMap[dayKey]) {
         dailyMap[dayKey] = {
-          date: dayKey,
-          dailySaleTotal: 0,
-          repairIncome: 0,
-          marginVatDailyTotal: 0
+          date: dayKey, totalSales: 0, cash: 0, card: 0,
+          std23Sales: 0, std23Vat: 0,
+          marginSales: 0, marginVat: 0,
+          reduced135Sales: 0, reduced135Vat: 0
         };
       }
+      const d = dailyMap[dayKey];
+      d.totalSales += txn.totalAmount;
 
-      dailyMap[dayKey].dailySaleTotal += txn.totalAmount;
-      dailyMap[dayKey].marginVatDailyTotal += txn.marginVatTotal || 0;
+      if (txn.paymentMethod === 'cash') { d.cash += txn.totalAmount; monthCash += txn.totalAmount; }
+      else if (txn.paymentMethod === 'card') { d.card += txn.totalAmount; monthCard += txn.totalAmount; }
+      else if (txn.paymentMethod === 'split') {
+        const cardPart = txn.cardAmount || 0;
+        const cashPart = txn.totalAmount - cardPart;
+        d.card += cardPart; d.cash += cashPart;
+        monthCard += cardPart; monthCash += cashPart;
+      }
 
-      // Repair income: items categorized as repair (if applicable)
       for (const item of txn.items) {
-        if (item.name && item.name.toLowerCase().includes('repair')) {
-          dailyMap[dayKey].repairIncome += item.subtotal;
+        const rate = item.vatRate || 0.23;
+        if (item.marginScheme || item.isSecondHand) {
+          d.marginSales += item.subtotal;
+          d.marginVat += item.marginVat || 0;
+          monthMarginVat += item.marginVat || 0;
+        } else if (Math.abs(rate - 0.135) < 0.01) {
+          d.reduced135Sales += item.subtotal;
+          d.reduced135Vat += item.vatAmount || 0;
+          monthReduced135Vat += item.vatAmount || 0;
+        } else {
+          d.std23Sales += item.subtotal;
+          d.std23Vat += item.vatAmount || 0;
+          monthStd23Vat += item.vatAmount || 0;
         }
       }
-
-      if (txn.paymentMethod === 'cash') {
-        monthCashTotal += txn.totalAmount;
-      } else {
-        monthCardTotal += txn.totalAmount;
-      }
-      monthStandardVatTotal += txn.standardVatTotal || 0;
-      monthMarginVatTotal += txn.marginVatTotal || 0;
     }
 
-    // Round daily values
+    const r = v => Math.round(v * 100) / 100;
+
     const dailyData = Object.values(dailyMap).map(d => ({
       date: d.date,
-      dailySaleTotal: Math.round(d.dailySaleTotal * 100) / 100,
-      repairIncome: Math.round(d.repairIncome * 100) / 100,
-      marginVatDailyTotal: Math.round(d.marginVatDailyTotal * 100) / 100
-    }));
-
-    // Sort by date ascending
-    dailyData.sort((a, b) => a.date.localeCompare(b.date));
-
-    const totalTaxPayable = Math.round((monthStandardVatTotal + monthMarginVatTotal) * 100) / 100;
+      totalSales: r(d.totalSales),
+      cash: r(d.cash),
+      card: r(d.card),
+      standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
+      margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat) },
+      reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
+      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat)
+    })).sort((a, b) => a.date.localeCompare(b.date));
 
     res.json({
       data: {
         month: `${year}-${String(mon).padStart(2, '0')}`,
         dailyData,
         summary: {
-          totalCash: Math.round(monthCashTotal * 100) / 100,
-          totalCard: Math.round(monthCardTotal * 100) / 100,
-          standardVatTotal: Math.round(monthStandardVatTotal * 100) / 100,
-          marginVatTotal: Math.round(monthMarginVatTotal * 100) / 100,
-          totalTaxPayable
+          totalCash: r(monthCash),
+          totalCard: r(monthCard),
+          totalSales: r(monthCash + monthCard),
+          standard23VatTotal: r(monthStd23Vat),
+          marginVatTotal: r(monthMarginVat),
+          reduced135VatTotal: r(monthReduced135Vat),
+          totalVatPayable: r(monthStd23Vat + monthMarginVat + monthReduced135Vat)
         }
       }
     });

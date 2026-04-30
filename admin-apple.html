@@ -151,27 +151,20 @@
     <script>
         const DEFAULT_USERNAME = '';
         const DEFAULT_PASSWORD = '';
-        // Auth: use inv system JWT if admin is logged in, otherwise ask for PIN
-        function getAdminTokenApple() {
+        // Auth: inv admin auto-login, or secondary PIN only
+        function checkAdminAuthApple() {
             try {
                 var invUser = JSON.parse(localStorage.getItem('inv_user'));
                 var invToken = localStorage.getItem('inv_token');
-                if (invUser && invUser.role === 'admin' && invToken) {
-                    return { mode: 'jwt', token: invToken };
-                }
+                if (invUser && invUser.role === 'admin' && invToken) return true;
             } catch(e) {}
-            if (!sessionStorage.getItem('admin_pin_ok')) {
-                var pin = prompt('Enter admin PIN:');
-                if (pin !== '0331') { alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return null; }
-                sessionStorage.setItem('admin_pin_ok', '1');
-            }
-            var t = localStorage.getItem('admin_token');
-            if (!t) { t = prompt('Enter admin token:'); if (t) localStorage.setItem('admin_token', t); }
-            return { mode: 'legacy', token: t };
+            if (sessionStorage.getItem('admin_pin_ok')) return true;
+            var pin = prompt('Enter admin PIN:');
+            if (pin === '0331') { sessionStorage.setItem('admin_pin_ok', '1'); return true; }
+            alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return false;
         }
-        var AUTH_APPLE = getAdminTokenApple();
-        if (!AUTH_APPLE) throw new Error('Not authorized');
-        const ADMIN_TOKEN = AUTH_APPLE.token;
+        if (!checkAdminAuthApple()) throw new Error('Not authorized');
+        const ADMIN_TOKEN = '';
         
         let currentDevice = 'iphone';
         let pricingData = null;

@@ -55,8 +55,22 @@
 </div>
 
 <script>
-// Auth: use inv system JWT if admin is logged in, otherwise ask for PIN
-function getAuthHeaders() {
+// Auth: inv admin auto-login, or secondary PIN only
+function checkAdminAuth() {
+    try {
+        var invUser = JSON.parse(localStorage.getItem('inv_user'));
+        var invToken = localStorage.getItem('inv_token');
+        if (invUser && invUser.role === 'admin' && invToken) return true;
+    } catch(e) {}
+    if (sessionStorage.getItem('admin_pin_ok')) return true;
+    var pin = prompt('Enter admin PIN:');
+    if (pin === '0331') { sessionStorage.setItem('admin_pin_ok', '1'); return true; }
+    alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return false;
+}
+if (!checkAdminAuth()) throw new Error('Not authorized');
+
+// Build auth headers for API calls
+function getReviewAuthHeaders() {
     try {
         var invUser = JSON.parse(localStorage.getItem('inv_user'));
         var invToken = localStorage.getItem('inv_token');
@@ -64,18 +78,9 @@ function getAuthHeaders() {
             return { 'Authorization': 'Bearer ' + invToken };
         }
     } catch(e) {}
-    // Fallback: secondary PIN
-    if (!sessionStorage.getItem('admin_pin_ok')) {
-        var pin = prompt('Enter admin PIN:');
-        if (pin !== '0331') { alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return null; }
-        sessionStorage.setItem('admin_pin_ok', '1');
-    }
-    var token = localStorage.getItem('admin_token');
-    if (!token) { token = prompt('Enter admin token:'); if (token) localStorage.setItem('admin_token', token); }
-    return { 'x-admin-token': token };
+    var t = localStorage.getItem('admin_token') || '';
+    return { 'x-admin-token': t };
 }
-var AUTH_HEADERS = getAuthHeaders();
-if (!AUTH_HEADERS) throw new Error('Not authorized');
 
 let currentFilter = 'all';
 let allReviews = [];
@@ -91,7 +96,7 @@ document.querySelectorAll('.ar-tab').forEach(tab => {
 
 async function loadReviews() {
     try {
-        const res = await fetch('/api/reviews/all', { headers: AUTH_HEADERS });
+        const res = await fetch('/api/reviews/all', { headers: getReviewAuthHeaders() });
         if (!res.ok) { alert('Unauthorized'); return; }
         allReviews = await res.json();
         renderReviews();
@@ -126,16 +131,16 @@ function renderReviews() {
 }
 
 async function approveReview(id) {
-    await fetch(`/api/reviews/${id}/approve`, { method: 'PUT', headers: AUTH_HEADERS });
+    await fetch(`/api/reviews/${id}/approve`, { method: 'PUT', headers: getReviewAuthHeaders() });
     loadReviews();
 }
 async function rejectReview(id) {
-    await fetch(`/api/reviews/${id}/reject`, { method: 'PUT', headers: AUTH_HEADERS });
+    await fetch(`/api/reviews/${id}/reject`, { method: 'PUT', headers: getReviewAuthHeaders() });
     loadReviews();
 }
 async function deleteReview(id) {
     if (!confirm('Delete this review permanently?')) return;
-    await fetch(`/api/reviews/${id}`, { method: 'DELETE', headers: AUTH_HEADERS });
+    await fetch(`/api/reviews/${id}`, { method: 'DELETE', headers: getReviewAuthHeaders() });
     loadReviews();
 }
 
