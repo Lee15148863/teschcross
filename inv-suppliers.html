@@ -207,7 +207,7 @@ async function loadSuppliers(){
             <td>
                 <button class="btn btn-secondary btn-sm" onclick="editSupplier('${s._id}')">编辑</button>
                 ${isAdmin?(s.active?`<button class="btn btn-danger btn-sm" onclick="showDisableModal('${s._id}')">禁用</button>`:`<button class="btn btn-success btn-sm" onclick="enableSupplier('${s._id}')">恢复</button>`):''}
-            </td>
+                ${isAdmin?`<button class="btn btn-sm" style="background:#6e6e73;color:#fff;" onclick="deleteSupplier('${s._id}','${esc(s.name)}')">删除</button>`:''}            </td>
         </tr>`).join('');
     }catch(e){showToast('加载失败','error');}
 }
@@ -290,6 +290,18 @@ async function enableSupplier(id){
     try{const r=await apiFetch('/suppliers/'+id+'/enable',{method:'PUT'});if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}showToast('供应商已恢复');loadSuppliers();}catch(e){showToast('操作失败','error');}
 }
 window.enableSupplier=enableSupplier;
+
+async function deleteSupplier(id,name){
+    if(!confirm(`确定要永久删除供应商「${name}」吗？\n\n⚠️ 此操作不可恢复！`))return;
+    if(!confirm('再次确认：删除后无法恢复，确定继续？'))return;
+    try{
+        const r=await apiFetch('/suppliers/'+id,{method:'DELETE'});
+        if(!r)return;
+        if(!r.ok){const e=await r.json();showToast(e.error||'删除失败','error');return;}
+        showToast('供应商已永久删除');loadSuppliers();
+    }catch(e){showToast('删除失败','error');}
+}
+window.deleteSupplier=deleteSupplier;
 
 // Account
 async function loadSupplierSelect(){

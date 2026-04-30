@@ -229,6 +229,7 @@ async function loadProducts(page){
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="editProduct('${p._id}')">编辑</button>
                     <button class="btn ${p.active?'btn-danger':'btn-success'} btn-sm" onclick="toggleProduct('${p._id}',${p.active})">${p.active?'停用':'启用'}</button>
+                    <button class="btn btn-sm" style="background:#6e6e73;color:#fff;" onclick="deleteProduct('${p._id}','${esc(p.name)}')">删除</button>
                 </td>
             </tr>`;
         }).join('');
@@ -398,6 +399,19 @@ async function toggleProduct(id,isActive){
     }
 }
 window.toggleProduct=toggleProduct;
+
+async function deleteProduct(id,name){
+    if(!confirm(`确定要永久删除商品「${name}」吗？\n\n⚠️ 此操作不可恢复！`))return;
+    if(!confirm('再次确认：删除后无法恢复，确定继续？'))return;
+    try{
+        const r=await apiFetch('/products/'+id,{method:'DELETE'});
+        if(!r)return;
+        if(!r.ok){const e=await r.json();showToast(e.error||'删除失败','error');return;}
+        showToast('商品已永久删除');
+        loadProducts(currentPage);
+    }catch(e){showToast('删除失败','error');}
+}
+window.deleteProduct=deleteProduct;
 
 window.loadProducts=loadProducts;
 loadProducts(1);

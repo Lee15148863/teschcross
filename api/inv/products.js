@@ -351,4 +351,38 @@ router.put('/:id/disable', async (req, res) => {
   }
 });
 
+// ─── DELETE /api/inv/products/:id ───────────────────────────────────────────
+// Permanently delete a product (Admin only)
+router.delete('/:id', requireRole('admin'), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: '商品不存在' });
+    }
+
+    // Check if product has been used in transactions
+    const Transaction = require('../../models/inv/Transaction');
+    const usedInTx = await Transaction.findOne({ 'items.product': req.params.id });
+    if (usedInTx) {
+      return res.status(409).json({
+        error: '该商品已有交易记录，不可删除。请使用停用功能。',
+        code: 'HAS_TRANSACTIONS'
+      });
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
+
+    // Also clean up any stock movements for this product
+    const StockMovement = require('../../models/inv/StockMovement');
+    await StockMovement.deleteMany({ product: req.params.id });
+
+    res.json({ message: '商品已永久删除' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(404).json({ error: '商品不存在' });
+    }
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
 module.exports = router;

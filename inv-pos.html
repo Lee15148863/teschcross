@@ -19,9 +19,9 @@
             display: flex; height: 100vh; width: 100vw;
         }
 
-        /* ─── LEFT PANEL: Product Search ───────────────────────────── */
+        /* ─── LEFT PANEL: Product Search (30%) ─────────────────────── */
         .left-panel {
-            width: 45%; min-width: 380px;
+            width: 30%; min-width: 300px;
             display: flex; flex-direction: column;
             background: #fff; border-right: 1px solid #e5e5e7;
         }
@@ -107,10 +107,10 @@
         .search-hint .sh-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
         .search-hint p { font-size: 16px; line-height: 1.6; }
 
-        /* ─── RIGHT PANEL: Cart + Checkout ─────────────────────────── */
+        /* ─── CENTER PANEL: Cart + Checkout (50%) ──────────────────── */
         .right-panel {
             flex: 1; display: flex; flex-direction: column;
-            min-width: 420px;
+            min-width: 360px;
         }
         .right-header {
             padding: 16px 20px; border-bottom: 1px solid #e5e5e7;
@@ -287,19 +287,66 @@
             opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none;
         }
 
-        /* ─── Shortcut Hints ───────────────────────────────────────── */
-        .shortcut-bar {
-            padding: 8px 20px; background: #1d1d1f; color: #86868b;
-            display: flex; gap: 16px; flex-wrap: wrap; font-size: 11px;
-            align-items: center;
+        /* ─── RIGHT SIDEBAR: Action Buttons (20%) ─────────────────── */
+        .action-sidebar {
+            width: 20%; min-width: 160px; max-width: 220px;
+            background: #1d1d1f; color: #f5f5f7;
+            display: flex; flex-direction: column;
+            padding: 16px 12px; gap: 10px;
+            overflow-y: auto; border-left: 1px solid #333;
         }
-        .shortcut-bar .sc {
-            display: flex; align-items: center; gap: 4px;
+        .action-sidebar .sidebar-title {
+            font-size: 11px; color: #86868b; text-transform: uppercase;
+            letter-spacing: 1px; padding: 4px 0; margin-bottom: 4px;
         }
-        .shortcut-bar kbd {
-            padding: 2px 6px; background: #333; border: 1px solid #555;
+        .action-sidebar .action-btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px; border-radius: 12px;
+            background: #2a2a2d; border: 1px solid #3a3a3d;
+            color: #f5f5f7; font-size: 14px; font-weight: 500;
+            cursor: pointer; transition: all 0.15s;
+            text-align: left; width: 100%;
+        }
+        .action-sidebar .action-btn:hover {
+            background: #3a3a3d; border-color: #D4E157;
+            transform: translateY(-1px);
+        }
+        .action-sidebar .action-btn:active {
+            transform: translateY(0); background: #444;
+        }
+        .action-sidebar .action-btn .action-icon {
+            font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;
+        }
+        .action-sidebar .action-btn .action-label {
+            flex: 1; font-size: 13px; line-height: 1.3;
+        }
+        .action-sidebar .action-btn kbd {
+            padding: 2px 6px; background: #555; border: 1px solid #666;
             border-radius: 4px; font-size: 10px; font-weight: 600;
-            color: #D4E157; font-family: inherit;
+            color: #D4E157; font-family: inherit; flex-shrink: 0;
+        }
+        .action-sidebar .action-btn.btn-checkout-action {
+            background: #D4E157; color: #000; border-color: #D4E157;
+            font-weight: 700;
+        }
+        .action-sidebar .action-btn.btn-checkout-action:hover {
+            background: #c5d148;
+        }
+        .action-sidebar .action-btn.btn-checkout-action kbd {
+            background: rgba(0,0,0,0.2); border-color: rgba(0,0,0,0.3); color: #000;
+        }
+        .action-sidebar .action-btn.btn-danger-action {
+            border-color: #ff3b30;
+        }
+        .action-sidebar .action-btn.btn-danger-action:hover {
+            background: #ff3b30; color: #fff;
+        }
+        .action-sidebar .sidebar-divider {
+            height: 1px; background: #3a3a3d; margin: 6px 0;
+        }
+        .action-sidebar .lang-info {
+            margin-top: auto; padding: 8px 0; text-align: center;
+            font-size: 12px; color: #86868b;
         }
 
         /* ─── Toast / Success Message ──────────────────────────────── */
@@ -527,16 +574,68 @@
                 </button>
             </div>
 
-            <!-- Shortcut Bar -->
-            <div class="shortcut-bar" id="shortcutBar">
-                <div class="sc"><kbd>F1</kbd> <span id="scSearch">搜索</span></div>
-                <div class="sc"><kbd>F2</kbd> <span id="scDiscount">折扣</span></div>
-                <div class="sc"><kbd>F3</kbd> <span id="scPayment">切换支付</span></div>
-                <div class="sc"><kbd>F4</kbd> <span id="scReprint">重打小票</span></div>
-                <div class="sc"><kbd>Enter</kbd> <span id="scCheckout">结账</span></div>
-                <div class="sc"><kbd>Esc</kbd> <span id="scClear">清空</span></div>
-                <div class="sc"><kbd>Del</kbd> <span id="scRemove">移除</span></div>
-                <div class="sc"><kbd>↑↓</kbd> <span id="scNav">导航</span></div>
+            <!-- Checkout Button (moved inside checkout-area) -->
+            </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR: Action Buttons -->
+        <div class="action-sidebar" id="actionSidebar">
+            <div class="sidebar-title" id="sidebarTitle">操作</div>
+            <button class="action-btn btn-checkout-action" onclick="doCheckout()" id="sidebarCheckout">
+                <span class="action-icon">✅</span>
+                <span class="action-label" id="scCheckout">结账</span>
+                <kbd>Enter</kbd>
+            </button>
+            <div class="sidebar-divider"></div>
+            <button class="action-btn" onclick="document.getElementById('searchInput').focus();document.getElementById('searchInput').select();">
+                <span class="action-icon">🔍</span>
+                <span class="action-label" id="scSearch">搜索</span>
+                <kbd>F1</kbd>
+            </button>
+            <button class="action-btn" onclick="openDiscountModal()">
+                <span class="action-icon">🏷️</span>
+                <span class="action-label" id="scDiscount">折扣</span>
+                <kbd>F2</kbd>
+            </button>
+            <button class="action-btn" onclick="document.getElementById('cardAmount').focus();document.getElementById('cardAmount').select();">
+                <span class="action-icon">💳</span>
+                <span class="action-label" id="scPayment">卡/现金</span>
+                <kbd>F3</kbd>
+            </button>
+            <button class="action-btn" onclick="reprintLast()">
+                <span class="action-icon">🖨️</span>
+                <span class="action-label" id="scReprint">重打小票</span>
+                <kbd>F4</kbd>
+            </button>
+            <button class="action-btn" onclick="triggerPrint()">
+                <span class="action-icon">📄</span>
+                <span class="action-label" id="scPrint">打印小票</span>
+                <kbd>F5</kbd>
+            </button>
+            <div class="sidebar-divider"></div>
+            <button class="action-btn" onclick="window._removeSelectedItem()">
+                <span class="action-icon">🗑️</span>
+                <span class="action-label" id="scRemove">移除</span>
+                <kbd>Del</kbd>
+            </button>
+            <button class="action-btn btn-danger-action" onclick="clearCartAction()">
+                <span class="action-icon">🧹</span>
+                <span class="action-label" id="scClear">清空</span>
+                <kbd>Esc</kbd>
+            </button>
+            <div class="sidebar-divider"></div>
+            <button class="action-btn" onclick="window._navCart(-1)">
+                <span class="action-icon">⬆️</span>
+                <span class="action-label" id="scNavUp">上移</span>
+                <kbd>↑</kbd>
+            </button>
+            <button class="action-btn" onclick="window._navCart(1)">
+                <span class="action-icon">⬇️</span>
+                <span class="action-label" id="scNavDown">下移</span>
+                <kbd>↓</kbd>
+            </button>
+            <div class="lang-info">
+                <button class="lang-toggle" id="langToggle2" title="Switch Language" style="padding:6px 14px;border-radius:980px;border:1px solid #555;background:#2a2a2d;color:#f5f5f7;font-size:12px;cursor:pointer;">中/EN</button>
             </div>
         </div>
     </div>
@@ -601,6 +700,7 @@
         lblCardAmount: '💳 卡:', lblCashAmount: '💵 现金:',
         scSearch: '搜索', scDiscount: '折扣', scPayment: '卡/现金', scReprint: '重打小票',
         scCheckout: '结账', scClear: '清空', scRemove: '移除', scNav: '导航',
+        scPrint: '打印小票', scNavUp: '上移', scNavDown: '下移', sidebarTitle: '操作',
         confirmClearTitle: '确认清空', confirmClearMsg: '确定要清空购物车吗？', confirmCancel: '取消', confirmOk: '确定',
         dmTitle: '应用折扣', dmItemLabel: '单品折扣（选中商品）', dmOrderLabel: '整单折扣',
         noResults: '未找到匹配商品', stock: '库存', secondHand: '二手',
@@ -618,6 +718,7 @@
         lblCardAmount: '💳 Card:', lblCashAmount: '💵 Cash:',
         scSearch: 'Search', scDiscount: 'Discount', scPayment: 'Card/Cash', scReprint: 'Reprint',
         scCheckout: 'Checkout', scClear: 'Clear', scRemove: 'Remove', scNav: 'Navigate',
+        scPrint: 'Print Receipt', scNavUp: 'Up', scNavDown: 'Down', sidebarTitle: 'Actions',
         confirmClearTitle: 'Confirm Clear', confirmClearMsg: 'Clear all items from cart?', confirmCancel: 'Cancel', confirmOk: 'Confirm',
         dmTitle: 'Apply Discount', dmItemLabel: 'Item Discount (selected)', dmOrderLabel: 'Order Discount',
         noResults: 'No matching products found', stock: 'Stock', secondHand: 'Used',
@@ -632,7 +733,7 @@
 
     function updateLang() {
       document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scNav','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin'].forEach(function(id) {
+      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = t(id);
       });
@@ -1063,7 +1164,8 @@
         if (document.activeElement === cardInput) { cashInput.focus(); cashInput.select(); }
         else { cardInput.focus(); cardInput.select(); }
       }
-      else if (e.key === 'F4') { e.preventDefault(); if (lastTransaction) printReceipt(lastTransaction); else showToast(lang === 'zh' ? '没有上一张小票' : 'No last receipt', 'info'); }
+      else if (e.key === 'F4') { e.preventDefault(); reprintLast(); }
+      else if (e.key === 'F5') { e.preventDefault(); triggerPrint(); }
       else if (e.key === 'Enter' && !isInput) { e.preventDefault(); doCheckout(); }
       else if (e.key === 'Escape') {
         // Close modals first
@@ -1086,6 +1188,52 @@
       lang = lang === 'zh' ? 'en' : 'zh';
       updateLang();
     });
+    // Second lang toggle in sidebar
+    var langToggle2 = document.getElementById('langToggle2');
+    if (langToggle2) {
+      langToggle2.addEventListener('click', function() {
+        lang = lang === 'zh' ? 'en' : 'zh';
+        updateLang();
+      });
+    }
+
+    // Sidebar action helpers
+    function reprintLast() {
+      if (lastTransaction) printReceipt(lastTransaction.receipt || lastTransaction.transaction || lastTransaction);
+      else showToast(lang === 'zh' ? '没有上一张小票' : 'No last receipt', 'info');
+    }
+    window.reprintLast = reprintLast;
+
+    function triggerPrint() {
+      if (lastTransaction) printReceipt(lastTransaction.receipt || lastTransaction.transaction || lastTransaction);
+      else showToast(lang === 'zh' ? '没有可打印的小票' : 'No receipt to print', 'info');
+    }
+    window.triggerPrint = triggerPrint;
+
+    function clearCartAction() {
+      if (cart.length === 0) return;
+      showConfirm(t('confirmClearTitle'), t('confirmClearMsg'), function() {
+        cart = []; selectedCartIndex = -1; orderDiscount = null;
+        renderCart();
+      });
+    }
+    window.clearCartAction = clearCartAction;
+
+    window._removeSelectedItem = function() {
+      if (selectedCartIndex >= 0 && selectedCartIndex < cart.length) {
+        cart.splice(selectedCartIndex, 1);
+        if (selectedCartIndex >= cart.length) selectedCartIndex = cart.length - 1;
+        renderCart();
+      }
+    };
+
+    window._navCart = function(dir) {
+      if (cart.length === 0) return;
+      selectedCartIndex += dir;
+      if (selectedCartIndex < 0) selectedCartIndex = 0;
+      if (selectedCartIndex >= cart.length) selectedCartIndex = cart.length - 1;
+      renderCart();
+    };
 
     // Barcode scanner: rapid input detection
     var barcodeBuffer = '';

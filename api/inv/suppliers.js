@@ -324,4 +324,34 @@ router.put('/:id/enable', requireRole('admin'), async (req, res) => {
   }
 });
 
+// ─── DELETE /api/inv/suppliers/:id ──────────────────────────────────────────
+// Permanently delete supplier (Admin only)
+router.delete('/:id', requireRole('admin'), async (req, res) => {
+  try {
+    const Supplier = require('../../models/inv/Supplier');
+    const supplier = await Supplier.findById(req.params.id);
+    if (!supplier) {
+      return res.status(404).json({ error: '供应商不存在' });
+    }
+
+    // Check if supplier has purchase orders
+    const PurchaseOrder = require('../../models/inv/PurchaseOrder');
+    const hasPO = await PurchaseOrder.findOne({ supplier: req.params.id });
+    if (hasPO) {
+      return res.status(409).json({
+        error: '该供应商已有采购记录，不可删除。请使用禁用功能。',
+        code: 'HAS_PURCHASES'
+      });
+    }
+
+    await Supplier.findByIdAndDelete(req.params.id);
+    res.json({ message: '供应商已永久删除' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(404).json({ error: '供应商不存在' });
+    }
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
 module.exports = router;

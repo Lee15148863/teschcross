@@ -331,6 +331,45 @@ router.put('/users/:id/reset-password', jwtAuth, requireRole('admin'), async (re
   }
 });
 
+// ─── DELETE /api/inv/auth/users/:id ─────────────────────────────────────────
+// Permanently delete user (Admin only)
+router.delete('/users/:id', jwtAuth, requireRole('admin'), async (req, res) => {
+  try {
+    const targetUser = await InvUser.findById(req.params.id);
+    if (!targetUser) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    // Cannot delete yourself
+    if (targetUser._id.toString() === req.user.userId) {
+      return res.status(400).json({ error: '不能删除自己的账号' });
+    }
+
+    // Check if user has transaction records
+    const Transaction = require('../../models/inv/Transaction');
+    const hasTransactions = await Transaction.findOne({ operator: req.params.id });
+    if (hasTransactions) {
+      return res.status(409).json({
+        error: '该用户已有交易记录，不可删除。请使用停用功能。',
+        code: 'HAS_TRANSACTIONS'
+      });
+    }
+
+    await InvUser.findByIdAndDelete(req.params.id);
+
+    // Clean up login logs
+    const LoginLog = require('../../models/inv/LoginLog');
+    await LoginLog.deleteMany({ user: req.params.id });
+
+    res.json({ message: '用户已永久删除' });
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
 // Export for testing
 router._captchaStore = captchaStore;
 

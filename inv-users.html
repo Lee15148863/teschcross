@@ -155,6 +155,7 @@ async function loadUsers(){
                 <button class="btn btn-secondary btn-sm" onclick="editUser('${u._id}','${esc(u.username)}','${esc(u.displayName||'')}','${u.role}')">编辑</button>
                 ${u.active!==false?`<button class="btn btn-danger btn-sm" onclick="disableUser('${u._id}')">停用</button>`:`<button class="btn btn-success btn-sm" onclick="enableUser('${u._id}')">启用</button>`}
                 <button class="btn btn-secondary btn-sm" onclick="showResetModal('${u._id}','${esc(u.username)}')">重置密码</button>
+                <button class="btn btn-sm" style="background:#6e6e73;color:#fff;" onclick="deleteUser('${u._id}','${esc(u.username)}')">删除</button>
             </td>
         </tr>`).join('');
     }catch(e){showToast('加载失败','error');}
@@ -218,6 +219,18 @@ async function enableUser(id){
     try{const r=await apiFetch('/auth/users/'+id,{method:'PUT',body:JSON.stringify({active:true})});if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}showToast('用户已启用');loadUsers();}catch(e){showToast('操作失败','error');}
 }
 window.enableUser=enableUser;
+
+async function deleteUser(id,username){
+    if(!confirm(`确定要永久删除用户「${username}」吗？\n\n⚠️ 此操作不可恢复！`))return;
+    if(!confirm('再次确认：删除后无法恢复，确定继续？'))return;
+    try{
+        const r=await apiFetch('/auth/users/'+id,{method:'DELETE'});
+        if(!r)return;
+        if(!r.ok){const e=await r.json();showToast(e.error||'删除失败','error');return;}
+        showToast('用户已永久删除');loadUsers();
+    }catch(e){showToast('删除失败','error');}
+}
+window.deleteUser=deleteUser;
 
 function showResetModal(id,username){
     document.getElementById('resetId').value=id;
