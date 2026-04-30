@@ -54,31 +54,29 @@ router.post('/captcha', (req, res) => {
 // Validate username, password, and CAPTCHA; handle account lockout
 router.post('/login', async (req, res) => {
   try {
-    const { username, password, captchaId, captchaAnswer } = req.body;
+    const { username, password, captchaId, captchaAnswer, humanCheck } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: '用户名和密码不能为空' });
     }
 
-    // Validate CAPTCHA
-    if (!captchaId || captchaAnswer === undefined || captchaAnswer === null) {
-      return res.status(400).json({ error: '请完成验证码' });
-    }
-
-    const captchaData = captchaStore.get(captchaId);
-    if (!captchaData) {
-      return res.status(400).json({ error: '验证码无效或已过期' });
-    }
-
-    // Remove CAPTCHA after use (one-time use)
-    captchaStore.delete(captchaId);
-
-    if (Date.now() > captchaData.expiresAt) {
-      return res.status(400).json({ error: '验证码已过期' });
-    }
-
-    if (Number(captchaAnswer) !== captchaData.answer) {
-      return res.status(400).json({ error: '验证码错误' });
+    // Validate human check (simple checkbox or CAPTCHA)
+    if (captchaId) {
+      // Math CAPTCHA mode
+      const captchaData = captchaStore.get(captchaId);
+      if (!captchaData) {
+        return res.status(400).json({ error: '验证码无效或已过期' });
+      }
+      captchaStore.delete(captchaId);
+      if (Date.now() > captchaData.expiresAt) {
+        return res.status(400).json({ error: '验证码已过期' });
+      }
+      if (Number(captchaAnswer) !== captchaData.answer) {
+        return res.status(400).json({ error: '验证码错误' });
+      }
+    } else if (!humanCheck) {
+      // Simple checkbox mode
+      return res.status(400).json({ error: '请确认您不是机器人' });
     }
 
     // Find user
@@ -153,10 +151,13 @@ router.post('/login', async (req, res) => {
       userAgent: req.headers['user-agent']
     }).catch(() => {});
 
+    // Token expiry: staff 10h, admin 20min
+    const tokenExpiry = user.role === 'admin' ? '20m' : '10h';
+
     const token = jwt.sign(
       { userId: user._id, username: user.username, role: user.role },
       JWT_SECRET,
-      { expiresIn: TOKEN_EXPIRES_IN }
+      { expiresIn: tokenExpiry }
     );
 
     res.json({

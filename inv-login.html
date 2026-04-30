@@ -292,22 +292,10 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="captchaAnswer">验证码</label>
-                    <div class="captcha-row">
-                        <div class="captcha-question">
-                            <span class="captcha-text" id="captchaText">加载中...</span>
-                            <button type="button" class="captcha-refresh" id="captchaRefresh" title="刷新验证码" aria-label="刷新验证码">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="23 4 23 10 17 10"></polyline>
-                                    <polyline points="1 20 1 14 7 14"></polyline>
-                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="form-field" style="flex: 1;">
-                            <input type="text" id="captchaAnswer" placeholder="请输入答案" required inputmode="numeric" autocomplete="off">
-                        </div>
-                    </div>
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:14px 16px;border:1px solid #d2d2d7;border-radius:12px;background:#f5f5f7;transition:all 0.2s;">
+                        <input type="checkbox" id="humanCheck" style="width:20px;height:20px;cursor:pointer;">
+                        <span style="font-size:15px;">我不是机器人</span>
+                    </label>
                 </div>
 
                 <div class="login-error" id="loginError" role="alert"></div>
@@ -335,9 +323,7 @@
         const form = document.getElementById('loginForm');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
-        const captchaAnswerInput = document.getElementById('captchaAnswer');
-        const captchaTextEl = document.getElementById('captchaText');
-        const captchaRefreshBtn = document.getElementById('captchaRefresh');
+        const humanCheckbox = document.getElementById('humanCheck');
         const loginError = document.getElementById('loginError');
         const loginBtn = document.getElementById('loginBtn');
 
@@ -356,35 +342,6 @@
                 }
             }
         })();
-
-        // ─── Load CAPTCHA ───────────────────────────────────────────────
-        async function loadCaptcha() {
-            captchaTextEl.textContent = '加载中...';
-            captchaRefreshBtn.classList.add('spinning');
-
-            try {
-                const res = await fetch('/api/inv/auth/captcha', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (!res.ok) {
-                    throw new Error('获取验证码失败');
-                }
-
-                const data = await res.json();
-                captchaId = data.captchaId;
-                captchaTextEl.textContent = data.question;
-                captchaAnswerInput.value = '';
-            } catch (err) {
-                captchaTextEl.textContent = '加载失败';
-                showError('无法获取验证码，请刷新页面重试');
-            } finally {
-                setTimeout(() => {
-                    captchaRefreshBtn.classList.remove('spinning');
-                }, 300);
-            }
-        }
 
         // ─── Show / hide error ──────────────────────────────────────────
         function showError(message) {
@@ -423,31 +380,10 @@
 
             const username = usernameInput.value.trim();
             const password = passwordInput.value;
-            const captchaAnswer = captchaAnswerInput.value.trim();
 
-            // Client-side validation
-            if (!username) {
-                showError('请输入用户名');
-                usernameInput.focus();
-                return;
-            }
-
-            if (!password) {
-                showError('请输入密码');
-                passwordInput.focus();
-                return;
-            }
-
-            if (!captchaAnswer) {
-                showError('请输入验证码答案');
-                captchaAnswerInput.focus();
-                return;
-            }
-
-            if (!captchaId) {
-                showError('验证码未加载，请点击刷新按钮');
-                return;
-            }
+            if (!username) { showError('请输入用户名'); usernameInput.focus(); return; }
+            if (!password) { showError('请输入密码'); passwordInput.focus(); return; }
+            if (!humanCheckbox.checked) { showError('请勾选"我不是机器人"'); return; }
 
             setLoading(true);
 
@@ -455,41 +391,27 @@
                 const res = await fetch('/api/inv/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username,
-                        password,
-                        captchaId,
-                        captchaAnswer: Number(captchaAnswer)
-                    })
+                    body: JSON.stringify({ username, password, humanCheck: true })
                 });
 
                 const data = await res.json();
 
                 if (!res.ok) {
-                    // Handle specific error cases
                     if (res.status === 423) {
-                        // Account locked
                         const minutes = data.remainingMinutes || 15;
-                        showError(`账号已锁定，请 ${minutes} 分钟后再试`);
+                        showError('账号已锁定，请 ' + minutes + ' 分钟后再试');
                     } else {
                         showError(data.error || '登录失败，请重试');
                     }
-
-                    // Refresh CAPTCHA after failed attempt
-                    await loadCaptcha();
                     return;
                 }
 
-                // Success — store token and user info
                 localStorage.setItem('inv_token', data.token);
                 localStorage.setItem('inv_user', JSON.stringify(data.user));
-
-                // Redirect based on role
                 redirectByRole(data.user.role);
 
             } catch (err) {
                 showError('网络错误，请检查网络连接后重试');
-                await loadCaptcha();
             } finally {
                 setLoading(false);
             }
@@ -498,26 +420,10 @@
         // ─── Event listeners ────────────────────────────────────────────
         form.addEventListener('submit', handleLogin);
 
-        captchaRefreshBtn.addEventListener('click', function() {
-            hideError();
-            loadCaptcha();
-        });
-
-        // Clear error on input
-        [usernameInput, passwordInput, captchaAnswerInput].forEach(function(input) {
+        [usernameInput, passwordInput].forEach(function(input) {
             input.addEventListener('input', hideError);
         });
-
-        // Allow Enter in captcha field to submit
-        captchaAnswerInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                form.dispatchEvent(new Event('submit', { cancelable: true }));
-            }
-        });
-
-        // ─── Init ───────────────────────────────────────────────────────
-        loadCaptcha();
+        humanCheckbox.addEventListener('change', hideError);
     })();
     </script>
 </body>
