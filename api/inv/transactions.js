@@ -36,7 +36,7 @@ function generateReceiptNumber() {
 // Core checkout endpoint
 router.post('/checkout', async (req, res) => {
   try {
-    const { items, orderDiscount, paymentMethod, cashReceived } = req.body;
+    const { items, orderDiscount, paymentMethod, cashReceived, cardAmount } = req.body;
 
     // Validate cart is not empty
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -44,8 +44,8 @@ router.post('/checkout', async (req, res) => {
     }
 
     // Validate payment method
-    if (!paymentMethod || !['cash', 'card'].includes(paymentMethod)) {
-      return res.status(400).json({ error: '支付方式无效，必须为 cash 或 card', code: 'VALIDATION_ERROR' });
+    if (!paymentMethod || !['cash', 'card', 'split'].includes(paymentMethod)) {
+      return res.status(400).json({ error: '支付方式无效，必须为 cash、card 或 split', code: 'VALIDATION_ERROR' });
     }
 
     // Pre-validate: ensure all items have product IDs
@@ -142,9 +142,11 @@ router.post('/checkout', async (req, res) => {
       }
     }
 
-    // Cash payment: validate and calculate change
+    // Payment validation and change calculation
     let changeGiven = undefined;
     let cashReceivedVal = undefined;
+    let cardAmountVal = undefined;
+
     if (paymentMethod === 'cash') {
       if (cashReceived === undefined || cashReceived === null || typeof cashReceived !== 'number') {
         return res.status(400).json({ error: '现金支付需要提供实收金额', code: 'VALIDATION_ERROR' });
@@ -157,6 +159,27 @@ router.post('/checkout', async (req, res) => {
       }
       cashReceivedVal = cashReceived;
       changeGiven = Math.round((cashReceived - cartResult.totalAmount) * 100) / 100;
+    } else if (paymentMethod === 'split') {
+      // Split payment: card + cash
+      if (cardAmount === undefined || cardAmount === null || typeof cardAmount !== 'number' || cardAmount < 0) {
+        return res.status(400).json({ error: '混合支付需要提供卡付金额', code: 'VALIDATION_ERROR' });
+      }
+      if (cardAmount > cartResult.totalAmount) {
+        return res.status(400).json({ error: '卡付金额不能超过应付总额', code: 'VALIDATION_ERROR' });
+      }
+      if (cashReceived === undefined || cashReceived === null || typeof cashReceived !== 'number') {
+        return res.status(400).json({ error: '混合支付需要提供现金金额', code: 'VALIDATION_ERROR' });
+      }
+      const remaining = Math.round((cartResult.totalAmount - cardAmount) * 100) / 100;
+      if (cashReceived < remaining) {
+        return res.status(400).json({
+          error: `现金不足: 卡付 ${cardAmount}，还需现金 ${remaining}，实收 ${cashReceived}`,
+          code: 'VALIDATION_ERROR'
+        });
+      }
+      cardAmountVal = cardAmount;
+      cashReceivedVal = cashReceived;
+      changeGiven = Math.round((cashReceived - remaining) * 100) / 100;
     }
 
     // Generate receipt number
@@ -201,6 +224,7 @@ router.post('/checkout', async (req, res) => {
       transactionData.orderDiscount = orderDiscount;
     }
     if (cashReceivedVal !== undefined) transactionData.cashReceived = cashReceivedVal;
+    if (cardAmountVal !== undefined) transactionData.cardAmount = cardAmountVal;
     if (changeGiven !== undefined) transactionData.changeGiven = changeGiven;
     if (req.body.discountOperator) transactionData.discountOperator = req.body.discountOperator;
 
@@ -332,7 +356,7 @@ router.get('/export', async (req, res) => {
     if (exportFormat === 'csv') {
       // Generate CSV
       const headers = [
-        'receiptNumber', 'totalAmount', 'paymentMethod', 'cashReceived',
+        'receiptNumber', 'totalAmount', 'paymentMethod', 'cardAmount', 'cashReceived',
         'changeGiven', 'standardVatTotal', 'marginVatTotal', 'createdAt',
         'operator', 'itemCount'
       ];
@@ -342,6 +366,7 @@ router.get('/export', async (req, res) => {
           t.receiptNumber,
           t.totalAmount,
           t.paymentMethod,
+          t.cardAmount || '',
           t.cashReceived || '',
           t.changeGiven || '',
           t.standardVatTotal,

@@ -153,6 +153,7 @@ function generateReceipt(transaction, companyInfo) {
     discountInfo,
     totalAmount: transaction.totalAmount || 0,
     paymentMethod: transaction.paymentMethod || 'cash',
+    cardAmount: transaction.cardAmount != null ? transaction.cardAmount : null,
     cashReceived: transaction.cashReceived != null ? transaction.cashReceived : null,
     changeGiven: transaction.changeGiven != null ? transaction.changeGiven : null,
     standardVatTotal: transaction.standardVatTotal || 0,

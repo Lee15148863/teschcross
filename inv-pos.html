@@ -248,33 +248,24 @@
             display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
             flex-wrap: wrap;
         }
-        .payment-toggle {
-            display: flex; border-radius: 10px; overflow: hidden;
-            border: 1px solid #d2d2d7;
+        .split-payment {
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex: 1;
         }
-        .payment-toggle button {
-            padding: 10px 20px; border: none; background: #fff;
-            font-size: 15px; font-weight: 500; cursor: pointer;
-            transition: all 0.15s; color: #6e6e73;
+        .split-pay-group {
+            display: flex; align-items: center; gap: 8px; font-size: 14px;
         }
-        .payment-toggle button.active {
-            background: #D4E157; color: #000; font-weight: 600;
-        }
-        .payment-toggle button:first-child { border-right: 1px solid #d2d2d7; }
-
-        .cash-input-group {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 14px;
-        }
-        .cash-input-group label { color: #6e6e73; white-space: nowrap; }
-        .cash-input-group input {
-            width: 120px; padding: 10px 12px; border: 1px solid #d2d2d7;
+        .split-pay-group label { font-weight: 500; white-space: nowrap; color: #6e6e73; }
+        .split-pay-group input {
+            width: 110px; padding: 10px 12px; border: 1px solid #d2d2d7;
             border-radius: 10px; font-size: 16px; font-weight: 600;
             text-align: right;
         }
-        .cash-input-group input:focus {
+        .split-pay-group input:focus {
             outline: none; border-color: #D4E157;
             box-shadow: 0 0 0 3px rgba(212,225,87,0.15);
+        }
+        .split-pay-group input.over-limit {
+            border-color: #ff3b30; box-shadow: 0 0 0 3px rgba(255,59,48,0.1);
         }
         .change-display {
             font-size: 16px; font-weight: 600; color: #34c759;
@@ -518,13 +509,15 @@
                 </div>
 
                 <div class="payment-row">
-                    <div class="payment-toggle" id="paymentToggle">
-                        <button class="active" data-method="cash" id="btnCash">💵 现金</button>
-                        <button data-method="card" id="btnCard">💳 银行卡</button>
-                    </div>
-                    <div class="cash-input-group" id="cashGroup">
-                        <label id="lblReceived">实收:</label>
-                        <input type="number" id="cashReceived" min="0" step="0.01" placeholder="0.00">
+                    <div class="split-payment" id="splitPayment">
+                        <div class="split-pay-group">
+                            <label id="lblCardAmount">💳 Card:</label>
+                            <input type="number" id="cardAmount" min="0" step="0.01" placeholder="0.00" value="">
+                        </div>
+                        <div class="split-pay-group">
+                            <label id="lblCashAmount">💵 Cash:</label>
+                            <input type="number" id="cashReceived" min="0" step="0.01" placeholder="0.00" value="">
+                        </div>
                         <span class="change-display" id="changeDisplay"></span>
                     </div>
                 </div>
@@ -605,8 +598,8 @@
         searchPlaceholder: '搜索商品名称、SKU/Barcode 或 IMEI...', hintText: '输入商品名称、SKU/Barcode 或 IMEI 搜索<br>或扫描条码添加商品',
         thProduct: '商品', thPrice: '单价', thQty: '数量', thTax: '税率', thSubtotal: '小计',
         lblSubtotal: '小计:', lblDiscount: '折扣:', lblTotal: '总计',
-        lblReceived: '实收:', btnCash: '💵 现金', btnCard: '💳 银行卡',
-        scSearch: '搜索', scDiscount: '折扣', scPayment: '切换支付', scReprint: '重打小票',
+        lblCardAmount: '💳 卡:', lblCashAmount: '💵 现金:',
+        scSearch: '搜索', scDiscount: '折扣', scPayment: '卡/现金', scReprint: '重打小票',
         scCheckout: '结账', scClear: '清空', scRemove: '移除', scNav: '导航',
         confirmClearTitle: '确认清空', confirmClearMsg: '确定要清空购物车吗？', confirmCancel: '取消', confirmOk: '确定',
         dmTitle: '应用折扣', dmItemLabel: '单品折扣（选中商品）', dmOrderLabel: '整单折扣',
@@ -622,8 +615,8 @@
         searchPlaceholder: 'Search by name, SKU/Barcode or IMEI...', hintText: 'Search by product name, SKU/Barcode or IMEI<br>or scan barcode to add',
         thProduct: 'Product', thPrice: 'Price', thQty: 'Qty', thTax: 'Tax', thSubtotal: 'Subtotal',
         lblSubtotal: 'Subtotal:', lblDiscount: 'Discount:', lblTotal: 'Total',
-        lblReceived: 'Received:', btnCash: '💵 Cash', btnCard: '💳 Card',
-        scSearch: 'Search', scDiscount: 'Discount', scPayment: 'Payment', scReprint: 'Reprint',
+        lblCardAmount: '💳 Card:', lblCashAmount: '💵 Cash:',
+        scSearch: 'Search', scDiscount: 'Discount', scPayment: 'Card/Cash', scReprint: 'Reprint',
         scCheckout: 'Checkout', scClear: 'Clear', scRemove: 'Remove', scNav: 'Navigate',
         confirmClearTitle: 'Confirm Clear', confirmClearMsg: 'Clear all items from cart?', confirmCancel: 'Cancel', confirmOk: 'Confirm',
         dmTitle: 'Apply Discount', dmItemLabel: 'Item Discount (selected)', dmOrderLabel: 'Order Discount',
@@ -639,7 +632,7 @@
 
     function updateLang() {
       document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblReceived','btnCash','btnCard','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scNav','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin'].forEach(function(id) {
+      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scNav','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = t(id);
       });
@@ -875,29 +868,53 @@
       document.getElementById('btnCheckout').disabled = cart.length === 0;
     }
 
-    // Payment toggle
-    document.getElementById('paymentToggle').addEventListener('click', function(e) {
-      var btn = e.target.closest('button');
-      if (!btn) return;
-      paymentMethod = btn.dataset.method;
-      document.querySelectorAll('#paymentToggle button').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      document.getElementById('cashGroup').style.display = paymentMethod === 'cash' ? '' : 'none';
-      updateChange();
-    });
-
-    // Cash change
-    document.getElementById('cashReceived').addEventListener('input', updateChange);
-    function updateChange() {
-      if (paymentMethod !== 'cash') { document.getElementById('changeDisplay').textContent = ''; return; }
-      var received = parseFloat(document.getElementById('cashReceived').value) || 0;
+    // Split payment: card + cash inputs
+    document.getElementById('cardAmount').addEventListener('input', function() {
       var totalText = document.getElementById('valTotal').textContent.replace('€', '');
       var total = parseFloat(totalText) || 0;
-      var change = Math.round((received - total) * 100) / 100;
+      var cardVal = parseFloat(this.value) || 0;
+      // Card cannot exceed total
+      if (cardVal > total) {
+        this.classList.add('over-limit');
+      } else {
+        this.classList.remove('over-limit');
+      }
+      updateChange();
+    });
+    document.getElementById('cashReceived').addEventListener('input', updateChange);
+
+    function updateChange() {
+      var totalText = document.getElementById('valTotal').textContent.replace('€', '');
+      var total = parseFloat(totalText) || 0;
+      var cardVal = parseFloat(document.getElementById('cardAmount').value) || 0;
+      var cashVal = parseFloat(document.getElementById('cashReceived').value) || 0;
+
+      // Cap card at total
+      if (cardVal > total) cardVal = total;
+
+      var remaining = Math.round((total - cardVal) * 100) / 100;
+      var change = Math.round((cashVal - remaining) * 100) / 100;
       var display = document.getElementById('changeDisplay');
-      if (received <= 0) { display.textContent = ''; return; }
-      display.textContent = (lang === 'zh' ? '找零: €' : 'Change: €') + change.toFixed(2);
-      display.className = 'change-display' + (change < 0 ? ' negative' : '');
+
+      if (cardVal <= 0 && cashVal <= 0) { display.textContent = ''; return; }
+      if (cardVal > 0 && cashVal <= 0 && cardVal >= total) {
+        display.textContent = lang === 'zh' ? '✓ 卡付全额' : '✓ Card covers total';
+        display.className = 'change-display';
+        return;
+      }
+      if (cashVal <= 0 && cardVal < total) {
+        var due = Math.round((total - cardVal) * 100) / 100;
+        display.textContent = (lang === 'zh' ? '还需现金: €' : 'Cash due: €') + due.toFixed(2);
+        display.className = 'change-display negative';
+        return;
+      }
+      if (change >= 0) {
+        display.textContent = (lang === 'zh' ? '找零: €' : 'Change: €') + change.toFixed(2);
+        display.className = 'change-display';
+      } else {
+        display.textContent = (lang === 'zh' ? '不足: €' : 'Short: €') + Math.abs(change).toFixed(2);
+        display.className = 'change-display negative';
+      }
     }
 
     // Clear cart
@@ -915,20 +932,45 @@
       if (cart.length === 0) return;
       var totalText = document.getElementById('valTotal').textContent.replace('€', '');
       var total = parseFloat(totalText) || 0;
-      if (paymentMethod === 'cash') {
-        var received = parseFloat(document.getElementById('cashReceived').value) || 0;
-        if (received < total) { showToast(lang === 'zh' ? '实收金额不足' : 'Insufficient cash received', 'error'); return; }
+      var cardVal = parseFloat(document.getElementById('cardAmount').value) || 0;
+      var cashVal = parseFloat(document.getElementById('cashReceived').value) || 0;
+
+      // Cap card at total
+      if (cardVal > total) cardVal = total;
+
+      var remaining = Math.round((total - cardVal) * 100) / 100;
+
+      // Determine payment method
+      var method = 'cash';
+      if (cardVal > 0 && cashVal <= 0 && cardVal >= total) {
+        method = 'card';
+      } else if (cardVal > 0 && cashVal > 0) {
+        method = 'split';
       }
+
+      // Validate: total payment must cover the bill
+      if (method === 'cash' && cashVal < total) {
+        showToast(lang === 'zh' ? '实收金额不足' : 'Insufficient payment', 'error'); return;
+      }
+      if (method === 'split' && cashVal < remaining) {
+        showToast(lang === 'zh' ? '现金不足以覆盖剩余金额' : 'Cash insufficient for remaining amount', 'error'); return;
+      }
+
       var btn = document.getElementById('btnCheckout');
       btn.disabled = true;
       btn.textContent = lang === 'zh' ? '处理中...' : 'Processing...';
       try {
         var body = {
           items: cart.map(function(c) { return { product: c.product, quantity: c.quantity, discount: c.discount, serialNumber: c.serialNumber }; }),
-          paymentMethod: paymentMethod
+          paymentMethod: method
         };
         if (orderDiscount && orderDiscount.type && orderDiscount.value > 0) body.orderDiscount = orderDiscount;
-        if (paymentMethod === 'cash') body.cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+        if (method === 'cash') {
+          body.cashReceived = cashVal;
+        } else if (method === 'split') {
+          body.cardAmount = cardVal;
+          body.cashReceived = cashVal;
+        }
 
         var res = await apiFetch('/transactions/checkout', { method: 'POST', body: JSON.stringify(body) });
         if (!res) return;
@@ -944,6 +986,7 @@
         // Clear cart
         cart = []; selectedCartIndex = -1; orderDiscount = null;
         document.getElementById('cashReceived').value = '';
+        document.getElementById('cardAmount').value = '';
         renderCart();
         searchInput.value = '';
         showSearchHint();
@@ -1014,10 +1057,11 @@
       else if (e.key === 'F2') { e.preventDefault(); openDiscountModal(); }
       else if (e.key === 'F3') {
         e.preventDefault();
-        paymentMethod = paymentMethod === 'cash' ? 'card' : 'cash';
-        document.querySelectorAll('#paymentToggle button').forEach(function(b) { b.classList.toggle('active', b.dataset.method === paymentMethod); });
-        document.getElementById('cashGroup').style.display = paymentMethod === 'cash' ? '' : 'none';
-        updateChange();
+        // Toggle focus between card and cash inputs
+        var cardInput = document.getElementById('cardAmount');
+        var cashInput = document.getElementById('cashReceived');
+        if (document.activeElement === cardInput) { cashInput.focus(); cashInput.select(); }
+        else { cardInput.focus(); cardInput.select(); }
       }
       else if (e.key === 'F4') { e.preventDefault(); if (lastTransaction) printReceipt(lastTransaction); else showToast(lang === 'zh' ? '没有上一张小票' : 'No last receipt', 'info'); }
       else if (e.key === 'Enter' && !isInput) { e.preventDefault(); doCheckout(); }
