@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Portal - Tech Cross</title>
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;background:#f5f5f7;color:#1d1d1f;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+        .portal{width:100%;max-width:420px;padding:20px;}
+        .logo-area{text-align:center;margin-bottom:32px;}
+        .logo-area img{height:48px;margin-bottom:8px;}
+        .logo-area p{font-size:13px;color:#86868b;}
+        .card{background:#fff;border-radius:18px;padding:32px;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+        .card h2{font-size:22px;font-weight:600;text-align:center;margin-bottom:6px;}
+        .card .subtitle{font-size:14px;color:#86868b;text-align:center;margin-bottom:24px;}
+        .form-group{margin-bottom:16px;}
+        .form-group label{display:block;font-size:14px;font-weight:500;margin-bottom:6px;}
+        .form-group input{width:100%;padding:12px 16px;border:1px solid #d2d2d7;border-radius:12px;font-size:16px;transition:all .2s;}
+        .form-group input:focus{outline:none;border-color:#D4E157;box-shadow:0 0 0 3px rgba(212,225,87,.15);}
+        .btn-login{width:100%;padding:14px;border:none;border-radius:12px;background:#D4E157;color:#000;font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px;}
+        .btn-login:hover{background:#c5d148;transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,225,87,.4);}
+        .btn-login:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+        .error-msg{display:none;background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;text-align:center;}
+        .error-msg.show{display:block;}
+        /* Portal menu after login */
+        .portal-menu{display:none;}
+        .portal-menu.show{display:block;}
+        .portal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+        .portal-header .user-info{font-size:14px;color:#6e6e73;}
+        .portal-header .user-info strong{color:#1d1d1f;}
+        .portal-header .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-left:6px;}
+        .badge-admin{background:#e3f2fd;color:#1565c0;}
+        .badge-staff{background:#f5f5f7;color:#6e6e73;}
+        .btn-logout{padding:6px 14px;border-radius:980px;border:1px solid #d2d2d7;background:#fff;font-size:13px;cursor:pointer;transition:all .2s;}
+        .btn-logout:hover{background:#ff3b30;color:#fff;border-color:#ff3b30;}
+        .menu-section{margin-bottom:16px;}
+        .menu-section h3{font-size:12px;color:#86868b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-left:4px;}
+        .menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;text-decoration:none;color:#1d1d1f;font-size:15px;font-weight:500;transition:all .15s;border:1px solid #e5e5e7;margin-bottom:8px;background:#fff;}
+        .menu-item:hover{border-color:#D4E157;background:#fafff0;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06);}
+        .menu-item .icon{font-size:20px;width:28px;text-align:center;}
+        .menu-item .desc{font-size:12px;color:#86868b;font-weight:400;margin-top:2px;}
+        .back-link{display:block;text-align:center;margin-top:20px;font-size:13px;color:#86868b;text-decoration:none;}
+        .back-link:hover{color:#0071e3;}
+    </style>
+</head>
+<body>
+<div class="portal">
+    <div class="logo-area">
+        <img src="logo.png" alt="Tech Cross">
+        <p>Staff Portal</p>
+    </div>
+
+    <!-- Login Form -->
+    <div class="card" id="loginCard">
+        <h2>Staff Login</h2>
+        <p class="subtitle">使用进销存系统账号登录</p>
+        <div class="error-msg" id="errorMsg"></div>
+        <form id="loginForm" onsubmit="return false;">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名" autocomplete="username" autofocus>
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;color:#6e6e73;">
+                    <input type="checkbox" id="humanCheck" checked> 我不是机器人
+                </label>
+            </div>
+            <button type="submit" class="btn-login" id="btnLogin" onclick="doLogin()">登录</button>
+        </form>
+    </div>
+
+    <!-- Portal Menu (shown after login) -->
+    <div class="card portal-menu" id="portalMenu">
+        <div class="portal-header">
+            <div class="user-info">
+                欢迎, <strong id="displayName">-</strong>
+                <span class="badge" id="roleBadge">-</span>
+            </div>
+            <button class="btn-logout" onclick="doLogout()">退出</button>
+        </div>
+
+        <!-- Staff: only POS -->
+        <div id="staffSection">
+            <div class="menu-section">
+                <h3>业务系统</h3>
+                <a href="/inv-pos.html" class="menu-item">
+                    <span class="icon">💰</span>
+                    <div>POS 收银<div class="desc">销售收银、结账</div></div>
+                </a>
+                <a href="/inv-products.html" class="menu-item">
+                    <span class="icon">📦</span>
+                    <div>商品管理<div class="desc">商品录入、编辑</div></div>
+                </a>
+                <a href="/inv-stock.html" class="menu-item">
+                    <span class="icon">🏭</span>
+                    <div>库存管理<div class="desc">库存查看、入库申请</div></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Admin: full access -->
+        <div id="adminSection" style="display:none;">
+            <div class="menu-section">
+                <h3>进销存系统</h3>
+                <a href="/inv-pos.html" class="menu-item">
+                    <span class="icon">💰</span>
+                    <div>POS 收银<div class="desc">销售收银、结账</div></div>
+                </a>
+                <a href="/inv-products.html" class="menu-item">
+                    <span class="icon">📦</span>
+                    <div>商品管理<div class="desc">商品录入、编辑、删除</div></div>
+                </a>
+                <a href="/inv-stock.html" class="menu-item">
+                    <span class="icon">🏭</span>
+                    <div>库存管理<div class="desc">入库、出库、库存核对</div></div>
+                </a>
+                <a href="/inv-suppliers.html" class="menu-item">
+                    <span class="icon">🤝</span>
+                    <div>供应商管理<div class="desc">供应商信息、对账</div></div>
+                </a>
+                <a href="/inv-purchases.html" class="menu-item">
+                    <span class="icon">🛒</span>
+                    <div>采购管理<div class="desc">采购订单</div></div>
+                </a>
+                <a href="/inv-transactions.html" class="menu-item">
+                    <span class="icon">📋</span>
+                    <div>交易记录<div class="desc">销售记录、导出、删除</div></div>
+                </a>
+                <a href="/inv-reports.html" class="menu-item">
+                    <span class="icon">📊</span>
+                    <div>报表中心<div class="desc">日报、月报、税务报表</div></div>
+                </a>
+                <a href="/inv-invoices.html" class="menu-item">
+                    <span class="icon">🧾</span>
+                    <div>VAT Invoice<div class="desc">发票生成、发送</div></div>
+                </a>
+                <a href="/inv-settings.html" class="menu-item">
+                    <span class="icon">⚙️</span>
+                    <div>系统设置<div class="desc">公司信息、系统配置</div></div>
+                </a>
+                <a href="/inv-users.html" class="menu-item">
+                    <span class="icon">👥</span>
+                    <div>用户管理<div class="desc">创建、编辑、删除用户</div></div>
+                </a>
+            </div>
+            <div class="menu-section">
+                <h3>网站管理</h3>
+                <a href="/admin.html" class="menu-item">
+                    <span class="icon">🌐</span>
+                    <div>网站后台<div class="desc">报价编辑、服务管理</div></div>
+                </a>
+                <a href="/admin-reviews.html" class="menu-item">
+                    <span class="icon">⭐</span>
+                    <div>评价管理<div class="desc">审核、删除客户评价</div></div>
+                </a>
+                <a href="/admin-apple.html" class="menu-item">
+                    <span class="icon">📱</span>
+                    <div>Apple 报价管理<div class="desc">iPhone/iPad 维修报价</div></div>
+                </a>
+                <a href="/admin-brands.html" class="menu-item">
+                    <span class="icon">🏷️</span>
+                    <div>品牌报价管理<div class="desc">Samsung、其他品牌报价</div></div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <a href="/" class="back-link">← 返回主页</a>
+</div>
+
+<script>
+(function(){
+    // Check if already logged in
+    var token = localStorage.getItem('inv_token');
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('inv_user')); } catch(e) {}
+
+    if (token && user) {
+        showPortal(user);
+    }
+
+    function showPortal(u) {
+        document.getElementById('loginCard').style.display = 'none';
+        document.getElementById('portalMenu').classList.add('show');
+        document.getElementById('displayName').textContent = u.displayName || u.username;
+        var badge = document.getElementById('roleBadge');
+        if (u.role === 'admin') {
+            badge.textContent = '管理员';
+            badge.className = 'badge badge-admin';
+            document.getElementById('adminSection').style.display = '';
+            document.getElementById('staffSection').style.display = 'none';
+        } else {
+            badge.textContent = '员工';
+            badge.className = 'badge badge-staff';
+            document.getElementById('adminSection').style.display = 'none';
+            document.getElementById('staffSection').style.display = '';
+        }
+    }
+
+    window.doLogin = async function() {
+        var username = document.getElementById('username').value.trim();
+        var password = document.getElementById('password').value;
+        var humanCheck = document.getElementById('humanCheck').checked;
+        var errEl = document.getElementById('errorMsg');
+        errEl.classList.remove('show');
+
+        if (!username || !password) {
+            errEl.textContent = '请输入用户名和密码';
+            errEl.classList.add('show');
+            return;
+        }
+        if (!humanCheck) {
+            errEl.textContent = '请确认您不是机器人';
+            errEl.classList.add('show');
+            return;
+        }
+
+        var btn = document.getElementById('btnLogin');
+        btn.disabled = true;
+        btn.textContent = '登录中...';
+
+        try {
+            var res = await fetch('/api/inv/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, password: password, humanCheck: true })
+            });
+            var data = await res.json();
+
+            if (res.ok && data.token && data.user) {
+                localStorage.setItem('inv_token', data.token);
+                localStorage.setItem('inv_user', JSON.stringify(data.user));
+                showPortal(data.user);
+            } else {
+                errEl.textContent = data.error || '登录失败';
+                errEl.classList.add('show');
+            }
+        } catch(e) {
+            errEl.textContent = '服务器连接失败';
+            errEl.classList.add('show');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '登录';
+        }
+    };
+
+    window.doLogout = function() {
+        localStorage.removeItem('inv_token');
+        localStorage.removeItem('inv_user');
+        sessionStorage.removeItem('techcross_admin_session');
+        location.reload();
+    };
+
+    // Enter key to login
+    document.getElementById('password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') window.doLogin();
+    });
+    document.getElementById('username').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('password').focus();
+    });
+})();
+</script>
+</body>
+</html>

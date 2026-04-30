@@ -560,17 +560,10 @@
         <p data-en="© 2026 Tech Cross Repair Centre. All rights reserved." data-ga="© 2026 Ionad Deisiúcháin Tech Cross. Gach ceart ar cosaint.">© 2026 Tech Cross Repair Centre. All rights reserved.</p>
 
         <!-- Staff Login Entry -->
-        <div class="staff-entry" id="staffEntry">
-            <button class="staff-entry-btn" onclick="document.getElementById('staffMenu').classList.toggle('show')" aria-label="Staff Login">
+        <div class="staff-entry">
+            <a href="/staff-portal.html" class="staff-entry-btn" aria-label="Staff Login" title="Staff Portal">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </button>
-            <div class="staff-menu" id="staffMenu">
-                <a href="/inv-login.html">📦 进销存系统</a>
-                <a href="/admin.html">⚙️ 网站后台</a>
-                <a href="/admin-reviews.html">⭐ 评价管理</a>
-                <a href="/admin-apple.html">📱 Apple 报价</a>
-                <a href="/admin-brands.html">🏷️ 品牌报价</a>
-            </div>
+            </a>
         </div>
     </footer>
 
@@ -583,15 +576,5 @@
         <span>WhatsApp Us</span>
     </a>
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
-<script>
-// Close staff menu when clicking outside
-document.addEventListener('click', function(e) {
-    var menu = document.getElementById('staffMenu');
-    var entry = document.getElementById('staffEntry');
-    if (menu && entry && !entry.contains(e.target)) {
-        menu.classList.remove('show');
-    }
-});
-</script>
 </body>
 </html>

@@ -34,7 +34,7 @@ async function seed() {
   const dbUri = process.env.DBCon;
   if (!dbUri) { console.error('ERROR: DBCon not set in .env'); process.exit(1); }
 
-  await mongoose.connect(dbUri);
+  await mongoose.connect(dbUri, { dbName: 'techcross' });
   console.log('Connected to MongoDB');
 
   let created = 0, skipped = 0;
