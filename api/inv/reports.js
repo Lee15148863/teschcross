@@ -77,6 +77,7 @@ router.get('/daily', async (req, res) => {
     let stdRate23Sales = 0, stdRate23Vat = 0;
     let marginSales = 0, marginVat = 0;
     let reducedRate135Sales = 0, reducedRate135Vat = 0;
+    let customerPurchaseCashOut = 0; // cash paid to buy from customers
     const marginItems = [];
 
     for (const txn of transactions) {
@@ -93,16 +94,22 @@ router.get('/daily', async (req, res) => {
         if (item.marginScheme || item.isSecondHand) {
           marginSales += item.subtotal;
           marginVat += item.marginVat || 0;
+          const isPurchasedFromCustomer = item.purchasedFromCustomer || item.source === 'customer';
+          if (isPurchasedFromCustomer && item.costPrice > 0) {
+            customerPurchaseCashOut += item.costPrice * (item.quantity || 1);
+          }
           marginItems.push({
             receiptNumber: txn.receiptNumber,
             name: item.name,
             sku: item.sku || '',
+            source: item.source || '',
             costPrice: item.costPrice || 0,
             sellingPrice: item.unitPrice || 0,
             discountedPrice: item.discountedPrice || item.unitPrice || 0,
             margin: r((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)),
             vatPayable: item.marginVat || 0,
-            quantity: item.quantity || 1
+            quantity: item.quantity || 1,
+            purchasedFromCustomer: isPurchasedFromCustomer
           });
         } else if (Math.abs(rate - 0.135) < 0.01) {
           reducedRate135Sales += item.subtotal;
@@ -130,7 +137,8 @@ router.get('/daily', async (req, res) => {
           margin: { sales: r(marginSales), vatPayable: r(marginVat), items: marginItems },
           reduced135: { sales: r(reducedRate135Sales), vatPayable: r(reducedRate135Vat) }
         },
-        totalVatPayable: r(stdRate23Vat + marginVat + reducedRate135Vat)
+        totalVatPayable: r(stdRate23Vat + marginVat + reducedRate135Vat),
+        customerPurchaseCashOut: r(customerPurchaseCashOut)
       }
     });
   } catch (err) {
@@ -169,6 +177,7 @@ router.get('/monthly', async (req, res) => {
     const dailyMap = {};
     let monthCash = 0, monthCard = 0;
     let monthStd23Vat = 0, monthMarginVat = 0, monthReduced135Vat = 0;
+    let monthCustomerCashOut = 0;
 
     for (const txn of transactions) {
       const dayKey = txn.createdAt.toISOString().split('T')[0];
@@ -178,7 +187,8 @@ router.get('/monthly', async (req, res) => {
           date: dayKey, totalSales: 0, cash: 0, card: 0,
           std23Sales: 0, std23Vat: 0,
           marginSales: 0, marginVat: 0, marginItems: [],
-          reduced135Sales: 0, reduced135Vat: 0
+          reduced135Sales: 0, reduced135Vat: 0,
+          customerPurchaseCashOut: 0
         };
       }
       const d = dailyMap[dayKey];
@@ -198,16 +208,23 @@ router.get('/monthly', async (req, res) => {
         if (item.marginScheme || item.isSecondHand) {
           d.marginSales += item.subtotal;
           d.marginVat += item.marginVat || 0;
+          const isPurchasedFromCustomer = item.purchasedFromCustomer || item.source === 'customer';
+          if (isPurchasedFromCustomer && item.costPrice > 0) {
+            d.customerPurchaseCashOut += item.costPrice * (item.quantity || 1);
+            monthCustomerCashOut += item.costPrice * (item.quantity || 1);
+          }
           d.marginItems.push({
             receiptNumber: txn.receiptNumber,
             name: item.name,
             sku: item.sku || '',
+            source: item.source || '',
             costPrice: item.costPrice || 0,
             sellingPrice: item.unitPrice || 0,
             discountedPrice: item.discountedPrice || item.unitPrice || 0,
             margin: r((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)),
             vatPayable: item.marginVat || 0,
-            quantity: item.quantity || 1
+            quantity: item.quantity || 1,
+            purchasedFromCustomer: isPurchasedFromCustomer
           });
           monthMarginVat += item.marginVat || 0;
         } else if (Math.abs(rate - 0.135) < 0.01) {
@@ -232,7 +249,8 @@ router.get('/monthly', async (req, res) => {
       standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
       margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
       reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
-      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat)
+      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat),
+      customerPurchaseCashOut: r(d.customerPurchaseCashOut)
     })).sort((a, b) => a.date.localeCompare(b.date));
 
     res.json({
@@ -246,7 +264,151 @@ router.get('/monthly', async (req, res) => {
           standard23VatTotal: r(monthStd23Vat),
           marginVatTotal: r(monthMarginVat),
           reduced135VatTotal: r(monthReduced135Vat),
-          totalVatPayable: r(monthStd23Vat + monthMarginVat + monthReduced135Vat)
+          totalVatPayable: r(monthStd23Vat + monthMarginVat + monthReduced135Vat),
+          customerPurchaseCashOut: r(monthCustomerCashOut)
+        }
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// ─── GET /api/inv/reports/weekly ────────────────────────────────────────────
+// Weekly report (English output) — same VAT breakdown as daily/monthly
+// Query: ?week=2026-W18 or ?startDate=2026-04-28 (Monday of the week)
+router.get('/weekly', async (req, res) => {
+  try {
+    const { week, startDate: qStart } = req.query;
+    let weekStart, weekEnd;
+
+    if (week) {
+      // Parse ISO week: YYYY-Www
+      const match = week.match(/^(\d{4})-W(\d{1,2})$/);
+      if (!match) return res.status(400).json({ error: 'Invalid week format. Use YYYY-Www (e.g. 2026-W18)', code: 'VALIDATION_ERROR' });
+      const y = parseInt(match[1]), w = parseInt(match[2]);
+      // ISO week 1 = week containing Jan 4
+      const jan4 = new Date(y, 0, 4);
+      const dayOfWeek = jan4.getDay() || 7; // Mon=1..Sun=7
+      weekStart = new Date(jan4);
+      weekStart.setDate(jan4.getDate() - dayOfWeek + 1 + (w - 1) * 7);
+      weekStart.setHours(0, 0, 0, 0);
+      weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+    } else if (qStart) {
+      weekStart = new Date(qStart);
+      weekStart.setHours(0, 0, 0, 0);
+      weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+    } else {
+      // Default: current week (Monday to Sunday)
+      const now = new Date();
+      const day = now.getDay() || 7;
+      weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - day + 1);
+      weekStart.setHours(0, 0, 0, 0);
+      weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+    }
+
+    if (isNaN(weekStart.getTime()) || isNaN(weekEnd.getTime())) {
+      return res.status(400).json({ error: 'Invalid date', code: 'VALIDATION_ERROR' });
+    }
+
+    const transactions = await Transaction.find({
+      createdAt: { $gte: weekStart, $lte: weekEnd }
+    }).sort({ createdAt: 1 });
+
+    const r = v => Math.round(v * 100) / 100;
+
+    // Build daily aggregates
+    const dailyMap = {};
+    let weekCash = 0, weekCard = 0;
+    let weekStd23Vat = 0, weekMarginVat = 0, weekReduced135Vat = 0;
+    let weekCustomerCashOut = 0;
+
+    for (const txn of transactions) {
+      const dayKey = txn.createdAt.toISOString().split('T')[0];
+      if (!dailyMap[dayKey]) {
+        dailyMap[dayKey] = {
+          date: dayKey, totalSales: 0, cash: 0, card: 0,
+          std23Sales: 0, std23Vat: 0,
+          marginSales: 0, marginVat: 0, marginItems: [],
+          reduced135Sales: 0, reduced135Vat: 0,
+          customerPurchaseCashOut: 0
+        };
+      }
+      const d = dailyMap[dayKey];
+      d.totalSales += txn.totalAmount;
+
+      if (txn.paymentMethod === 'cash') { d.cash += txn.totalAmount; weekCash += txn.totalAmount; }
+      else if (txn.paymentMethod === 'card') { d.card += txn.totalAmount; weekCard += txn.totalAmount; }
+      else if (txn.paymentMethod === 'split') {
+        const cardPart = txn.cardAmount || 0;
+        const cashPart = txn.totalAmount - cardPart;
+        d.card += cardPart; d.cash += cashPart;
+        weekCard += cardPart; weekCash += cashPart;
+      }
+
+      for (const item of txn.items) {
+        const rate = item.vatRate || 0.23;
+        if (item.marginScheme || item.isSecondHand) {
+          d.marginSales += item.subtotal;
+          d.marginVat += item.marginVat || 0;
+          const isPFC = item.purchasedFromCustomer || item.source === 'customer';
+          if (isPFC && item.costPrice > 0) {
+            d.customerPurchaseCashOut += item.costPrice * (item.quantity || 1);
+            weekCustomerCashOut += item.costPrice * (item.quantity || 1);
+          }
+          d.marginItems.push({
+            receiptNumber: txn.receiptNumber, name: item.name, sku: item.sku || '',
+            source: item.source || '', costPrice: item.costPrice || 0,
+            sellingPrice: item.unitPrice || 0,
+            discountedPrice: item.discountedPrice || item.unitPrice || 0,
+            margin: r((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)),
+            vatPayable: item.marginVat || 0, quantity: item.quantity || 1,
+            purchasedFromCustomer: isPFC
+          });
+          weekMarginVat += item.marginVat || 0;
+        } else if (Math.abs(rate - 0.135) < 0.01) {
+          d.reduced135Sales += item.subtotal;
+          d.reduced135Vat += item.vatAmount || 0;
+          weekReduced135Vat += item.vatAmount || 0;
+        } else {
+          d.std23Sales += item.subtotal;
+          d.std23Vat += item.vatAmount || 0;
+          weekStd23Vat += item.vatAmount || 0;
+        }
+      }
+    }
+
+    const dailyData = Object.values(dailyMap).map(d => ({
+      date: d.date,
+      totalSales: r(d.totalSales), cash: r(d.cash), card: r(d.card),
+      standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
+      margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
+      reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
+      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat),
+      customerPurchaseCashOut: r(d.customerPurchaseCashOut)
+    })).sort((a, b) => a.date.localeCompare(b.date));
+
+    res.json({
+      data: {
+        weekStart: weekStart.toISOString().split('T')[0],
+        weekEnd: weekEnd.toISOString().split('T')[0],
+        dailyData,
+        summary: {
+          totalCash: r(weekCash),
+          totalCard: r(weekCard),
+          totalSales: r(weekCash + weekCard),
+          standard23VatTotal: r(weekStd23Vat),
+          marginVatTotal: r(weekMarginVat),
+          reduced135VatTotal: r(weekReduced135Vat),
+          totalVatPayable: r(weekStd23Vat + weekMarginVat + weekReduced135Vat),
+          customerPurchaseCashOut: r(weekCustomerCashOut)
         }
       }
     });
