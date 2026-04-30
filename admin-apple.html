@@ -151,9 +151,27 @@
     <script>
         const DEFAULT_USERNAME = '';
         const DEFAULT_PASSWORD = '';
-        // ADMIN_TOKEN is no longer hardcoded — use inv system JWT or prompt
-        const ADMIN_TOKEN = localStorage.getItem('admin_token') || prompt('Enter admin token:');
-        if (ADMIN_TOKEN) localStorage.setItem('admin_token', ADMIN_TOKEN);
+        // Auth: use inv system JWT if admin is logged in, otherwise ask for PIN
+        function getAdminTokenApple() {
+            try {
+                var invUser = JSON.parse(localStorage.getItem('inv_user'));
+                var invToken = localStorage.getItem('inv_token');
+                if (invUser && invUser.role === 'admin' && invToken) {
+                    return { mode: 'jwt', token: invToken };
+                }
+            } catch(e) {}
+            if (!sessionStorage.getItem('admin_pin_ok')) {
+                var pin = prompt('Enter admin PIN:');
+                if (pin !== '0331') { alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return null; }
+                sessionStorage.setItem('admin_pin_ok', '1');
+            }
+            var t = localStorage.getItem('admin_token');
+            if (!t) { t = prompt('Enter admin token:'); if (t) localStorage.setItem('admin_token', t); }
+            return { mode: 'legacy', token: t };
+        }
+        var AUTH_APPLE = getAdminTokenApple();
+        if (!AUTH_APPLE) throw new Error('Not authorized');
+        const ADMIN_TOKEN = AUTH_APPLE.token;
         
         let currentDevice = 'iphone';
         let pricingData = null;

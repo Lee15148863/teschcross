@@ -20,12 +20,23 @@ const PricingAPI = {
     },
 
     async save(brand, data, adminToken) {
+        // Build auth headers: support JWT or legacy token
+        const headers = { 'Content-Type': 'application/json' };
+        try {
+            var invUser = JSON.parse(localStorage.getItem('inv_user'));
+            var invToken = localStorage.getItem('inv_token');
+            if (invUser && invUser.role === 'admin' && invToken) {
+                headers['Authorization'] = 'Bearer ' + invToken;
+            } else {
+                headers['x-admin-token'] = adminToken;
+            }
+        } catch(e) {
+            headers['x-admin-token'] = adminToken;
+        }
+
         const res = await fetch(`/api/pricing/${brand}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-admin-token': adminToken
-            },
+            headers: headers,
             body: JSON.stringify(data)
         });
         if (!res.ok) {
