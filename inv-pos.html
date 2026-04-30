@@ -1325,11 +1325,6 @@
         errEl.style.display = 'block';
         return;
       }
-      if (body.isSecondHand && (!body.costPrice || body.costPrice <= 0)) {
-        errEl.textContent = lang === 'zh' ? '二手商品必须填写成本价' : 'Second-hand items require cost price';
-        errEl.style.display = 'block';
-        return;
-      }
       try {
         var res = await apiFetch('/products', { method: 'POST', body: JSON.stringify(body) });
         if (!res) return;

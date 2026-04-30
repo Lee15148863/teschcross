@@ -152,7 +152,7 @@
                 </div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>成本价 (€) <span id="costRequired" style="color:#ff3b30;">*</span></label><input type="number" id="fCost" step="0.01" min="0"><div class="hint" id="costHint">二手商品必填（用于 Margin VAT 计算）</div></div>
+                <div class="form-group"><label>成本价 (€) <span id="costRequired" style="color:#ff3b30;display:none;">*</span></label><input type="number" id="fCost" step="0.01" min="0"><div class="hint" id="costHint">填写成本价可启用 Margin VAT（仅对利润部分报税）</div></div>
                 <div class="form-group"><label>售价 (€) <span style="color:#ff3b30;">*</span></label><input type="number" id="fPrice" step="0.01" min="0" required></div>
             </div>
             <div class="form-group"><label>低库存阈值</label><input type="number" id="fThreshold" value="10" min="0"></div>
@@ -423,8 +423,6 @@ async function saveProduct(){
     }
     if(!id)body.stock=parseInt(document.getElementById('fStock').value)||0;
     if(!body.name||!body.sku||!body.category||isNaN(body.sellingPrice)){showToast('请填写商品名称、SKU、分类和售价','error');return;}
-    // Second-hand requires cost price
-    if(body.isSecondHand&&(!body.costPrice||body.costPrice<=0)){showToast('二手商品必须填写成本价','error');return;}
     try{
         const r=await apiFetch('/products'+(id?'/'+id:''),{method:id?'PUT':'POST',body:JSON.stringify(body)});
         if(!r)return;
