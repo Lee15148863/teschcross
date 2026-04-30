@@ -1,12 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
+const jwt = require('jsonwebtoken');
 
+// Dual-mode admin auth: JWT admin OR legacy x-admin-token
 function adminAuth(req, res, next) {
-    if (req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
-        return res.status(401).json({ error: 'Unauthorized' });
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+            const decoded = jwt.verify(authHeader.slice(7), process.env.INV_JWT_SECRET);
+            if (decoded.role === 'admin') { req.user = decoded; return next(); }
+        } catch (e) { /* fall through */ }
     }
-    next();
+    if (req.headers['x-admin-token'] === process.env.ADMIN_TOKEN) {
+        return next();
+    }
+    return res.status(401).json({ error: 'Unauthorized' });
 }
 
 // GET /api/reviews — public, only approved reviews

@@ -189,9 +189,11 @@
 
 <script src="/api-client.js"></script>
 <script>
-const ADMIN_TOKEN = 'techcross_admin_2026';
-const USERNAME = '0876676466';
-const PASSWORD = '0870019999';
+// Credentials no longer hardcoded — prompt or use stored token
+const ADMIN_TOKEN = localStorage.getItem('admin_token') || prompt('Enter admin token:');
+if (ADMIN_TOKEN) localStorage.setItem('admin_token', ADMIN_TOKEN);
+const USERNAME = '';
+const PASSWORD = '';
 
 let allData = {};
 let currentBrand = null;

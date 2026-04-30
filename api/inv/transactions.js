@@ -230,22 +230,45 @@ router.post('/checkout', async (req, res) => {
     const transaction = await Transaction.create(transactionData);
 
     // Auto-create StockMovement(exit) for each item and decrement stock
+    // With error compensation: if stock update fails, log to AuditLog for manual reconciliation
+    const stockErrors = [];
     for (const item of transactionItems) {
-      await StockMovement.create({
-        product: item.product,
-        type: 'exit',
-        quantity: item.quantity,
-        operator: req.user.userId,
-        referenceId: transaction._id.toString(),
-        referenceType: 'transaction',
-        serialNumber: item.serialNumber || undefined,
-        note: `销售出库 - 小票 ${receiptNumber}`
-      });
+      try {
+        await StockMovement.create({
+          product: item.product,
+          type: 'exit',
+          quantity: item.quantity,
+          operator: req.user.userId,
+          referenceId: transaction._id.toString(),
+          referenceType: 'transaction',
+          serialNumber: item.serialNumber || undefined,
+          note: `销售出库 - 小票 ${receiptNumber}`
+        });
 
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: -item.quantity },
-        updatedAt: new Date()
-      });
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: -item.quantity },
+          updatedAt: new Date()
+        });
+      } catch (stockErr) {
+        console.error(`Stock update failed for product ${item.product}:`, stockErr.message);
+        stockErrors.push({ product: item.product, name: item.name, quantity: item.quantity, error: stockErr.message });
+      }
+    }
+
+    // If any stock updates failed, write compensation audit log
+    if (stockErrors.length > 0) {
+      try {
+        await AuditLog.create({
+          action: 'stock_update_failed',
+          operator: req.user.userId,
+          targetType: 'transaction',
+          targetId: transaction._id.toString(),
+          encryptedData: JSON.stringify({ receiptNumber, stockErrors, timestamp: new Date().toISOString() }),
+          ip: req.ip || req.connection?.remoteAddress
+        });
+      } catch (auditErr) {
+        console.error('Failed to write stock error audit log:', auditErr.message);
+      }
     }
 
     // Generate formatted receipt data for Print Agent
@@ -262,7 +285,12 @@ router.post('/checkout', async (req, res) => {
       console.error('Receipt generation error:', e.message);
     }
 
-    res.status(201).json({ transaction, receipt: receiptData });
+    const response = { transaction, receipt: receiptData };
+    if (stockErrors.length > 0) {
+      response.stockWarnings = stockErrors;
+      response.message = '交易成功，但部分库存更新失败，请管理员核对';
+    }
+    res.status(201).json(response);
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(400).json({ error: '无效的ID格式', code: 'VALIDATION_ERROR' });

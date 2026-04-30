@@ -2,12 +2,30 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+// ─── Security: Helmet (default security headers) ────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: false,  // disabled to avoid breaking inline scripts in HTML pages
+  crossOriginEmbedderPolicy: false
+}));
+
+// ─── CORS: allow production domain + local dev ──────────────────────────────
+app.use(cors({
+  origin: [
+    'https://techcross.ie',
+    'https://www.techcross.ie',
+    'https://teschcross-git-1045728849939.europe-west1.run.app',
+    'http://localhost:8080',
+    'http://localhost:3000'
+  ],
+  credentials: true
+}));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname)));
 

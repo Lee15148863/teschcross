@@ -3,9 +3,9 @@ const ADMIN_USERNAME_KEY = 'techcross_admin_username';
 const ADMIN_PASSWORD_KEY = 'techcross_admin_password';
 const ADMIN_SESSION_KEY = 'techcross_admin_session';
 
-// Default credentials (can be changed)
-const DEFAULT_USERNAME = '0876676466';
-const DEFAULT_PASSWORD = '0870019999';
+// Default credentials removed for security — must be set via localStorage
+const DEFAULT_USERNAME = '';
+const DEFAULT_PASSWORD = '';
 
 // Check if custom credentials exist, otherwise use default
 function getAdminUsername() {

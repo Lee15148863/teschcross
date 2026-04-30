@@ -149,9 +149,11 @@
     <script src="/api-client.js"></script>
     <script src="pricing-data-apple.js"></script>
     <script>
-        const DEFAULT_USERNAME = '0876676466';
-        const DEFAULT_PASSWORD = '0870019999';
-        const ADMIN_TOKEN = 'techcross_admin_2026';
+        const DEFAULT_USERNAME = '';
+        const DEFAULT_PASSWORD = '';
+        // ADMIN_TOKEN is no longer hardcoded — use inv system JWT or prompt
+        const ADMIN_TOKEN = localStorage.getItem('admin_token') || prompt('Enter admin token:');
+        if (ADMIN_TOKEN) localStorage.setItem('admin_token', ADMIN_TOKEN);
         
         let currentDevice = 'iphone';
         let pricingData = null;

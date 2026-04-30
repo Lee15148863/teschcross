@@ -218,12 +218,22 @@ describe('POST /api/inv/stock/entry — input validation', () => {
 // POST /api/inv/stock/exit — input validation
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('POST /api/inv/stock/exit — input validation', () => {
-  it('should return 400 when productId is missing', async () => {
+  it('should return 403 when staff tries to exit stock', async () => {
     if (!stockRouter) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/stock/exit')
       .set('Authorization', `Bearer ${staffToken()}`)
+      .send({ productId: '507f1f77bcf86cd799439011', quantity: 5 });
+    expect(res.status).toBe(403);
+  });
+
+  it('should return 400 when productId is missing', async () => {
+    if (!stockRouter) return;
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/inv/stock/exit')
+      .set('Authorization', `Bearer ${adminToken()}`)
       .send({ quantity: 5 });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/productId/);
@@ -235,7 +245,7 @@ describe('POST /api/inv/stock/exit — input validation', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/stock/exit')
-      .set('Authorization', `Bearer ${staffToken()}`)
+      .set('Authorization', `Bearer ${adminToken()}`)
       .send({ productId: '507f1f77bcf86cd799439011' });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/quantity/);
@@ -247,7 +257,7 @@ describe('POST /api/inv/stock/exit — input validation', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/stock/exit')
-      .set('Authorization', `Bearer ${staffToken()}`)
+      .set('Authorization', `Bearer ${adminToken()}`)
       .send({ productId: '507f1f77bcf86cd799439011', quantity: 0 });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/正整数/);
@@ -258,7 +268,7 @@ describe('POST /api/inv/stock/exit — input validation', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/stock/exit')
-      .set('Authorization', `Bearer ${staffToken()}`)
+      .set('Authorization', `Bearer ${adminToken()}`)
       .send({ productId: '507f1f77bcf86cd799439011', quantity: -1 });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/正整数/);
@@ -269,7 +279,7 @@ describe('POST /api/inv/stock/exit — input validation', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/stock/exit')
-      .set('Authorization', `Bearer ${staffToken()}`)
+      .set('Authorization', `Bearer ${adminToken()}`)
       .send({ productId: '507f1f77bcf86cd799439011', quantity: 1.7 });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/正整数/);
@@ -320,7 +330,7 @@ describe('POST /api/inv/stock/exit — product not found', () => {
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/stock/exit')
-      .set('Authorization', `Bearer ${staffToken()}`)
+      .set('Authorization', `Bearer ${adminToken()}`)
       .send({ productId: 'not-a-valid-id', quantity: 5 });
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('NOT_FOUND');

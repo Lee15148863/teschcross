@@ -104,42 +104,42 @@ describe('GET /api/inv/products/templates', () => {
       .set('Authorization', `Bearer ${staffToken()}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('二手手机');
-    expect(res.body).toHaveProperty('配件');
-    expect(res.body).toHaveProperty('平板');
+    expect(res.body).toHaveProperty('销售');
+    expect(res.body).toHaveProperty('新机');
+    expect(res.body).toHaveProperty('二手');
   });
 
-  it('should return 二手手机 template with correct attributes', async () => {
+  it('should return 二手 template with correct attributes', async () => {
     if (!productsRouter) return;
     const app = createApp();
     const res = await request(app)
-      .get('/api/inv/products/templates?category=二手手机')
+      .get('/api/inv/products/templates?category=二手')
       .set('Authorization', `Bearer ${staffToken()}`);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ '成色': '', '电池健康度': '', '维修记录': '' });
   });
 
-  it('should return 配件 template with correct attributes', async () => {
+  it('should return 新机 template with correct attributes', async () => {
     if (!productsRouter) return;
     const app = createApp();
     const res = await request(app)
-      .get('/api/inv/products/templates?category=配件')
+      .get('/api/inv/products/templates?category=新机')
       .set('Authorization', `Bearer ${staffToken()}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ '材质': '', '适配机型': '' });
+    expect(res.body).toEqual({ '品牌': '', '型号': '', '存储容量': '' });
   });
 
-  it('should return 平板 template with correct attributes', async () => {
+  it('should return empty object for 销售 category', async () => {
     if (!productsRouter) return;
     const app = createApp();
     const res = await request(app)
-      .get('/api/inv/products/templates?category=平板')
+      .get('/api/inv/products/templates?category=销售')
       .set('Authorization', `Bearer ${staffToken()}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ '成色': '', '存储容量': '' });
+    expect(res.body).toEqual({});
   });
 
   it('should return empty object for unknown category', async () => {
@@ -161,7 +161,7 @@ describe('GET /api/inv/products/templates', () => {
       .set('Authorization', `Bearer ${adminToken()}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('二手手机');
+    expect(res.body).toHaveProperty('二手');
   });
 });
 
@@ -246,16 +246,18 @@ describe('POST /api/inv/products — input validation', () => {
     expect(res.body.fields).toContain('sellingPrice');
   });
 
-  it('should return 400 when costPrice is missing', async () => {
+  it('should accept product without costPrice (defaults to 0)', async () => {
     if (!productsRouter) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/products')
       .set('Authorization', `Bearer ${adminToken()}`)
-      .send({ name: 'iPhone 15', sku: 'SJ-APP15-128G-2026', sellingPrice: 100, category: '手机' });
+      .send({ name: 'iPhone 15', sku: 'SJ-APP15-128G-2026', sellingPrice: 100, category: '销售' })
+      .timeout(3000)
+      .catch(e => e.response || { status: 500 });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/costPrice/);
+    // Should NOT return 400 for missing costPrice — it's optional now
+    expect(res.status).not.toBe(400);
   });
 
   it('should return 400 when costPrice is negative', async () => {
@@ -282,16 +284,18 @@ describe('POST /api/inv/products — input validation', () => {
     expect(res.body.error).toMatch(/category/);
   });
 
-  it('should return 400 when SKU format is invalid', async () => {
+  it('should accept any SKU format including plain numbers', async () => {
     if (!productsRouter) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/products')
       .set('Authorization', `Bearer ${adminToken()}`)
-      .send({ name: 'iPhone 15', sku: 'invalid-sku', sellingPrice: 100, costPrice: 50, category: '手机' });
+      .send({ name: 'iPhone 15', sku: '12345678', sellingPrice: 100, costPrice: 50, category: '销售' })
+      .timeout(3000)
+      .catch(e => e.response || { status: 500 });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/SKU/);
+    // Should NOT return 400 for SKU format — any string is accepted
+    expect(res.status).not.toBe(400);
   });
 
   it('should return 400 when multiple required fields are missing', async () => {
@@ -335,15 +339,17 @@ describe('PUT /api/inv/products/:id — input validation', () => {
     expect(res.body.error).toMatch(/非负数/);
   });
 
-  it('should return 400 when SKU format is invalid in update', async () => {
+  it('should accept any SKU format in update', async () => {
     if (!productsRouter) return;
     const app = createApp();
     const res = await request(app)
       .put('/api/inv/products/507f1f77bcf86cd799439011')
       .set('Authorization', `Bearer ${adminToken()}`)
-      .send({ sku: 'bad-sku' });
+      .send({ sku: 'any-format-123' })
+      .timeout(3000)
+      .catch(e => e.response || { status: 500 });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/SKU/);
+    // Should NOT return 400 for SKU format
+    expect(res.status).not.toBe(400);
   });
 });

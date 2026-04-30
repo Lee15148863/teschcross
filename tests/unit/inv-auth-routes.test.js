@@ -107,7 +107,7 @@ describe('CAPTCHA generation and validation', () => {
 // Login validation tests (no DB needed — tests early returns)
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('POST /api/inv/auth/login — input validation', () => {
-  it('should return 400 when captcha fields are missing', async () => {
+  it('should return 400 when human verification is missing', async () => {
     if (!authRouter) return;
     const app = createApp();
     const res = await request(app)
@@ -115,7 +115,7 @@ describe('POST /api/inv/auth/login — input validation', () => {
       .send({ username: 'admin', password: 'pass1234' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/验证码/);
+    expect(res.body.error).toMatch(/机器人|验证/);
   });
 
   it('should return 400 when captchaId is invalid', async () => {
