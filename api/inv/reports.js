@@ -77,6 +77,7 @@ router.get('/daily', async (req, res) => {
     let stdRate23Sales = 0, stdRate23Vat = 0;
     let marginSales = 0, marginVat = 0;
     let reducedRate135Sales = 0, reducedRate135Vat = 0;
+    const marginItems = [];
 
     for (const txn of transactions) {
       totalSales += txn.totalAmount;
@@ -92,6 +93,17 @@ router.get('/daily', async (req, res) => {
         if (item.marginScheme || item.isSecondHand) {
           marginSales += item.subtotal;
           marginVat += item.marginVat || 0;
+          marginItems.push({
+            receiptNumber: txn.receiptNumber,
+            name: item.name,
+            sku: item.sku || '',
+            costPrice: item.costPrice || 0,
+            sellingPrice: item.unitPrice || 0,
+            discountedPrice: item.discountedPrice || item.unitPrice || 0,
+            margin: r((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)),
+            vatPayable: item.marginVat || 0,
+            quantity: item.quantity || 1
+          });
         } else if (Math.abs(rate - 0.135) < 0.01) {
           reducedRate135Sales += item.subtotal;
           reducedRate135Vat += item.vatAmount || 0;
@@ -115,7 +127,7 @@ router.get('/daily', async (req, res) => {
         },
         vatBreakdown: {
           standard23: { sales: r(stdRate23Sales), vatPayable: r(stdRate23Vat) },
-          margin: { sales: r(marginSales), vatPayable: r(marginVat) },
+          margin: { sales: r(marginSales), vatPayable: r(marginVat), items: marginItems },
           reduced135: { sales: r(reducedRate135Sales), vatPayable: r(reducedRate135Vat) }
         },
         totalVatPayable: r(stdRate23Vat + marginVat + reducedRate135Vat)
@@ -165,7 +177,7 @@ router.get('/monthly', async (req, res) => {
         dailyMap[dayKey] = {
           date: dayKey, totalSales: 0, cash: 0, card: 0,
           std23Sales: 0, std23Vat: 0,
-          marginSales: 0, marginVat: 0,
+          marginSales: 0, marginVat: 0, marginItems: [],
           reduced135Sales: 0, reduced135Vat: 0
         };
       }
@@ -186,6 +198,17 @@ router.get('/monthly', async (req, res) => {
         if (item.marginScheme || item.isSecondHand) {
           d.marginSales += item.subtotal;
           d.marginVat += item.marginVat || 0;
+          d.marginItems.push({
+            receiptNumber: txn.receiptNumber,
+            name: item.name,
+            sku: item.sku || '',
+            costPrice: item.costPrice || 0,
+            sellingPrice: item.unitPrice || 0,
+            discountedPrice: item.discountedPrice || item.unitPrice || 0,
+            margin: r((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)),
+            vatPayable: item.marginVat || 0,
+            quantity: item.quantity || 1
+          });
           monthMarginVat += item.marginVat || 0;
         } else if (Math.abs(rate - 0.135) < 0.01) {
           d.reduced135Sales += item.subtotal;
@@ -207,7 +230,7 @@ router.get('/monthly', async (req, res) => {
       cash: r(d.cash),
       card: r(d.card),
       standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
-      margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat) },
+      margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
       reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
       dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat)
     })).sort((a, b) => a.date.localeCompare(b.date));
