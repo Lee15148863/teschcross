@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Transaction = require('../../models/inv/Transaction');
+const Expense = require('../../models/inv/Expense');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require Staff+ access
@@ -78,7 +79,6 @@ router.get('/daily', async (req, res) => {
     let marginSales = 0, marginVat = 0;
     let reducedRate135Sales = 0, reducedRate135Vat = 0;
     let lycaSales = 0, lycaProfit = 0, lycaVat = 0, lycaCount = 0;
-    let customerPurchaseCashOut = 0;
     const marginItems = [];
     const lycaItems = [];
 
@@ -116,9 +116,6 @@ router.get('/daily', async (req, res) => {
           marginSales += item.subtotal;
           marginVat += item.marginVat || 0;
           const isPurchasedFromCustomer = item.purchasedFromCustomer || item.source === 'customer';
-          if (isPurchasedFromCustomer && item.costPrice > 0) {
-            customerPurchaseCashOut += item.costPrice * (item.quantity || 1);
-          }
           marginItems.push({
             receiptNumber: txn.receiptNumber,
             name: item.name, sku: item.sku || '',
@@ -143,6 +140,19 @@ router.get('/daily', async (req, res) => {
 
     const r = v => Math.round(v * 100) / 100;
 
+    // Query actual expenses from Expense table
+    const expenses = await Expense.find({ date: { $gte: dateStart, $lte: dateEnd } });
+    let expenseCashTotal = 0, expenseCardTotal = 0;
+    const expenseByCategory = {};
+    for (const e of expenses) {
+      if (e.paymentMethod === 'cash') expenseCashTotal += e.amount;
+      else expenseCardTotal += e.amount;
+      if (!expenseByCategory[e.category]) expenseByCategory[e.category] = 0;
+      expenseByCategory[e.category] += e.amount;
+    }
+
+    const dailyNetCash = r((cashTotal + splitCashTotal) - expenseCashTotal);
+
     res.json({
       data: {
         date: startDate && endDate ? { startDate, endDate } : (date || new Date().toISOString().split('T')[0]),
@@ -159,7 +169,15 @@ router.get('/daily', async (req, res) => {
           lycaCredit: { sales: r(lycaSales), profit: r(lycaProfit), vatPayable: r(lycaVat), count: lycaCount, items: lycaItems }
         },
         totalVatPayable: r(stdRate23Vat + marginVat + reducedRate135Vat + lycaVat),
-        customerPurchaseCashOut: r(customerPurchaseCashOut)
+        expenses: {
+          total: r(expenseCashTotal + expenseCardTotal),
+          cash: r(expenseCashTotal),
+          card: r(expenseCardTotal),
+          byCategory: Object.fromEntries(Object.entries(expenseByCategory).map(([k, v]) => [k, r(v)])),
+          count: expenses.length
+        },
+        netCash: dailyNetCash,
+        cashWarning: dailyNetCash < 0 ? 'Bank withdrawal needed' : null
       }
     });
   } catch (err) {
@@ -194,11 +212,9 @@ router.get('/monthly', async (req, res) => {
       createdAt: { $gte: startDate, $lte: endDate }
     }).sort({ createdAt: 1 });
 
-    // Build daily aggregates with VAT breakdown
     const dailyMap = {};
     let monthCash = 0, monthCard = 0;
     let monthStd23Vat = 0, monthMarginVat = 0, monthReduced135Vat = 0;
-    let monthCustomerCashOut = 0;
     let monthLycaVat = 0;
 
     for (const txn of transactions) {
@@ -210,8 +226,7 @@ router.get('/monthly', async (req, res) => {
           std23Sales: 0, std23Vat: 0,
           marginSales: 0, marginVat: 0, marginItems: [],
           reduced135Sales: 0, reduced135Vat: 0,
-          lycaSales: 0, lycaProfit: 0, lycaVat: 0, lycaCount: 0, lycaItems: [],
-          customerPurchaseCashOut: 0
+          lycaSales: 0, lycaProfit: 0, lycaVat: 0, lycaCount: 0, lycaItems: []
         };
       }
       const d = dailyMap[dayKey];
@@ -246,23 +261,15 @@ router.get('/monthly', async (req, res) => {
         } else if (item.marginScheme || item.isSecondHand) {
           d.marginSales += item.subtotal;
           d.marginVat += item.marginVat || 0;
-          const isPurchasedFromCustomer = item.purchasedFromCustomer || item.source === 'customer';
-          if (isPurchasedFromCustomer && item.costPrice > 0) {
-            d.customerPurchaseCashOut += item.costPrice * (item.quantity || 1);
-            monthCustomerCashOut += item.costPrice * (item.quantity || 1);
-          }
+          const isPFC = item.purchasedFromCustomer || item.source === 'customer';
           d.marginItems.push({
-            receiptNumber: txn.receiptNumber,
-            name: item.name,
-            sku: item.sku || '',
-            source: item.source || '',
-            costPrice: item.costPrice || 0,
+            receiptNumber: txn.receiptNumber, name: item.name, sku: item.sku || '',
+            source: item.source || '', costPrice: item.costPrice || 0,
             sellingPrice: item.unitPrice || 0,
             discountedPrice: item.discountedPrice || item.unitPrice || 0,
             margin: r((item.discountedPrice || item.unitPrice || 0) - (item.costPrice || 0)),
-            vatPayable: item.marginVat || 0,
-            quantity: item.quantity || 1,
-            purchasedFromCustomer: isPurchasedFromCustomer
+            vatPayable: item.marginVat || 0, quantity: item.quantity || 1,
+            purchasedFromCustomer: isPFC
           });
           monthMarginVat += item.marginVat || 0;
         } else if (Math.abs(rate - 0.135) < 0.01) {
@@ -279,18 +286,39 @@ router.get('/monthly', async (req, res) => {
 
     const r = v => Math.round(v * 100) / 100;
 
-    const dailyData = Object.values(dailyMap).map(d => ({
-      date: d.date,
-      totalSales: r(d.totalSales),
-      cash: r(d.cash),
-      card: r(d.card),
-      standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
-      margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
-      reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
-      lycaCredit: { sales: r(d.lycaSales), profit: r(d.lycaProfit), vatPayable: r(d.lycaVat), count: d.lycaCount, items: d.lycaItems },
-      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat + d.lycaVat),
-      customerPurchaseCashOut: r(d.customerPurchaseCashOut)
-    })).sort((a, b) => a.date.localeCompare(b.date));
+    // Query actual expenses
+    const expenses = await Expense.find({ date: { $gte: startDate, $lte: endDate } });
+    let monthExpCash = 0, monthExpCard = 0;
+    const expByCategory = {};
+    const expByDate = {};
+    for (const e of expenses) {
+      if (e.paymentMethod === 'cash') monthExpCash += e.amount;
+      else monthExpCard += e.amount;
+      if (!expByCategory[e.category]) expByCategory[e.category] = 0;
+      expByCategory[e.category] += e.amount;
+      const dk = e.date.toISOString().split('T')[0];
+      if (!expByDate[dk]) expByDate[dk] = 0;
+      expByDate[dk] += e.amount;
+    }
+
+    const netCash = r(monthCash - monthExpCash);
+
+    const dailyData = Object.values(dailyMap).map(d => {
+      const dayExpense = expByDate[d.date] || 0;
+      const dayCashNet = r(d.cash - dayExpense);
+      return {
+        date: d.date,
+        totalSales: r(d.totalSales), cash: r(d.cash), card: r(d.card),
+        standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
+        margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
+        reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
+        lycaCredit: { sales: r(d.lycaSales), profit: r(d.lycaProfit), vatPayable: r(d.lycaVat), count: d.lycaCount, items: d.lycaItems },
+        dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat + d.lycaVat),
+        expenses: r(dayExpense),
+        netCash: dayCashNet,
+        cashWarning: dayCashNet < 0 ? 'Bank withdrawal needed' : null
+      };
+    }).sort((a, b) => a.date.localeCompare(b.date));
 
     res.json({
       data: {
@@ -305,7 +333,9 @@ router.get('/monthly', async (req, res) => {
           reduced135VatTotal: r(monthReduced135Vat),
           lycaCreditVatTotal: r(monthLycaVat),
           totalVatPayable: r(monthStd23Vat + monthMarginVat + monthReduced135Vat + monthLycaVat),
-          customerPurchaseCashOut: r(monthCustomerCashOut)
+          expenses: { total: r(monthExpCash + monthExpCard), cash: r(monthExpCash), card: r(monthExpCard), byCategory: Object.fromEntries(Object.entries(expByCategory).map(([k, v]) => [k, r(v)])) },
+          netCash: netCash,
+          cashWarning: netCash < 0 ? 'Bank withdrawal needed' : null
         }
       }
     });
@@ -364,11 +394,9 @@ router.get('/weekly', async (req, res) => {
 
     const r = v => Math.round(v * 100) / 100;
 
-    // Build daily aggregates
     const dailyMap = {};
     let weekCash = 0, weekCard = 0;
     let weekStd23Vat = 0, weekMarginVat = 0, weekReduced135Vat = 0;
-    let weekCustomerCashOut = 0;
     let weekLycaVat = 0;
 
     for (const txn of transactions) {
@@ -379,8 +407,7 @@ router.get('/weekly', async (req, res) => {
           std23Sales: 0, std23Vat: 0,
           marginSales: 0, marginVat: 0, marginItems: [],
           reduced135Sales: 0, reduced135Vat: 0,
-          lycaSales: 0, lycaProfit: 0, lycaVat: 0, lycaCount: 0, lycaItems: [],
-          customerPurchaseCashOut: 0
+          lycaSales: 0, lycaProfit: 0, lycaVat: 0, lycaCount: 0, lycaItems: []
         };
       }
       const d = dailyMap[dayKey];
@@ -416,10 +443,6 @@ router.get('/weekly', async (req, res) => {
           d.marginSales += item.subtotal;
           d.marginVat += item.marginVat || 0;
           const isPFC = item.purchasedFromCustomer || item.source === 'customer';
-          if (isPFC && item.costPrice > 0) {
-            d.customerPurchaseCashOut += item.costPrice * (item.quantity || 1);
-            weekCustomerCashOut += item.costPrice * (item.quantity || 1);
-          }
           d.marginItems.push({
             receiptNumber: txn.receiptNumber, name: item.name, sku: item.sku || '',
             source: item.source || '', costPrice: item.costPrice || 0,
@@ -442,16 +465,39 @@ router.get('/weekly', async (req, res) => {
       }
     }
 
-    const dailyData = Object.values(dailyMap).map(d => ({
-      date: d.date,
-      totalSales: r(d.totalSales), cash: r(d.cash), card: r(d.card),
-      standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
-      margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
-      reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
-      lycaCredit: { sales: r(d.lycaSales), profit: r(d.lycaProfit), vatPayable: r(d.lycaVat), count: d.lycaCount, items: d.lycaItems },
-      dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat + d.lycaVat),
-      customerPurchaseCashOut: r(d.customerPurchaseCashOut)
-    })).sort((a, b) => a.date.localeCompare(b.date));
+    // Query actual expenses
+    const expenses = await Expense.find({ date: { $gte: weekStart, $lte: weekEnd } });
+    let weekExpCash = 0, weekExpCard = 0;
+    const expByCategory = {};
+    const expByDate = {};
+    for (const e of expenses) {
+      if (e.paymentMethod === 'cash') weekExpCash += e.amount;
+      else weekExpCard += e.amount;
+      if (!expByCategory[e.category]) expByCategory[e.category] = 0;
+      expByCategory[e.category] += e.amount;
+      const dk = e.date.toISOString().split('T')[0];
+      if (!expByDate[dk]) expByDate[dk] = 0;
+      expByDate[dk] += e.amount;
+    }
+
+    const netCash = r(weekCash - weekExpCash);
+
+    const dailyData = Object.values(dailyMap).map(d => {
+      const dayExpense = expByDate[d.date] || 0;
+      const dayCashNet = r(d.cash - dayExpense);
+      return {
+        date: d.date,
+        totalSales: r(d.totalSales), cash: r(d.cash), card: r(d.card),
+        standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
+        margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
+        reduced135: { sales: r(d.reduced135Sales), vatPayable: r(d.reduced135Vat) },
+        lycaCredit: { sales: r(d.lycaSales), profit: r(d.lycaProfit), vatPayable: r(d.lycaVat), count: d.lycaCount, items: d.lycaItems },
+        dailyVatPayable: r(d.std23Vat + d.marginVat + d.reduced135Vat + d.lycaVat),
+        expenses: r(dayExpense),
+        netCash: dayCashNet,
+        cashWarning: dayCashNet < 0 ? 'Bank withdrawal needed' : null
+      };
+    }).sort((a, b) => a.date.localeCompare(b.date));
 
     res.json({
       data: {
@@ -467,7 +513,9 @@ router.get('/weekly', async (req, res) => {
           reduced135VatTotal: r(weekReduced135Vat),
           lycaCreditVatTotal: r(weekLycaVat),
           totalVatPayable: r(weekStd23Vat + weekMarginVat + weekReduced135Vat + weekLycaVat),
-          customerPurchaseCashOut: r(weekCustomerCashOut)
+          expenses: { total: r(weekExpCash + weekExpCard), cash: r(weekExpCash), card: r(weekExpCard), byCategory: Object.fromEntries(Object.entries(expByCategory).map(([k, v]) => [k, r(v)])) },
+          netCash: netCash,
+          cashWarning: netCash < 0 ? 'Bank withdrawal needed' : null
         }
       }
     });
