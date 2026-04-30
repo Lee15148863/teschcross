@@ -448,6 +448,7 @@
                     <input type="text" id="searchInput" autocomplete="off" autofocus>
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
+                <button onclick="openQuickAddModal()" style="margin-top:8px;padding:8px 16px;border:1px dashed #D4E157;border-radius:10px;background:none;color:#6e6e73;font-size:13px;cursor:pointer;width:100%;transition:all .15s;" onmouseover="this.style.background='#fafff0';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'" id="btnQuickAdd">+ <span id="quickAddText">快速新增商品</span></button>
             </div>
             <div class="product-results" id="productResults">
                 <div class="search-hint" id="searchHint">
@@ -543,6 +544,32 @@
                 <div class="sc"><kbd>Esc</kbd> <span id="scClear">清空</span></div>
                 <div class="sc"><kbd>Del</kbd> <span id="scRemove">移除</span></div>
                 <div class="sc"><kbd>↑↓</kbd> <span id="scNav">导航</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Add Product Modal -->
+    <div id="quickAddOverlay" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:18px;padding:32px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+            <h3 style="font-size:20px;margin-bottom:20px;" id="qaTitle">快速新增商品</h3>
+            <div style="margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblName">商品名称 *</label><input type="text" id="qaName" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="iPhone 15 128GB"></div>
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblSku">SKU *</label><input type="text" id="qaSku" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="SJ-APP15-128G-2026"></div>
+                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCat">分类 *</label>
+                    <select id="qaCat" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"><option value="二手手机">二手手机</option><option value="配件">配件</option><option value="平板">平板</option><option value="新机">新机</option><option value="维修配件">维修配件</option><option value="其他">其他</option></select>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCost">成本价 € *</label><input type="number" id="qaCost" step="0.01" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
+                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblPrice">售价 € *</label><input type="number" id="qaPrice" step="0.01" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
+            </div>
+            <div style="margin-bottom:12px;"><label style="font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="qaSecondHand" onchange="document.getElementById('qaSerialGroup').style.display=this.checked?'block':'none'"> <span id="qaLblSH">二手商品</span></label></div>
+            <div id="qaSerialGroup" style="display:none;margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">IMEI/SN *</label><input type="text" id="qaSerial" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
+            <div style="margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblQty">初始库存</label><input type="number" id="qaStock" value="1" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
+            <div id="qaError" style="display:none;background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;"></div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button onclick="closeQuickAddModal()" style="padding:10px 24px;border-radius:980px;border:1px solid #d2d2d7;background:#f5f5f7;font-size:15px;cursor:pointer;" id="qaBtnCancel">取消</button>
+                <button onclick="submitQuickAdd()" style="padding:10px 24px;border-radius:980px;border:none;background:#D4E157;color:#000;font-size:15px;font-weight:600;cursor:pointer;" id="qaBtnSave">创建并添加到购物车</button>
             </div>
         </div>
     </div>
@@ -1021,6 +1048,74 @@
         });
       }
     });
+
+    // Quick Add Product
+    function openQuickAddModal() {
+      document.getElementById('quickAddOverlay').style.display = 'flex';
+      document.getElementById('qaName').value = '';
+      document.getElementById('qaSku').value = '';
+      document.getElementById('qaCost').value = '';
+      document.getElementById('qaPrice').value = '';
+      document.getElementById('qaStock').value = '1';
+      document.getElementById('qaSecondHand').checked = false;
+      document.getElementById('qaSerial').value = '';
+      document.getElementById('qaSerialGroup').style.display = 'none';
+      document.getElementById('qaError').style.display = 'none';
+      document.getElementById('qaName').focus();
+    }
+    window.openQuickAddModal = openQuickAddModal;
+
+    function closeQuickAddModal() {
+      document.getElementById('quickAddOverlay').style.display = 'none';
+    }
+    window.closeQuickAddModal = closeQuickAddModal;
+
+    async function submitQuickAdd() {
+      var errEl = document.getElementById('qaError');
+      errEl.style.display = 'none';
+      var body = {
+        name: document.getElementById('qaName').value.trim(),
+        sku: document.getElementById('qaSku').value.trim(),
+        category: document.getElementById('qaCat').value,
+        costPrice: parseFloat(document.getElementById('qaCost').value),
+        sellingPrice: parseFloat(document.getElementById('qaPrice').value),
+        stock: parseInt(document.getElementById('qaStock').value) || 0,
+        isSecondHand: document.getElementById('qaSecondHand').checked
+      };
+      if (body.isSecondHand) body.serialNumber = document.getElementById('qaSerial').value.trim();
+      if (!body.name || !body.sku || !body.category || isNaN(body.costPrice) || isNaN(body.sellingPrice)) {
+        errEl.textContent = lang === 'zh' ? '请填写所有必填字段' : 'Please fill all required fields';
+        errEl.style.display = 'block';
+        return;
+      }
+      try {
+        var res = await apiFetch('/products', { method: 'POST', body: JSON.stringify(body) });
+        if (!res) return;
+        var data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Error'; errEl.style.display = 'block'; return; }
+
+        // Ask if user wants to add to stock
+        var stockQty = body.stock;
+        if (stockQty > 0) {
+          var doStock = confirm(lang === 'zh'
+            ? '商品已创建！是否将 ' + stockQty + ' 件入库？'
+            : 'Product created! Add ' + stockQty + ' to stock?');
+          if (doStock) {
+            await apiFetch('/stock/entry', { method: 'POST', body: JSON.stringify({ productId: data._id, quantity: stockQty, note: 'POS快速新增入库' }) });
+          }
+        }
+
+        closeQuickAddModal();
+        showToast((lang === 'zh' ? '商品已创建: ' : 'Product created: ') + data.name, 'success');
+
+        // Auto-add to cart
+        window._addToCart(data._id);
+      } catch (err) {
+        errEl.textContent = err.message || 'Error';
+        errEl.style.display = 'block';
+      }
+    }
+    window.submitQuickAdd = submitQuickAdd;
 
     // Init
     updateLang();
