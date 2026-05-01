@@ -1315,73 +1315,91 @@
 
     function buildReceiptPreviewHtml(r) {
       if (!r) return '<p style="text-align:center;color:#86868b;">No receipt data</p>';
+      var S = 'style="'; // shorthand
       var h = '';
-      // Header
-      h += '<div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:12px;margin-bottom:12px;">';
-      h += '<div style="font-size:18px;font-weight:bold;">' + (r.companyName || 'Tech Cross Repair Centre') + '</div>';
-      h += '<div style="font-size:11px;margin-top:4px;">' + (r.companyAddress || 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658') + '</div>';
-      h += '<div style="font-size:11px;">Tel: ' + (r.companyPhone || '046 905 9854') + ' | Mob: 089 482 5300</div>';
-      h += '<div style="font-size:11px;">navantechcross@gmail.com | techcross.ie</div>';
+
+      // ═══ HEADER ═══
+      h += '<div style="text-align:center;padding-bottom:10px;margin-bottom:10px;border-bottom:2px solid #000;">';
+      h += '<div style="font-size:20px;font-weight:900;letter-spacing:1px;">' + (r.companyName || 'Tech Cross Repair Centre') + '</div>';
+      h += '<div style="font-size:13px;margin-top:6px;line-height:1.5;">' + (r.companyAddress || 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658') + '</div>';
+      h += '<div style="font-size:13px;">Tel: ' + (r.companyPhone || '046 905 9854') + '</div>';
+      h += '<div style="font-size:13px;">Mob: 089 482 5300</div>';
+      h += '<div style="font-size:13px;">navantechcross@gmail.com</div>';
       h += '</div>';
-      // Receipt info
-      h += '<div style="margin-bottom:10px;">';
-      h += '<div><strong>Receipt #:</strong> ' + (r.receiptNumber || '-') + '</div>';
-      h += '<div><strong>Date:</strong> ' + (r.date || '-') + '</div>';
+
+      // ═══ RECEIPT INFO ═══
+      h += '<div style="margin-bottom:10px;font-size:14px;">';
+      h += '<div style="display:flex;justify-content:space-between;"><span>Receipt #</span><strong>' + (r.receiptNumber || '-') + '</strong></div>';
+      h += '<div style="display:flex;justify-content:space-between;"><span>Date</span><span>' + (r.date || '-') + '</span></div>';
       h += '</div>';
-      // Items
-      h += '<div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:8px 0;margin-bottom:8px;">';
+
+      // ═══ ITEMS ═══
+      h += '<div style="border-top:2px solid #000;border-bottom:2px solid #000;padding:10px 0;margin-bottom:10px;">';
       if (r.items && r.items.length) {
         r.items.forEach(function(item) {
           var price = (item.discountedPrice != null ? item.discountedPrice : item.unitPrice) || 0;
-          h += '<div style="display:flex;justify-content:space-between;">';
-          h += '<span>' + (item.quantity > 1 ? item.quantity + 'x ' : '') + escHtml(item.name) + '</span>';
-          h += '<span>€' + (price * (item.quantity || 1)).toFixed(2) + '</span>';
+          var total = price * (item.quantity || 1);
+          h += '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">';
+          h += '<span style="flex:1;">' + (item.quantity > 1 ? item.quantity + ' x ' : '') + escHtml(item.name) + '</span>';
+          h += '<strong style="white-space:nowrap;margin-left:8px;">€' + total.toFixed(2) + '</strong>';
           h += '</div>';
-          if (item.serialNumber) h += '<div style="font-size:12px;font-weight:700;">  SN: ' + escHtml(item.serialNumber) + '</div>';
+          if (item.serialNumber) {
+            h += '<div style="font-size:13px;font-weight:700;margin-bottom:4px;">  IMEI/SN: ' + escHtml(item.serialNumber) + '</div>';
+          }
           if (item.discountedPrice != null && item.discountedPrice < item.unitPrice) {
-            h += '<div style="font-size:11px;">  Was €' + item.unitPrice.toFixed(2) + '</div>';
+            h += '<div style="font-size:12px;text-decoration:line-through;margin-bottom:4px;">  Was €' + item.unitPrice.toFixed(2) + '</div>';
           }
         });
       }
       h += '</div>';
-      // Totals
-      h += '<div style="margin-bottom:8px;">';
-      h += '<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:bold;"><span>TOTAL</span><span>€' + (r.totalAmount || 0).toFixed(2) + '</span></div>';
+
+      // ═══ TOTAL ═══
+      h += '<div style="display:flex;justify-content:space-between;font-size:20px;font-weight:900;margin-bottom:10px;">';
+      h += '<span>TOTAL</span><span>€' + (r.totalAmount || 0).toFixed(2) + '</span>';
       h += '</div>';
-      // Payment
-      h += '<div style="margin-bottom:8px;font-size:11px;">';
+
+      // ═══ PAYMENT ═══
+      h += '<div style="margin-bottom:10px;font-size:14px;border-bottom:1px dashed #000;padding-bottom:10px;">';
       var pm = r.paymentMethod || 'cash';
       if (pm === 'split') {
-        h += '<div>Card: €' + (r.cardAmount || 0).toFixed(2) + '</div>';
-        h += '<div>Cash: €' + (r.cashReceived || 0).toFixed(2) + '</div>';
+        h += '<div style="display:flex;justify-content:space-between;"><span>💳 Card</span><span>€' + (r.cardAmount || 0).toFixed(2) + '</span></div>';
+        h += '<div style="display:flex;justify-content:space-between;"><span>💵 Cash</span><span>€' + (r.cashReceived || 0).toFixed(2) + '</span></div>';
       } else if (pm === 'cash') {
-        h += '<div>Cash: €' + (r.cashReceived || 0).toFixed(2) + '</div>';
+        h += '<div style="display:flex;justify-content:space-between;"><span>💵 Cash Received</span><span>€' + (r.cashReceived || 0).toFixed(2) + '</span></div>';
       } else {
-        h += '<div>Card Payment</div>';
+        h += '<div>💳 Card Payment</div>';
       }
       if (r.changeGiven != null && r.changeGiven > 0) {
-        h += '<div><strong>Change: €' + r.changeGiven.toFixed(2) + '</strong></div>';
+        h += '<div style="display:flex;justify-content:space-between;font-weight:700;"><span>Change</span><span>€' + r.changeGiven.toFixed(2) + '</span></div>';
       }
       h += '</div>';
-      // VAT
-      h += '<div style="border-top:1px dashed #000;padding-top:6px;margin-bottom:8px;font-size:11px;">';
-      if (r.standardVatTotal > 0) h += '<div>Standard VAT (23%): €' + r.standardVatTotal.toFixed(2) + '</div>';
-      if (r.marginVatTotal > 0) h += '<div>Margin VAT: €' + r.marginVatTotal.toFixed(2) + '</div>';
-      h += '</div>';
-      // Terms
-      h += '<div style="border-top:1px dashed #000;padding-top:8px;font-size:11px;text-align:center;">';
-      h += r.termsText || '';
-      if (r.hasSecondHandItems && r.secondHandTermsText) {
-        h += '<br><br>' + r.secondHandTermsText;
+
+      // ═══ VAT ═══
+      if (r.standardVatTotal > 0 || r.marginVatTotal > 0) {
+        h += '<div style="margin-bottom:10px;font-size:13px;border-bottom:1px dashed #000;padding-bottom:10px;">';
+        if (r.standardVatTotal > 0) h += '<div style="display:flex;justify-content:space-between;"><span>VAT (23%)</span><span>€' + r.standardVatTotal.toFixed(2) + '</span></div>';
+        if (r.marginVatTotal > 0) h += '<div style="display:flex;justify-content:space-between;"><span>Margin VAT</span><span>€' + r.marginVatTotal.toFixed(2) + '</span></div>';
+        h += '</div>';
+      }
+
+      // ═══ T&C ═══
+      h += '<div style="font-size:12px;text-align:center;line-height:1.6;margin-bottom:10px;">';
+      h += '<div style="font-weight:700;font-size:13px;margin-bottom:4px;">Warranty & Store Policy</div>';
+      h += '<div>Repairs – 3 Months | Accessories – 14 Days</div>';
+      if (r.hasSecondHandItems) {
+        h += '<div style="margin-top:4px;">Pre-owned – 7 Days | Must be fully erased</div>';
       }
       h += '</div>';
-      // QR codes hint
-      h += '<div style="text-align:center;margin-top:10px;font-size:12px;font-weight:700;">';
+
+      // ═══ LINKS ═══
+      h += '<div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;line-height:1.6;">';
       h += 'Sales T&C: techcross.ie/receipt-terms.html<br>';
       h += 'Repair T&C: techcross.ie/terms.html';
       h += '</div>';
-      // Thank you
-      h += '<div style="text-align:center;margin-top:12px;font-size:13px;font-weight:bold;">Thank you!</div>';
+
+      // ═══ THANK YOU ═══
+      h += '<div style="text-align:center;font-size:16px;font-weight:900;padding:8px 0;border-top:2px solid #000;">Thank you!</div>';
+
       return h;
     }
 
