@@ -111,6 +111,20 @@
 <!-- Hidden batch delete trigger (admin only) -->
 <img src="logo.png" alt="" class="admin-only" style="display:none;position:fixed;bottom:16px;right:16px;width:48px;height:48px;opacity:0.2;cursor:pointer;z-index:100;border-radius:50%;transition:opacity 0.2s;" onclick="batchDelete()" onmouseover="this.style.opacity='0.5'" onmouseout="this.style.opacity='0.2'" title="">
 
+<!-- Refund Method Dialog -->
+<div id="refundDialog" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:18px;padding:32px;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+        <h3 style="font-size:20px;margin-bottom:8px;">↩️ Refund</h3>
+        <p style="font-size:14px;color:#6e6e73;margin-bottom:20px;" id="refundDialogInfo"></p>
+        <p style="font-size:14px;margin-bottom:20px;">Select refund method:</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button onclick="confirmRefund('cash')" style="padding:12px 24px;border:none;border-radius:12px;background:#34c759;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">💵 Cash</button>
+            <button onclick="confirmRefund('card')" style="padding:12px 24px;border:none;border-radius:12px;background:#0071e3;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">💳 Card</button>
+            <button onclick="cancelRefund()" style="padding:12px 24px;border:none;border-radius:12px;background:#f5f5f7;border:1px solid #d2d2d7;color:#1d1d1f;font-size:15px;cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
 (function(){
 'use strict';
@@ -308,19 +322,33 @@ function loadToday(){
 }
 window.loadToday=loadToday;
 
+var _pendingRefundReceipt = null;
+
 async function refundTx(receiptNumber){
-    const method=confirm('Refund to CARD?\n\nOK = Card refund\nCancel = Cash refund')?'card':'cash';
-    if(!confirm('Process refund for receipt #'+receiptNumber+'?\nRefund method: '+method.toUpperCase()))return;
+    _pendingRefundReceipt = receiptNumber;
+    document.getElementById('refundDialogInfo').textContent = 'Receipt #' + receiptNumber;
+    document.getElementById('refundDialog').style.display = 'flex';
+}
+window.refundTx=refundTx;
+
+window.confirmRefund = async function(method) {
+    document.getElementById('refundDialog').style.display = 'none';
+    if (!_pendingRefundReceipt) return;
     try{
-        const r=await apiFetch('/transactions/refund',{method:'POST',body:JSON.stringify({receiptNumber:receiptNumber,refundMethod:method})});
+        const r=await apiFetch('/transactions/refund',{method:'POST',body:JSON.stringify({receiptNumber:_pendingRefundReceipt,refundMethod:method})});
         if(!r)return;
         const data=await r.json();
         if(!r.ok){showToast(data.error||'Refund failed','error');return;}
         showToast('Refund processed: #'+data.refund.receiptNumber);
         loadTransactions();
     }catch(e){showToast('Refund error: '+e.message,'error');}
-}
-window.refundTx=refundTx;
+    _pendingRefundReceipt = null;
+};
+
+window.cancelRefund = function() {
+    document.getElementById('refundDialog').style.display = 'none';
+    _pendingRefundReceipt = null;
+};
 
 loadTransactions();
 })();
