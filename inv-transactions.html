@@ -56,18 +56,18 @@
         <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
         <nav>
             <div class="nav-section">业务管理</div>
-            <a href="inv-pos.html"><span class="icon">💰</span>POS 收银</a>
-            <a href="inv-products.html"><span class="icon">📦</span>商品管理</a>
-            <a href="inv-stock.html"><span class="icon">🏭</span>库存管理</a>
-            <a href="inv-suppliers.html"><span class="icon">🤝</span>供应商管理</a>
-            <a href="inv-purchases.html"><span class="icon">🛒</span>采购管理</a>
-            <a href="inv-transactions.html" class="active"><span class="icon">📋</span>交易记录</a>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银</a>
+            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理</a>
+            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理</a>
+            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商管理</a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理</a>
+            <a href="inv-transactions.html" class="active" data-perm="transactions"><span class="icon">📋</span>交易记录</a>
             <div class="nav-section">报表与发票</div>
-            <a href="inv-reports.html"><span class="icon">📊</span>报表中心</a>
-            <a href="inv-invoices.html"><span class="icon">🧾</span>VAT Invoice</a>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心</a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>VAT Invoice</a>
             <div class="nav-section" id="adminSection" style="display:none;">系统管理</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;"><span class="icon">⚙️</span>系统设置</a>
-            <a href="inv-users.html" class="admin-only" style="display:none;"><span class="icon">👥</span>用户管理</a>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置</a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理</a>
         </nav>
     </aside>
     <div class="main">
@@ -123,6 +123,11 @@ document.getElementById('roleBadge').textContent=user.role==='admin'?'管理员'
 const isAdmin=user.role==='admin';
 if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
 
+// Hide sidebar items based on permissions
+var perms=user.permissions||{};
+if(isAdmin){document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});}
+else{document.querySelectorAll('nav a[data-perm]').forEach(function(a){if(!perms[a.dataset.perm])a.style.display='none';});}
+
 const API='/api/inv';
 const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success');setTimeout(()=>t.classList.add('show'),10);setTimeout(()=>t.classList.remove('show'),3000);}
@@ -164,7 +169,7 @@ async function loadTransactions(){
             <td>
                 <button class="btn btn-secondary btn-sm" onclick="viewDetail('${tx._id}')">详情</button>
                 <button class="btn btn-secondary btn-sm" onclick="reprintReceipt('${tx._id}')">🖨️</button>
-                ${tx.totalAmount>=0?`<button class="btn btn-sm" style="background:#ff9500;color:#fff;" onclick="refundTx('${esc(tx.receiptNumber)}')">↩️ Refund</button>`:''}
+                ${tx.totalAmount>=0&&(isAdmin||perms.refund)?`<button class="btn btn-sm" style="background:#ff9500;color:#fff;" onclick="refundTx('${esc(tx.receiptNumber)}')">↩️ Refund</button>`:''}
                 ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="silentDelete('${tx._id}')">删除</button>`:''}
             </td>
         </tr>`}).join('');
@@ -279,8 +284,8 @@ async function reprintReceipt(id){
         if(tx.standardVatTotal>0)win.document.write('<div class="small">Standard VAT: €'+Number(tx.standardVatTotal).toFixed(2)+'</div>');
         if(tx.marginVatTotal>0)win.document.write('<div class="small">Margin VAT: €'+Number(tx.marginVatTotal).toFixed(2)+'</div>');
         win.document.write('<hr>');
-        win.document.write('<div class="small center">7-day refund policy — items must be in resalable condition. No refund on damaged or used items. 3-month repair warranty on replaced parts. Keep receipt for all claims.</div>');
-        if((tx.items||[]).some(i=>i.isSecondHand))win.document.write('<div class="small center" style="margin-top:4px;">All accounts (Apple ID/Google) must be signed out before purchase.</div>');
+        win.document.write('<div class="small center">Warranty & Store Policy | Repairs - 3 Months: Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair. | Accessories - 14 Days: Exchange/return only if unopened, sealed, and resalable.</div>');
+        if((tx.items||[]).some(i=>i.isSecondHand))win.document.write('<div class="small center" style="margin-top:4px;">Pre-owned Devices - 7 Days: No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable.</div>');
         win.document.write('<div class="center" style="margin-top:8px;font-size:9px;color:#999;">Sales T&C: techcross.ie/receipt-terms.html</div>');
         win.document.write('<div class="center" style="font-size:9px;color:#999;">Repair T&C: techcross.ie/terms.html</div>');
         win.document.write('<div class="center" style="margin-top:10px;font-weight:bold;">Thank you!</div>');

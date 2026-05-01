@@ -60,13 +60,12 @@ const DEFAULT_COMPANY_INFO = {
 
 // Fixed receipt terms text (English only)
 const TERMS_TEXT =
-  '7-day refund policy — items must be in resalable condition. No refund on damaged or used items. 3-month repair warranty on replaced parts. Keep receipt for all claims.';
+  'Warranty & Store Policy\n' +
+  'Repairs - 3 Months: Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair. Customer must back up data before repair.\n' +
+  'Accessories - 14 Days: Exchange/return only if unopened, sealed, and resalable.';
 
 const SECOND_HAND_TERMS_TEXT =
-  'IMPORTANT: Please ensure all accounts (Apple ID / iCloud / Google Account / Samsung Account) ' +
-  'have been signed out before purchase. The seller is not responsible for any account locks after sale. ' +
-  'All second-hand devices are sold as seen. Warranty covers hardware defects only — ' +
-  'no coverage for software issues, water damage or physical damage.';
+  'Pre-owned Devices - 7 Days: No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable. Refund after inspection via original payment method.';
 
 const QR_CODE_URL = 'https://techcross.ie/receipt-terms.html';
 const REPAIR_TC_URL = 'https://techcross.ie/terms.html';

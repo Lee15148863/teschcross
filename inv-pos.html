@@ -1517,9 +1517,9 @@
           changeGiven: txn.changeGiven,
           standardVatTotal: txn.standardVatTotal || 0,
           marginVatTotal: txn.marginVatTotal || 0,
-          termsText: '7-day refund policy — items must be in resalable condition.',
+          termsText: 'Warranty & Store Policy | Repairs - 3 Months: Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair. | Accessories - 14 Days: Exchange/return only if unopened, sealed, and resalable.',
           hasSecondHandItems: (txn.items || []).some(function(i) { return i.isSecondHand; }),
-          secondHandTermsText: 'All accounts (Apple ID/Google) must be signed out before purchase.'
+          secondHandTermsText: 'Pre-owned Devices - 7 Days: No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable.'
         };
 
         printReceipt(receiptData);
