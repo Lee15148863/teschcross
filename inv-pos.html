@@ -645,6 +645,11 @@
                 <span class="action-label" id="scOrderSearch">查单</span>
                 <kbd>F6</kbd>
             </button>
+            <button class="action-btn" onclick="openRefundModal()">
+                <span class="action-icon">↩️</span>
+                <span class="action-label" id="scRefund">退款</span>
+                <kbd>F7</kbd>
+            </button>
             <div class="sidebar-divider"></div>
             <button class="action-btn" onclick="window._removeSelectedItem()">
                 <span class="action-icon">🗑️</span>
@@ -722,6 +727,40 @@
         </div>
     </div>
 
+    <!-- Refund Modal -->
+    <div id="refundOverlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:18px;padding:32px;max-width:480px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+            <h3 style="font-size:20px;margin-bottom:20px;" id="refundTitle">Refund / 退款</h3>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">Receipt # (optional)</label>
+                <input type="text" id="refundReceipt" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="e.g. 20260501153015">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">Or enter manually:</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="refundItemName" style="flex:2;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="Item name">
+                    <input type="number" id="refundItemAmount" step="0.01" min="0" style="flex:1;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="€ Amount">
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">Refund Method / 退款方式</label>
+                <div style="display:flex;gap:8px;">
+                    <button id="refundCashBtn" onclick="selectRefundMethod('cash')" style="flex:1;padding:10px;border:2px solid #D4E157;border-radius:10px;background:#fafff0;font-size:14px;font-weight:600;cursor:pointer;">💵 Cash</button>
+                    <button id="refundCardBtn" onclick="selectRefundMethod('card')" style="flex:1;padding:10px;border:2px solid #d2d2d7;border-radius:10px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;">💳 Card</button>
+                </div>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">Reason (optional)</label>
+                <input type="text" id="refundReason" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="e.g. Defective item">
+            </div>
+            <div id="refundError" style="display:none;background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;"></div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button onclick="closeRefundModal()" style="padding:10px 24px;border-radius:980px;border:1px solid #d2d2d7;background:#f5f5f7;font-size:15px;cursor:pointer;">Cancel</button>
+                <button onclick="submitRefund()" style="padding:10px 24px;border-radius:980px;border:none;background:#ff3b30;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">↩️ Process Refund</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     (function() {
     'use strict';
@@ -752,7 +791,7 @@
         lblCardAmount: '💳 卡:', lblCashAmount: '💵 现金:',
         scSearch: '搜索', scDiscount: '折扣', scPayment: '卡/现金', scReprint: '重打小票',
         scCheckout: '结账', scClear: '清空', scRemove: '移除', scNav: '导航',
-        scPrint: '打印小票', scNavUp: '上移', scNavDown: '下移', sidebarTitle: '操作', scOrderSearch: '查单',
+        scPrint: '打印小票', scNavUp: '上移', scNavDown: '下移', sidebarTitle: '操作', scOrderSearch: '查单', scRefund: '退款',
         confirmClearTitle: '确认清空', confirmClearMsg: '确定要清空购物车吗？', confirmCancel: '取消', confirmOk: '确定',
         dmTitle: '应用折扣', dmItemLabel: '单品折扣（选中商品）', dmOrderLabel: '整单折扣',
         noResults: '未找到匹配商品', stock: '库存', secondHand: '二手',
@@ -770,7 +809,7 @@
         lblCardAmount: '💳 Card:', lblCashAmount: '💵 Cash:',
         scSearch: 'Search', scDiscount: 'Discount', scPayment: 'Card/Cash', scReprint: 'Reprint',
         scCheckout: 'Checkout', scClear: 'Clear', scRemove: 'Remove', scNav: 'Navigate',
-        scPrint: 'Print Receipt', scNavUp: 'Up', scNavDown: 'Down', sidebarTitle: 'Actions', scOrderSearch: 'Orders',
+        scPrint: 'Print Receipt', scNavUp: 'Up', scNavDown: 'Down', sidebarTitle: 'Actions', scOrderSearch: 'Orders', scRefund: 'Refund',
         confirmClearTitle: 'Confirm Clear', confirmClearMsg: 'Clear all items from cart?', confirmCancel: 'Cancel', confirmOk: 'Confirm',
         dmTitle: 'Apply Discount', dmItemLabel: 'Item Discount (selected)', dmOrderLabel: 'Order Discount',
         noResults: 'No matching products found', stock: 'Stock', secondHand: 'Used',
@@ -785,7 +824,7 @@
 
     function updateLang() {
       document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thDisc','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','scOrderSearch','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin','qaLblVat'].forEach(function(id) {
+      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thDisc','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','scOrderSearch','scRefund','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin','qaLblVat'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = t(id);
       });
@@ -1381,6 +1420,67 @@
       }
     };
 
+    // ─── Refund Modal ───────────────────────────────────────────
+    var _refundMethod = 'cash';
+
+    function openRefundModal() {
+      document.getElementById('refundOverlay').style.display = 'flex';
+      document.getElementById('refundReceipt').value = '';
+      document.getElementById('refundItemName').value = '';
+      document.getElementById('refundItemAmount').value = '';
+      document.getElementById('refundReason').value = '';
+      document.getElementById('refundError').style.display = 'none';
+      selectRefundMethod('cash');
+    }
+    window.openRefundModal = openRefundModal;
+
+    function closeRefundModal() {
+      document.getElementById('refundOverlay').style.display = 'none';
+    }
+    window.closeRefundModal = closeRefundModal;
+
+    window.selectRefundMethod = function(method) {
+      _refundMethod = method;
+      document.getElementById('refundCashBtn').style.borderColor = method === 'cash' ? '#D4E157' : '#d2d2d7';
+      document.getElementById('refundCashBtn').style.background = method === 'cash' ? '#fafff0' : '#fff';
+      document.getElementById('refundCardBtn').style.borderColor = method === 'card' ? '#D4E157' : '#d2d2d7';
+      document.getElementById('refundCardBtn').style.background = method === 'card' ? '#fafff0' : '#fff';
+    };
+
+    window.submitRefund = async function() {
+      var errEl = document.getElementById('refundError');
+      errEl.style.display = 'none';
+      var receipt = document.getElementById('refundReceipt').value.trim();
+      var itemName = document.getElementById('refundItemName').value.trim();
+      var itemAmount = parseFloat(document.getElementById('refundItemAmount').value) || 0;
+      var reason = document.getElementById('refundReason').value.trim();
+
+      if (!receipt && (!itemName || itemAmount <= 0)) {
+        errEl.textContent = lang === 'zh' ? '请输入小票号或手动填写退款商品' : 'Enter receipt # or item details';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      var body = { refundMethod: _refundMethod, reason: reason || undefined };
+      if (receipt) {
+        body.receiptNumber = receipt;
+      } else {
+        body.items = [{ name: itemName, amount: itemAmount, quantity: 1 }];
+      }
+
+      try {
+        var res = await apiFetch('/transactions/refund', { method: 'POST', body: JSON.stringify(body) });
+        if (!res) return;
+        var data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Refund failed'; errEl.style.display = 'block'; return; }
+        showToast((lang === 'zh' ? '退款成功 #' : 'Refund OK #') + data.refund.receiptNumber, 'success');
+        closeRefundModal();
+      } catch(e) {
+        errEl.textContent = 'Error: ' + e.message;
+        errEl.style.display = 'block';
+      }
+    };
+
     // Discount modal (F2)
     function openDiscountModal() {
       var overlay = document.getElementById('discountModalOverlay');
@@ -1433,6 +1533,7 @@
       else if (e.key === 'F4') { e.preventDefault(); reprintLast(); }
       else if (e.key === 'F5') { e.preventDefault(); triggerPrint(); }
       else if (e.key === 'F6') { e.preventDefault(); document.getElementById('orderSearchInput').focus(); document.getElementById('orderSearchInput').select(); }
+      else if (e.key === 'F7') { e.preventDefault(); openRefundModal(); }
       else if (e.key === 'Enter' && !isInput) { e.preventDefault(); doCheckout(); }
       else if (e.key === 'Escape') {
         // Close modals first

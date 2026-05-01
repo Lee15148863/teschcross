@@ -302,6 +302,165 @@ router.post('/checkout', async (req, res) => {
   }
 });
 
+// ─── POST /api/inv/transactions/refund ──────────────────────────────────────
+// Process refund — staff and admin can both refund
+router.post('/refund', async (req, res) => {
+  try {
+    const { receiptNumber, items, refundMethod, reason } = req.body;
+
+    if (!refundMethod || !['cash', 'card'].includes(refundMethod)) {
+      return res.status(400).json({ error: 'Refund method must be cash or card', code: 'VALIDATION_ERROR' });
+    }
+
+    let refundItems = [];
+    let originalTransaction = null;
+
+    // Mode 1: Refund by receipt number (full or partial)
+    if (receiptNumber) {
+      originalTransaction = await Transaction.findOne({ receiptNumber });
+      if (!originalTransaction) {
+        return res.status(404).json({ error: 'Transaction not found', code: 'NOT_FOUND' });
+      }
+
+      const txnItems = originalTransaction.items || [];
+
+      if (items && items.length > 0) {
+        // Partial refund: only specified items
+        for (const ri of items) {
+          const found = txnItems.find(ti => ti.product.toString() === ri.product || ti.name === ri.name);
+          if (!found) continue;
+          const qty = Math.min(ri.quantity || found.quantity, found.quantity);
+          refundItems.push({
+            product: found.product,
+            name: found.name,
+            sku: found.sku || '',
+            quantity: qty,
+            unitPrice: found.discountedPrice || found.unitPrice,
+            subtotal: Math.round((found.discountedPrice || found.unitPrice) * qty * 100) / 100,
+            isSecondHand: found.isSecondHand || false,
+            marginScheme: found.marginScheme || false,
+            vatRate: found.vatRate || 0.23
+          });
+        }
+      } else {
+        // Full refund
+        refundItems = txnItems.map(ti => ({
+          product: ti.product,
+          name: ti.name,
+          sku: ti.sku || '',
+          quantity: ti.quantity,
+          unitPrice: ti.discountedPrice || ti.unitPrice,
+          subtotal: ti.subtotal,
+          isSecondHand: ti.isSecondHand || false,
+          marginScheme: ti.marginScheme || false,
+          vatRate: ti.vatRate || 0.23
+        }));
+      }
+    }
+    // Mode 2: Manual refund (no receipt number)
+    else if (items && items.length > 0) {
+      for (const ri of items) {
+        if (!ri.name || !ri.amount) continue;
+        refundItems.push({
+          product: null,
+          name: ri.name,
+          sku: ri.sku || '',
+          quantity: ri.quantity || 1,
+          unitPrice: ri.amount,
+          subtotal: Math.round((ri.amount) * (ri.quantity || 1) * 100) / 100,
+          isSecondHand: false,
+          marginScheme: false,
+          vatRate: 0.23
+        });
+      }
+    }
+
+    if (!refundItems.length) {
+      return res.status(400).json({ error: 'No items to refund', code: 'VALIDATION_ERROR' });
+    }
+
+    const totalRefund = Math.round(refundItems.reduce((sum, i) => sum + i.subtotal, 0) * 100) / 100;
+
+    // Calculate VAT for refund (negative)
+    let stdVatRefund = 0, marginVatRefund = 0;
+    for (const item of refundItems) {
+      const rate = item.vatRate || 0.23;
+      if (item.marginScheme) {
+        // Margin VAT not easily reversed without cost price, set to 0
+        marginVatRefund += 0;
+      } else {
+        stdVatRefund += Math.round(item.unitPrice * rate / (1 + rate) * item.quantity * 100) / 100;
+      }
+    }
+
+    // Generate refund receipt number: R + timestamp
+    const now = new Date();
+    const pad = (n, l = 2) => String(n).padStart(l, '0');
+    const refundReceiptNumber = `R${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+    // Create refund transaction (negative amount)
+    const refundTxn = await Transaction.create({
+      receiptNumber: refundReceiptNumber,
+      items: refundItems.map(i => ({
+        product: i.product,
+        name: i.name,
+        sku: i.sku,
+        quantity: i.quantity,
+        unitPrice: -i.unitPrice,
+        costPrice: 0,
+        isSecondHand: i.isSecondHand,
+        marginScheme: i.marginScheme,
+        vatRate: i.vatRate,
+        discountedPrice: -i.unitPrice,
+        subtotal: -i.subtotal,
+        vatAmount: 0,
+        marginVat: 0
+      })),
+      totalAmount: -totalRefund,
+      standardVatTotal: -stdVatRefund,
+      marginVatTotal: -marginVatRefund,
+      paymentMethod: refundMethod,
+      cashReceived: refundMethod === 'cash' ? -totalRefund : null,
+      operator: req.user.userId
+    });
+
+    // Restore stock for refunded items
+    for (const item of refundItems) {
+      if (item.product) {
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: item.quantity },
+          updatedAt: new Date()
+        });
+        await StockMovement.create({
+          product: item.product,
+          type: 'entry',
+          quantity: item.quantity,
+          operator: req.user.userId,
+          referenceId: refundTxn._id.toString(),
+          referenceType: 'refund',
+          note: `Refund - ${refundReceiptNumber}${reason ? ' - ' + reason : ''}`
+        });
+      }
+    }
+
+    res.status(201).json({
+      message: 'Refund processed',
+      refund: {
+        receiptNumber: refundReceiptNumber,
+        totalRefund,
+        refundMethod,
+        items: refundItems,
+        originalReceipt: receiptNumber || null
+      }
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ error: 'Refund receipt number conflict, please retry', code: 'DUPLICATE_RECEIPT' });
+    }
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
 // ─── GET /api/inv/transactions ──────────────────────────────────────────────
 // Transaction list with date range filter and pagination
 router.get('/', async (req, res) => {
