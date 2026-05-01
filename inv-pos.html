@@ -1204,23 +1204,78 @@
         if (!res.ok) { showToast(data.error || 'Checkout failed', 'error'); return; }
 
         lastTransaction = data;
-        showToast((lang === 'zh' ? '结账成功！小票号: ' : 'Success! Receipt: ') + (data.transaction||data).receiptNumber, 'success');
 
-        // Show receipt preview — cart stays until user closes preview
-        printReceipt(data.receipt || data.transaction || data);
-
-        // Clear payment inputs
+        // IMMEDIATELY clear cart to prevent double payment
+        cart = []; selectedCartIndex = -1; orderDiscount = null;
         document.getElementById('cashReceived').value = '';
         document.getElementById('cardAmount').value = '';
+        btn.disabled = true;
+
+        // Show checkout complete screen in cart area
+        var receiptNum = (data.transaction || data).receiptNumber;
+        var totalAmt = (data.transaction || data).totalAmount;
+        var cartArea = document.getElementById('cartArea');
+        document.getElementById('cartTable').style.display = 'none';
+        document.getElementById('cartEmpty').style.display = 'none';
+        cartArea.innerHTML = '<div style="text-align:center;padding:40px 20px;">' +
+          '<div style="font-size:64px;margin-bottom:16px;">✅</div>' +
+          '<h2 style="font-size:24px;font-weight:700;margin-bottom:8px;">Transaction Complete</h2>' +
+          '<p style="font-size:18px;color:#6e6e73;margin-bottom:4px;">Receipt #' + receiptNum + '</p>' +
+          '<p style="font-size:28px;font-weight:700;margin-bottom:24px;">€' + Number(totalAmt).toFixed(2) + '</p>' +
+          '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">' +
+          '<button onclick="doPrintReceipt()" style="padding:14px 28px;border:none;border-radius:12px;background:#D4E157;color:#000;font-size:16px;font-weight:600;cursor:pointer;">🖨️ Print Receipt</button>' +
+          '<button onclick="startNewTransaction()" style="padding:14px 28px;border:none;border-radius:12px;background:#0071e3;color:#fff;font-size:16px;font-weight:600;cursor:pointer;">➕ New Transaction</button>' +
+          '</div>' +
+          '<button onclick="startNewTransaction()" style="margin-top:16px;padding:10px 20px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:14px;cursor:pointer;color:#6e6e73;">No Receipt Needed</button>' +
+          '</div>';
+
+        // Store receipt data for printing
+        window._lastReceiptData = data.receipt || data.transaction || data;
+
       } catch (err) {
         showToast('Checkout error: ' + err.message, 'error');
       } finally {
-        btn.disabled = cart.length === 0;
+        btn.disabled = true;
         btn.textContent = t('checkoutText');
       }
     }
 
-    // Print receipt — show preview first
+    // Print last receipt
+    window.doPrintReceipt = async function() {
+      var receiptData = window._lastReceiptData;
+      if (!receiptData) { showToast('No receipt data', 'error'); return; }
+      try {
+        var res = await fetch('http://localhost:9100/print', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(receiptData),
+          signal: AbortSignal.timeout(5000)
+        });
+        if (!res.ok) throw new Error('Print Agent error');
+        showToast('Printed!', 'success');
+      } catch (err) {
+        // Fallback: browser print
+        var html = buildReceiptPreviewHtml(receiptData);
+        var printWin = window.open('', '_blank', 'width=380,height=600');
+        printWin.document.write('<html><head><title>Receipt</title><style>body{font-family:"Courier New",monospace;font-size:12px;padding:16px;max-width:300px;margin:0 auto;}</style></head><body>');
+        printWin.document.write(html);
+        printWin.document.write('</body></html>');
+        printWin.document.close();
+        printWin.focus();
+        printWin.print();
+      }
+    };
+
+    // Start new transaction — restore cart UI
+    window.startNewTransaction = function() {
+      var cartArea = document.getElementById('cartArea');
+      cartArea.innerHTML = '';
+      cartArea.appendChild(document.getElementById('cartEmpty') || createCartEmpty());
+      cartArea.appendChild(document.getElementById('cartTable') || createCartTable());
+      // Re-create the empty and table elements since innerHTML wiped them
+      location.reload(); // simplest way to reset the full UI state
+    };
+
+    // Keep old printReceipt for reprint from sidebar
     var _pendingReceiptData = null;
 
     async function printReceipt(receiptData) {
