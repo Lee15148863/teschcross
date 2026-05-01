@@ -72,20 +72,21 @@
     </aside>
     <div class="main">
         <div class="topbar">
-            <h2>交易记录</h2>
+            <h2>Transactions / 交易记录</h2>
             <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()">退出登录</button></div>
         </div>
         <div class="content">
             <div class="card">
                 <div class="toolbar">
+                    <input type="text" id="searchReceipt" placeholder="Receipt # search..." style="width:180px;" onkeydown="if(event.key==='Enter')loadTransactions()">
                     <input type="date" id="startDate">
-                    <span style="color:#86868b;">至</span>
+                    <span style="color:#86868b;">to</span>
                     <input type="date" id="endDate">
-                    <button class="btn btn-primary" onclick="loadTransactions()">查询</button>
+                    <button class="btn btn-primary" onclick="loadTransactions()">Search</button>
+                    <button class="btn btn-secondary" onclick="loadToday()">Today</button>
                     <div style="flex:1;"></div>
-                    <button class="btn btn-secondary" onclick="exportTx('csv')">导出 CSV</button>
-                    <button class="btn btn-secondary" onclick="exportTx('json')">导出 JSON</button>
-                    <button class="btn btn-danger btn-sm admin-only" style="display:none;" onclick="batchDelete()">批量删除已导出</button>
+                    <button class="btn btn-secondary" onclick="exportTx('csv')">Export CSV</button>
+                    <button class="btn btn-danger btn-sm admin-only" style="display:none;" onclick="batchDelete()">Batch Delete Exported</button>
                 </div>
                 <table>
                     <thead><tr><th>单号</th><th>时间</th><th>商品数</th><th>总金额 (€)</th><th>支付方式</th><th>标记</th><th>操作</th></tr></thead>
@@ -137,29 +138,36 @@ const weekAgo=new Date(today);weekAgo.setDate(weekAgo.getDate()-30);
 document.getElementById('startDate').value=weekAgo.toISOString().split('T')[0];
 
 async function loadTransactions(){
+    const q=document.getElementById('searchReceipt').value.trim();
     const start=document.getElementById('startDate').value;
     const end=document.getElementById('endDate').value;
-    let url='/transactions';
-    const params=[];if(start)params.push('startDate='+start);if(end)params.push('endDate='+end);
-    if(params.length)url+='?'+params.join('&');
+    let url='/transactions?limit=100';
+    if(q)url+='&q='+encodeURIComponent(q);
+    if(start)url+='&startDate='+start;
+    if(end)url+='&endDate='+end;
     try{
         const r=await apiFetch(url);if(!r)return;
-        const list=await r.json();
+        const data=await r.json();
+        const list=data.data||[];
         const tb=document.getElementById('txTable');
-        if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">暂无交易记录</td></tr>';return;}
-        tb.innerHTML=list.map(tx=>`<tr>
-            <td style="font-family:monospace;font-size:13px;">${esc(tx.receiptNumber)}</td>
-            <td>${new Date(tx.createdAt).toLocaleString('zh-CN')}</td>
+        if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">No transactions found</td></tr>';return;}
+        tb.innerHTML=list.map(tx=>{
+            const isRefund=tx.totalAmount<0;
+            const amountStyle=isRefund?'color:#ff3b30;':'';
+            return `<tr>
+            <td style="font-family:monospace;font-size:13px;">${isRefund?'↩️ ':''}${esc(tx.receiptNumber)}</td>
+            <td>${new Date(tx.createdAt).toLocaleString('en-IE')}</td>
             <td>${tx.items?tx.items.length:0}</td>
-            <td>€${Number(tx.totalAmount).toFixed(2)}</td>
-            <td>${tx.paymentMethod==='cash'?'💵 现金':'💳 银行卡'}</td>
-            <td>${tx.exported?'<span class="badge badge-exported">已导出</span>':''}</td>
+            <td style="${amountStyle}">€${Number(tx.totalAmount).toFixed(2)}</td>
+            <td>${tx.paymentMethod==='split'?'💳+💵':tx.paymentMethod==='cash'?'💵 Cash':'💳 Card'}</td>
+            <td>${tx.exported?'<span class="badge badge-exported">Exported</span>':''}</td>
             <td>
                 <button class="btn btn-secondary btn-sm" onclick="viewDetail('${tx._id}')">详情</button>
-                <button class="btn btn-secondary btn-sm" onclick="reprintReceipt('${tx._id}')">🖨️ 重打</button>
+                <button class="btn btn-secondary btn-sm" onclick="reprintReceipt('${tx._id}')">🖨️</button>
+                ${tx.totalAmount>=0?`<button class="btn btn-sm" style="background:#ff9500;color:#fff;" onclick="refundTx('${esc(tx.receiptNumber)}')">↩️ Refund</button>`:''}
                 ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="silentDelete('${tx._id}')">删除</button>`:''}
             </td>
-        </tr>`).join('');
+        </tr>`}).join('');
     }catch(e){showToast('加载失败','error');}
 }
 
@@ -261,6 +269,30 @@ async function reprintReceipt(id){
 window.reprintReceipt=reprintReceipt;
 
 window.loadTransactions=loadTransactions;
+
+function loadToday(){
+    const today=new Date().toISOString().split('T')[0];
+    document.getElementById('startDate').value=today;
+    document.getElementById('endDate').value=today;
+    document.getElementById('searchReceipt').value='';
+    loadTransactions();
+}
+window.loadToday=loadToday;
+
+async function refundTx(receiptNumber){
+    const method=confirm('Refund to CARD?\n\nOK = Card refund\nCancel = Cash refund')?'card':'cash';
+    if(!confirm('Process refund for receipt #'+receiptNumber+'?\nRefund method: '+method.toUpperCase()))return;
+    try{
+        const r=await apiFetch('/transactions/refund',{method:'POST',body:JSON.stringify({receiptNumber:receiptNumber,refundMethod:method})});
+        if(!r)return;
+        const data=await r.json();
+        if(!r.ok){showToast(data.error||'Refund failed','error');return;}
+        showToast('Refund processed: #'+data.refund.receiptNumber);
+        loadTransactions();
+    }catch(e){showToast('Refund error: '+e.message,'error');}
+}
+window.refundTx=refundTx;
+
 loadTransactions();
 })();
 </script>
