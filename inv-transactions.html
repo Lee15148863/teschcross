@@ -245,26 +245,50 @@ async function reprintReceipt(id){
     try{
         const r=await apiFetch('/transactions/'+id);if(!r)return;
         const tx=await r.json();
-        // Try Print Agent first, fallback to window.print
-        const receiptData={transaction:tx};
+        // Try Print Agent first
         try{
-            const pr=await fetch('http://localhost:9100/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(receiptData),signal:AbortSignal.timeout(5000)});
-            if(pr.ok){showToast('小票已发送到打印机');return;}
+            const pr=await fetch('http://localhost:9100/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transaction:tx}),signal:AbortSignal.timeout(5000)});
+            if(pr.ok){showToast('Sent to printer');return;}
         }catch(e){}
-        // Fallback: open print window
-        const win=window.open('','_blank','width=400,height=600');
-        win.document.write('<html><head><title>小票</title><style>body{font-family:monospace;font-size:12px;width:280px;margin:0 auto;padding:20px;}h2{text-align:center;margin:0;}hr{border:none;border-top:1px dashed #000;}.right{text-align:right;}.center{text-align:center;}</style></head><body>');
-        win.document.write('<h2>Tech Cross</h2><p class="center">Receipt</p><hr>');
-        win.document.write('<p>单号: '+esc(tx.receiptNumber)+'</p>');
-        win.document.write('<p>时间: '+new Date(tx.createdAt).toLocaleString('zh-CN')+'</p><hr>');
-        (tx.items||[]).forEach(it=>{win.document.write('<p>'+esc(it.name)+' x'+it.quantity+' €'+Number(it.subtotal).toFixed(2)+'</p>');});
-        win.document.write('<hr><p class="right"><strong>总计: €'+Number(tx.totalAmount).toFixed(2)+'</strong></p>');
-        win.document.write('<p>支付: '+(tx.paymentMethod==='cash'?'现金':'银行卡')+'</p>');
-        if(tx.paymentMethod==='cash'){win.document.write('<p>实收: €'+Number(tx.cashReceived||0).toFixed(2)+'</p><p>找零: €'+Number(tx.changeGiven||0).toFixed(2)+'</p>');}
+        // Fallback: browser print with full receipt
+        const win=window.open('','_blank','width=320,height=500');
+        const pm=tx.paymentMethod==='split'?'Card+Cash':tx.paymentMethod==='card'?'Card':'Cash';
+        let itemsHtml='';
+        (tx.items||[]).forEach(it=>{
+            const price=(it.discountedPrice!=null?it.discountedPrice:it.unitPrice)||0;
+            itemsHtml+='<div style="display:flex;justify-content:space-between;"><span>'+(it.quantity>1?it.quantity+'x ':'')+esc(it.name)+'</span><span>€'+(price*(it.quantity||1)).toFixed(2)+'</span></div>';
+            if(it.serialNumber)itemsHtml+='<div style="font-size:10px;color:#666;">SN: '+esc(it.serialNumber)+'</div>';
+        });
+        win.document.write(`<html><head><title>Receipt</title><style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;padding:8px;max-width:280px;margin:0 auto;}hr{border:none;border-top:1px dashed #000;margin:8px 0;}.center{text-align:center;}.right{text-align:right;}.small{font-size:9px;color:#666;}</style></head><body>`);
+        win.document.write('<div class="center"><strong style="font-size:16px;">Tech Cross Repair Centre</strong></div>');
+        win.document.write('<div class="center small">Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658</div>');
+        win.document.write('<div class="center small">Tel: 046 905 9854 | Mob: 089 482 5300</div>');
+        win.document.write('<div class="center small">navantechcross@gmail.com | techcross.ie</div>');
+        win.document.write('<hr>');
+        win.document.write('<div>Receipt #: '+esc(tx.receiptNumber)+'</div>');
+        win.document.write('<div>Date: '+new Date(tx.createdAt).toLocaleString('en-IE')+'</div>');
+        win.document.write('<hr>');
+        win.document.write(itemsHtml);
+        win.document.write('<hr>');
+        win.document.write('<div class="right" style="font-size:16px;font-weight:bold;">TOTAL: €'+Number(tx.totalAmount).toFixed(2)+'</div>');
+        win.document.write('<div>Payment: '+pm+'</div>');
+        if(tx.cashReceived)win.document.write('<div>Cash: €'+Number(tx.cashReceived).toFixed(2)+'</div>');
+        if(tx.cardAmount)win.document.write('<div>Card: €'+Number(tx.cardAmount).toFixed(2)+'</div>');
+        if(tx.changeGiven>0)win.document.write('<div><strong>Change: €'+Number(tx.changeGiven).toFixed(2)+'</strong></div>');
+        win.document.write('<hr>');
+        if(tx.standardVatTotal>0)win.document.write('<div class="small">Standard VAT: €'+Number(tx.standardVatTotal).toFixed(2)+'</div>');
+        if(tx.marginVatTotal>0)win.document.write('<div class="small">Margin VAT: €'+Number(tx.marginVatTotal).toFixed(2)+'</div>');
+        win.document.write('<hr>');
+        win.document.write('<div class="small center">7-day refund policy — items must be in resalable condition. No refund on damaged or used items. 3-month repair warranty on replaced parts. Keep receipt for all claims.</div>');
+        if((tx.items||[]).some(i=>i.isSecondHand))win.document.write('<div class="small center" style="margin-top:4px;">All accounts (Apple ID/Google) must be signed out before purchase.</div>');
+        win.document.write('<div class="center" style="margin-top:8px;font-size:9px;color:#999;">Sales T&C: techcross.ie/receipt-terms.html</div>');
+        win.document.write('<div class="center" style="font-size:9px;color:#999;">Repair T&C: techcross.ie/terms.html</div>');
+        win.document.write('<div class="center" style="margin-top:10px;font-weight:bold;">Thank you!</div>');
         win.document.write('</body></html>');
         win.document.close();
+        win.focus();
         win.print();
-    }catch(e){showToast('重打失败','error');}
+    }catch(e){showToast('Reprint failed','error');}
 }
 window.reprintReceipt=reprintReceipt;
 

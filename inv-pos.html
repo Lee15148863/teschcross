@@ -1245,8 +1245,8 @@
       } catch (err) {
         // Fallback: browser print
         var html = buildReceiptPreviewHtml(receiptData);
-        var printWin = window.open('', '_blank', 'width=380,height=600');
-        printWin.document.write('<html><head><title>Receipt</title><style>body{font-family:"Courier New",monospace;font-size:12px;padding:16px;max-width:300px;margin:0 auto;}</style></head><body>');
+        var printWin = window.open('', '_blank', 'width=320,height=500');
+        printWin.document.write('<html><head><title>Receipt</title><style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;padding:8px;max-width:280px;margin:0 auto;}</style></head><body>');
         printWin.document.write(html);
         printWin.document.write('</body></html>');
         printWin.document.close();
@@ -1287,8 +1287,8 @@
         showToast(lang === 'zh' ? '打印成功' : 'Printed', 'success');
       } catch (err) {
         console.warn('Print Agent unavailable:', err.message);
-        var printWin = window.open('', '_blank', 'width=380,height=600');
-        printWin.document.write('<html><head><title>Receipt</title><style>body{font-family:"Courier New",monospace;font-size:12px;padding:16px;max-width:300px;margin:0 auto;}</style></head><body>');
+        var printWin = window.open('', '_blank', 'width=320,height=500');
+        printWin.document.write('<html><head><title>Receipt</title><style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;padding:8px;max-width:280px;margin:0 auto;}</style></head><body>');
         printWin.document.write(document.getElementById('receiptPreviewContent').innerHTML);
         printWin.document.write('</body></html>');
         printWin.document.close();
