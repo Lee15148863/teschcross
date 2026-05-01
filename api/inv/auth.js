@@ -170,7 +170,8 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: '服务器错误' });
+    console.error('Login error:', err.message, err.stack);
+    res.status(500).json({ error: '服务器错误', detail: err.message });
   }
 });
 
