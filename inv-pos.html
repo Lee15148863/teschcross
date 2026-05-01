@@ -721,8 +721,8 @@
         <div style="background:#fff;border-radius:18px;padding:0;max-width:380px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.3);">
             <div id="receiptPreviewContent" style="padding:24px;font-family:'Courier New',monospace;font-size:12px;line-height:1.5;color:#000;"></div>
             <div style="display:flex;gap:12px;padding:16px 24px;border-top:1px solid #e5e5e7;justify-content:flex-end;">
-                <button onclick="document.getElementById('receiptPreviewOverlay').style.display='none'" style="padding:10px 20px;border-radius:980px;border:1px solid #d2d2d7;background:#f5f5f7;font-size:14px;cursor:pointer;">Close</button>
-                <button onclick="doPrintFromPreview()" style="padding:10px 20px;border-radius:980px;border:none;background:#D4E157;color:#000;font-size:14px;font-weight:600;cursor:pointer;">🖨️ Print</button>
+                <button onclick="closeReceiptPreview()" style="padding:10px 20px;border-radius:980px;border:1px solid #d2d2d7;background:#f5f5f7;font-size:14px;cursor:pointer;">No Receipt</button>
+                <button onclick="doPrintFromPreview()" style="padding:10px 20px;border-radius:980px;border:none;background:#D4E157;color:#000;font-size:14px;font-weight:600;cursor:pointer;">🖨️ Print Receipt</button>
             </div>
         </div>
     </div>
@@ -1217,17 +1217,12 @@
         lastTransaction = data;
         showToast((lang === 'zh' ? '结账成功！小票号: ' : 'Success! Receipt: ') + (data.transaction||data).receiptNumber, 'success');
 
-        // Try print with formatted receipt data
+        // Show receipt preview — cart stays until user closes preview
         printReceipt(data.receipt || data.transaction || data);
 
-        // Clear cart
-        cart = []; selectedCartIndex = -1; orderDiscount = null;
+        // Clear payment inputs
         document.getElementById('cashReceived').value = '';
         document.getElementById('cardAmount').value = '';
-        renderCart();
-        searchInput.value = '';
-        showSearchHint();
-        searchInput.focus();
       } catch (err) {
         showToast('Checkout error: ' + err.message, 'error');
       } finally {
@@ -1258,7 +1253,6 @@
         showToast(lang === 'zh' ? '打印成功' : 'Printed', 'success');
       } catch (err) {
         console.warn('Print Agent unavailable:', err.message);
-        // Fallback: browser print the preview
         var printWin = window.open('', '_blank', 'width=380,height=600');
         printWin.document.write('<html><head><title>Receipt</title><style>body{font-family:"Courier New",monospace;font-size:12px;padding:16px;max-width:300px;margin:0 auto;}</style></head><body>');
         printWin.document.write(document.getElementById('receiptPreviewContent').innerHTML);
@@ -1268,7 +1262,22 @@
         printWin.print();
       }
       document.getElementById('receiptPreviewOverlay').style.display = 'none';
+      clearCartAfterCheckout();
     };
+
+    function closeReceiptPreview() {
+      document.getElementById('receiptPreviewOverlay').style.display = 'none';
+      clearCartAfterCheckout();
+    }
+    window.closeReceiptPreview = closeReceiptPreview;
+
+    function clearCartAfterCheckout() {
+      cart = []; selectedCartIndex = -1; orderDiscount = null;
+      renderCart();
+      searchInput.value = '';
+      showSearchHint();
+      searchInput.focus();
+    }
 
     function buildReceiptPreviewHtml(r) {
       if (!r) return '<p style="text-align:center;color:#86868b;">No receipt data</p>';
