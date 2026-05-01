@@ -1,4 +1,4 @@
-const CACHE_NAME = 'techcross-v2';
+const CACHE_NAME = 'techcross-v3';
 const PRECACHE = ['/', '/index.html', '/pricing.html', '/styles.css', '/logo-sm.png', '/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -6,19 +6,21 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-    e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+    // Delete ALL old caches
+    e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
 self.addEventListener('fetch', e => {
     if (e.request.method !== 'GET') return;
-    // API requests: ALWAYS network only, never cache
-    if (e.request.url.includes('/api/')) {
+    var url = e.request.url;
+    // API, inv-*, staff-portal, admin-*: ALWAYS network only
+    if (url.includes('/api/') || url.includes('/inv-') || url.includes('/staff-portal') || url.includes('/admin')) {
         e.respondWith(fetch(e.request));
         return;
     }
-    // Static assets: cache first, fallback to network
+    // Static assets only: cache first
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-        const clone = res.clone();
+        var clone = res.clone();
         caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
         return res;
     })));
