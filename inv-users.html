@@ -98,7 +98,26 @@
         <div class="form-group"><label>用户名 <span style="color:#ff3b30;">*</span></label><input type="text" id="fUsername" autocomplete="off"></div>
         <div class="form-group"><label>显示名 <span style="color:#ff3b30;">*</span></label><input type="text" id="fDisplayName"></div>
         <div class="form-group" id="passwordGroup"><label>密码 <span style="color:#ff3b30;">*</span></label><input type="password" id="fPassword" autocomplete="new-password"><div class="hint">至少 8 位，必须包含字母和数字</div></div>
-        <div class="form-group"><label>角色</label><select id="fRole"><option value="staff">员工 (Staff)</option><option value="admin">管理员 (Admin)</option></select></div>
+        <div class="form-group"><label>角色 Role</label><select id="fRole" onchange="togglePermissions()"><option value="staff">员工 Staff</option><option value="admin">管理员 Admin</option></select></div>
+        <div class="form-group" id="permissionsGroup">
+            <label>权限 Permissions</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;" id="permCheckboxes">
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="pos" checked> 💰 POS</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="products"> 📦 Products</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="stock"> 🏭 Stock</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="suppliers"> 🤝 Suppliers</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="purchases"> 🛒 Purchases</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="transactions"> 📋 Transactions</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="reports"> 📊 Reports</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="invoices"> 🧾 Invoices</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="refund" checked> ↩️ Refund</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="expenses"> 💸 Expenses</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="settings"> ⚙️ Settings</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="users"> 👥 Users</label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" data-perm="website"> 🌐 Website</label>
+            </div>
+            <div class="hint">Admin has all permissions automatically</div>
+        </div>
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeModal()">取消</button>
             <button class="btn btn-primary" onclick="saveUser()">保存</button>
@@ -145,7 +164,7 @@ async function loadUsers(){
         const users=await r.json();
         const tb=document.getElementById('userTable');
         if(!users.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#86868b;padding:40px;">暂无用户</td></tr>';return;}
-        tb.innerHTML=users.map(u=>`<tr>
+        tb.innerHTML=users.map(u=>`<tr data-uid="${u._id}" data-perms='${JSON.stringify(u.permissions||{})}'>
             <td><strong>${esc(u.username)}</strong></td>
             <td>${esc(u.displayName||'-')}</td>
             <td><span class="badge ${roleBadge[u.role]||'badge-staff'}">${roleMap[u.role]||u.role}</span></td>
@@ -161,26 +180,49 @@ async function loadUsers(){
     }catch(e){showToast('加载失败','error');}
 }
 
+function togglePermissions(){
+    var role=document.getElementById('fRole').value;
+    var pg=document.getElementById('permissionsGroup');
+    if(role==='admin'){pg.style.opacity='0.4';pg.style.pointerEvents='none';}
+    else{pg.style.opacity='1';pg.style.pointerEvents='auto';}
+}
+window.togglePermissions=togglePermissions;
+
+function getPermissions(){
+    var perms={};
+    document.querySelectorAll('#permCheckboxes input[data-perm]').forEach(function(cb){perms[cb.dataset.perm]=cb.checked;});
+    return perms;
+}
+function setPermissions(perms){
+    document.querySelectorAll('#permCheckboxes input[data-perm]').forEach(function(cb){cb.checked=!!(perms&&perms[cb.dataset.perm]);});
+}
+
 function showCreateModal(){
-    document.getElementById('modalTitle').textContent='创建用户';
+    document.getElementById('modalTitle').textContent='创建用户 Create User';
     document.getElementById('editId').value='';
     document.getElementById('fUsername').value='';document.getElementById('fUsername').disabled=false;
     document.getElementById('fDisplayName').value='';
     document.getElementById('fPassword').value='';
     document.getElementById('passwordGroup').style.display='';
     document.getElementById('fRole').value='staff';
+    setPermissions({pos:true,refund:true});
+    togglePermissions();
     document.getElementById('userModal').classList.add('show');
 }
 window.showCreateModal=showCreateModal;
 
 function editUser(id,username,displayName,role){
-    document.getElementById('modalTitle').textContent='编辑用户';
+    document.getElementById('modalTitle').textContent='编辑用户 Edit User';
     document.getElementById('editId').value=id;
     document.getElementById('fUsername').value=username;document.getElementById('fUsername').disabled=true;
     document.getElementById('fDisplayName').value=displayName;
     document.getElementById('fPassword').value='';
     document.getElementById('passwordGroup').style.display='none';
     document.getElementById('fRole').value=role;
+    // Load permissions from the user list
+    var userRow=document.querySelector('tr[data-uid="'+id+'"]');
+    if(userRow&&userRow.dataset.perms){try{setPermissions(JSON.parse(userRow.dataset.perms));}catch(e){}}
+    togglePermissions();
     document.getElementById('userModal').classList.add('show');
 }
 window.editUser=editUser;
@@ -199,6 +241,7 @@ async function saveUser(){
     }
     body.displayName=document.getElementById('fDisplayName').value.trim();
     body.role=document.getElementById('fRole').value;
+    if(body.role!=='admin')body.permissions=getPermissions();
     if(!body.displayName){showToast('请输入显示名','error');return;}
     try{
         const url=id?'/auth/users/'+id:'/auth/users';

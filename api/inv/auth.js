@@ -166,7 +166,8 @@ router.post('/login', async (req, res) => {
         id: user._id,
         username: user.username,
         displayName: user.displayName,
-        role: user.role
+        role: user.role,
+        permissions: user.getPermissions()
       }
     });
   } catch (err) {
@@ -180,7 +181,7 @@ router.post('/login', async (req, res) => {
 router.get('/users', jwtAuth, requireRole('admin'), async (req, res) => {
   try {
     const users = await InvUser.find({}, '-password').sort({ createdAt: -1 });
-    res.json(users);
+    res.json(users.map(u => ({ ...u.toObject(), permissions: u.getPermissions() })));
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
   }
@@ -190,7 +191,7 @@ router.get('/users', jwtAuth, requireRole('admin'), async (req, res) => {
 // Create user (Admin only)
 router.post('/users', jwtAuth, requireRole('admin'), async (req, res) => {
   try {
-    const { username, password, displayName, role } = req.body;
+    const { username, password, displayName, role, permissions } = req.body;
 
     // Required fields validation
     if (!username || !password || !displayName || !role) {
@@ -221,7 +222,8 @@ router.post('/users', jwtAuth, requireRole('admin'), async (req, res) => {
       username,
       password: hashedPassword,
       displayName,
-      role
+      role,
+      permissions: permissions || {}
     });
 
     res.status(201).json({
@@ -244,7 +246,7 @@ router.post('/users', jwtAuth, requireRole('admin'), async (req, res) => {
 // Edit user (Admin only) — can update displayName, role, active
 router.put('/users/:id', jwtAuth, requireRole('admin'), async (req, res) => {
   try {
-    const { displayName, role, active } = req.body;
+    const { displayName, role, active, permissions } = req.body;
     const updateFields = {};
 
     if (displayName !== undefined) updateFields.displayName = displayName;
@@ -255,6 +257,7 @@ router.put('/users/:id', jwtAuth, requireRole('admin'), async (req, res) => {
       updateFields.role = role;
     }
     if (active !== undefined) updateFields.active = active;
+    if (permissions !== undefined) updateFields.permissions = permissions;
 
     if (Object.keys(updateFields).length === 0) {
       return res.status(400).json({ error: '没有提供需要更新的字段' });
@@ -272,7 +275,7 @@ router.put('/users/:id', jwtAuth, requireRole('admin'), async (req, res) => {
       return res.status(404).json({ error: '用户不存在' });
     }
 
-    res.json(user);
+    res.json({ ...user.toObject(), permissions: user.getPermissions() });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
   }

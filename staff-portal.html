@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Portal - Tech Cross</title>
+    <title>Staff Portal</title>
     <meta name="robots" content="noindex, nofollow">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;background:#f5f5f7;color:#1d1d1f;min-height:100vh;display:flex;align-items:center;justify-content:center;}
-        .portal{width:100%;max-width:420px;padding:20px;}
+        .portal{width:100%;max-width:520px;padding:20px;}
         .logo-area{text-align:center;margin-bottom:32px;}
         .logo-area img{height:48px;margin-bottom:8px;}
         .logo-area p{font-size:13px;color:#86868b;}
@@ -20,157 +20,90 @@
         .form-group input{width:100%;padding:12px 16px;border:1px solid #d2d2d7;border-radius:12px;font-size:16px;transition:all .2s;}
         .form-group input:focus{outline:none;border-color:#D4E157;box-shadow:0 0 0 3px rgba(212,225,87,.15);}
         .btn-login{width:100%;padding:14px;border:none;border-radius:12px;background:#D4E157;color:#000;font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px;}
-        .btn-login:hover{background:#c5d148;transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,225,87,.4);}
-        .btn-login:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+        .btn-login:hover{background:#c5d148;}
+        .btn-login:disabled{opacity:.4;cursor:not-allowed;}
         .error-msg{display:none;background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;text-align:center;}
         .error-msg.show{display:block;}
-        /* Portal menu after login */
         .portal-menu{display:none;}
         .portal-menu.show{display:block;}
-        .portal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+        .portal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
         .portal-header .user-info{font-size:14px;color:#6e6e73;}
         .portal-header .user-info strong{color:#1d1d1f;}
-        .portal-header .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-left:6px;}
+        .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-left:6px;}
         .badge-admin{background:#e3f2fd;color:#1565c0;}
         .badge-staff{background:#f5f5f7;color:#6e6e73;}
         .btn-logout{padding:6px 14px;border-radius:980px;border:1px solid #d2d2d7;background:#fff;font-size:13px;cursor:pointer;transition:all .2s;}
         .btn-logout:hover{background:#ff3b30;color:#fff;border-color:#ff3b30;}
-        .menu-section{margin-bottom:16px;}
-        .menu-section h3{font-size:12px;color:#86868b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-left:4px;}
-        .menu-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;text-decoration:none;color:#1d1d1f;font-size:15px;font-weight:500;transition:all .15s;border:1px solid #e5e5e7;margin-bottom:8px;background:#fff;}
+        /* Tabs */
+        .tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid #e5e5e7;}
+        .tab{padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:#6e6e73;transition:all .15s;}
+        .tab:hover{color:#1d1d1f;}
+        .tab.active{color:#D4E157;border-bottom-color:#D4E157;font-weight:600;}
+        .tab-content{display:none;}
+        .tab-content.active{display:block;}
+        /* Menu items */
+        .menu-section{margin-bottom:12px;}
+        .menu-section h3{font-size:11px;color:#86868b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;padding-left:4px;}
+        .menu-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;text-decoration:none;color:#1d1d1f;font-size:14px;font-weight:500;transition:all .15s;border:1px solid #e5e5e7;margin-bottom:6px;background:#fff;}
         .menu-item:hover{border-color:#D4E157;background:#fafff0;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06);}
-        .menu-item .icon{font-size:20px;width:28px;text-align:center;}
-        .menu-item .desc{font-size:12px;color:#86868b;font-weight:400;margin-top:2px;}
-        .back-link{display:block;text-align:center;margin-top:20px;font-size:13px;color:#86868b;text-decoration:none;}
+        .menu-item .icon{font-size:18px;width:24px;text-align:center;}
+        .menu-item .desc{font-size:11px;color:#86868b;font-weight:400;margin-top:1px;}
+        .back-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:#86868b;text-decoration:none;}
         .back-link:hover{color:#0071e3;}
     </style>
 </head>
 <body>
 <div class="portal">
     <div class="logo-area">
-        <img src="logo.png" alt="Tech Cross">
+        <img src="logo.png" alt="Till POS" onerror="this.style.display='none'">
         <p>Staff Portal</p>
     </div>
 
-    <!-- Login Form -->
+    <!-- Login -->
     <div class="card" id="loginCard">
         <h2>Staff Login</h2>
-        <p class="subtitle">Login with your staff account</p>
+        <p class="subtitle">Login with your account</p>
         <div class="error-msg" id="errorMsg"></div>
-        <form id="loginForm" onsubmit="return false;">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="username" placeholder="Enter username" autocomplete="username" autofocus>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;color:#6e6e73;">
-                    <input type="checkbox" id="humanCheck" checked> I'm not a robot
-                </label>
-            </div>
+        <form onsubmit="return false;">
+            <div class="form-group"><label>Username</label><input type="text" id="username" placeholder="Enter username" autocomplete="username" autofocus></div>
+            <div class="form-group"><label>Password</label><input type="password" id="password" placeholder="Enter password" autocomplete="current-password"></div>
+            <div class="form-group" style="margin-bottom:0;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;color:#6e6e73;"><input type="checkbox" id="humanCheck" checked> I'm not a robot</label></div>
             <button type="submit" class="btn-login" id="btnLogin" onclick="doLogin()">Login</button>
         </form>
     </div>
 
-    <!-- Portal Menu (shown after login) -->
+    <!-- Portal Menu -->
     <div class="card portal-menu" id="portalMenu">
         <div class="portal-header">
-            <div class="user-info">
-                <span id="welcomeText">Welcome, </span><strong id="displayName">-</strong>
-                <span class="badge" id="roleBadge">-</span>
-            </div>
+            <div class="user-info"><span id="welcomeText">Welcome, </span><strong id="displayName">-</strong><span class="badge" id="roleBadge">-</span></div>
             <button class="btn-logout" id="btnLogout" onclick="doLogout()">Logout</button>
         </div>
 
-        <!-- Staff: only POS (English) -->
-        <div id="staffSection">
-            <div class="menu-section">
-                <h3>Business</h3>
-                <a href="/inv-pos.html" class="menu-item">
-                    <span class="icon">💰</span>
-                    <div>POS Checkout<div class="desc">Sales & checkout</div></div>
-                </a>
-                <a href="/inv-products.html" class="menu-item">
-                    <span class="icon">📦</span>
-                    <div>Products<div class="desc">Add & edit products</div></div>
-                </a>
-                <a href="/inv-stock.html" class="menu-item">
-                    <span class="icon">🏭</span>
-                    <div>Stock<div class="desc">View stock, request entry</div></div>
-                </a>
-            </div>
+        <!-- Tabs (admin sees both, staff sees only 进销存) -->
+        <div class="tabs" id="portalTabs">
+            <div class="tab active" onclick="switchTab('inv')">进销存系统 / Inventory</div>
+            <div class="tab" onclick="switchTab('mgmt')" id="tabMgmt" style="display:none;">管理系统 / Management</div>
         </div>
 
-        <!-- Admin: full access (Chinese) -->
-        <div id="adminSection" style="display:none;">
+        <!-- Tab 1: 进销存系统 (permissions-based) -->
+        <div class="tab-content active" id="tab-inv">
+            <div class="menu-section" id="menuInv"></div>
+        </div>
+
+        <!-- Tab 2: 管理系统 (admin only) -->
+        <div class="tab-content" id="tab-mgmt">
             <div class="menu-section">
-                <h3>进销存系统</h3>
-                <a href="/inv-pos.html" class="menu-item">
-                    <span class="icon">💰</span>
-                    <div>POS 收银<div class="desc">销售收银、结账</div></div>
-                </a>
-                <a href="/inv-products.html" class="menu-item">
-                    <span class="icon">📦</span>
-                    <div>商品管理<div class="desc">商品录入、编辑、删除</div></div>
-                </a>
-                <a href="/inv-stock.html" class="menu-item">
-                    <span class="icon">🏭</span>
-                    <div>库存管理<div class="desc">入库、出库、库存核对</div></div>
-                </a>
-                <a href="/inv-suppliers.html" class="menu-item">
-                    <span class="icon">🤝</span>
-                    <div>供应商管理<div class="desc">供应商信息、对账</div></div>
-                </a>
-                <a href="/inv-purchases.html" class="menu-item">
-                    <span class="icon">🛒</span>
-                    <div>采购管理<div class="desc">采购订单</div></div>
-                </a>
-                <a href="/inv-transactions.html" class="menu-item">
-                    <span class="icon">📋</span>
-                    <div>交易记录<div class="desc">销售记录、导出、删除</div></div>
-                </a>
-                <a href="/inv-reports.html" class="menu-item">
-                    <span class="icon">📊</span>
-                    <div>报表中心<div class="desc">日报、月报、税务报表</div></div>
-                </a>
-                <a href="/inv-invoices.html" class="menu-item">
-                    <span class="icon">🧾</span>
-                    <div>VAT Invoice<div class="desc">发票生成、发送</div></div>
-                </a>
-                <a href="/inv-settings.html" class="menu-item">
-                    <span class="icon">⚙️</span>
-                    <div>系统设置<div class="desc">公司信息、系统配置</div></div>
-                </a>
-                <a href="/inv-expenses.html" class="menu-item">
-                    <span class="icon">💸</span>
-                    <div>每日支出<div class="desc">Lyca Credit 采购、杂费等</div></div>
-                </a>
-                <a href="/inv-users.html" class="menu-item">
-                    <span class="icon">👥</span>
-                    <div>用户管理<div class="desc">创建、编辑、删除用户</div></div>
-                </a>
+                <h3>System / 系统</h3>
+                <a href="/inv-users.html" class="menu-item"><span class="icon">👥</span><div>User Management / 用户管理<div class="desc">Create, edit, permissions</div></div></a>
+                <a href="/inv-settings.html" class="menu-item"><span class="icon">⚙️</span><div>Settings / 系统设置<div class="desc">Company info, config</div></div></a>
+                <a href="/inv-expenses.html" class="menu-item"><span class="icon">💸</span><div>Expenses / 每日支出<div class="desc">Lyca Credit, misc costs</div></div></a>
             </div>
             <div class="menu-section">
-                <h3>网站管理</h3>
-                <a href="/admin.html" class="menu-item">
-                    <span class="icon">🌐</span>
-                    <div>网站后台<div class="desc">报价编辑、服务管理</div></div>
-                </a>
-                <a href="/admin-reviews.html" class="menu-item">
-                    <span class="icon">⭐</span>
-                    <div>评价管理<div class="desc">审核、删除客户评价</div></div>
-                </a>
-                <a href="/admin-apple.html" class="menu-item">
-                    <span class="icon">📱</span>
-                    <div>Apple 报价管理<div class="desc">iPhone/iPad 维修报价</div></div>
-                </a>
-                <a href="/admin-brands.html" class="menu-item">
-                    <span class="icon">🏷️</span>
-                    <div>品牌报价管理<div class="desc">Samsung、其他品牌报价</div></div>
-                </a>
+                <h3>Website / 网站</h3>
+                <a href="/admin.html" class="menu-item"><span class="icon">🌐</span><div>Website Admin / 网站后台<div class="desc">Pricing, services</div></div></a>
+                <a href="/admin-reviews.html" class="menu-item"><span class="icon">⭐</span><div>Reviews / 评价管理<div class="desc">Approve, delete reviews</div></div></a>
+                <a href="/admin-apple.html" class="menu-item"><span class="icon">📱</span><div>Apple Pricing / Apple 报价<div class="desc">iPhone/iPad repair pricing</div></div></a>
+                <a href="/admin-brands.html" class="menu-item"><span class="icon">🏷️</span><div>Brand Pricing / 品牌报价<div class="desc">Samsung & other brands</div></div></a>
             </div>
         </div>
     </div>
@@ -180,34 +113,63 @@
 
 <script>
 (function(){
-    // Check if already logged in
+    // Menu items with permission keys
+    var menuItems = [
+        { perm: 'pos', icon: '💰', label: 'POS Checkout / POS 收银', desc: 'Sales & checkout / 销售收银', href: '/inv-pos.html' },
+        { perm: 'products', icon: '📦', label: 'Products / 商品管理', desc: 'Add, edit products / 商品录入编辑', href: '/inv-products.html' },
+        { perm: 'stock', icon: '🏭', label: 'Stock / 库存管理', desc: 'Entry, exit, alerts / 入库出库', href: '/inv-stock.html' },
+        { perm: 'suppliers', icon: '🤝', label: 'Suppliers / 供应商', desc: 'Supplier info / 供应商信息', href: '/inv-suppliers.html' },
+        { perm: 'purchases', icon: '🛒', label: 'Purchases / 采购', desc: 'Purchase orders / 采购订单', href: '/inv-purchases.html' },
+        { perm: 'transactions', icon: '📋', label: 'Transactions / 交易记录', desc: 'Sales records, refund / 销售记录退款', href: '/inv-transactions.html' },
+        { perm: 'reports', icon: '📊', label: 'Reports / 报表', desc: 'Daily, monthly, VAT / 日报月报', href: '/inv-reports.html' },
+        { perm: 'invoices', icon: '🧾', label: 'VAT Invoice / 发票', desc: 'Generate & send / 生成发送', href: '/inv-invoices.html' }
+    ];
+
     var token = localStorage.getItem('inv_token');
     var user = null;
     try { user = JSON.parse(localStorage.getItem('inv_user')); } catch(e) {}
-
-    if (token && user) {
-        showPortal(user);
-    }
+    if (token && user) showPortal(user);
 
     function showPortal(u) {
-        if (u.role !== 'admin') {
-            // Staff: redirect directly to POS
-            window.location.href = '/inv-pos.html';
-            return;
-        }
-        // Admin: show full menu
         document.getElementById('loginCard').style.display = 'none';
         document.getElementById('portalMenu').classList.add('show');
         document.getElementById('displayName').textContent = u.displayName || u.username;
-        var badge = document.getElementById('roleBadge');
-        badge.textContent = '管理员';
-        badge.className = 'badge badge-admin';
-        document.getElementById('adminSection').style.display = '';
-        document.getElementById('staffSection').style.display = 'none';
-        document.getElementById('welcomeText').textContent = '欢迎, ';
-        document.getElementById('btnLogout').textContent = '退出';
-        document.getElementById('backLink').textContent = '← 返回主页';
+
+        var perms = u.permissions || {};
+        var isAdmin = u.role === 'admin';
+
+        // If admin, all permissions
+        if (isAdmin) {
+            menuItems.forEach(function(m) { perms[m.perm] = true; });
+            document.getElementById('tabMgmt').style.display = '';
+            document.getElementById('roleBadge').textContent = '管理员 Admin';
+            document.getElementById('roleBadge').className = 'badge badge-admin';
+            document.getElementById('welcomeText').textContent = '欢迎 Welcome, ';
+            document.getElementById('btnLogout').textContent = '退出 Logout';
+            document.getElementById('backLink').textContent = '← 返回主页 / Back';
+        } else {
+            document.getElementById('tabMgmt').style.display = 'none';
+            document.getElementById('roleBadge').textContent = 'Staff';
+            document.getElementById('roleBadge').className = 'badge badge-staff';
+        }
+
+        // Build menu based on permissions
+        var menuHtml = '';
+        menuItems.forEach(function(m) {
+            if (perms[m.perm]) {
+                menuHtml += '<a href="' + m.href + '" class="menu-item"><span class="icon">' + m.icon + '</span><div>' + m.label + '<div class="desc">' + m.desc + '</div></div></a>';
+            }
+        });
+        if (!menuHtml) menuHtml = '<p style="color:#86868b;text-align:center;padding:20px;">No permissions assigned. Contact admin.</p>';
+        document.getElementById('menuInv').innerHTML = menuHtml;
     }
+
+    window.switchTab = function(name) {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelector('.tab[onclick="switchTab(\'' + name + '\')"]').classList.add('active');
+        document.getElementById('tab-' + name).classList.add('active');
+    };
 
     window.doLogin = async function() {
         var username = document.getElementById('username').value.trim();
@@ -215,61 +177,31 @@
         var humanCheck = document.getElementById('humanCheck').checked;
         var errEl = document.getElementById('errorMsg');
         errEl.classList.remove('show');
-
-        if (!username || !password) {
-            errEl.textContent = 'Please enter username and password';
-            errEl.classList.add('show');
-            return;
-        }
-        if (!humanCheck) {
-            errEl.textContent = 'Please confirm you are not a robot';
-            errEl.classList.add('show');
-            return;
-        }
-
+        if (!username || !password) { errEl.textContent = 'Please enter username and password'; errEl.classList.add('show'); return; }
+        if (!humanCheck) { errEl.textContent = 'Please confirm you are not a robot'; errEl.classList.add('show'); return; }
         var btn = document.getElementById('btnLogin');
-        btn.disabled = true;
-        btn.textContent = 'Logging in...';
-
+        btn.disabled = true; btn.textContent = 'Logging in...';
         try {
-            var res = await fetch('/api/inv/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: username, password: password, humanCheck: true })
-            });
+            var res = await fetch('/api/inv/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username, password: password, humanCheck: true }) });
             var data = await res.json();
-
             if (res.ok && data.token && data.user) {
                 localStorage.setItem('inv_token', data.token);
                 localStorage.setItem('inv_user', JSON.stringify(data.user));
                 showPortal(data.user);
-            } else {
-                errEl.textContent = data.error || 'Login failed';
-                errEl.classList.add('show');
-            }
-        } catch(e) {
-            errEl.textContent = 'Server connection failed';
-            errEl.classList.add('show');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Login';
-        }
+            } else { errEl.textContent = data.error || data.detail || 'Login failed'; errEl.classList.add('show'); }
+        } catch(e) { errEl.textContent = 'Server connection failed'; errEl.classList.add('show'); }
+        finally { btn.disabled = false; btn.textContent = 'Login'; }
     };
 
     window.doLogout = function() {
         localStorage.removeItem('inv_token');
         localStorage.removeItem('inv_user');
-        sessionStorage.removeItem('techcross_admin_session');
+        sessionStorage.clear();
         location.reload();
     };
 
-    // Enter key to login
-    document.getElementById('password').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') window.doLogin();
-    });
-    document.getElementById('username').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('password').focus();
-    });
+    document.getElementById('password').addEventListener('keydown', function(e) { if (e.key === 'Enter') window.doLogin(); });
+    document.getElementById('username').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('password').focus(); });
 })();
 </script>
 </body>
