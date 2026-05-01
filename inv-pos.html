@@ -510,7 +510,11 @@
                     <input type="text" id="searchInput" autocomplete="off" autofocus>
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
-                <button onclick="openQuickAddModal()" style="margin-top:8px;padding:8px 16px;border:1px dashed #D4E157;border-radius:10px;background:none;color:#6e6e73;font-size:13px;cursor:pointer;width:100%;transition:all .15s;" onmouseover="this.style.background='#fafff0';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'" id="btnQuickAdd">+ <span id="quickAddText">快速新增商品</span></button>
+                <div style="display:flex;gap:6px;margin-top:8px;">
+                    <button onclick="openQuickAddModal()" style="flex:1;padding:8px 10px;border:1px dashed #D4E157;border-radius:10px;background:none;color:#6e6e73;font-size:12px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#fafff0';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'" id="btnQuickAdd">+ <span id="quickAddText">Sales</span></button>
+                    <button onclick="openQuickRepair()" style="flex:1;padding:8px 10px;border:1px dashed #0071e3;border-radius:10px;background:none;color:#6e6e73;font-size:12px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0f7ff';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'">+ 🔧 Repair</button>
+                    <button onclick="openQuickSecondHand()" style="flex:1;padding:8px 10px;border:1px dashed #ff9500;border-radius:10px;background:none;color:#6e6e73;font-size:12px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#fff8f0';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'">+ 📱 Used</button>
+                </div>
             </div>
             <div class="product-results" id="productResults">
                 <div class="search-hint" id="searchHint">
@@ -659,7 +663,7 @@
 
     <!-- Quick Add Product Modal -->
     <div id="quickAddOverlay" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:18px;padding:32px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+        <div style="background:#fff;border-radius:18px;padding:32px;max-width:620px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
             <h3 style="font-size:20px;margin-bottom:20px;" id="qaTitle">快速新增商品</h3>
             <div style="margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblName">商品名称 *</label><input type="text" id="qaName" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="iPhone 15 128GB"></div>
             <div style="display:flex;gap:12px;margin-bottom:12px;">
@@ -677,8 +681,8 @@
                     </div>
                 </div>
             <div style="display:flex;gap:12px;margin-bottom:12px;">
-                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCost">成本价 € *</label><input type="number" id="qaCost" step="0.01" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
-                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblPrice">售价 € *</label><input type="number" id="qaPrice" step="0.01" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
+                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCost">成本价 €</label><input type="text" inputmode="decimal" id="qaCost" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="0.00"></div>
+                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblPrice">售价 € *</label><input type="text" inputmode="decimal" id="qaPrice" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="0.00"></div>
             </div>
             <div style="margin-bottom:12px;"><label style="font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="qaSecondHand" onchange="document.getElementById('qaSecondHandFields').style.display=this.checked?'block':'none'"> <span id="qaLblSH">二手商品</span></label></div>
             <div id="qaSecondHandFields" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:12px;">
@@ -686,6 +690,7 @@
                 <div style="margin-bottom:8px;"><label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="qaMarginScheme" checked> <span id="qaLblMargin">适用 Margin Scheme VAT</span></label></div>
                 <div><label style="font-size:13px;font-weight:500;display:block;margin-bottom:4px;">IMEI/SN *</label><input type="text" id="qaSerial" style="width:100%;padding:8px 12px;border:1px solid #d2d2d7;border-radius:8px;font-size:13px;"></div>
             </div>
+            <div id="qaRepairSnGroup" style="display:none;margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">IMEI / SN (for repair tracking)</label><input type="text" id="qaRepairSn" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="Device IMEI or Serial Number"></div>
             <div style="margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblQty">初始库存</label><input type="number" id="qaStock" value="1" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
             <div id="qaError" style="display:none;background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;"></div>
             <div style="display:flex;gap:12px;justify-content:flex-end;">
@@ -1759,6 +1764,8 @@
       document.getElementById('qaSecondHand').checked = false;
       document.getElementById('qaSerial').value = '';
       document.getElementById('qaSecondHandFields').style.display = 'none';
+      document.getElementById('qaRepairSnGroup').style.display = 'none';
+      document.getElementById('qaRepairSn').value = '';
       document.getElementById('qaSource').value = 'customer';
       document.getElementById('qaMarginScheme').checked = true;
       document.getElementById('qaError').style.display = 'none';
@@ -1766,12 +1773,41 @@
     }
     window.openQuickAddModal = openQuickAddModal;
 
+    // Quick Repair: pre-set category=维修, VAT=13.5%, show SN field
+    function openQuickRepair() {
+      openQuickAddModal();
+      document.getElementById('qaCat').value = '维修';
+      document.getElementById('qaVatRate').value = '13.5';
+      document.getElementById('qaRepairSnGroup').style.display = 'block';
+      document.getElementById('qaStock').value = '0';
+      document.getElementById('qaName').placeholder = 'e.g. Screen Repair iPhone 15';
+    }
+    window.openQuickRepair = openQuickRepair;
+
+    // Quick Second-Hand: pre-set category=二手, check second-hand, show margin fields
+    function openQuickSecondHand() {
+      openQuickAddModal();
+      document.getElementById('qaCat').value = '二手';
+      document.getElementById('qaVatRate').value = '23';
+      document.getElementById('qaSecondHand').checked = true;
+      document.getElementById('qaSecondHandFields').style.display = 'block';
+      document.getElementById('qaStock').value = '1';
+      document.getElementById('qaName').placeholder = 'e.g. iPhone 13 128GB';
+    }
+    window.openQuickSecondHand = openQuickSecondHand;
+
     function qaOnCategoryChange() {
       var cat = document.getElementById('qaCat').value;
       var vatInput = document.getElementById('qaVatRate');
       var shCheck = document.getElementById('qaSecondHand');
-      if (cat === '维修' || cat === '服务') { vatInput.value = '13.5'; }
-      else { vatInput.value = '23'; }
+      var repairSnGroup = document.getElementById('qaRepairSnGroup');
+      if (cat === '维修' || cat === '服务') {
+        vatInput.value = '13.5';
+        repairSnGroup.style.display = 'block';
+      } else {
+        vatInput.value = '23';
+        repairSnGroup.style.display = 'none';
+      }
       if (cat === '二手') {
         shCheck.checked = true;
         document.getElementById('qaSecondHandFields').style.display = 'block';
@@ -1804,7 +1840,11 @@
         body.marginScheme = document.getElementById('qaMarginScheme').checked;
         body.purchasedFromCustomer = body.source === 'customer';
       }
-      if (!body.name || !body.sku || !body.category || isNaN(body.sellingPrice)) {
+      // Repair/service: include SN/IMEI if provided
+      var repairSn = document.getElementById('qaRepairSn').value.trim();
+      if (repairSn && !body.serialNumber) body.serialNumber = repairSn;
+
+      if (!body.name || !body.sku || !body.category || isNaN(body.sellingPrice) || body.sellingPrice <= 0) {
         errEl.textContent = lang === 'zh' ? '请填写商品名称、SKU、分类和售价' : 'Please fill name, SKU, category and price';
         errEl.style.display = 'block';
         return;
