@@ -1,4 +1,4 @@
-const CACHE_NAME = 'techcross-v3';
+const CACHE_NAME = 'techcross-v4';
 const PRECACHE = ['/', '/index.html', '/pricing.html', '/styles.css', '/logo-sm.png', '/manifest.json'];
 
 self.addEventListener('install', e => {
