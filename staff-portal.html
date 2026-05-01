@@ -190,29 +190,23 @@
     }
 
     function showPortal(u) {
+        if (u.role !== 'admin') {
+            // Staff: redirect directly to POS
+            window.location.href = '/inv-pos.html';
+            return;
+        }
+        // Admin: show full menu
         document.getElementById('loginCard').style.display = 'none';
         document.getElementById('portalMenu').classList.add('show');
         document.getElementById('displayName').textContent = u.displayName || u.username;
         var badge = document.getElementById('roleBadge');
-        if (u.role === 'admin') {
-            // Admin: Chinese interface
-            badge.textContent = '管理员';
-            badge.className = 'badge badge-admin';
-            document.getElementById('adminSection').style.display = '';
-            document.getElementById('staffSection').style.display = 'none';
-            document.getElementById('welcomeText').textContent = '欢迎, ';
-            document.getElementById('btnLogout').textContent = '退出';
-            document.getElementById('backLink').textContent = '← 返回主页';
-        } else {
-            // Staff: English interface
-            badge.textContent = 'Staff';
-            badge.className = 'badge badge-staff';
-            document.getElementById('adminSection').style.display = 'none';
-            document.getElementById('staffSection').style.display = '';
-            document.getElementById('welcomeText').textContent = 'Welcome, ';
-            document.getElementById('btnLogout').textContent = 'Logout';
-            document.getElementById('backLink').textContent = '← Back to Home';
-        }
+        badge.textContent = '管理员';
+        badge.className = 'badge badge-admin';
+        document.getElementById('adminSection').style.display = '';
+        document.getElementById('staffSection').style.display = 'none';
+        document.getElementById('welcomeText').textContent = '欢迎, ';
+        document.getElementById('btnLogout').textContent = '退出';
+        document.getElementById('backLink').textContent = '← 返回主页';
     }
 
     window.doLogin = async function() {
