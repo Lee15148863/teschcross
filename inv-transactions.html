@@ -278,7 +278,7 @@ async function reprintReceipt(id){
             itemsHtml+='<div style="display:flex;justify-content:space-between;"><span>'+(it.quantity>1?it.quantity+'x ':'')+esc(it.name)+'</span><span>€'+(price*(it.quantity||1)).toFixed(2)+'</span></div>';
             if(it.serialNumber)itemsHtml+='<div style="font-size:10px;color:#666;">SN: '+esc(it.serialNumber)+'</div>';
         });
-        win.document.write(`<html><head><title>Receipt</title><style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;padding:8px;max-width:280px;margin:0 auto;}hr{border:none;border-top:1px dashed #000;margin:8px 0;}.center{text-align:center;}.right{text-align:right;}.small{font-size:9px;color:#666;}</style></head><body>`);
+        win.document.write(`<html><head><title>Receipt</title><style>@page{size:68mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}hr{border:none;border-top:1px dashed #000;margin:8px 0;}.center{text-align:center;}.right{text-align:right;}.small{font-size:9px;}</style></head><body>`);
         win.document.write('<div class="center"><strong style="font-size:16px;">Tech Cross Repair Centre</strong></div>');
         win.document.write('<div class="center small">Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658</div>');
         win.document.write('<div class="center small">Tel: 046 905 9854 | Mob: 089 482 5300</div>');

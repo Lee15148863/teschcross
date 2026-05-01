@@ -1246,7 +1246,7 @@
         // Fallback: browser print
         var html = buildReceiptPreviewHtml(receiptData);
         var printWin = window.open('', '_blank', 'width=320,height=500');
-        printWin.document.write('<html><head><title>Receipt</title><style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;padding:8px;max-width:280px;margin:0 auto;}</style></head><body>');
+        printWin.document.write('<html><head><title>Receipt</title><style>@page{size:68mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}</style></head><body>');
         printWin.document.write(html);
         printWin.document.write('</body></html>');
         printWin.document.close();
@@ -1288,7 +1288,7 @@
       } catch (err) {
         console.warn('Print Agent unavailable:', err.message);
         var printWin = window.open('', '_blank', 'width=320,height=500');
-        printWin.document.write('<html><head><title>Receipt</title><style>@page{size:80mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;padding:8px;max-width:280px;margin:0 auto;}</style></head><body>');
+        printWin.document.write('<html><head><title>Receipt</title><style>@page{size:68mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}</style></head><body>');
         printWin.document.write(document.getElementById('receiptPreviewContent').innerHTML);
         printWin.document.write('</body></html>');
         printWin.document.close();
