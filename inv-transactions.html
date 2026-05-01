@@ -276,7 +276,7 @@ async function reprintReceipt(id){
         (tx.items||[]).forEach(it=>{
             const price=(it.discountedPrice!=null?it.discountedPrice:it.unitPrice)||0;
             itemsHtml+='<div style="display:flex;justify-content:space-between;"><span>'+(it.quantity>1?it.quantity+'x ':'')+esc(it.name)+'</span><span>€'+(price*(it.quantity||1)).toFixed(2)+'</span></div>';
-            if(it.serialNumber)itemsHtml+='<div style="font-size:10px;color:#666;">SN: '+esc(it.serialNumber)+'</div>';
+            if(it.serialNumber)itemsHtml+='<div style="font-size:12px;font-weight:700;">SN: '+esc(it.serialNumber)+'</div>';
         });
         win.document.write(`<html><head><title>Receipt</title><style>@page{size:68mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}hr{border:none;border-top:1px dashed #000;margin:8px 0;}.center{text-align:center;}.right{text-align:right;}.small{font-size:11px;}</style></head><body>`);
         win.document.write('<div class="center"><strong style="font-size:16px;">Tech Cross Repair Centre</strong></div>');
@@ -300,8 +300,8 @@ async function reprintReceipt(id){
         win.document.write('<hr>');
         win.document.write('<div class="small center">Warranty & Store Policy | Repairs - 3 Months: Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair. | Accessories - 14 Days: Exchange/return only if unopened, sealed, and resalable.</div>');
         if((tx.items||[]).some(i=>i.isSecondHand))win.document.write('<div class="small center" style="margin-top:4px;">Pre-owned Devices - 7 Days: No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable.</div>');
-        win.document.write('<div class="center" style="margin-top:8px;font-size:9px;color:#999;">Sales T&C: techcross.ie/receipt-terms.html</div>');
-        win.document.write('<div class="center" style="font-size:9px;color:#999;">Repair T&C: techcross.ie/terms.html</div>');
+        win.document.write('<div class="center" style="margin-top:8px;font-size:12px;font-weight:700;">Sales T&C: techcross.ie/receipt-terms.html</div>');
+        win.document.write('<div class="center" style="font-size:12px;font-weight:700;">Repair T&C: techcross.ie/terms.html</div>');
         win.document.write('<div class="center" style="margin-top:10px;font-weight:bold;">Thank you!</div>');
         win.document.write('</body></html>');
         win.document.close();

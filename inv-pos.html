@@ -1337,7 +1337,7 @@
           h += '<span>' + (item.quantity > 1 ? item.quantity + 'x ' : '') + escHtml(item.name) + '</span>';
           h += '<span>€' + (price * (item.quantity || 1)).toFixed(2) + '</span>';
           h += '</div>';
-          if (item.serialNumber) h += '<div style="font-size:11px;">  SN: ' + escHtml(item.serialNumber) + '</div>';
+          if (item.serialNumber) h += '<div style="font-size:12px;font-weight:700;">  SN: ' + escHtml(item.serialNumber) + '</div>';
           if (item.discountedPrice != null && item.discountedPrice < item.unitPrice) {
             h += '<div style="font-size:11px;">  Was €' + item.unitPrice.toFixed(2) + '</div>';
           }
@@ -1376,7 +1376,7 @@
       }
       h += '</div>';
       // QR codes hint
-      h += '<div style="text-align:center;margin-top:10px;font-size:11px;">';
+      h += '<div style="text-align:center;margin-top:10px;font-size:12px;font-weight:700;">';
       h += 'Sales T&C: techcross.ie/receipt-terms.html<br>';
       h += 'Repair T&C: techcross.ie/terms.html';
       h += '</div>';
