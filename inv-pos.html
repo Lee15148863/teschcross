@@ -1422,22 +1422,38 @@
         var data = await res.json();
         var matches = data.data || [];
 
-        // Calculate daily summary
+        // Calculate daily summary with category breakdown
         var totalSales = 0, totalCash = 0, totalCard = 0, txnCount = matches.length;
+        var stdSales = 0, marginSales = 0, serviceSales = 0, lycaSales = 0;
         matches.forEach(function(t) {
           totalSales += t.totalAmount;
           if (t.paymentMethod === 'cash') totalCash += t.totalAmount;
           else if (t.paymentMethod === 'card') totalCard += t.totalAmount;
           else { totalCard += t.cardAmount || 0; totalCash += t.totalAmount - (t.cardAmount || 0); }
+          // Category breakdown from items
+          (t.items || []).forEach(function(item) {
+            var rate = item.vatRate || 0.23;
+            var isLyca = (item.sku || '').toUpperCase().startsWith('LYCA-');
+            if (isLyca) lycaSales += item.subtotal || 0;
+            else if (item.marginScheme || item.isSecondHand) marginSales += item.subtotal || 0;
+            else if (Math.abs(rate - 0.135) < 0.01) serviceSales += item.subtotal || 0;
+            else stdSales += item.subtotal || 0;
+          });
         });
 
         var summaryHtml = '<div style="background:#f0f7ff;border:1px solid #0071e3;border-radius:10px;padding:10px 12px;margin-bottom:8px;">' +
-          '<div style="font-size:13px;font-weight:600;margin-bottom:4px;">📊 ' + startDate + (startDate !== endDate ? ' ~ ' + endDate : '') + '</div>' +
-          '<div style="font-size:12px;display:flex;gap:12px;flex-wrap:wrap;">' +
-          '<span>Sales: <strong>€' + totalSales.toFixed(2) + '</strong></span>' +
+          '<div style="font-size:13px;font-weight:600;margin-bottom:6px;">📊 ' + startDate + (startDate !== endDate ? ' ~ ' + endDate : '') + '</div>' +
+          '<div style="font-size:12px;display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px;">' +
+          '<span>Total: <strong>€' + totalSales.toFixed(2) + '</strong></span>' +
           '<span>💵 €' + totalCash.toFixed(2) + '</span>' +
           '<span>💳 €' + totalCard.toFixed(2) + '</span>' +
           '<span>' + txnCount + ' txns</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:#333;display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid #d2d2d7;padding-top:4px;">' +
+          (stdSales > 0 ? '<span>🛒 Sales: €' + stdSales.toFixed(2) + '</span>' : '') +
+          (marginSales > 0 ? '<span>📱 Margin: €' + marginSales.toFixed(2) + '</span>' : '') +
+          (serviceSales > 0 ? '<span>🔧 Service: €' + serviceSales.toFixed(2) + '</span>' : '') +
+          (lycaSales > 0 ? '<span>📞 Lyca: €' + lycaSales.toFixed(2) + '</span>' : '') +
           '</div></div>';
 
         if (!matches.length) {
