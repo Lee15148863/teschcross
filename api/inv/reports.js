@@ -10,13 +10,23 @@ router.use(jwtAuth, requireRole('admin', 'staff'));
 // ─── Helper: build date range filter ────────────────────────────────────────
 function buildDateFilter(startDate, endDate) {
   const filter = {};
-  if (startDate) filter.$gte = new Date(startDate);
+  if (startDate) {
+    // Parse as local date start: YYYY-MM-DD 00:00:00
+    const parts = startDate.split('-');
+    filter.$gte = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
+  }
   if (endDate) {
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-    filter.$lte = end;
+    // Parse as local date end: YYYY-MM-DD 23:59:59.999
+    const parts = endDate.split('-');
+    filter.$lte = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
   }
   return Object.keys(filter).length > 0 ? filter : null;
+}
+
+// ─── Helper: parse YYYY-MM-DD as local midnight (not UTC) ───────────────────
+function parseLocalDate(dateStr) {
+  const parts = dateStr.split('-');
+  return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
 }
 
 // ─── Helper: aggregate product ranking from transactions ────────────────────
@@ -50,11 +60,12 @@ router.get('/daily', async (req, res) => {
 
     let dateStart, dateEnd;
     if (startDate && endDate) {
-      dateStart = new Date(startDate);
-      dateEnd = new Date(endDate);
+      dateStart = parseLocalDate(startDate);
+      dateStart.setHours(0, 0, 0, 0);
+      dateEnd = parseLocalDate(endDate);
       dateEnd.setHours(23, 59, 59, 999);
     } else {
-      const targetDate = date ? new Date(date) : new Date();
+      const targetDate = date ? parseLocalDate(date) : new Date();
       dateStart = new Date(targetDate);
       dateStart.setHours(0, 0, 0, 0);
       dateEnd = new Date(targetDate);
@@ -367,7 +378,7 @@ router.get('/weekly', async (req, res) => {
       weekEnd.setDate(weekStart.getDate() + 6);
       weekEnd.setHours(23, 59, 59, 999);
     } else if (qStart) {
-      weekStart = new Date(qStart);
+      weekStart = parseLocalDate(qStart);
       weekStart.setHours(0, 0, 0, 0);
       weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
@@ -537,8 +548,9 @@ router.get('/product-ranking', async (req, res) => {
       });
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = parseLocalDate(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = parseLocalDate(endDate);
     end.setHours(23, 59, 59, 999);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
@@ -574,13 +586,14 @@ router.get('/export', async (req, res) => {
       let dateStart, dateEnd;
 
       if (startDate && endDate) {
-        dateStart = new Date(startDate);
-        dateEnd = new Date(endDate);
+        dateStart = parseLocalDate(startDate);
+        dateStart.setHours(0, 0, 0, 0);
+        dateEnd = parseLocalDate(endDate);
         dateEnd.setHours(23, 59, 59, 999);
       } else if (date) {
-        dateStart = new Date(date);
+        dateStart = parseLocalDate(date);
         dateStart.setHours(0, 0, 0, 0);
-        dateEnd = new Date(date);
+        dateEnd = parseLocalDate(date);
         dateEnd.setHours(23, 59, 59, 999);
       } else {
         dateStart = new Date();

@@ -153,64 +153,165 @@ window.switchTab=switchTab;
 async function loadDaily(){
     const date=document.getElementById('dailyDate').value;
     if(!date){showToast('请选择日期','error');return;}
+    var el=document.getElementById('dailyContent');
+    el.innerHTML='<p class="no-data">加载中...</p>';
     try{
-        const r=await apiFetch('/reports/daily?date='+date);if(!r)return;
-        const data=await r.json();
-        const el=document.getElementById('dailyContent');
-        if(data.message||data.totalTransactions===0){
-            el.innerHTML='<p class="no-data">📭 '+esc(data.message||'当日无交易记录')+'</p>';return;
+        var r=await apiFetch('/reports/daily?date='+date);if(!r)return;
+        var resp=await r.json();
+        // 后端返回 { data: {...} } 或 { message: '...' }
+        if(resp.message||!resp.data){
+            el.innerHTML='<p class="no-data">📭 '+(resp.message||'当日无交易记录 / No transactions for this date')+'</p>';return;
         }
-        let html=`<div class="stat-grid">
-            <div class="stat-card"><div class="stat-value">${data.totalTransactions||0}</div><div class="stat-label">交易笔数</div></div>
-            <div class="stat-card"><div class="stat-value">€${Number(data.totalSales||0).toFixed(2)}</div><div class="stat-label">销售总额</div></div>
-            <div class="stat-card"><div class="stat-value">€${Number(data.cashTotal||0).toFixed(2)}</div><div class="stat-label">现金收款</div></div>
-            <div class="stat-card"><div class="stat-value">€${Number(data.cardTotal||0).toFixed(2)}</div><div class="stat-label">银行卡收款</div></div>
-            <div class="stat-card"><div class="stat-value">€${Number(data.standardVatTotal||0).toFixed(2)}</div><div class="stat-label">Standard VAT</div></div>
-            <div class="stat-card"><div class="stat-value">€${Number(data.marginVatTotal||0).toFixed(2)}</div><div class="stat-label">Margin VAT</div></div>
-        </div>`;
-        if(data.productRanking&&data.productRanking.length){
-            html+=`<h4 style="margin:16px 0 8px;">商品销售排行</h4><table>
-                <thead><tr><th>#</th><th>商品</th><th>数量</th><th>金额 (€)</th></tr></thead>
-                <tbody>${data.productRanking.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.name||p._id)}</td><td>${p.totalQuantity||p.quantity||0}</td><td>€${Number(p.totalAmount||p.amount||0).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
+        var d=resp.data;
+        var cashAmt=d.payment?d.payment.cash:0;
+        var cardAmt=d.payment?d.payment.card:0;
+        var vat=d.vatBreakdown||{};
+        var std23=vat.standard23||{};
+        var margin=vat.margin||{};
+        var reduced=vat.reduced135||{};
+        var lyca=vat.lycaCredit||{};
+        var exp=d.expenses||{};
+
+        var html='<div class="stat-grid">'+
+            '<div class="stat-card"><div class="stat-value">'+d.totalTransactions+'</div><div class="stat-label">交易笔数 / Transactions</div></div>'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(d.totalSales||0).toFixed(2)+'</div><div class="stat-label">销售总额 / Total Sales</div></div>'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(cashAmt).toFixed(2)+'</div><div class="stat-label">💵 现金 / Cash</div></div>'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(cardAmt).toFixed(2)+'</div><div class="stat-label">💳 银行卡 / Card</div></div>'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(d.totalVatPayable||0).toFixed(2)+'</div><div class="stat-label">应缴VAT / VAT Payable</div></div>'+
+            '<div class="stat-card"><div class="stat-value" style="color:'+(d.netCash<0?'#ff3b30':'#34c759')+'">€'+Number(d.netCash||0).toFixed(2)+'</div><div class="stat-label">净现金 / Net Cash'+(d.cashWarning?' ⚠️':'')+'</div></div>'+
+        '</div>';
+
+        // VAT 明细表
+        html+='<h4 style="margin:16px 0 8px;">VAT 分类明细 / VAT Breakdown</h4><table>'+
+            '<thead><tr><th>VAT Category</th><th>Sales (€)</th><th>VAT Payable (€)</th></tr></thead><tbody>'+
+            '<tr><td>Standard 23%</td><td>€'+Number(std23.sales||0).toFixed(2)+'</td><td>€'+Number(std23.vatPayable||0).toFixed(2)+'</td></tr>'+
+            '<tr><td>Margin Scheme</td><td>€'+Number(margin.sales||0).toFixed(2)+'</td><td>€'+Number(margin.vatPayable||0).toFixed(2)+'</td></tr>'+
+            '<tr><td>Reduced 13.5%</td><td>€'+Number(reduced.sales||0).toFixed(2)+'</td><td>€'+Number(reduced.vatPayable||0).toFixed(2)+'</td></tr>'+
+            '<tr><td>Lyca Credit</td><td>€'+Number(lyca.sales||0).toFixed(2)+'</td><td>€'+Number(lyca.vatPayable||0).toFixed(2)+'</td></tr>'+
+            '<tr style="font-weight:700;background:#f0f4c3;"><td>Total</td><td>€'+Number(d.totalSales||0).toFixed(2)+'</td><td>€'+Number(d.totalVatPayable||0).toFixed(2)+'</td></tr>'+
+            '</tbody></table>';
+
+        // Margin 明细
+        if(margin.items&&margin.items.length){
+            html+='<h4 style="margin:16px 0 8px;">📱 Margin Scheme Items</h4><table>'+
+                '<thead><tr><th>Receipt</th><th>Item</th><th>Cost (€)</th><th>Sell (€)</th><th>Margin (€)</th><th>VAT (€)</th></tr></thead><tbody>'+
+                margin.items.map(function(m){return '<tr><td style="font-family:monospace;font-size:12px;">'+esc(m.receiptNumber)+'</td><td>'+esc(m.name)+'</td><td>€'+Number(m.costPrice||0).toFixed(2)+'</td><td>€'+Number(m.discountedPrice||m.sellingPrice||0).toFixed(2)+'</td><td>€'+Number(m.margin||0).toFixed(2)+'</td><td>€'+Number(m.vatPayable||0).toFixed(2)+'</td></tr>';}).join('')+
+                '</tbody></table>';
         }
+
+        // Lyca 明细
+        if(lyca.items&&lyca.items.length){
+            html+='<h4 style="margin:16px 0 8px;">📞 Lyca Credit Items ('+lyca.count+' sold)</h4><table>'+
+                '<thead><tr><th>Receipt</th><th>Item</th><th>Face Value (€)</th><th>Cost (€)</th><th>Profit (€)</th><th>VAT (€)</th></tr></thead><tbody>'+
+                lyca.items.map(function(l){return '<tr><td style="font-family:monospace;font-size:12px;">'+esc(l.receiptNumber)+'</td><td>'+esc(l.name)+'</td><td>€'+Number(l.faceValue||0).toFixed(2)+'</td><td>€'+Number(l.costPrice||0).toFixed(2)+'</td><td>€'+Number(l.profit||0).toFixed(2)+'</td><td>€'+Number(l.totalVat||0).toFixed(2)+'</td></tr>';}).join('')+
+                '</tbody></table>';
+        }
+
+        // 支出
+        if(exp.count>0){
+            html+='<h4 style="margin:16px 0 8px;">💸 当日支出 / Expenses ('+exp.count+')</h4>'+
+                '<div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">'+
+                '<div class="stat-card"><div class="stat-value">€'+Number(exp.total||0).toFixed(2)+'</div><div class="stat-label">支出总额 / Total</div></div>'+
+                '<div class="stat-card"><div class="stat-value">€'+Number(exp.cash||0).toFixed(2)+'</div><div class="stat-label">💵 现金支出</div></div>'+
+                '<div class="stat-card"><div class="stat-value">€'+Number(exp.card||0).toFixed(2)+'</div><div class="stat-label">💳 卡支出</div></div>'+
+                '</div>';
+            if(exp.byCategory){
+                var cats=Object.keys(exp.byCategory);
+                if(cats.length){
+                    html+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">'+
+                        cats.map(function(k){return '<div style="background:#f5f5f7;border-radius:8px;padding:8px 14px;font-size:13px;">'+esc(k)+': <strong>€'+Number(exp.byCategory[k]).toFixed(2)+'</strong></div>';}).join('')+
+                    '</div>';
+                }
+            }
+        }
+
         el.innerHTML=html;
-    }catch(e){showToast('加载失败','error');}
+    }catch(e){showToast('加载失败: '+e.message,'error');}
 }
 window.loadDaily=loadDaily;
 
 async function loadMonthly(){
     const month=document.getElementById('monthlyDate').value;
     if(!month){showToast('请选择月份','error');return;}
+    var el=document.getElementById('monthlyContent');
+    el.innerHTML='<p class="no-data">加载中...</p>';
     try{
-        const r=await apiFetch('/reports/monthly?month='+month);if(!r)return;
-        const data=await r.json();
-        const el=document.getElementById('monthlyContent');
-        if(data.message){el.innerHTML='<p class="no-data">📭 '+esc(data.message)+'</p>';return;}
-        let html='<h4 style="margin-bottom:12px;">Monthly Tax Summary — '+esc(month)+'</h4>';
-        if(data.dailySummary&&data.dailySummary.length){
-            html+=`<table><thead><tr><th>Date</th><th>Sale Total (€)</th><th>Repair Income (€)</th><th>Margin VAT (€)</th><th>Standard VAT (€)</th></tr></thead>
-                <tbody>${data.dailySummary.map(d=>`<tr>
-                    <td>${esc(d.date)}</td>
-                    <td>€${Number(d.saleTotal||0).toFixed(2)}</td>
-                    <td>€${Number(d.repairIncome||0).toFixed(2)}</td>
-                    <td>€${Number(d.marginVat||0).toFixed(2)}</td>
-                    <td>€${Number(d.standardVat||0).toFixed(2)}</td>
-                </tr>`).join('')}</tbody></table>`;
+        var r=await apiFetch('/reports/monthly?month='+month);if(!r)return;
+        var resp=await r.json();
+        if(resp.message||!resp.data){el.innerHTML='<p class="no-data">📭 '+(resp.message||'该月无交易记录 / No transactions for this month')+'</p>';return;}
+        var d=resp.data;
+        var s=d.summary||{};
+        var days=d.dailyData||[];
+        var exp=s.expenses||{};
+
+        var html='<h4 style="margin-bottom:12px;">月度报表 / Monthly Report — '+esc(d.month)+'</h4>';
+
+        // 汇总卡片
+        html+='<div class="stat-grid">'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(s.totalSales||0).toFixed(2)+'</div><div class="stat-label">总销售 / Total Sales</div></div>'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(s.totalCash||0).toFixed(2)+'</div><div class="stat-label">💵 现金 / Cash</div></div>'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(s.totalCard||0).toFixed(2)+'</div><div class="stat-label">💳 银行卡 / Card</div></div>'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(s.totalVatPayable||0).toFixed(2)+'</div><div class="stat-label">应缴VAT / VAT Payable</div></div>'+
+            '<div class="stat-card"><div class="stat-value">€'+Number(exp.total||0).toFixed(2)+'</div><div class="stat-label">💸 支出 / Expenses</div></div>'+
+            '<div class="stat-card"><div class="stat-value" style="color:'+(s.netCash<0?'#ff3b30':'#34c759')+'">€'+Number(s.netCash||0).toFixed(2)+'</div><div class="stat-label">净现金 / Net Cash'+(s.cashWarning?' ⚠️':'')+'</div></div>'+
+        '</div>';
+
+        // 每日明细表
+        if(days.length){
+            html+='<h4 style="margin:16px 0 8px;">每日明细 / Daily Breakdown</h4><table>'+
+                '<thead><tr><th>日期 / Date</th><th>Sales (€)</th><th>💵 Cash</th><th>💳 Card</th><th>Std 23% VAT</th><th>Margin VAT</th><th>13.5% VAT</th><th>Lyca VAT</th><th>Day VAT</th><th>Expenses</th><th>Net Cash</th></tr></thead><tbody>'+
+                days.map(function(day){
+                    var nc=day.netCash||0;
+                    return '<tr>'+
+                        '<td>'+esc(day.date)+'</td>'+
+                        '<td>€'+Number(day.totalSales||0).toFixed(2)+'</td>'+
+                        '<td>€'+Number(day.cash||0).toFixed(2)+'</td>'+
+                        '<td>€'+Number(day.card||0).toFixed(2)+'</td>'+
+                        '<td>€'+Number((day.standard23||{}).vatPayable||0).toFixed(2)+'</td>'+
+                        '<td>€'+Number((day.margin||{}).vatPayable||0).toFixed(2)+'</td>'+
+                        '<td>€'+Number((day.reduced135||{}).vatPayable||0).toFixed(2)+'</td>'+
+                        '<td>€'+Number((day.lycaCredit||{}).vatPayable||0).toFixed(2)+'</td>'+
+                        '<td style="font-weight:600;">€'+Number(day.dailyVatPayable||0).toFixed(2)+'</td>'+
+                        '<td>€'+Number(day.expenses||0).toFixed(2)+'</td>'+
+                        '<td style="color:'+(nc<0?'#ff3b30':'#34c759')+';font-weight:600;">€'+nc.toFixed(2)+(day.cashWarning?' ⚠️':'')+'</td>'+
+                    '</tr>';
+                }).join('')+
+                '</tbody></table>';
         }
-        if(data.summary){
-            const s=data.summary;
-            html+=`<div class="monthly-summary">
-=== Month-End Summary ===
-Total Sales:        €${Number(s.totalSales||0).toFixed(2)}
-Cash Total:         €${Number(s.cashTotal||0).toFixed(2)}
-Card Total:         €${Number(s.cardTotal||0).toFixed(2)}
-Standard VAT Total: €${Number(s.standardVatTotal||0).toFixed(2)}
-Margin VAT Total:   €${Number(s.marginVatTotal||0).toFixed(2)}
-Total VAT Payable:  €${Number(s.totalVatPayable||((s.standardVatTotal||0)+(s.marginVatTotal||0))).toFixed(2)}
-</div>`;
+
+        // VAT 汇总
+        html+='<div class="monthly-summary">'+
+'=== Month-End VAT Summary / 月末VAT汇总 ===\n'+
+'Total Sales:          €'+Number(s.totalSales||0).toFixed(2)+'\n'+
+'Cash Total:           €'+Number(s.totalCash||0).toFixed(2)+'\n'+
+'Card Total:           €'+Number(s.totalCard||0).toFixed(2)+'\n'+
+'─────────────────────────────────\n'+
+'Standard 23% VAT:     €'+Number(s.standard23VatTotal||0).toFixed(2)+'\n'+
+'Margin Scheme VAT:    €'+Number(s.marginVatTotal||0).toFixed(2)+'\n'+
+'Reduced 13.5% VAT:    €'+Number(s.reduced135VatTotal||0).toFixed(2)+'\n'+
+'Lyca Credit VAT:      €'+Number(s.lycaCreditVatTotal||0).toFixed(2)+'\n'+
+'─────────────────────────────────\n'+
+'Total VAT Payable:    €'+Number(s.totalVatPayable||0).toFixed(2)+'\n'+
+'─────────────────────────────────\n'+
+'Expenses Total:       €'+Number(exp.total||0).toFixed(2)+'\n'+
+'  Cash Expenses:      €'+Number(exp.cash||0).toFixed(2)+'\n'+
+'  Card Expenses:      €'+Number(exp.card||0).toFixed(2)+'\n'+
+'─────────────────────────────────\n'+
+'Net Cash:             €'+Number(s.netCash||0).toFixed(2)+(s.cashWarning?'  ⚠️ '+s.cashWarning:'')+'\n'+
+'</div>';
+
+        // 支出分类
+        if(exp.byCategory){
+            var cats=Object.keys(exp.byCategory);
+            if(cats.length){
+                html+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">'+
+                    cats.map(function(k){return '<div style="background:#f5f5f7;border-radius:8px;padding:8px 14px;font-size:13px;">'+esc(k)+': <strong>€'+Number(exp.byCategory[k]).toFixed(2)+'</strong></div>';}).join('')+
+                '</div>';
+            }
         }
+
         el.innerHTML=html;
-    }catch(e){showToast('加载失败','error');}
+    }catch(e){showToast('加载失败: '+e.message,'error');}
 }
 window.loadMonthly=loadMonthly;
 
