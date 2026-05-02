@@ -280,8 +280,8 @@ async function loadDaily(){
     if(!date){toast('请选择日期','error');return;}
     document.getElementById('dailyBody').innerHTML='<tr><td colspan="6" class="no-data">加载中...</td></tr>';
     try{
-        // 报表汇总
-        var r=await apiFetch('/reports/daily?date='+date);if(!r)return;
+        // 统一用 startDate + endDate 范围查询，不传单个 date
+        var r=await apiFetch('/reports/daily?startDate='+date+'&endDate='+date);if(!r)return;
         var resp=await r.json();
         if(resp.message||!resp.data){
             document.getElementById('dailySummary').innerHTML='';
@@ -291,7 +291,7 @@ async function loadDaily(){
         renderSummary('dailySummary',resp.data);
         renderVatBreakdown('dailyVat',resp.data);
         // 交易明细列表
-        var r2=await apiFetch('/transactions?startDate='+date+'&endDate='+date+'&limit=100');if(!r2)return;
+        var r2=await apiFetch('/transactions?startDate='+date+'&endDate='+date+'&limit=500');if(!r2)return;
         var resp2=await r2.json();
         renderTxList('dailyBody',resp2.data||[]);
     }catch(e){toast('加载失败: '+e.message,'error');}
@@ -304,7 +304,21 @@ async function loadWeekly(){
     if(!week){toast('请选择周','error');return;}
     document.getElementById('weeklyBody').innerHTML='<tr><td colspan="6" class="no-data">加载中...</td></tr>';
     try{
-        var r=await apiFetch('/reports/weekly?week='+week);if(!r)return;
+        // 前端算出周一~周日日期范围
+        var match=week.match(/^(\d{4})-W(\d{1,2})$/);
+        var weekStart='',weekEnd='';
+        if(match){
+            var y=parseInt(match[1]),w=parseInt(match[2]);
+            var jan4=new Date(y,0,4);
+            var dow=jan4.getDay()||7;
+            var mon=new Date(jan4);
+            mon.setDate(jan4.getDate()-dow+1+(w-1)*7);
+            var sun=new Date(mon);sun.setDate(mon.getDate()+6);
+            weekStart=mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
+            weekEnd=sun.getFullYear()+'-'+String(sun.getMonth()+1).padStart(2,'0')+'-'+String(sun.getDate()).padStart(2,'0');
+        }
+        // 报表汇总 — 用 startDate+endDate 范围查询
+        var r=await apiFetch('/reports/weekly?startDate='+weekStart+'&week='+week);if(!r)return;
         var resp=await r.json();
         if(!resp.data){
             document.getElementById('weeklySummary').innerHTML='';
@@ -313,7 +327,6 @@ async function loadWeekly(){
         }
         var d=resp.data;
         var s=d.summary||{};
-        // 周报汇总用 summary 构造和日报一样的结构
         var fakeD={
             totalTransactions:0,totalSales:s.totalSales||0,
             payment:{cash:s.totalCash||0,card:s.totalCard||0},
@@ -326,13 +339,11 @@ async function loadWeekly(){
             totalVatPayable:s.totalVatPayable||0,
             expenses:s.expenses||{},netCash:s.netCash||0,cashWarning:s.cashWarning
         };
-        // 计算总交易笔数
-        (d.dailyData||[]).forEach(function(day){fakeD.totalTransactions+=(day.totalSales>0?1:0);});
         renderSummary('weeklySummary',fakeD);
         renderVatBreakdown('weeklyVat',fakeD);
-        // 交易明细
-        var startDate=d.weekStart;var endDate=d.weekEnd;
-        var r2=await apiFetch('/transactions?startDate='+startDate+'&endDate='+endDate+'&limit=500');if(!r2)return;
+        // 交易明细 — 用前端算好的范围
+        var sd=weekStart||d.weekStart;var ed=weekEnd||d.weekEnd;
+        var r2=await apiFetch('/transactions?startDate='+sd+'&endDate='+ed+'&limit=500');if(!r2)return;
         var resp2=await r2.json();
         fakeD.totalTransactions=(resp2.data||[]).length;
         renderSummary('weeklySummary',fakeD);
