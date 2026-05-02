@@ -1,78 +1,88 @@
-# Context Transfer — POS UI Redesign
+# Context Transfer — Remaining Tasks
 
-## Current State (as of latest commit)
+## How to Continue
+Copy this entire section into a new Kiro chat to resume work.
 
-### Project
+---
+
+## Project Info
 - **Repo**: `https://github.com/Lee15148863/teschcross`
-- **Branch**: `main`
-- **Deployment**: Cloud Run `teschcross-git` (europe-west1) → `techcross.ie`
 - **Local path**: `~/Documents/workspace/techcross/teschcross/`
+- **Branch**: `main`, auto-deploys to `techcross.ie` via Cloud Run
 - **Admin login**: username `Lee087`
+- **Git rules**: Don't push without permission. Commit first, push when user says "push".
+- **Security**: Don't display credentials in chat.
 
-### What's Done
-- Full POS system with product search, cart, checkout, receipt printing
-- Permission system (13 modules, per-user toggles)
-- Staff Portal with two tabs (Inventory + Management)
-- Transactions page with search, date filter, refund, reprint
-- Receipt with full shop info, T&C, VAT breakdown
-- Inline expandable panels for Sale/Repair/Used (replaced popups)
-- Reports: daily/weekly/monthly with 4 VAT categories + Lyca + expenses
-- Expense tracking system
-- Split payment (card + cash)
-- 426 tests passing
+---
 
-### What Needs To Be Done — POS UI Redesign
+## Remaining Tasks (Priority Order)
 
-**Goal**: Merge the right Action Sidebar and Cart Panel into one unified professional POS interface.
+### Task 1: POS UI — Remove inline styles/onclick (HIGH)
+- File: `teschcross/inv-pos.html`
+- Move all inline `onclick="..."` to JS event listeners
+- Move all inline `style="..."` to CSS classes
+- Keep all existing functionality intact
+- Test: all buttons, shortcuts, cart, checkout, receipt still work
 
-**Requirements**:
-1. **Layout**: Action bar on top → Cart + Checkout below. Single unified right panel.
-2. **Styling**: Unified border-radius 10-12px, consistent padding/fonts, hover effects, disabled states, alternating row colors, sticky table header, bold amounts, green change display.
-3. **Functionality**: Empty cart state, auto-show table when items added, Clear only when cart not empty, Checkout only when amount > 0, discount auto-recalculates VAT, Standard/Margin VAT auto-detection, auto change calculation.
-4. **Interaction**: Full keyboard shortcuts (F1-F6, Enter, Esc, Del, arrows), touch-friendly, no flicker, formatted amounts.
-5. **Code quality**: CSS class names (no inline styles), JS event listeners (no inline onclick), i18n support, maintainable.
+### Task 2: All inv-* pages — Sidebar permission hiding (HIGH)
+- Files: `inv-products.html`, `inv-stock.html`, `inv-suppliers.html`, `inv-purchases.html`, `inv-reports.html`, `inv-invoices.html`, `inv-settings.html`, `inv-users.html`
+- Each page has a sidebar with nav links
+- Add `data-perm="xxx"` to each nav link
+- In JS: read `user.permissions` from localStorage, hide links where permission is false
+- Admin sees all. Staff sees only permitted modules.
+- Reference: `inv-transactions.html` already has this implemented
 
-### Key Files
-- `teschcross/inv-pos.html` — THE file to rewrite (~1800 lines)
-- `teschcross/api/inv/transactions.js` — checkout/refund API
-- `teschcross/utils/inv-receipt-generator.js` — receipt content
-- `teschcross/utils/inv-discount-calculator.js` — discount engine
-- `teschcross/utils/inv-vat-calculator.js` — VAT calculation
-- `teschcross/models/inv/Product.js` — product schema with permissions
-- `teschcross/models/inv/User.js` — user schema with permissions
+### Task 3: All inv-* pages — Bilingual labels (MEDIUM)
+- All 14 inv-*.html pages need Chinese + English labels
+- Format: `Chinese / English` (e.g. "商品管理 / Products")
+- Sidebar nav, page titles, table headers, button labels, form labels
+- Output (receipts, reports) stays English only
+- POS page already has i18n system — other pages need similar
 
-### Current POS Layout (3 columns)
-```
-[Left 30%: Search + Quick Add Panels] [Center: Cart + Checkout] [Right 20%: Action Sidebar]
-```
+### Task 4: inv-expenses.html — Complete frontend (MEDIUM)
+- API exists at `/api/inv/expenses`
+- Need a proper frontend page with:
+  - Add expense form (category, amount, payment method, date, description)
+  - Expense list with date filter
+  - Category summary
+  - Delete button (admin only)
+- Categories: Lyca Credit, 收购客人商品, 店铺杂费, 其他
 
-### Target POS Layout (2 columns)
-```
-[Left 35%: Search + Quick Add Panels] [Right 65%: Action Bar + Cart + Checkout]
-```
+### Task 5: Local Till version — Sync latest code (LOW)
+- Desktop app at `~/Desktop/Till/`
+- Copy updated HTML files from teschcross/public to Till/public
+- Update Till server routes to match latest teschcross API changes
+- Rebuild: `cd ~/Desktop/Till && npx electron-builder --win --dir`
 
-### Existing Features to Preserve
-- Product search (name/SKU/IMEI)
-- Inline Sale/Repair/Used panels (expandable, no popups)
-- Cart: add/remove items, quantity +/-, inline discount per item
-- Per-item VAT rate display (23%, 13.5%, Margin)
-- Order discount (F2 modal)
-- Split payment (card + cash inputs)
-- Change calculation
-- Checkout → completion screen (Print Receipt / New Transaction)
-- F1=Search, F2=Discount, F3=Card/Cash, F4=Print, F5=New, F6=Orders
-- Language toggle (中/EN)
-- Receipt preview with full shop info + T&C
+---
 
-### i18n Keys (zh/en)
-Both languages defined for: posTitle, cartTitle, clearCartText, emptyCartText, checkoutText, thProduct, thPrice, thDisc, thQty, thTax, thSubtotal, lblSubtotal, lblDiscount, lblTotal, lblCardAmount, lblCashAmount, scSearch, scDiscount, scPayment, scCheckout, scClear, scRemove, scNavUp, scNavDown, sidebarTitle, scOrderSearch, scRefund, dmTitle, dmItemLabel, dmOrderLabel, lblStdVat, lblMarginVat, quickAddText, qaTitle, qaBtnSave, qaBtnCancel, qaLblName, qaLblSku, qaLblCat, qaLblCost, qaLblPrice, qaLblQty, qaLblSH, qaLblSource, qaLblMargin, qaLblVat, scPrint, scNavUp, scNavDown, sidebarTitle, scOrderSearch, scRefund
+## Key Architecture Notes
 
-### Git Rules
-- Don't push without permission
-- Commit first, push when user says "push"
-- Username: Lee15148863, email: Lee15148863@gmail.com
+### Permission System
+- User model: `models/inv/User.js` has `permissions` field with 13 boolean keys
+- Admin always has all permissions (via `getPermissions()` method)
+- Login API returns `user.permissions` object
+- Frontend stores in `localStorage('inv_user')`
+- Check: `var perms = user.permissions || {}; if (perms.products) { show(); }`
 
-### Security
-- Don't display credentials in chat
-- .env uses placeholders
-- Steering file: `.kiro/steering/security-practices.md`
+### POS Page Structure (inv-pos.html)
+- Left panel (35%): search + inline Sale/Repair/Used panels
+- Right panel (65%): action bar (dark) + cart table + checkout area
+- Keyboard: F1=Search, F2=Discount, F3=Card/Cash, F4=Print, F5=New, F6=Orders
+- Cart state: `cart[]` array, `selectedCartIndex`, `orderDiscount`, `paymentMethod`
+- i18n: `lang` variable, `i18n.zh` / `i18n.en` objects, `t(key)` function, `updateLang()`
+
+### Receipt System
+- POS: `buildReceiptPreviewHtml(r)` generates HTML
+- Transactions page: inline HTML in `reprintReceipt()`
+- Print: tries localhost:9100 Print Agent first, falls back to browser print
+- Size: 68mm width, font-weight:600, @page size:68mm auto
+
+### Reports API
+- `/api/inv/reports/daily?date=YYYY-MM-DD`
+- `/api/inv/reports/weekly?startDate=YYYY-MM-DD`
+- `/api/inv/reports/monthly?month=YYYY-MM`
+- 4 VAT categories: standard23, margin, reduced135, lycaCredit
+- Includes expenses from Expense table
+- netCash = cash income - cash expenses
+- cashWarning when netCash < 0
