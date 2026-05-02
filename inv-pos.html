@@ -841,8 +841,8 @@
         thProduct: '商品', thPrice: '单价', thDisc: '折扣', thQty: '数量', thTax: '税率', thSubtotal: '小计',
         lblSubtotal: '小计:', lblDiscount: '折扣:', lblTotal: '总计',
         lblCardAmount: '💳 卡:', lblCashAmount: '💵 现金:',
-        scSearch: '搜索', scDiscount: '折扣', scPayment: '卡/现金', scReprint: '重打小票',
-        scCheckout: '结账', scClear: '清空', scRemove: '移除', scNav: '导航',
+        scSearch: '搜索', scDiscount: 'F1 折扣', scPayment: '卡/现金', scReprint: '重打小票',
+        scCheckout: 'F4 结账', scClear: '清空', scRemove: '移除', scNav: '导航',
         scPrint: '打印小票', scNavUp: '上移', scNavDown: '下移', sidebarTitle: '操作', scOrderSearch: '查单', scRefund: '退款',
         confirmClearTitle: '确认清空', confirmClearMsg: '确定要清空购物车吗？', confirmCancel: '取消', confirmOk: '确定',
         dmTitle: '应用折扣', dmItemLabel: '单品折扣（选中商品）', dmOrderLabel: '整单折扣',
@@ -859,8 +859,8 @@
         thProduct: 'Product', thPrice: 'Price', thDisc: 'Disc.', thQty: 'Qty', thTax: 'Tax', thSubtotal: 'Subtotal',
         lblSubtotal: 'Subtotal:', lblDiscount: 'Discount:', lblTotal: 'Total',
         lblCardAmount: '💳 Card:', lblCashAmount: '💵 Cash:',
-        scSearch: 'Search', scDiscount: 'Discount', scPayment: 'Card/Cash', scReprint: 'Reprint',
-        scCheckout: 'Checkout', scClear: 'Clear', scRemove: 'Remove', scNav: 'Navigate',
+        scSearch: 'Search', scDiscount: 'F1 Discount', scPayment: 'Card/Cash', scReprint: 'Reprint',
+        scCheckout: 'F4 Checkout', scClear: 'Clear', scRemove: 'Remove', scNav: 'Navigate',
         scPrint: 'Print Receipt', scNavUp: 'Up', scNavDown: 'Down', sidebarTitle: 'Actions', scOrderSearch: 'Orders', scRefund: 'Refund',
         confirmClearTitle: 'Confirm Clear', confirmClearMsg: 'Clear all items from cart?', confirmCancel: 'Cancel', confirmOk: 'Confirm',
         dmTitle: 'Apply Discount', dmItemLabel: 'Item Discount (selected)', dmOrderLabel: 'Order Discount',
@@ -1362,22 +1362,48 @@
         document.getElementById('cardAmount').value = '';
         btn.disabled = true;
 
-        // Show checkout complete screen in cart area
+        // Show checkout complete screen with receipt preview in cart area
         var receiptNum = (data.transaction || data).receiptNumber;
         var totalAmt = (data.transaction || data).totalAmount;
+        var txn = data.transaction || data;
         var cartArea = document.getElementById('cartArea');
         document.getElementById('cartTable').style.display = 'none';
         document.getElementById('cartEmpty').style.display = 'none';
-        cartArea.innerHTML = '<div style="text-align:center;padding:40px 20px;">' +
-          '<div style="font-size:64px;margin-bottom:16px;">✅</div>' +
-          '<h2 style="font-size:24px;font-weight:700;margin-bottom:8px;">Transaction Complete</h2>' +
-          '<p style="font-size:18px;color:#6e6e73;margin-bottom:4px;">Receipt #' + receiptNum + '</p>' +
-          '<p style="font-size:28px;font-weight:700;margin-bottom:24px;">€' + Number(totalAmt).toFixed(2) + '</p>' +
-          '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">' +
-          '<button class="pos-btn-pill pos-btn-pill-primary" id="btnPrintReceipt" style="padding:14px 28px;font-size:16px;">🖨️ Print Receipt</button>' +
-          '<button class="pos-btn-pill" id="btnNewTx" style="padding:14px 28px;border:none;border-radius:980px;background:#0071e3;color:#fff;font-size:16px;font-weight:600;cursor:pointer;">➕ New Transaction</button>' +
+
+        // Build receipt preview
+        var rxItems = '';
+        (txn.items || []).forEach(function(it) {
+          var price = (it.discountedPrice != null ? it.discountedPrice : it.unitPrice) || 0;
+          var total = price * (it.quantity || 1);
+          rxItems += '<div style="display:flex;justify-content:space-between;font-size:13px;margin:2px 0;"><span>' + (it.quantity > 1 ? it.quantity + 'x ' : '') + escHtml(it.name) + '</span><span>€' + total.toFixed(2) + '</span></div>';
+          if (it.serialNumber) rxItems += '<div style="font-size:11px;color:#0071e3;">SN: ' + escHtml(it.serialNumber) + '</div>';
+        });
+
+        var pmLabel = txn.paymentMethod === 'split' ? 'Card+Cash' : txn.paymentMethod === 'card' ? 'Card' : 'Cash';
+
+        cartArea.innerHTML = '<div style="text-align:center;padding:30px 20px;">' +
+          '<div style="font-size:60px;margin-bottom:10px;">✅</div>' +
+          '<h2 style="font-size:24px;font-weight:700;margin:0 0 8px;">Transaction Complete</h2>' +
+          '<p style="font-size:16px;color:#6e6e73;margin:0;">Receipt #' + receiptNum + '</p>' +
+          '<p style="font-size:30px;font-weight:700;margin:12px 0 20px;">€' + Number(totalAmt).toFixed(2) + '</p>' +
+          // Receipt preview box
+          '<div style="background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px;margin:0 auto 20px;max-width:320px;text-align:left;font-family:monospace;font-size:13px;line-height:1.5;">' +
+            '<div style="text-align:center;font-weight:700;font-size:15px;">Tech Cross</div>' +
+            '<div style="text-align:center;color:#aaa;margin:4px 0;">──────────────────────</div>' +
+            rxItems +
+            '<div style="text-align:center;color:#aaa;margin:4px 0;">──────────────────────</div>' +
+            '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;"><span>TOTAL</span><span>€' + Number(totalAmt).toFixed(2) + '</span></div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:12px;color:#6e6e73;margin-top:4px;"><span>Payment</span><span>' + pmLabel + '</span></div>' +
+            (txn.cashReceived ? '<div style="display:flex;justify-content:space-between;font-size:12px;color:#6e6e73;"><span>Cash</span><span>€' + Number(txn.cashReceived).toFixed(2) + '</span></div>' : '') +
+            (txn.changeGiven > 0 ? '<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;"><span>Change</span><span>€' + Number(txn.changeGiven).toFixed(2) + '</span></div>' : '') +
+            '<div style="text-align:center;margin-top:8px;font-size:12px;color:#6e6e73;">Thank you!</div>' +
           '</div>' +
-          '<button class="pos-btn-pill pos-btn-pill-secondary" id="btnNoReceiptNeeded" style="margin-top:16px;padding:10px 20px;font-size:14px;">No Receipt Needed</button>' +
+          // Action buttons with shortcut hints
+          '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">' +
+          '<button class="pos-btn-pill pos-btn-pill-primary" id="btnPrintReceipt" style="padding:14px 28px;font-size:16px;">🖨️ F3 Print Receipt</button>' +
+          '<button class="pos-btn-pill" id="btnNewTx" style="padding:14px 28px;border:none;border-radius:980px;background:#0071e3;color:#fff;font-size:16px;font-weight:600;cursor:pointer;">➕ F2 New Transaction</button>' +
+          '</div>' +
+          '<button style="margin-top:16px;background:none;border:none;color:#6e6e73;font-size:14px;cursor:pointer;" id="btnNoReceiptNeeded">No Receipt Needed</button>' +
           '</div>';
 
         // Attach event listeners to dynamically created buttons
@@ -1819,18 +1845,14 @@
       var tag = (e.target.tagName || '').toLowerCase();
       var isInput = tag === 'input' || tag === 'select' || tag === 'textarea';
 
-      if (e.key === 'F1') { e.preventDefault(); searchInput.focus(); searchInput.select(); }
-      else if (e.key === 'F2') { e.preventDefault(); openDiscountModal(); }
+      if (e.key === 'F1') { e.preventDefault(); openDiscountModal(); }
+      else if (e.key === 'F2') { e.preventDefault(); startNewTransaction(); }
       else if (e.key === 'F3') {
         e.preventDefault();
-        // Toggle focus between card and cash inputs
-        var cardInput = document.getElementById('cardAmount');
-        var cashInput = document.getElementById('cashReceived');
-        if (document.activeElement === cardInput) { cashInput.focus(); cashInput.select(); }
-        else { cardInput.focus(); cardInput.select(); }
+        doPrintReceipt();
       }
-      else if (e.key === 'F4') { e.preventDefault(); doPrintReceipt(); }
-      else if (e.key === 'F5') { e.preventDefault(); startNewTransaction(); }
+      else if (e.key === 'F4') { e.preventDefault(); doCheckout(); }
+      else if (e.key === 'F5') { e.preventDefault(); searchInput.focus(); searchInput.select(); }
       else if (e.key === 'F6') { e.preventDefault(); window.open('/inv-transactions.html', '_blank'); }
       else if (e.key === 'Enter' && !isInput) { e.preventDefault(); doCheckout(); }
       else if (e.key === 'Escape') {
