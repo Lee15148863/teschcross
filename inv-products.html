@@ -198,11 +198,12 @@ if(!user){window.location.href='inv-login.html';return;}
 
 document.getElementById('displayName').textContent=user.displayName||user.username;
 document.getElementById('roleBadge').textContent=user.role==='admin'?'管理员':'员工';
-if(user.role==='admin'){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
+var isAdmin=user.role==='admin';
+if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
 
 // Hide sidebar items based on permissions
 var perms=user.permissions||{};
-if(user.role==='admin'){document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});}
+if(isAdmin){document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});}
 else{document.querySelectorAll('nav a[data-perm]').forEach(function(a){if(!perms[a.dataset.perm])a.style.display='none';});}
 
 const API='/api/inv';
@@ -233,15 +234,19 @@ async function loadProducts(page){
         if(!data.data||data.data.length===0){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">暂无商品数据</td></tr>';renderPagination();return;}
         tb.innerHTML=data.data.map(p=>{
             if(p.category)categories.add(p.category);
-            return `<tr>
-                <td><strong>${esc(p.name)}</strong>${p.isSecondHand?' <span class="badge badge-secondhand">二手</span>':''}</td>
+            var stockWarn=p.stock>4?'<span style="color:#ff9500;font-weight:600;" title="库存>4，检查是否死库存">⚠️ '+p.stock+'</span>':(p.stock>0&&p.stock<=p.lowStockThreshold?'<span style="color:#ff3b30;font-weight:600;">'+p.stock+'</span>':''+p.stock);
+            var deadBadge=p.deadStock?'<span class="badge" style="background:#fef2f2;color:#991b1b;margin-left:4px;">死库存</span>':'';
+            var deadBtn=p.stock>4||p.deadStock?(isAdmin?'<button class="btn btn-sm" style="background:'+(p.deadStock?'#34c759':'#ff9500')+';color:#fff;" onclick="toggleDeadStock(\''+p._id+'\','+!!p.deadStock+')">'+(p.deadStock?'取消死库存':'标记死库存')+'</button>':''):'';
+            return `<tr style="${p.deadStock?'background:#fef2f2;':''}">
+                <td><strong>${esc(p.name)}</strong>${p.isSecondHand?' <span class="badge badge-secondhand">二手</span>':''}${deadBadge}</td>
                 <td style="font-family:monospace;font-size:13px;">${esc(p.sku)}</td>
                 <td>${esc(p.category||'-')}</td>
-                <td>${p.stock>0&&p.stock<=p.lowStockThreshold?'<span style="color:#ff3b30;font-weight:600;">'+p.stock+'</span>':p.stock}</td>
+                <td>${stockWarn}</td>
                 <td>€${Number(p.sellingPrice).toFixed(2)}</td>
                 <td>${p.active?'<span class="badge badge-active">启用</span>':'<span class="badge badge-inactive">停用</span>'}</td>
                 <td>
                     <button class="btn btn-secondary btn-sm" onclick="editProduct('${p._id}')">编辑</button>
+                    ${deadBtn}
                     <button class="btn ${p.active?'btn-danger':'btn-success'} btn-sm" onclick="toggleProduct('${p._id}',${p.active})">${p.active?'停用':'启用'}</button>
                     <button class="btn btn-sm" style="background:#6e6e73;color:#fff;" onclick="deleteProduct('${p._id}','${esc(p.name)}')">删除</button>
                 </td>
@@ -461,6 +466,20 @@ async function deleteProduct(id,name){
     }catch(e){showToast('删除失败','error');}
 }
 window.deleteProduct=deleteProduct;
+
+async function toggleDeadStock(id,currentlyDead){
+    var action=currentlyDead?'取消死库存标记':'标记为死库存';
+    if(!confirm(action+'？'))return;
+    try{
+        var r=await apiFetch('/products/'+id+'/dead-stock',{method:'PUT'});
+        if(!r)return;
+        if(!r.ok){var e=await r.json();showToast(e.error||'操作失败','error');return;}
+        var data=await r.json();
+        showToast(data.name+' → '+(data.deadStock?'已标记死库存':'已取消死库存'));
+        loadProducts(currentPage);
+    }catch(e){showToast('操作失败','error');}
+}
+window.toggleDeadStock=toggleDeadStock;
 
 window.loadProducts=loadProducts;
 loadProducts(1);

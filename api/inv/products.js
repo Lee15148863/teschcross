@@ -279,6 +279,9 @@ router.put('/:id', async (req, res) => {
     if (lowStockThreshold !== undefined) updateFields.lowStockThreshold = lowStockThreshold;
     if (active !== undefined) updateFields.active = active;
 
+    // deadStock flag
+    if (req.body.deadStock !== undefined) updateFields.deadStock = req.body.deadStock;
+
     // SKU update with uniqueness check (no format validation - accept any string including barcodes)
     if (sku !== undefined) {
       // Check uniqueness (exclude current product)
@@ -363,6 +366,28 @@ router.put('/:id/disable', async (req, res) => {
     }
 
     res.json(product);
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(404).json({ error: '商品不存在' });
+    }
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// ─── PUT /api/inv/products/:id/dead-stock ───────────────────────────────────
+// Toggle dead stock flag (Admin only)
+router.put('/:id/dead-stock', requireRole('admin'), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: '商品不存在' });
+    }
+
+    product.deadStock = !product.deadStock;
+    product.updatedAt = new Date();
+    await product.save();
+
+    res.json({ _id: product._id, name: product.name, deadStock: product.deadStock, stock: product.stock });
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(404).json({ error: '商品不存在' });

@@ -15,6 +15,7 @@ const ProductSchema = new mongoose.Schema({
   serialNumber: { type: String, trim: true },
   attributes:   { type: mongoose.Schema.Types.Mixed, default: {} },
   active:       { type: Boolean, default: true },
+  deadStock:    { type: Boolean, default: false },
   lowStockThreshold: { type: Number, default: 10 },
   createdAt:    { type: Date, default: Date.now },
   updatedAt:    { type: Date, default: Date.now }
