@@ -473,19 +473,27 @@ router.get('/', async (req, res) => {
       filter.receiptNumber = { $regex: q.trim(), $options: 'i' };
     }
 
-    // Date range filter
+    // Date range filter — parse as local dates to avoid UTC timezone shift
     if (startDate || endDate) {
       filter.createdAt = {};
-      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (startDate) {
+        const p = startDate.split('-');
+        if (p.length === 3) filter.createdAt.$gte = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]), 0, 0, 0, 0);
+        else filter.createdAt.$gte = new Date(startDate);
+      }
       if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        filter.createdAt.$lte = end;
+        const p = endDate.split('-');
+        if (p.length === 3) filter.createdAt.$lte = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]), 23, 59, 59, 999);
+        else {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          filter.createdAt.$lte = end;
+        }
       }
     }
 
     const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
+    const limitNum = Math.min(500, Math.max(1, parseInt(limit) || 20));
     const skip = (pageNum - 1) * limitNum;
 
     const [transactions, total] = await Promise.all([
@@ -526,11 +534,19 @@ router.get('/export', async (req, res) => {
     const filter = {};
     if (startDate || endDate) {
       filter.createdAt = {};
-      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (startDate) {
+        const p = startDate.split('-');
+        if (p.length === 3) filter.createdAt.$gte = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]), 0, 0, 0, 0);
+        else filter.createdAt.$gte = new Date(startDate);
+      }
       if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        filter.createdAt.$lte = end;
+        const p = endDate.split('-');
+        if (p.length === 3) filter.createdAt.$lte = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]), 23, 59, 59, 999);
+        else {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          filter.createdAt.$lte = end;
+        }
       }
     }
 
