@@ -642,26 +642,8 @@ router.delete('/:id/delete', requireRole('admin'), async (req, res) => {
       type: 'exit'
     });
 
-    // Create AuditLog with encrypted data
-    try {
-      const encryptedData = encryptData({
-        transaction: transaction.toObject(),
-        deletedAt: new Date().toISOString(),
-        deletedBy: req.user.username
-      });
-
-      await AuditLog.create({
-        action: 'silent_delete',
-        operator: req.user.userId,
-        targetType: 'transaction',
-        targetId: transaction._id.toString(),
-        encryptedData,
-        ip: req.ip || req.connection?.remoteAddress
-      });
-    } catch (auditErr) {
-      // Log audit error but don't block deletion
-      console.error('审计日志创建失败:', auditErr.message);
-    }
+    // Create AuditLog with encrypted data — DISABLED per requirement: no delete audit log
+    // Deletion is permanent, no logging
 
     // Physically delete the transaction
     await Transaction.findByIdAndDelete(transaction._id);
@@ -724,25 +706,7 @@ router.delete('/batch-delete', requireRole('admin'), async (req, res) => {
         type: 'exit'
       });
 
-      // Create AuditLog
-      try {
-        const encryptedData = encryptData({
-          transaction: transaction.toObject(),
-          deletedAt: new Date().toISOString(),
-          deletedBy: req.user.username
-        });
-
-        await AuditLog.create({
-          action: 'batch_delete',
-          operator: req.user.userId,
-          targetType: 'transaction',
-          targetId: transaction._id.toString(),
-          encryptedData,
-          ip: req.ip || req.connection?.remoteAddress
-        });
-      } catch (auditErr) {
-        console.error('审计日志创建失败:', auditErr.message);
-      }
+      // AuditLog — DISABLED per requirement: no delete audit log
 
       deletedReceipts.push(transaction.receiptNumber);
     }
