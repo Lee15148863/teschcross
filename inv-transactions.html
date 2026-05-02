@@ -226,7 +226,7 @@ window.viewDetail=viewDetail;
 async function silentDelete(id){
     if(!confirm('⚠️ 无痕删除\n\n此操作将永久删除该交易记录并恢复库存。\n确定要继续吗？'))return;
     if(!confirm('再次确认：此操作不可撤销，确定删除？'))return;
-    try{const r=await apiFetch('/transactions/'+id+'/delete',{method:'DELETE'});if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}showToast('交易已删除');loadTransactions();}catch(e){showToast('删除失败','error');}
+    try{const r=await apiFetch('/transactions/'+id+'/delete',{method:'DELETE',body:JSON.stringify({confirm:true})});if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}showToast('交易已删除');loadTransactions();}catch(e){showToast('删除失败','error');}
 }
 window.silentDelete=silentDelete;
 
@@ -254,9 +254,20 @@ async function batchDelete(){
     if(!confirm('⚠️ 批量删除已导出记录\n\n此操作将删除所有已标记为"已导出"的交易记录。\n确定要继续吗？'))return;
     if(!confirm('再次确认：此操作不可撤销，确定批量删除？'))return;
     try{
-        const r=await apiFetch('/transactions/batch-delete',{method:'DELETE',body:JSON.stringify({confirmed:true})});
+        // 先查出当前筛选范围内所有已导出的交易ID
+        const start=document.getElementById('startDate').value;
+        const end=document.getElementById('endDate').value;
+        let url='/transactions?limit=500&exported=true';
+        if(start)url+='&startDate='+start;
+        if(end)url+='&endDate='+end;
+        const listR=await apiFetch(url);if(!listR)return;
+        const listData=await listR.json();
+        const exported=(listData.data||[]).filter(t=>t.exported);
+        if(!exported.length){showToast('没有已导出的记录可删除','error');return;}
+        const ids=exported.map(t=>t._id);
+        const r=await apiFetch('/transactions/batch-delete',{method:'DELETE',body:JSON.stringify({confirm:true,ids:ids})});
         if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}
-        const data=await r.json();showToast(`已删除 ${data.deletedCount||0} 条记录`);loadTransactions();
+        const data=await r.json();showToast(data.message||'批量删除完成');loadTransactions();
     }catch(e){showToast('批量删除失败','error');}
 }
 window.batchDelete=batchDelete;
