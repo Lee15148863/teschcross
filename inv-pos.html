@@ -621,6 +621,7 @@
                     <button class="panel-btn panel-btn-sale" id="btnQuickAdd" data-panel="sale">+ <span id="quickAddText">Sale</span></button>
                     <button class="panel-btn panel-btn-repair" data-panel="repair">+ 🔧 Repair</button>
                     <button class="panel-btn panel-btn-used" data-panel="used">+ 📱 Used</button>
+                    <button class="panel-btn panel-btn-used" data-panel="buy-used" style="border-color:#34c759;">+ 🛒 Buy</button>
                 </div>
                 <!-- Inline Panels -->
                 <div id="inlinePanel" class="inline-panel"></div>
@@ -882,6 +883,9 @@
       });
       document.getElementById('searchInput').placeholder = t('searchPlaceholder');
       document.getElementById('hintText').innerHTML = t('hintText');
+      // Update repair panel title if open
+      var repairTitle = document.querySelector('.ip-repair-title');
+      if (repairTitle) repairTitle.textContent = lang === 'zh' ? '快速维修' : 'Quick Repair';
       renderCart();
     }
 
@@ -1396,6 +1400,13 @@
             '<div style="display:flex;justify-content:space-between;font-size:12px;color:#6e6e73;margin-top:4px;"><span>Payment</span><span>' + pmLabel + '</span></div>' +
             (txn.cashReceived ? '<div style="display:flex;justify-content:space-between;font-size:12px;color:#6e6e73;"><span>Cash</span><span>€' + Number(txn.cashReceived).toFixed(2) + '</span></div>' : '') +
             (txn.changeGiven > 0 ? '<div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;"><span>Change</span><span>€' + Number(txn.changeGiven).toFixed(2) + '</span></div>' : '') +
+            // Repair info on success screen receipt preview (always English)
+            (window._lastRepairInfo ? '<div style="border-top:1px dashed #ccc;margin-top:6px;padding-top:6px;font-size:11px;line-height:1.5;">' +
+              '<div style="font-weight:700;">🔧 REPAIR [' + window._lastRepairInfo.orderTypeLabel + ']</div>' +
+              'Fault: ' + escHtml(window._lastRepairInfo.fault) + '<br>' +
+              'Condition: ' + escHtml(window._lastRepairInfo.condition) + '<br>' +
+              'Test: ' + escHtml(window._lastRepairInfo.testStatus) + '<br>' +
+              'Notes: ' + escHtml(window._lastRepairInfo.notes) + '</div>' : '') +
             '<div style="text-align:center;margin-top:8px;font-size:12px;color:#6e6e73;">Thank you!</div>' +
           '</div>' +
           // Action buttons with shortcut hints
@@ -1499,6 +1510,9 @@
 
     function clearCartAfterCheckout() {
       cart = []; selectedCartIndex = -1; orderDiscount = null;
+      window._lastRepairInfo = null;
+      window._repairInfoMap = {};
+      window._lastUsedDeviceInfo = null;
       renderCart();
       searchInput.value = '';
       showSearchHint();
@@ -1571,6 +1585,32 @@
         h += '<div style="margin-bottom:10px;font-size:13px;border-bottom:1px dashed #000;padding-bottom:10px;">';
         if (r.standardVatTotal > 0) h += '<div style="display:flex;justify-content:space-between;"><span>VAT (23%)</span><span>€' + r.standardVatTotal.toFixed(2) + '</span></div>';
         if (r.marginVatTotal > 0) h += '<div style="display:flex;justify-content:space-between;"><span>Margin VAT</span><span>€' + r.marginVatTotal.toFixed(2) + '</span></div>';
+        h += '</div>';
+      }
+
+      // ═══ REPAIR INFO (always English) ═══
+      if (window._lastRepairInfo) {
+        var ri = window._lastRepairInfo;
+        h += '<div style="border-top:2px solid #000;padding:10px 0;margin-bottom:10px;">';
+        h += '<div style="text-align:center;font-weight:700;font-size:13px;margin-bottom:6px;">🔧 REPAIR DETAILS</div>';
+        h += '<div style="font-size:13px;font-weight:700;margin-bottom:4px;">[' + ri.orderTypeLabel + ']</div>';
+        h += '<div style="font-size:12px;line-height:1.6;">';
+        h += 'Fault: ' + escHtml(ri.fault) + '<br>';
+        h += 'Condition: ' + escHtml(ri.condition) + '<br>';
+        h += 'Test Status: ' + escHtml(ri.testStatus) + '<br>';
+        h += 'Notes: ' + escHtml(ri.notes);
+        h += '</div></div>';
+      }
+
+      // ═══ USED DEVICE INFO (always English) ═══
+      if (window._lastUsedDeviceInfo) {
+        var ui = window._lastUsedDeviceInfo;
+        h += '<div style="border-top:1px dashed #000;padding:8px 0;margin-bottom:10px;font-size:12px;line-height:1.6;">';
+        h += '<div style="font-weight:700;margin-bottom:4px;">📱 PRE-OWNED DEVICE</div>';
+        if (ui.serial) h += 'Serial/IMEI: ' + escHtml(ui.serial) + '<br>';
+        if (ui.cost > 0) h += 'Cost: €' + Number(ui.cost).toFixed(2) + '<br>';
+        if (ui.notes) h += 'Notes: ' + escHtml(ui.notes) + '<br>';
+        if (ui.source) h += 'Source: ' + escHtml(ui.source);
         h += '</div>';
       }
 
@@ -1953,8 +1993,9 @@
       if (type === 'sale') html = buildSalePanel();
       else if (type === 'repair') html = buildRepairPanel();
       else if (type === 'used') html = buildUsedPanel();
+      else if (type === 'buy-used') html = buildBuyUsedPanel();
       panel.innerHTML = html;
-      panel.style.maxHeight = '500px';
+      panel.style.maxHeight = '600px';
       setTimeout(function() { var first = panel.querySelector('input'); if (first) first.focus(); }, 100);
     };
 
@@ -1976,10 +2017,46 @@
 
     function buildRepairPanel() {
       return '<div style="background:#f0f7ff;border:1px solid #0071e3;border-radius:10px;padding:12px;margin-top:8px;">' +
-        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">+ 🔧 Quick Repair</div>' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">+ 🔧 <span class="ip-repair-title">Quick Repair</span></div>' +
         '<div style="margin-bottom:6px;"><input id="ipName" placeholder="e.g. Screen Repair iPhone 15 *" style="' + _panelInputs + '"></div>' +
         '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="ipSku" placeholder="SKU (any format)" style="flex:1;' + _panelInputs + '"><input id="ipPrice" type="number" step="0.01" placeholder="Price € *" style="flex:1;' + _panelInputs + '"></div>' +
-        '<div style="margin-bottom:6px;"><input id="ipSerial" placeholder="IMEI / SN (for search)" style="' + _panelInputs + '"></div>' +
+        '<div style="margin-bottom:6px;"><input id="ipSerial" placeholder="IMEI / SN *" style="' + _panelInputs + '"></div>' +
+        // 付款 / 送修
+        '<div style="margin-bottom:6px;"><select id="ipOrderType" style="width:100%;' + _panelInputs + '">' +
+          '<option value="PAID">Paid - 已付款</option>' +
+          '<option value="REPAIR_ONLY">Customer Drop-off - 送修未付款</option>' +
+        '</select></div>' +
+        // 故障类型
+        '<div style="margin-bottom:6px;"><select id="ipFault" style="width:100%;' + _panelInputs + '">' +
+          '<option value="">Select Fault * 故障类型</option>' +
+          '<option value="Broken Screen">Broken Screen 坏屏</option>' +
+          '<option value="No Charging">No Charging 不充电</option>' +
+          '<option value="Camera Fault">Camera Fault 相机损坏</option>' +
+          '<option value="No Power">No Power 不开机</option>' +
+          '<option value="Water Damage">Water Damage 进水</option>' +
+          '<option value="Battery Issue">Battery Issue 电池问题</option>' +
+          '<option value="Speaker/Mic">Speaker/Mic 听筒/麦克风</option>' +
+          '<option value="Software Issue">Software Issue 软件问题</option>' +
+          '<option value="Other">Other 其他</option>' +
+        '</select></div>' +
+        // 外观状态
+        '<div style="margin-bottom:6px;"><select id="ipCondition" style="width:100%;' + _panelInputs + '">' +
+          '<option value="">Physical Condition 外观状态</option>' +
+          '<option value="Good">Good 完好</option>' +
+          '<option value="Back Broken">Back Broken 后盖碎</option>' +
+          '<option value="Frame Bent">Frame Bent 中框变形</option>' +
+          '<option value="Scratches">Scratches 明显划痕</option>' +
+          '<option value="Multiple Damage">Multiple Damage 多处损坏</option>' +
+        '</select></div>' +
+        // 检测状态
+        '<div style="margin-bottom:6px;"><select id="ipTestStatus" style="width:100%;' + _panelInputs + '">' +
+          '<option value="">Test Status 检测状态</option>' +
+          '<option value="Testable">Testable 可测试</option>' +
+          '<option value="Cannot Test">Cannot Test 不能测试</option>' +
+          '<option value="Need Diagnose">Need Diagnose 需拆机检测</option>' +
+        '</select></div>' +
+        // 备注
+        '<div style="margin-bottom:6px;"><input id="ipNotes" placeholder="Notes / Customer description 备注" style="' + _panelInputs + '"></div>' +
         '<input type="hidden" id="ipVat" value="13.5"><input type="hidden" id="ipCat" value="维修"><input type="hidden" id="ipCost" value="0">' +
         '<div style="display:flex;gap:6px;"><button class="ip-submit" data-cat="维修" style="flex:1;' + _panelBtn + 'background:#0071e3;color:#fff;">Add Repair</button><button class="ip-cancel" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
         '<div id="ipError" style="display:none;color:#ff3b30;font-size:12px;margin-top:6px;"></div></div>';
@@ -1987,16 +2064,31 @@
 
     function buildUsedPanel() {
       return '<div style="background:#fff8f0;border:1px solid #ff9500;border-radius:10px;padding:12px;margin-top:8px;">' +
-        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">+ 📱 Quick Used Device</div>' +
-        '<div style="margin-bottom:6px;"><input id="ipName" placeholder="e.g. iPhone 13 128GB *" style="' + _panelInputs + '"></div>' +
-        '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="ipSku" placeholder="SKU/Barcode *" style="flex:1;' + _panelInputs + '"><input id="ipSerial" placeholder="IMEI/SN *" style="flex:1;' + _panelInputs + '"></div>' +
-        '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="ipPrice" type="number" step="0.01" placeholder="Sell Price € *" style="flex:1;' + _panelInputs + '"><input id="ipCost" type="number" step="0.01" placeholder="Cost € (opt)" style="flex:1;' + _panelInputs + '"></div>' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">+ 📱 Quick Used Device (Sell)</div>' +
+        '<div style="margin-bottom:6px;"><input id="ipName" placeholder="e.g. iPhone 13 128GB, Laptop, Tablet *" style="' + _panelInputs + '"></div>' +
+        '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="ipSku" placeholder="SKU/Barcode *" style="flex:1;' + _panelInputs + '"><input id="ipSerial" placeholder="Serial / SN / IMEI (any)" style="flex:1;' + _panelInputs + '"></div>' +
+        '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="ipPrice" type="number" step="0.01" placeholder="Sell Price € *" style="flex:1;' + _panelInputs + '"><input id="ipCost" type="number" step="0.01" placeholder="Cost €" style="flex:1;' + _panelInputs + '"></div>' +
+        '<div style="margin-bottom:6px;"><input id="ipNotes" placeholder="Notes (condition, specs, color, storage etc.)" style="' + _panelInputs + '"></div>' +
         '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">' +
         '<select id="ipSource" style="flex:1;' + _panelInputs + '"><option value="customer">From Customer</option><option value="dealer">From Dealer</option><option value="other">Other</option></select>' +
         '<label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ipMargin" checked> Margin VAT</label></div>' +
         '<input type="hidden" id="ipVat" value="23"><input type="hidden" id="ipCat" value="二手">' +
         '<div style="display:flex;gap:6px;"><button class="ip-submit" data-cat="二手" style="flex:1;' + _panelBtn + 'background:#ff9500;color:#fff;">Add Used Device</button><button class="ip-cancel" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
         '<div id="ipError" style="display:none;color:#ff3b30;font-size:12px;margin-top:6px;"></div></div>';
+    }
+
+    function buildBuyUsedPanel() {
+      return '<div style="background:#f0fff4;border:1px solid #34c759;border-radius:10px;padding:12px;margin-top:8px;">' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">+ 🛒 Buy Used (Stock In)</div>' +
+        '<div style="margin-bottom:6px;"><input id="buyName" placeholder="Item Name (e.g. MacBook Air M2, iPhone 14 Pro) *" style="' + _panelInputs + '"></div>' +
+        '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="buySku" placeholder="SKU/Barcode" style="flex:1;' + _panelInputs + '"><input id="buySerial" placeholder="Serial / SN / IMEI" style="flex:1;' + _panelInputs + '"></div>' +
+        '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="buyCost" type="number" step="0.01" placeholder="Cost € *" style="flex:1;' + _panelInputs + '"><input id="buySellPrice" type="number" step="0.01" placeholder="Sell Price € (opt)" style="flex:1;' + _panelInputs + '"></div>' +
+        '<div style="margin-bottom:6px;"><input id="buyNotes" placeholder="Notes (condition, specs, color, storage, from whom)" style="' + _panelInputs + '"></div>' +
+        '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">' +
+        '<select id="buySource" style="flex:1;' + _panelInputs + '"><option value="customer">From Customer 从客人收购</option><option value="dealer">From Dealer 从商人进货</option><option value="other">Other 其他</option></select>' +
+        '<label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="buyMargin" checked> Margin VAT</label></div>' +
+        '<div style="display:flex;gap:6px;"><button class="buy-submit" style="flex:1;' + _panelBtn + 'background:#34c759;color:#fff;">Save Buy Record & Stock In</button><button class="ip-cancel" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
+        '<div id="buyError" style="display:none;color:#ff3b30;font-size:12px;margin-top:6px;"></div></div>';
     }
 
     // Event delegation for inline panels
@@ -2006,7 +2098,84 @@
       if (e.target.closest('.ip-cancel')) { closePanel(); return; }
       var vatBtn = e.target.closest('.ip-vat-preset');
       if (vatBtn) { var ipVat = document.getElementById('ipVat'); if (ipVat) ipVat.value = vatBtn.dataset.vat; return; }
+      // Buy Used submit
+      if (e.target.closest('.buy-submit')) { submitBuyUsed(); return; }
     });
+
+    // ─── Buy Used: 创建商品 + 入库 + 记录支出 ──────────────────
+    async function submitBuyUsed() {
+      var errEl = document.getElementById('buyError');
+      if (errEl) errEl.style.display = 'none';
+
+      var name = (document.getElementById('buyName') || {}).value || '';
+      name = name.trim();
+      var sku = (document.getElementById('buySku') || {}).value || '';
+      sku = sku.trim() || (name.replace(/\s+/g, '-').substring(0, 20) + '-' + Date.now().toString(36));
+      var serial = (document.getElementById('buySerial') || {}).value || '';
+      var cost = parseFloat((document.getElementById('buyCost') || {}).value);
+      var sellPrice = parseFloat((document.getElementById('buySellPrice') || {}).value) || 0;
+      var notes = (document.getElementById('buyNotes') || {}).value || '';
+      var source = (document.getElementById('buySource') || {}).value || 'customer';
+      var margin = document.getElementById('buyMargin') ? document.getElementById('buyMargin').checked : true;
+
+      if (!name) { if (errEl) { errEl.textContent = 'Item name required'; errEl.style.display = 'block'; } return; }
+      if (isNaN(cost) || cost <= 0) { if (errEl) { errEl.textContent = 'Cost price required'; errEl.style.display = 'block'; } return; }
+
+      try {
+        // Step 1: 创建商品
+        var productBody = {
+          name: name,
+          sku: sku,
+          category: '二手',
+          costPrice: cost,
+          sellingPrice: sellPrice > 0 ? sellPrice : cost,
+          vatRate: 0.23,
+          stock: 0,
+          isSecondHand: true,
+          purchasedFromCustomer: source === 'customer',
+          marginScheme: margin,
+          source: source,
+          serialNumber: serial.trim()
+        };
+
+        var r1 = await apiFetch('/products', { method: 'POST', body: JSON.stringify(productBody) });
+        if (!r1) return;
+        var product = await r1.json();
+        if (!r1.ok) { if (errEl) { errEl.textContent = product.error || 'Failed to create product'; errEl.style.display = 'block'; } return; }
+
+        var productId = product._id || product.id;
+
+        // Step 2: 入库 (stock +1)
+        var r2 = await apiFetch('/stock/entry', { method: 'POST', body: JSON.stringify({
+          productId: productId,
+          quantity: 1,
+          note: 'Buy Used - ' + name + (serial ? ' SN:' + serial : '') + (notes ? ' | ' + notes : '')
+        })});
+        if (r2 && !r2.ok) {
+          var e2 = await r2.json();
+          showToast('Stock entry warning: ' + (e2.error || ''), 'error');
+        }
+
+        // Step 3: 记录支出 (category=收购客人商品)
+        var expenseBody = {
+          category: '收购客人商品',
+          amount: cost,
+          paymentMethod: 'cash',
+          description: 'Buy Used: ' + name + (serial ? ' SN:' + serial : '') + (notes ? ' | ' + notes : '')
+        };
+        var r3 = await apiFetch('/expenses', { method: 'POST', body: JSON.stringify(expenseBody) });
+        // 支出记录失败不阻塞（可能员工没权限），但提示
+        if (r3 && !r3.ok) {
+          showToast('Expense record may need admin to add manually', 'info');
+        }
+
+        closePanel();
+        showToast('✅ Buy Used saved: ' + name + ' | Cost €' + cost.toFixed(2) + ' | Stocked in', 'success');
+
+      } catch(e) {
+        if (errEl) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+      }
+    }
 
     window.submitInlineProduct = async function(defaultCat) {
       var errEl = document.getElementById('ipError');
@@ -2024,6 +2193,34 @@
 
       if (!name || isNaN(price)) { errEl.textContent = 'Name and price required'; errEl.style.display = 'block'; return; }
 
+      // 维修类别：收集额外信息
+      var repairInfo = null;
+      if (cat === '维修') {
+        var orderType = (document.getElementById('ipOrderType') || {}).value || 'PAID';
+        var fault = (document.getElementById('ipFault') || {}).value || '';
+        var condition = (document.getElementById('ipCondition') || {}).value || '';
+        var testStatus = (document.getElementById('ipTestStatus') || {}).value || '';
+        var notes = (document.getElementById('ipNotes') || {}).value || '';
+
+        if (!fault) { errEl.textContent = 'Please select fault type / 请选择故障类型'; errEl.style.display = 'block'; return; }
+
+        // 存维修信息供收据打印（全英文）
+        repairInfo = {
+          orderType: orderType,
+          orderTypeLabel: orderType === 'PAID' ? 'PAID' : 'CUSTOMER DROP-OFF',
+          fault: fault,
+          condition: condition || '-',
+          testStatus: testStatus || '-',
+          notes: notes || '-'
+        };
+
+        // 送修未付款：价格设为0，名称加标记
+        if (orderType === 'REPAIR_ONLY') {
+          price = 0;
+          name = '[DROP-OFF] ' + name;
+        }
+      }
+
       var body = {
         name: name, sku: sku.trim(), category: cat,
         costPrice: cost, sellingPrice: price, vatRate: vatVal / 100,
@@ -2037,6 +2234,27 @@
         if (!res) return;
         var data = await res.json();
         if (!res.ok) { errEl.textContent = data.error || 'Failed'; errEl.style.display = 'block'; return; }
+
+        // 存维修信息到全局，收据生成时使用
+        if (repairInfo) {
+          if (!window._repairInfoMap) window._repairInfoMap = {};
+          window._repairInfoMap[data._id || data.id] = repairInfo;
+          window._lastRepairInfo = repairInfo;
+        }
+
+        // 二手设备：存备注/成本信息供收据使用
+        if (cat === '二手') {
+          var usedNotes = (document.getElementById('ipNotes') || {}).value || '';
+          if (usedNotes || cost > 0 || serial) {
+            window._lastUsedDeviceInfo = {
+              cost: cost,
+              serial: serial,
+              notes: usedNotes,
+              source: source
+            };
+          }
+        }
+
         // Add to cart
         window._addToCart(data._id || data.id);
         closePanel();
