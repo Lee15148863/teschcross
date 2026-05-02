@@ -1444,17 +1444,10 @@
           signal: AbortSignal.timeout(5000)
         });
         if (!res.ok) throw new Error('Print Agent error');
-        showToast('Printed!', 'success');
+        showToast('✅ Printed!', 'success');
       } catch (err) {
-        // Fallback: browser print
-        var html = buildReceiptPreviewHtml(receiptData);
-        var printWin = window.open('', '_blank', 'width=320,height=500');
-        printWin.document.write('<html><head><title>Receipt</title><style>@page{size:68mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}</style></head><body>');
-        printWin.document.write(html);
-        printWin.document.write('</body></html>');
-        printWin.document.close();
-        printWin.focus();
-        printWin.print();
+        // Fallback: silent iframe print (no popup window)
+        silentBrowserPrint(buildReceiptPreviewHtml(receiptData));
       }
     };
 
@@ -1487,20 +1480,59 @@
           signal: AbortSignal.timeout(5000)
         });
         if (!res.ok) throw new Error('Print Agent error');
-        showToast(lang === 'zh' ? '打印成功' : 'Printed', 'success');
+        showToast(lang === 'zh' ? '打印成功' : '✅ Printed', 'success');
       } catch (err) {
-        console.warn('Print Agent unavailable:', err.message);
-        var printWin = window.open('', '_blank', 'width=320,height=500');
-        printWin.document.write('<html><head><title>Receipt</title><style>@page{size:68mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}</style></head><body>');
-        printWin.document.write(document.getElementById('receiptPreviewContent').innerHTML);
-        printWin.document.write('</body></html>');
-        printWin.document.close();
-        printWin.focus();
-        printWin.print();
+        // Fallback: silent iframe print
+        silentBrowserPrint(document.getElementById('receiptPreviewContent').innerHTML);
       }
       document.getElementById('receiptPreviewOverlay').classList.remove('show');
       clearCartAfterCheckout();
     };
+
+    // ─── Silent Browser Print (iframe, no popup) ────────────────
+    // Uses a hidden iframe to trigger print. Browser will still show
+    // the print dialog the FIRST time, but after you select the receipt
+    // printer once and check "remember", subsequent prints go straight through.
+    function silentBrowserPrint(html) {
+      var iframe = document.getElementById('_printFrame');
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = '_printFrame';
+        iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';
+        document.body.appendChild(iframe);
+      }
+      var doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write('<html><head><title>Receipt</title><style>');
+      doc.write('@page{size:68mm auto;margin:0;}');
+      doc.write('body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}');
+      doc.write('</style></head><body>');
+      doc.write(html);
+      doc.write('</body></html>');
+      doc.close();
+      // Wait for content to render then print
+      setTimeout(function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }, 200);
+    }
+
+    // ─── Print Agent Status Check ───────────────────────────────
+    // Check on page load if Print Agent is running
+    (function checkPrintAgent() {
+      fetch('http://localhost:9100/status', { signal: AbortSignal.timeout(3000) })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.connected) {
+            console.log('🟢 Print Agent online — ' + data.connectionType + ' printer');
+          } else {
+            console.warn('🟡 Print Agent running but printer not connected:', data.error);
+          }
+        })
+        .catch(function() {
+          console.warn('🔴 Print Agent offline — browser print fallback will be used');
+        });
+    })();
 
     function closeReceiptPreview() {
       document.getElementById('receiptPreviewOverlay').classList.remove('show');
