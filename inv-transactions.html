@@ -55,25 +55,26 @@
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
         <nav>
-            <div class="nav-section">业务管理</div>
-            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银</a>
-            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理</a>
-            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理</a>
-            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商管理</a>
-            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理</a>
-            <a href="inv-transactions.html" class="active" data-perm="transactions"><span class="icon">📋</span>交易记录</a>
-            <div class="nav-section">报表与发票</div>
-            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心</a>
-            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>VAT Invoice</a>
-            <div class="nav-section" id="adminSection" style="display:none;">系统管理</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置</a>
-            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理</a>
+            <div class="nav-section">业务管理 / Business</div>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
+            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
+            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
+            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
+            <a href="inv-transactions.html" class="active" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
+            <div class="nav-section">报表与发票 / Reports</div>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
+            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
+            <div class="nav-section" id="adminSection" style="display:none;">系统管理 / System</div>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
         </nav>
     </aside>
     <div class="main">
         <div class="topbar">
             <h2>Transactions / 交易记录</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()">退出登录</button></div>
+            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
         </div>
         <div class="content">
             <div class="card">
@@ -89,7 +90,7 @@
                     <button class="btn btn-danger btn-sm admin-only" style="display:none;" onclick="batchDelete()">Batch Delete Exported</button>
                 </div>
                 <table>
-                    <thead><tr><th>单号</th><th>时间</th><th>商品数</th><th>总金额 (€)</th><th>支付方式</th><th>标记</th><th>操作</th></tr></thead>
+                    <thead><tr><th>单号 / Receipt#</th><th>时间 / Time</th><th>商品数 / Items</th><th>总金额 / Total (€)</th><th>支付方式 / Payment</th><th>标记 / Status</th><th>操作 / Actions</th></tr></thead>
                     <tbody id="txTable"><tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">加载中...</td></tr></tbody>
                 </table>
             </div>

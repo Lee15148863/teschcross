@@ -52,25 +52,26 @@
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
         <nav>
-            <div class="nav-section">业务管理</div>
-            <a href="inv-pos.html"><span class="icon">💰</span>POS 收银</a>
-            <a href="inv-products.html"><span class="icon">📦</span>商品管理</a>
-            <a href="inv-stock.html"><span class="icon">🏭</span>库存管理</a>
-            <a href="inv-suppliers.html"><span class="icon">🤝</span>供应商管理</a>
-            <a href="inv-purchases.html"><span class="icon">🛒</span>采购管理</a>
-            <a href="inv-transactions.html"><span class="icon">📋</span>交易记录</a>
-            <div class="nav-section">报表与发票</div>
-            <a href="inv-reports.html"><span class="icon">📊</span>报表中心</a>
-            <a href="inv-invoices.html"><span class="icon">🧾</span>VAT Invoice</a>
-            <div class="nav-section">系统管理</div>
-            <a href="inv-settings.html" class="active"><span class="icon">⚙️</span>系统设置</a>
-            <a href="inv-users.html"><span class="icon">👥</span>用户管理</a>
+            <div class="nav-section">业务管理 / Business</div>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
+            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
+            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
+            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
+            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
+            <div class="nav-section">报表与发票 / Reports</div>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
+            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
+            <div class="nav-section">系统管理 / System</div>
+            <a href="inv-settings.html" class="active" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
+            <a href="inv-users.html" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
         </nav>
     </aside>
     <div class="main">
         <div class="topbar">
-            <h2>系统设置</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">管理员</span><button class="btn-logout" onclick="logout()">退出登录</button></div>
+            <h2>系统设置 / Settings</h2>
+            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">管理员</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
         </div>
         <div class="content">
             <div class="tabs">
@@ -92,7 +93,7 @@
                     <div class="form-row">
                         <div class="form-group"><label>新税率 (%)</label><input type="number" id="newVatRate" step="0.1" min="0" max="100" placeholder="23"><div class="hint">爱尔兰标准税率: 23%</div></div>
                     </div>
-                    <button class="btn btn-primary" onclick="updateVatRate()">更新税率</button>
+                    <button class="btn btn-primary" onclick="updateVatRate()">更新税率 / Update</button>
                 </div>
             </div>
 
@@ -106,7 +107,7 @@
                         <div class="form-group"><label>配件</label><input type="number" id="threshAccessory" min="0" value="30"></div>
                         <div class="form-group"><label>平板</label><input type="number" id="threshTablet" min="0" value="5"></div>
                     </div>
-                    <button class="btn btn-primary" onclick="updateThresholds()">保存阈值</button>
+                    <button class="btn btn-primary" onclick="updateThresholds()">保存阈值 / Save</button>
                 </div>
             </div>
 
@@ -121,7 +122,7 @@
                         <div class="form-group"><label>VAT 注册号</label><input type="text" id="compVat" placeholder="IE1234567X"></div>
                     </div>
                     <div class="form-group"><label>Logo URL</label><input type="text" id="compLogo" placeholder="logo.png"></div>
-                    <button class="btn btn-primary" onclick="updateCompanyInfo()">保存公司信息</button>
+                    <button class="btn btn-primary" onclick="updateCompanyInfo()">保存公司信息 / Save</button>
                 </div>
             </div>
 
@@ -130,7 +131,7 @@
                 <div class="card">
                     <h3>审计日志</h3>
                     <table>
-                        <thead><tr><th>时间</th><th>操作</th><th>操作人</th><th>目标类型</th><th>目标ID</th></tr></thead>
+                        <thead><tr><th>时间 / Time</th><th>操作 / Action</th><th>操作人 / Operator</th><th>目标类型 / Target Type</th><th>目标ID / Target ID</th></tr></thead>
                         <tbody id="auditTable"><tr><td colspan="5" style="text-align:center;color:#86868b;padding:40px;">加载中...</td></tr></tbody>
                     </table>
                 </div>
@@ -146,6 +147,9 @@ if(!token){window.location.href='inv-login.html';return;}
 let user;try{user=JSON.parse(localStorage.getItem('inv_user'));}catch(e){window.location.href='inv-login.html';return;}
 if(!user||user.role!=='admin'){window.location.href='inv-login.html';return;}
 document.getElementById('displayName').textContent=user.displayName||user.username;
+
+// Hide sidebar items based on permissions (admin pages - admin sees all)
+document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});
 
 const API='/api/inv';
 const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});

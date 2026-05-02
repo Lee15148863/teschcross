@@ -395,6 +395,163 @@
         .btn-dm-cancel:hover { background: #e5e5e7; }
         .btn-dm-apply { background: #D4E157; border: none; color: #000; font-weight: 600; }
         .btn-dm-apply:hover { background: #c5d148; }
+
+        /* ─── Quick Panel Buttons ──────────────────────────────────── */
+        .panel-btn {
+            flex: 1; padding: 8px 10px; border-radius: 10px;
+            background: none; color: #6e6e73; font-size: 12px;
+            cursor: pointer; transition: all .15s;
+        }
+        .panel-btn-sale { border: 1px dashed #D4E157; }
+        .panel-btn-sale:hover { background: #fafff0; border-style: solid; }
+        .panel-btn-repair { border: 1px dashed #0071e3; }
+        .panel-btn-repair:hover { background: #f0f7ff; border-style: solid; }
+        .panel-btn-used { border: 1px dashed #ff9500; }
+        .panel-btn-used:hover { background: #fff8f0; border-style: solid; }
+
+        /* ─── Panel Buttons Row ────────────────────────────────────── */
+        .panel-btn-row { display: flex; gap: 6px; margin-top: 8px; }
+
+        /* ─── Inline Panel Container ───────────────────────────────── */
+        .inline-panel { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+
+        /* ─── Action Bar ───────────────────────────────────────────── */
+        .action-bar {
+            display: flex; gap: 6px; padding: 10px 16px;
+            background: #1d1d1f; flex-wrap: wrap; align-items: center;
+        }
+        .action-bar-spacer { flex: 1; }
+        .pos-action-sm { font-size: 11px; }
+
+        /* ─── Action Bar Lang Toggle ───────────────────────────────── */
+        .lang-toggle-dark {
+            padding: 4px 10px; border-radius: 980px; border: 1px solid #555;
+            background: #2a2a2d; color: #f5f5f7; font-size: 11px; cursor: pointer;
+        }
+
+        /* ─── Cart Title ───────────────────────────────────────────── */
+        .cart-title-wrap { display: flex; align-items: center; }
+        .cart-title { font-size: 16px; }
+
+        /* ─── Modal Overlay (shared) ───────────────────────────────── */
+        .pos-modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 9997;
+            background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+        }
+        .pos-modal-overlay.show { display: flex; }
+        .pos-modal-overlay.z-high { z-index: 9999; background: rgba(0,0,0,.6); }
+        .pos-modal-overlay.z-mid { z-index: 9998; }
+
+        /* ─── Modal Box (shared) ───────────────────────────────────── */
+        .pos-modal-box {
+            background: #fff; border-radius: 18px; padding: 32px;
+            max-width: 620px; width: 95%; max-height: 90vh;
+            overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.2);
+        }
+        .pos-modal-box.narrow { max-width: 480px; width: 90%; max-height: 85vh; }
+        .pos-modal-box.receipt { padding: 0; max-width: 380px; width: 90%; box-shadow: 0 24px 64px rgba(0,0,0,.3); }
+
+        /* ─── Modal Title ──────────────────────────────────────────── */
+        .pos-modal-title { font-size: 20px; margin-bottom: 20px; }
+
+        /* ─── Form Group ───────────────────────────────────────────── */
+        .pos-form-group { margin-bottom: 12px; }
+        .pos-form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .pos-form-row-sm { display: flex; gap: 8px; }
+        .pos-form-col { flex: 1; }
+        .pos-form-col-2 { flex: 2; }
+
+        /* ─── Form Label ───────────────────────────────────────────── */
+        .pos-form-label {
+            font-size: 14px; font-weight: 500; display: block; margin-bottom: 4px;
+        }
+        .pos-form-label-sm { font-size: 13px; font-weight: 500; display: block; margin-bottom: 4px; }
+        .pos-form-label-inline {
+            font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+        .pos-form-label-inline-sm {
+            font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;
+        }
+
+        /* ─── Form Input ───────────────────────────────────────────── */
+        .pos-form-input {
+            width: 100%; padding: 10px 14px; border: 1px solid #d2d2d7;
+            border-radius: 10px; font-size: 14px;
+        }
+        .pos-form-input-sm {
+            width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7;
+            border-radius: 8px; font-size: 13px;
+        }
+        .pos-form-select {
+            width: 100%; padding: 10px 14px; border: 1px solid #d2d2d7;
+            border-radius: 10px; font-size: 14px;
+        }
+        .pos-form-select-sm {
+            width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7;
+            border-radius: 8px; font-size: 13px;
+        }
+
+        /* ─── VAT Preset Buttons ───────────────────────────────────── */
+        .vat-row { display: flex; gap: 6px; align-items: center; }
+        .vat-preset-btn {
+            padding: 6px 10px; border: 1px solid #d2d2d7; border-radius: 8px;
+            background: #fff; font-size: 12px; cursor: pointer;
+        }
+
+        /* ─── Second-hand Fields ───────────────────────────────────── */
+        .qa-sh-fields {
+            display: none; background: #fffbeb; border: 1px solid #fde68a;
+            border-radius: 10px; padding: 12px; margin-bottom: 12px;
+        }
+        .qa-sh-row { margin-bottom: 8px; }
+
+        /* ─── Repair SN Group ──────────────────────────────────────── */
+        .qa-repair-sn { display: none; margin-bottom: 12px; }
+
+        /* ─── Error Box ────────────────────────────────────────────── */
+        .pos-error-box {
+            display: none; background: #fef2f2; color: #991b1b;
+            padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 12px;
+        }
+
+        /* ─── Modal Actions ────────────────────────────────────────── */
+        .pos-modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+        /* ─── Modal Button (pill) ──────────────────────────────────── */
+        .pos-btn-pill {
+            padding: 10px 24px; border-radius: 980px; font-size: 15px; cursor: pointer;
+        }
+        .pos-btn-pill-secondary {
+            border: 1px solid #d2d2d7; background: #f5f5f7; color: #1d1d1f;
+        }
+        .pos-btn-pill-primary {
+            border: none; background: #D4E157; color: #000; font-weight: 600;
+        }
+        .pos-btn-pill-danger {
+            border: none; background: #ff3b30; color: #fff; font-weight: 600;
+        }
+        .pos-btn-pill-sm { padding: 10px 20px; font-size: 14px; }
+
+        /* ─── Receipt Preview ──────────────────────────────────────── */
+        .receipt-preview-content {
+            padding: 24px; font-family: 'Courier New', monospace;
+            font-size: 12px; line-height: 1.5; color: #000;
+        }
+        .receipt-preview-actions {
+            display: flex; gap: 12px; padding: 16px 24px;
+            border-top: 1px solid #e5e5e7; justify-content: flex-end;
+        }
+
+        /* ─── Refund Method Buttons ────────────────────────────────── */
+        .refund-method-btn {
+            flex: 1; padding: 10px; border: 2px solid #d2d2d7;
+            border-radius: 10px; background: #fff; font-size: 14px;
+            font-weight: 600; cursor: pointer;
+        }
+        .refund-method-btn.active {
+            border-color: #D4E157; background: #fafff0;
+        }
     </style>
 </head>
 <body>
@@ -460,13 +617,13 @@
                     <input type="text" id="searchInput" autocomplete="off" autofocus>
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
-                <div style="display:flex;gap:6px;margin-top:8px;">
-                    <button onclick="togglePanel('sale')" style="flex:1;padding:8px 10px;border:1px dashed #D4E157;border-radius:10px;background:none;color:#6e6e73;font-size:12px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#fafff0';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'" id="btnQuickAdd">+ <span id="quickAddText">Sale</span></button>
-                    <button onclick="togglePanel('repair')" style="flex:1;padding:8px 10px;border:1px dashed #0071e3;border-radius:10px;background:none;color:#6e6e73;font-size:12px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#f0f7ff';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'">+ 🔧 Repair</button>
-                    <button onclick="togglePanel('used')" style="flex:1;padding:8px 10px;border:1px dashed #ff9500;border-radius:10px;background:none;color:#6e6e73;font-size:12px;cursor:pointer;transition:all .15s;" onmouseover="this.style.background='#fff8f0';this.style.borderStyle='solid'" onmouseout="this.style.background='none';this.style.borderStyle='dashed'">+ 📱 Used</button>
+                <div class="panel-btn-row">
+                    <button class="panel-btn panel-btn-sale" id="btnQuickAdd" data-panel="sale">+ <span id="quickAddText">Sale</span></button>
+                    <button class="panel-btn panel-btn-repair" data-panel="repair">+ 🔧 Repair</button>
+                    <button class="panel-btn panel-btn-used" data-panel="used">+ 📱 Used</button>
                 </div>
                 <!-- Inline Panels -->
-                <div id="inlinePanel" style="max-height:0;overflow:hidden;transition:max-height .3s ease;"></div>
+                <div id="inlinePanel" class="inline-panel"></div>
             </div>
             <div class="product-results" id="productResults">
                 <div class="search-hint" id="searchHint">
@@ -479,22 +636,22 @@
         <!-- RIGHT: Cart + Checkout -->
         <div class="right-panel">
             <!-- Action Bar -->
-            <div style="display:flex;gap:6px;padding:10px 16px;background:#1d1d1f;flex-wrap:wrap;align-items:center;">
-                <button class="pos-action-btn pos-action-primary" id="sidebarCheckout" onclick="doCheckout()">✅ <span id="scCheckout">Checkout</span></button>
-                <button class="pos-action-btn" onclick="openDiscountModal()">🏷️ <span id="scDiscount">Discount</span></button>
-                <button class="pos-action-btn" onclick="window.open('/inv-transactions.html','_blank')">📋 <span id="scOrderSearch">Orders</span></button>
-                <button class="pos-action-btn" onclick="clearCartAction()">🧹 <span id="scClear">Clear</span></button>
-                <div style="flex:1;"></div>
-                <button class="pos-action-btn" style="font-size:11px;" onclick="window._navCart(-1)">⬆</button>
-                <button class="pos-action-btn" style="font-size:11px;" onclick="window._navCart(1)">⬇</button>
-                <button class="pos-action-btn" style="font-size:11px;" onclick="window._removeSelectedItem()">🗑</button>
-                <button class="lang-toggle" id="langToggle2" style="padding:4px 10px;border-radius:980px;border:1px solid #555;background:#2a2a2d;color:#f5f5f7;font-size:11px;cursor:pointer;">中/EN</button>
+            <div class="action-bar">
+                <button class="pos-action-btn pos-action-primary" id="sidebarCheckout">✅ <span id="scCheckout">Checkout</span></button>
+                <button class="pos-action-btn" id="btnOpenDiscount">🏷️ <span id="scDiscount">Discount</span></button>
+                <button class="pos-action-btn" id="btnOpenOrders">📋 <span id="scOrderSearch">Orders</span></button>
+                <button class="pos-action-btn" id="btnClearAction">🧹 <span id="scClear">Clear</span></button>
+                <div class="action-bar-spacer"></div>
+                <button class="pos-action-btn pos-action-sm" id="btnNavUp">⬆</button>
+                <button class="pos-action-btn pos-action-sm" id="btnNavDown">⬇</button>
+                <button class="pos-action-btn pos-action-sm" id="btnRemoveSelected">🗑</button>
+                <button class="lang-toggle-dark" id="langToggle2">中/EN</button>
             </div>
 
             <!-- Cart Header -->
             <div class="right-header">
-                <div style="display:flex;align-items:center;">
-                    <h2 id="cartTitle" style="font-size:16px;">Cart</h2>
+                <div class="cart-title-wrap">
+                    <h2 id="cartTitle" class="cart-title">Cart</h2>
                     <span class="cart-count" id="cartCount">0</span>
                 </div>
                 <button class="btn-clear-cart" id="btnClearCart" disabled>
@@ -573,85 +730,85 @@
     </div>
 
     <!-- Quick Add Product Modal -->
-    <div id="quickAddOverlay" style="display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:18px;padding:32px;max-width:620px;width:95%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
-            <h3 style="font-size:20px;margin-bottom:20px;" id="qaTitle">快速新增商品</h3>
-            <div style="margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblName">商品名称 *</label><input type="text" id="qaName" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="iPhone 15 128GB"></div>
-            <div style="display:flex;gap:12px;margin-bottom:12px;">
-                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblSku">SKU/Barcode *</label><input type="text" id="qaSku" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="条码或自定义编号"></div>
-                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCat">分类 *</label>
-                    <select id="qaCat" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" onchange="qaOnCategoryChange()"><option value="销售">销售</option><option value="维修">维修</option><option value="服务">服务</option><option value="新机">新手机平板等电器</option><option value="二手">二手手机平板等电器</option><option value="Lyca Credit">Lyca Credit</option></select>
+    <div id="quickAddOverlay" class="pos-modal-overlay">
+        <div class="pos-modal-box">
+            <h3 class="pos-modal-title" id="qaTitle">快速新增商品</h3>
+            <div class="pos-form-group"><label class="pos-form-label" id="qaLblName">商品名称 *</label><input type="text" id="qaName" class="pos-form-input" placeholder="iPhone 15 128GB"></div>
+            <div class="pos-form-row">
+                <div class="pos-form-col"><label class="pos-form-label" id="qaLblSku">SKU/Barcode *</label><input type="text" id="qaSku" class="pos-form-input" placeholder="条码或自定义编号"></div>
+                <div class="pos-form-col"><label class="pos-form-label" id="qaLblCat">分类 *</label>
+                    <select id="qaCat" class="pos-form-select"><option value="销售">销售</option><option value="维修">维修</option><option value="服务">服务</option><option value="新机">新手机平板等电器</option><option value="二手">二手手机平板等电器</option><option value="Lyca Credit">Lyca Credit</option></select>
                 </div>
             </div>
-            <div style="display:flex;gap:12px;margin-bottom:12px;">
-                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblVat">VAT %</label>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                        <input type="number" id="qaVatRate" step="0.1" min="0" max="100" value="23" style="flex:1;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;">
-                        <button type="button" onclick="document.getElementById('qaVatRate').value='23'" style="padding:6px 10px;border:1px solid #d2d2d7;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;">23%</button>
-                        <button type="button" onclick="document.getElementById('qaVatRate').value='13.5'" style="padding:6px 10px;border:1px solid #d2d2d7;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;">13.5%</button>
+            <div class="pos-form-row">
+                <div class="pos-form-col"><label class="pos-form-label" id="qaLblVat">VAT %</label>
+                    <div class="vat-row">
+                        <input type="number" id="qaVatRate" step="0.1" min="0" max="100" value="23" class="pos-form-input">
+                        <button type="button" class="vat-preset-btn" data-vat="23">23%</button>
+                        <button type="button" class="vat-preset-btn" data-vat="13.5">13.5%</button>
                     </div>
                 </div>
-            <div style="display:flex;gap:12px;margin-bottom:12px;">
-                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblCost">成本价 €</label><input type="text" inputmode="decimal" id="qaCost" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="0.00"></div>
-                <div style="flex:1;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblPrice">售价 € *</label><input type="text" inputmode="decimal" id="qaPrice" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="0.00"></div>
+            <div class="pos-form-row">
+                <div class="pos-form-col"><label class="pos-form-label" id="qaLblCost">成本价 €</label><input type="text" inputmode="decimal" id="qaCost" class="pos-form-input" placeholder="0.00"></div>
+                <div class="pos-form-col"><label class="pos-form-label" id="qaLblPrice">售价 € *</label><input type="text" inputmode="decimal" id="qaPrice" class="pos-form-input" placeholder="0.00"></div>
             </div>
-            <div style="margin-bottom:12px;"><label style="font-size:14px;display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="qaSecondHand" onchange="document.getElementById('qaSecondHandFields').style.display=this.checked?'block':'none'"> <span id="qaLblSH">二手商品</span></label></div>
-            <div id="qaSecondHandFields" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:12px;">
-                <div style="margin-bottom:8px;"><label style="font-size:13px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblSource">来源</label><select id="qaSource" style="width:100%;padding:8px 12px;border:1px solid #d2d2d7;border-radius:8px;font-size:13px;"><option value="customer">从客人收购</option><option value="dealer">从其他二手商人进货</option><option value="other">其他来源</option></select></div>
-                <div style="margin-bottom:8px;"><label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="qaMarginScheme" checked> <span id="qaLblMargin">适用 Margin Scheme VAT</span></label></div>
-                <div><label style="font-size:13px;font-weight:500;display:block;margin-bottom:4px;">IMEI/SN *</label><input type="text" id="qaSerial" style="width:100%;padding:8px 12px;border:1px solid #d2d2d7;border-radius:8px;font-size:13px;"></div>
+            <div class="pos-form-group"><label class="pos-form-label-inline"><input type="checkbox" id="qaSecondHand"> <span id="qaLblSH">二手商品</span></label></div>
+            <div id="qaSecondHandFields" class="qa-sh-fields">
+                <div class="qa-sh-row"><label class="pos-form-label-sm" id="qaLblSource">来源</label><select id="qaSource" class="pos-form-select-sm"><option value="customer">从客人收购</option><option value="dealer">从其他二手商人进货</option><option value="other">其他来源</option></select></div>
+                <div class="qa-sh-row"><label class="pos-form-label-inline-sm"><input type="checkbox" id="qaMarginScheme" checked> <span id="qaLblMargin">适用 Margin Scheme VAT</span></label></div>
+                <div><label class="pos-form-label-sm">IMEI/SN *</label><input type="text" id="qaSerial" class="pos-form-input-sm"></div>
             </div>
-            <div id="qaRepairSnGroup" style="display:none;margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">IMEI / SN (for repair tracking)</label><input type="text" id="qaRepairSn" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="Device IMEI or Serial Number"></div>
-            <div style="margin-bottom:12px;"><label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;" id="qaLblQty">初始库存</label><input type="number" id="qaStock" value="1" min="0" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;"></div>
-            <div id="qaError" style="display:none;background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;"></div>
-            <div style="display:flex;gap:12px;justify-content:flex-end;">
-                <button onclick="closeQuickAddModal()" style="padding:10px 24px;border-radius:980px;border:1px solid #d2d2d7;background:#f5f5f7;font-size:15px;cursor:pointer;" id="qaBtnCancel">取消</button>
-                <button onclick="submitQuickAdd()" style="padding:10px 24px;border-radius:980px;border:none;background:#D4E157;color:#000;font-size:15px;font-weight:600;cursor:pointer;" id="qaBtnSave">创建并添加到购物车</button>
+            <div id="qaRepairSnGroup" class="qa-repair-sn"><label class="pos-form-label">IMEI / SN (for repair tracking)</label><input type="text" id="qaRepairSn" class="pos-form-input" placeholder="Device IMEI or Serial Number"></div>
+            <div class="pos-form-group"><label class="pos-form-label" id="qaLblQty">初始库存</label><input type="number" id="qaStock" value="1" min="0" class="pos-form-input"></div>
+            <div id="qaError" class="pos-error-box"></div>
+            <div class="pos-modal-actions">
+                <button class="pos-btn-pill pos-btn-pill-secondary" id="qaBtnCancel">取消</button>
+                <button class="pos-btn-pill pos-btn-pill-primary" id="qaBtnSave">创建并添加到购物车</button>
             </div>
         </div>
     </div>
 
     <!-- Receipt Preview Modal -->
-    <div id="receiptPreviewOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:18px;padding:0;max-width:380px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.3);">
-            <div id="receiptPreviewContent" style="padding:24px;font-family:'Courier New',monospace;font-size:12px;line-height:1.5;color:#000;"></div>
-            <div style="display:flex;gap:12px;padding:16px 24px;border-top:1px solid #e5e5e7;justify-content:flex-end;">
-                <button onclick="closeReceiptPreview()" style="padding:10px 20px;border-radius:980px;border:1px solid #d2d2d7;background:#f5f5f7;font-size:14px;cursor:pointer;">No Receipt</button>
-                <button onclick="doPrintFromPreview()" style="padding:10px 20px;border-radius:980px;border:none;background:#D4E157;color:#000;font-size:14px;font-weight:600;cursor:pointer;">🖨️ Print Receipt</button>
+    <div id="receiptPreviewOverlay" class="pos-modal-overlay z-high">
+        <div class="pos-modal-box receipt">
+            <div id="receiptPreviewContent" class="receipt-preview-content"></div>
+            <div class="receipt-preview-actions">
+                <button class="pos-btn-pill pos-btn-pill-sm pos-btn-pill-secondary" id="btnNoReceipt">No Receipt</button>
+                <button class="pos-btn-pill pos-btn-pill-sm pos-btn-pill-primary" id="btnPrintFromPreview">🖨️ Print Receipt</button>
             </div>
         </div>
     </div>
 
     <!-- Refund Modal -->
-    <div id="refundOverlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-        <div style="background:#fff;border-radius:18px;padding:32px;max-width:480px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);">
-            <h3 style="font-size:20px;margin-bottom:20px;" id="refundTitle">Refund / 退款</h3>
-            <div style="margin-bottom:12px;">
-                <label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">Receipt # (optional)</label>
-                <input type="text" id="refundReceipt" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="e.g. 20260501153015">
+    <div id="refundOverlay" class="pos-modal-overlay z-mid">
+        <div class="pos-modal-box narrow">
+            <h3 class="pos-modal-title" id="refundTitle">Refund / 退款</h3>
+            <div class="pos-form-group">
+                <label class="pos-form-label">Receipt # (optional)</label>
+                <input type="text" id="refundReceipt" class="pos-form-input" placeholder="e.g. 20260501153015">
             </div>
-            <div style="margin-bottom:12px;">
-                <label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">Or enter manually:</label>
-                <div style="display:flex;gap:8px;">
-                    <input type="text" id="refundItemName" style="flex:2;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="Item name">
-                    <input type="number" id="refundItemAmount" step="0.01" min="0" style="flex:1;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="€ Amount">
+            <div class="pos-form-group">
+                <label class="pos-form-label">Or enter manually:</label>
+                <div class="pos-form-row-sm">
+                    <input type="text" id="refundItemName" class="pos-form-input pos-form-col-2" placeholder="Item name">
+                    <input type="number" id="refundItemAmount" step="0.01" min="0" class="pos-form-input pos-form-col" placeholder="€ Amount">
                 </div>
             </div>
-            <div style="margin-bottom:12px;">
-                <label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">Refund Method / 退款方式</label>
-                <div style="display:flex;gap:8px;">
-                    <button id="refundCashBtn" onclick="selectRefundMethod('cash')" style="flex:1;padding:10px;border:2px solid #D4E157;border-radius:10px;background:#fafff0;font-size:14px;font-weight:600;cursor:pointer;">💵 Cash</button>
-                    <button id="refundCardBtn" onclick="selectRefundMethod('card')" style="flex:1;padding:10px;border:2px solid #d2d2d7;border-radius:10px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;">💳 Card</button>
+            <div class="pos-form-group">
+                <label class="pos-form-label">Refund Method / 退款方式</label>
+                <div class="pos-form-row-sm">
+                    <button id="refundCashBtn" class="refund-method-btn active">💵 Cash</button>
+                    <button id="refundCardBtn" class="refund-method-btn">💳 Card</button>
                 </div>
             </div>
-            <div style="margin-bottom:12px;">
-                <label style="font-size:14px;font-weight:500;display:block;margin-bottom:4px;">Reason (optional)</label>
-                <input type="text" id="refundReason" style="width:100%;padding:10px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;" placeholder="e.g. Defective item">
+            <div class="pos-form-group">
+                <label class="pos-form-label">Reason (optional)</label>
+                <input type="text" id="refundReason" class="pos-form-input" placeholder="e.g. Defective item">
             </div>
-            <div id="refundError" style="display:none;background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;"></div>
-            <div style="display:flex;gap:12px;justify-content:flex-end;">
-                <button onclick="closeRefundModal()" style="padding:10px 24px;border-radius:980px;border:1px solid #d2d2d7;background:#f5f5f7;font-size:15px;cursor:pointer;">Cancel</button>
-                <button onclick="submitRefund()" style="padding:10px 24px;border-radius:980px;border:none;background:#ff3b30;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">↩️ Process Refund</button>
+            <div id="refundError" class="pos-error-box"></div>
+            <div class="pos-modal-actions">
+                <button class="pos-btn-pill pos-btn-pill-secondary" id="btnRefundCancel">Cancel</button>
+                <button class="pos-btn-pill pos-btn-pill-danger" id="btnRefundSubmit">↩️ Process Refund</button>
             </div>
         </div>
     </div>
@@ -737,6 +894,44 @@
       setTimeout(function() { toast.classList.remove('show'); }, 3000);
     }
 
+    // ─── Static Element Event Listeners ─────────────────────────
+    // Panel toggle buttons
+    document.querySelectorAll('.panel-btn[data-panel]').forEach(function(btn) {
+      btn.addEventListener('click', function() { togglePanel(this.dataset.panel); });
+    });
+
+    // Action bar buttons
+    document.getElementById('sidebarCheckout').addEventListener('click', function() { doCheckout(); });
+    document.getElementById('btnOpenDiscount').addEventListener('click', function() { openDiscountModal(); });
+    document.getElementById('btnOpenOrders').addEventListener('click', function() { window.open('/inv-transactions.html', '_blank'); });
+    document.getElementById('btnClearAction').addEventListener('click', function() { clearCartAction(); });
+    document.getElementById('btnNavUp').addEventListener('click', function() { window._navCart(-1); });
+    document.getElementById('btnNavDown').addEventListener('click', function() { window._navCart(1); });
+    document.getElementById('btnRemoveSelected').addEventListener('click', function() { window._removeSelectedItem(); });
+
+    // Quick Add modal buttons
+    document.getElementById('qaBtnCancel').addEventListener('click', function() { closeQuickAddModal(); });
+    document.getElementById('qaBtnSave').addEventListener('click', function() { submitQuickAdd(); });
+    document.getElementById('qaCat').addEventListener('change', function() { qaOnCategoryChange(); });
+    document.getElementById('qaSecondHand').addEventListener('change', function() {
+      document.getElementById('qaSecondHandFields').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // VAT preset buttons
+    document.querySelectorAll('.vat-preset-btn[data-vat]').forEach(function(btn) {
+      btn.addEventListener('click', function() { document.getElementById('qaVatRate').value = this.dataset.vat; });
+    });
+
+    // Receipt preview buttons
+    document.getElementById('btnNoReceipt').addEventListener('click', function() { closeReceiptPreview(); });
+    document.getElementById('btnPrintFromPreview').addEventListener('click', function() { doPrintFromPreview(); });
+
+    // Refund modal buttons
+    document.getElementById('refundCashBtn').addEventListener('click', function() { selectRefundMethod('cash'); });
+    document.getElementById('refundCardBtn').addEventListener('click', function() { selectRefundMethod('card'); });
+    document.getElementById('btnRefundCancel').addEventListener('click', function() { closeRefundModal(); });
+    document.getElementById('btnRefundSubmit').addEventListener('click', function() { submitRefund(); });
+
     // Confirm dialog
     function showConfirm(title, msg, onOk) {
       document.getElementById('confirmTitle').textContent = title;
@@ -761,6 +956,12 @@
     // Search
     var searchInput = document.getElementById('searchInput');
     var productResults = document.getElementById('productResults');
+
+    // Event delegation for product cards
+    productResults.addEventListener('click', function(e) {
+      var card = e.target.closest('.product-card');
+      if (card && card.dataset.id) window._addToCart(card.dataset.id);
+    });
 
     searchInput.addEventListener('input', function() {
       clearTimeout(searchTimer);
@@ -795,7 +996,7 @@
         products.forEach(function(p) {
           var stockClass = p.stock <= (p.lowStockThreshold || 5) ? 'low' : '';
           var badge = p.isSecondHand ? '<span class="p-badge badge-secondhand">' + t('secondHand') + '</span>' : '';
-          html += '<div class="product-card" data-id="' + p._id + '" onclick="window._addToCart(\'' + p._id + '\')">' +
+          html += '<div class="product-card" data-id="' + p._id + '">' +
             '<div class="p-info"><div class="p-name">' + escHtml(p.name) + badge + '</div>' +
             '<div class="p-meta">' + escHtml(p.sku) + (p.serialNumber ? ' · ' + escHtml(p.serialNumber) : '') + '</div></div>' +
             '<div style="text-align:right"><div class="p-price">€' + p.sellingPrice.toFixed(2) + '</div>' +
@@ -876,31 +1077,75 @@
         var dVal = (item.discount && item.discount.value) ? item.discount.value : '';
         var discCell = '<div class="inline-disc">' +
           '<div class="disc-row">' +
-          '<select onchange="window._setItemDiscType(' + idx + ',this.value)" onclick="event.stopPropagation()">' +
+          '<select class="disc-type-select">' +
           '<option value=""' + (!dType ? ' selected' : '') + '>—</option>' +
           '<option value="percentage"' + (dType === 'percentage' ? ' selected' : '') + '>%</option>' +
           '<option value="fixed"' + (dType === 'fixed' ? ' selected' : '') + '>€</option>' +
           '</select>' +
           '<input type="number" min="0" step="0.01" value="' + (dVal || '') + '" placeholder="0" ' +
-          'onchange="window._setItemDiscVal(' + idx + ',this.value)" onclick="event.stopPropagation()" ' +
-          'onkeydown="event.stopPropagation()">' +
-          (dType && dVal ? '<button class="disc-clear" onclick="event.stopPropagation();window._clearItemDisc(' + idx + ')" title="Clear">✕</button>' : '') +
+          'class="disc-val-input">' +
+          (dType && dVal ? '<button class="disc-clear" title="Clear">✕</button>' : '') +
           '</div>' +
           (item.discount && item.discount.type && item.discount.value > 0 ? '<div class="disc-active">' + (item.discount.type === 'percentage' ? '-' + item.discount.value + '%' : '-€' + Number(item.discount.value).toFixed(2)) + '</div>' : '') +
           '</div>';
 
-        html += '<tr class="' + selected + '" data-idx="' + idx + '" onclick="window._selectCartItem(' + idx + ')">' +
+        html += '<tr class="' + selected + '" data-idx="' + idx + '">' +
           '<td><div class="cart-item-name">' + escHtml(item.name) + '</div><div class="cart-item-sku">' + escHtml(item.sku) + '</div>' + serial + '</td>' +
           '<td>' + discountInfo + '€' + displayPrice.toFixed(2) + '</td>' +
           '<td>' + discCell + '</td>' +
-          '<td><div class="qty-controls"><button class="qty-btn" onclick="event.stopPropagation();window._changeQty(' + idx + ',-1)">−</button>' +
+          '<td><div class="qty-controls"><button class="qty-btn" data-delta="-1">−</button>' +
           '<span class="qty-val">' + item.quantity + '</span>' +
-          '<button class="qty-btn" onclick="event.stopPropagation();window._changeQty(' + idx + ',1)">+</button></div>' + stockWarn + '</td>' +
+          '<button class="qty-btn" data-delta="1">+</button></div>' + stockWarn + '</td>' +
           '<td>' + taxBadge + '</td>' +
           '<td class="cart-subtotal">€' + subtotal.toFixed(2) + '</td>' +
-          '<td><button class="btn-remove" onclick="event.stopPropagation();window._removeItem(' + idx + ')" title="Remove">✕</button></td></tr>';
+          '<td><button class="btn-remove" title="Remove">✕</button></td></tr>';
       });
       cartBody.innerHTML = html;
+
+      // Event delegation for cart interactions
+      cartBody.onclick = function(e) {
+        var tr = e.target.closest('tr[data-idx]');
+        if (!tr) return;
+        var idx = parseInt(tr.dataset.idx);
+        // Qty buttons
+        if (e.target.closest('.qty-btn')) {
+          e.stopPropagation();
+          var delta = e.target.closest('.qty-btn').dataset.delta;
+          window._changeQty(idx, parseInt(delta));
+          return;
+        }
+        // Remove button
+        if (e.target.closest('.btn-remove')) {
+          e.stopPropagation();
+          window._removeItem(idx);
+          return;
+        }
+        // Discount clear button
+        if (e.target.closest('.disc-clear')) {
+          e.stopPropagation();
+          window._clearItemDisc(idx);
+          return;
+        }
+        // Discount select/input - don't select row
+        if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+        // Select row
+        window._selectCartItem(idx);
+      };
+      // Discount select change delegation
+      cartBody.onchange = function(e) {
+        var tr = e.target.closest('tr[data-idx]');
+        if (!tr) return;
+        var idx = parseInt(tr.dataset.idx);
+        if (e.target.classList.contains('disc-type-select')) {
+          window._setItemDiscType(idx, e.target.value);
+        } else if (e.target.classList.contains('disc-val-input')) {
+          window._setItemDiscVal(idx, e.target.value);
+        }
+      };
+      // Stop keyboard shortcuts from firing when typing in cart inputs
+      cartBody.onkeydown = function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') e.stopPropagation();
+      };
       updateTotals();
     }
 
@@ -1129,11 +1374,16 @@
           '<p style="font-size:18px;color:#6e6e73;margin-bottom:4px;">Receipt #' + receiptNum + '</p>' +
           '<p style="font-size:28px;font-weight:700;margin-bottom:24px;">€' + Number(totalAmt).toFixed(2) + '</p>' +
           '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">' +
-          '<button onclick="doPrintReceipt()" style="padding:14px 28px;border:none;border-radius:12px;background:#D4E157;color:#000;font-size:16px;font-weight:600;cursor:pointer;">🖨️ Print Receipt</button>' +
-          '<button onclick="startNewTransaction()" style="padding:14px 28px;border:none;border-radius:12px;background:#0071e3;color:#fff;font-size:16px;font-weight:600;cursor:pointer;">➕ New Transaction</button>' +
+          '<button class="pos-btn-pill pos-btn-pill-primary" id="btnPrintReceipt" style="padding:14px 28px;font-size:16px;">🖨️ Print Receipt</button>' +
+          '<button class="pos-btn-pill" id="btnNewTx" style="padding:14px 28px;border:none;border-radius:980px;background:#0071e3;color:#fff;font-size:16px;font-weight:600;cursor:pointer;">➕ New Transaction</button>' +
           '</div>' +
-          '<button onclick="startNewTransaction()" style="margin-top:16px;padding:10px 20px;border:1px solid #d2d2d7;border-radius:10px;background:#fff;font-size:14px;cursor:pointer;color:#6e6e73;">No Receipt Needed</button>' +
+          '<button class="pos-btn-pill pos-btn-pill-secondary" id="btnNoReceiptNeeded" style="margin-top:16px;padding:10px 20px;font-size:14px;">No Receipt Needed</button>' +
           '</div>';
+
+        // Attach event listeners to dynamically created buttons
+        document.getElementById('btnPrintReceipt').addEventListener('click', function() { doPrintReceipt(); });
+        document.getElementById('btnNewTx').addEventListener('click', function() { startNewTransaction(); });
+        document.getElementById('btnNoReceiptNeeded').addEventListener('click', function() { startNewTransaction(); });
 
         // Store receipt data for printing
         window._lastReceiptData = data.receipt || data.transaction || data;
@@ -1188,7 +1438,7 @@
       _pendingReceiptData = receiptData;
       var html = buildReceiptPreviewHtml(receiptData);
       document.getElementById('receiptPreviewContent').innerHTML = html;
-      document.getElementById('receiptPreviewOverlay').style.display = 'flex';
+      document.getElementById('receiptPreviewOverlay').classList.add('show');
     }
 
     window.doPrintFromPreview = async function() {
@@ -1211,12 +1461,12 @@
         printWin.focus();
         printWin.print();
       }
-      document.getElementById('receiptPreviewOverlay').style.display = 'none';
+      document.getElementById('receiptPreviewOverlay').classList.remove('show');
       clearCartAfterCheckout();
     };
 
     function closeReceiptPreview() {
-      document.getElementById('receiptPreviewOverlay').style.display = 'none';
+      document.getElementById('receiptPreviewOverlay').classList.remove('show');
       clearCartAfterCheckout();
     }
     window.closeReceiptPreview = closeReceiptPreview;
@@ -1410,10 +1660,18 @@
             '</div>' +
             '<div style="font-size:12px;color:#6e6e73;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(items) + '</div>' +
             '<div style="display:flex;gap:8px;margin-top:8px;">' +
-            '<button onclick="viewOrderDetail(\'' + t._id + '\')" style="padding:6px 12px;border:1px solid #d2d2d7;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;">📄 View Receipt</button>' +
-            (!isRefund ? '<button onclick="refundFromOrder(\'' + escHtml(t.receiptNumber) + '\')" style="padding:6px 12px;border:1px solid #ff3b30;border-radius:8px;background:#fff;color:#ff3b30;font-size:12px;cursor:pointer;">↩️ Refund</button>' : '') +
+            '<button class="op-view-receipt" data-id="' + t._id + '" style="padding:6px 12px;border:1px solid #d2d2d7;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;">📄 View Receipt</button>' +
+            (!isRefund ? '<button class="op-refund" data-receipt="' + escHtml(t.receiptNumber) + '" style="padding:6px 12px;border:1px solid #ff3b30;border-radius:8px;background:#fff;color:#ff3b30;font-size:12px;cursor:pointer;">↩️ Refund</button>' : '') +
             '</div></div>';
         }).join('');
+
+        // Event delegation for order panel buttons
+        resultEl.addEventListener('click', function(e) {
+          var viewBtn = e.target.closest('.op-view-receipt');
+          if (viewBtn) { viewOrderDetail(viewBtn.dataset.id); return; }
+          var refundBtn = e.target.closest('.op-refund');
+          if (refundBtn) { refundFromOrder(refundBtn.dataset.receipt); return; }
+        });
       } catch(e) {
         resultEl.innerHTML = '<div style="color:#ff3b30;padding:20px;">Error: ' + e.message + '</div>';
       }
@@ -1467,7 +1725,7 @@
     var _refundMethod = 'cash';
 
     function openRefundModal() {
-      document.getElementById('refundOverlay').style.display = 'flex';
+      document.getElementById('refundOverlay').classList.add('show');
       document.getElementById('refundReceipt').value = '';
       document.getElementById('refundItemName').value = '';
       document.getElementById('refundItemAmount').value = '';
@@ -1478,16 +1736,14 @@
     window.openRefundModal = openRefundModal;
 
     function closeRefundModal() {
-      document.getElementById('refundOverlay').style.display = 'none';
+      document.getElementById('refundOverlay').classList.remove('show');
     }
     window.closeRefundModal = closeRefundModal;
 
     window.selectRefundMethod = function(method) {
       _refundMethod = method;
-      document.getElementById('refundCashBtn').style.borderColor = method === 'cash' ? '#D4E157' : '#d2d2d7';
-      document.getElementById('refundCashBtn').style.background = method === 'cash' ? '#fafff0' : '#fff';
-      document.getElementById('refundCardBtn').style.borderColor = method === 'card' ? '#D4E157' : '#d2d2d7';
-      document.getElementById('refundCardBtn').style.background = method === 'card' ? '#fafff0' : '#fff';
+      document.getElementById('refundCashBtn').classList.toggle('active', method === 'cash');
+      document.getElementById('refundCardBtn').classList.toggle('active', method === 'card');
     };
 
     window.submitRefund = async function() {
@@ -1691,8 +1947,8 @@
         '<div style="display:flex;gap:6px;margin-bottom:6px;">' +
         '<select id="ipCat" style="flex:1;' + _panelInputs + '"><option value="销售">Sales 销售</option><option value="Lyca Credit">Lyca Credit</option></select>' +
         '<div style="display:flex;gap:4px;align-items:center;"><input id="ipVat" type="number" value="23" step="0.1" style="width:50px;' + _panelInputs + '"><span style="font-size:11px;">%</span>' +
-        '<button onclick="document.getElementById(\'ipVat\').value=\'13.5\'" style="padding:4px 6px;border:1px solid #d2d2d7;border-radius:4px;background:#fff;font-size:10px;cursor:pointer;">13.5</button></div></div>' +
-        '<div style="display:flex;gap:6px;"><button onclick="submitInlineProduct(\'销售\')" style="flex:1;' + _panelBtn + 'background:#D4E157;color:#000;">Add to Cart</button><button onclick="closePanel()" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
+        '<button class="ip-vat-preset" data-vat="13.5" style="padding:4px 6px;border:1px solid #d2d2d7;border-radius:4px;background:#fff;font-size:10px;cursor:pointer;">13.5</button></div></div>' +
+        '<div style="display:flex;gap:6px;"><button class="ip-submit" data-cat="销售" style="flex:1;' + _panelBtn + 'background:#D4E157;color:#000;">Add to Cart</button><button class="ip-cancel" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
         '<div id="ipError" style="display:none;color:#ff3b30;font-size:12px;margin-top:6px;"></div></div>';
     }
 
@@ -1703,7 +1959,7 @@
         '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="ipSku" placeholder="SKU (any format)" style="flex:1;' + _panelInputs + '"><input id="ipPrice" type="number" step="0.01" placeholder="Price € *" style="flex:1;' + _panelInputs + '"></div>' +
         '<div style="margin-bottom:6px;"><input id="ipSerial" placeholder="IMEI / SN (for search)" style="' + _panelInputs + '"></div>' +
         '<input type="hidden" id="ipVat" value="13.5"><input type="hidden" id="ipCat" value="维修"><input type="hidden" id="ipCost" value="0">' +
-        '<div style="display:flex;gap:6px;"><button onclick="submitInlineProduct(\'维修\')" style="flex:1;' + _panelBtn + 'background:#0071e3;color:#fff;">Add Repair</button><button onclick="closePanel()" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
+        '<div style="display:flex;gap:6px;"><button class="ip-submit" data-cat="维修" style="flex:1;' + _panelBtn + 'background:#0071e3;color:#fff;">Add Repair</button><button class="ip-cancel" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
         '<div id="ipError" style="display:none;color:#ff3b30;font-size:12px;margin-top:6px;"></div></div>';
     }
 
@@ -1717,9 +1973,18 @@
         '<select id="ipSource" style="flex:1;' + _panelInputs + '"><option value="customer">From Customer</option><option value="dealer">From Dealer</option><option value="other">Other</option></select>' +
         '<label style="font-size:12px;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ipMargin" checked> Margin VAT</label></div>' +
         '<input type="hidden" id="ipVat" value="23"><input type="hidden" id="ipCat" value="二手">' +
-        '<div style="display:flex;gap:6px;"><button onclick="submitInlineProduct(\'二手\')" style="flex:1;' + _panelBtn + 'background:#ff9500;color:#fff;">Add Used Device</button><button onclick="closePanel()" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
+        '<div style="display:flex;gap:6px;"><button class="ip-submit" data-cat="二手" style="flex:1;' + _panelBtn + 'background:#ff9500;color:#fff;">Add Used Device</button><button class="ip-cancel" style="' + _panelBtn + 'background:#f5f5f7;border:1px solid #d2d2d7;">Cancel</button></div>' +
         '<div id="ipError" style="display:none;color:#ff3b30;font-size:12px;margin-top:6px;"></div></div>';
     }
+
+    // Event delegation for inline panels
+    document.getElementById('inlinePanel').addEventListener('click', function(e) {
+      var submitBtn = e.target.closest('.ip-submit');
+      if (submitBtn) { submitInlineProduct(submitBtn.dataset.cat); return; }
+      if (e.target.closest('.ip-cancel')) { closePanel(); return; }
+      var vatBtn = e.target.closest('.ip-vat-preset');
+      if (vatBtn) { var ipVat = document.getElementById('ipVat'); if (ipVat) ipVat.value = vatBtn.dataset.vat; return; }
+    });
 
     window.submitInlineProduct = async function(defaultCat) {
       var errEl = document.getElementById('ipError');
@@ -1777,7 +2042,7 @@
     window.qaOnCategoryChange = qaOnCategoryChange;
 
     function closeQuickAddModal() {
-      document.getElementById('quickAddOverlay').style.display = 'none';
+      document.getElementById('quickAddOverlay').classList.remove('show');
     }
     window.closeQuickAddModal = closeQuickAddModal;
 

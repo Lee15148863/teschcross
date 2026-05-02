@@ -55,34 +55,35 @@
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
         <nav>
-            <div class="nav-section">业务管理</div>
-            <a href="inv-pos.html"><span class="icon">💰</span>POS 收银</a>
-            <a href="inv-products.html"><span class="icon">📦</span>商品管理</a>
-            <a href="inv-stock.html"><span class="icon">🏭</span>库存管理</a>
-            <a href="inv-suppliers.html"><span class="icon">🤝</span>供应商管理</a>
-            <a href="inv-purchases.html"><span class="icon">🛒</span>采购管理</a>
-            <a href="inv-transactions.html"><span class="icon">📋</span>交易记录</a>
-            <div class="nav-section">报表与发票</div>
-            <a href="inv-reports.html"><span class="icon">📊</span>报表中心</a>
-            <a href="inv-invoices.html"><span class="icon">🧾</span>VAT Invoice</a>
-            <div class="nav-section">系统管理</div>
-            <a href="inv-settings.html"><span class="icon">⚙️</span>系统设置</a>
-            <a href="inv-users.html" class="active"><span class="icon">👥</span>用户管理</a>
+            <div class="nav-section">业务管理 / Business</div>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
+            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
+            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
+            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
+            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
+            <div class="nav-section">报表与发票 / Reports</div>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
+            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
+            <div class="nav-section">系统管理 / System</div>
+            <a href="inv-settings.html" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
+            <a href="inv-users.html" class="active" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
         </nav>
     </aside>
     <div class="main">
         <div class="topbar">
-            <h2>用户管理</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">管理员</span><button class="btn-logout" onclick="logout()">退出登录</button></div>
+            <h2>用户管理 / Users</h2>
+            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">管理员</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
         </div>
         <div class="content">
             <div class="card">
                 <div class="toolbar">
                     <div style="flex:1;"></div>
-                    <button class="btn btn-primary" onclick="showCreateModal()">+ 创建用户</button>
+                    <button class="btn btn-primary" onclick="showCreateModal()">+ 创建用户 / Create User</button>
                 </div>
                 <table>
-                    <thead><tr><th>用户名</th><th>显示名</th><th>角色</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+                    <thead><tr><th>用户名 / Username</th><th>显示名 / Display Name</th><th>角色 / Role</th><th>状态 / Status</th><th>创建时间 / Created</th><th>操作 / Actions</th></tr></thead>
                     <tbody id="userTable"><tr><td colspan="6" style="text-align:center;color:#86868b;padding:40px;">加载中...</td></tr></tbody>
                 </table>
             </div>
@@ -119,8 +120,8 @@
             <div class="hint">Admin has all permissions automatically</div>
         </div>
         <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
-            <button class="btn btn-primary" onclick="saveUser()">保存</button>
+            <button class="btn btn-secondary" onclick="closeModal()">取消 / Cancel</button>
+            <button class="btn btn-primary" onclick="saveUser()">保存 / Save</button>
         </div>
     </div>
 </div>
@@ -133,8 +134,8 @@
         <p style="color:#6e6e73;margin-bottom:16px;" id="resetUserInfo"></p>
         <div class="form-group"><label>新密码</label><input type="password" id="resetPassword" autocomplete="new-password"><div class="hint">至少 8 位，必须包含字母和数字</div></div>
         <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="document.getElementById('resetModal').classList.remove('show')">取消</button>
-            <button class="btn btn-primary" onclick="confirmReset()">确认重置</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('resetModal').classList.remove('show')">取消 / Cancel</button>
+            <button class="btn btn-primary" onclick="confirmReset()">确认重置 / Confirm</button>
         </div>
     </div>
 </div>
@@ -147,6 +148,9 @@ if(!token){window.location.href='inv-login.html';return;}
 let user;try{user=JSON.parse(localStorage.getItem('inv_user'));}catch(e){window.location.href='inv-login.html';return;}
 if(!user||user.role!=='admin'){window.location.href='inv-login.html';return;}
 document.getElementById('displayName').textContent=user.displayName||user.username;
+
+// Hide sidebar items based on permissions (admin pages - admin sees all)
+document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});
 
 const API='/api/inv';
 const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});

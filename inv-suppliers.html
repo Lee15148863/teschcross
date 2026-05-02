@@ -62,25 +62,26 @@
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
         <nav>
-            <div class="nav-section">业务管理</div>
-            <a href="inv-pos.html"><span class="icon">💰</span>POS 收银</a>
-            <a href="inv-products.html"><span class="icon">📦</span>商品管理</a>
-            <a href="inv-stock.html"><span class="icon">🏭</span>库存管理</a>
-            <a href="inv-suppliers.html" class="active"><span class="icon">🤝</span>供应商管理</a>
-            <a href="inv-purchases.html"><span class="icon">🛒</span>采购管理</a>
-            <a href="inv-transactions.html"><span class="icon">📋</span>交易记录</a>
-            <div class="nav-section">报表与发票</div>
-            <a href="inv-reports.html"><span class="icon">📊</span>报表中心</a>
-            <a href="inv-invoices.html"><span class="icon">🧾</span>VAT Invoice</a>
-            <div class="nav-section" id="adminSection" style="display:none;">系统管理</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;"><span class="icon">⚙️</span>系统设置</a>
-            <a href="inv-users.html" class="admin-only" style="display:none;"><span class="icon">👥</span>用户管理</a>
+            <div class="nav-section">业务管理 / Business</div>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
+            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
+            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
+            <a href="inv-suppliers.html" class="active" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
+            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
+            <div class="nav-section">报表与发票 / Reports</div>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
+            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
+            <div class="nav-section" id="adminSection" style="display:none;">系统管理 / System</div>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
         </nav>
     </aside>
     <div class="main">
         <div class="topbar">
-            <h2>供应商管理</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()">退出登录</button></div>
+            <h2>供应商 / Suppliers</h2>
+            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
         </div>
         <div class="content">
             <div class="tabs">
@@ -95,10 +96,10 @@
                         <div style="flex:1;"></div>
                         <button class="btn btn-danger btn-sm admin-batch" style="display:none;" onclick="batchDisable()">批量禁用</button>
                         <button class="btn btn-success btn-sm admin-batch" style="display:none;" onclick="batchEnable()">批量恢复</button>
-                        <button class="btn btn-primary" onclick="showAddModal()">+ 新增供应商</button>
+                        <button class="btn btn-primary" onclick="showAddModal()">+ 新增 / Add</button>
                     </div>
                     <table>
-                        <thead><tr><th class="check-col admin-batch" style="display:none;"><input type="checkbox" id="checkAll" onchange="toggleAll()"></th><th>名称</th><th>联系人</th><th>电话</th><th>等级</th><th>状态</th><th>操作</th></tr></thead>
+                        <thead><tr><th class="check-col admin-batch" style="display:none;"><input type="checkbox" id="checkAll" onchange="toggleAll()"></th><th>名称 / Name</th><th>联系人 / Contact</th><th>电话 / Phone</th><th>等级 / Level</th><th>状态 / Status</th><th>操作 / Actions</th></tr></thead>
                         <tbody id="supplierTable"><tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">加载中...</td></tr></tbody>
                     </table>
                 </div>
@@ -111,7 +112,7 @@
                         <select id="accountSupplier" style="min-width:200px;"><option value="">请选择供应商</option></select>
                         <input type="date" id="accountStart">
                         <input type="date" id="accountEnd">
-                        <button class="btn btn-primary" onclick="loadAccount()">查询</button>
+                        <button class="btn btn-primary" onclick="loadAccount()">查询 / Search</button>
                     </div>
                     <div id="accountResult"></div>
                 </div>
@@ -137,8 +138,8 @@
         <div class="form-group"><label>地址</label><input type="text" id="fAddress"></div>
         <div class="form-group"><label>备注</label><textarea id="fNote" rows="2"></textarea></div>
         <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeModal()">取消</button>
-            <button class="btn btn-primary" onclick="saveSupplier()">保存</button>
+            <button class="btn btn-secondary" onclick="closeModal()">取消 / Cancel</button>
+            <button class="btn btn-primary" onclick="saveSupplier()">保存 / Save</button>
         </div>
     </div>
 </div>
@@ -150,8 +151,8 @@
         <input type="hidden" id="disableId">
         <div class="form-group"><label>禁用原因</label><textarea id="disableReason" rows="3" placeholder="请输入禁用原因"></textarea></div>
         <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="document.getElementById('disableModal').classList.remove('show')">取消</button>
-            <button class="btn btn-danger" onclick="confirmDisable()">确认禁用</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('disableModal').classList.remove('show')">取消 / Cancel</button>
+            <button class="btn btn-danger" onclick="confirmDisable()">确认禁用 / Confirm</button>
         </div>
     </div>
 </div>
@@ -167,6 +168,11 @@ document.getElementById('displayName').textContent=user.displayName||user.userna
 document.getElementById('roleBadge').textContent=user.role==='admin'?'管理员':'员工';
 const isAdmin=user.role==='admin';
 if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');document.querySelectorAll('.admin-batch').forEach(el=>el.style.display='');}
+
+// Hide sidebar items based on permissions
+var perms=user.permissions||{};
+if(isAdmin){document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});}
+else{document.querySelectorAll('nav a[data-perm]').forEach(function(a){if(!perms[a.dataset.perm])a.style.display='none';});}
 
 const API='/api/inv';
 const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
