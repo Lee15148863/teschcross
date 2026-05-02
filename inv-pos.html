@@ -19,9 +19,9 @@
             display: flex; height: 100vh; width: 100vw;
         }
 
-        /* ─── LEFT PANEL: Product Search (30%) ─────────────────────── */
+        /* ─── LEFT PANEL: Product Search (35%) ─────────────────────── */
         .left-panel {
-            width: 30%; min-width: 300px;
+            width: 35%; min-width: 320px;
             display: flex; flex-direction: column;
             background: #fff; border-right: 1px solid #e5e5e7;
         }
@@ -107,10 +107,10 @@
         .search-hint .sh-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
         .search-hint p { font-size: 16px; line-height: 1.6; }
 
-        /* ─── CENTER PANEL: Cart + Checkout (50%) ──────────────────── */
+        /* ─── RIGHT PANEL: Cart + Checkout (65%) ──────────────────── */
         .right-panel {
             flex: 1; display: flex; flex-direction: column;
-            min-width: 360px;
+            min-width: 400px;
         }
         .right-header {
             padding: 16px 20px; border-bottom: 1px solid #e5e5e7;
@@ -150,7 +150,8 @@
         .cart-table tbody tr {
             border-bottom: 1px solid #f0f0f2; transition: background 0.1s;
         }
-        .cart-table tbody tr:hover { background: #fafafa; }
+        .cart-table tbody tr:nth-child(even) { background: #fafafa; }
+        .cart-table tbody tr:hover { background: #f0f7ff; }
         .cart-table tbody tr.selected { background: rgba(212,225,87,0.12); }
         .cart-table tbody td { padding: 10px 12px; vertical-align: middle; }
         .cart-item-name { font-weight: 500; font-size: 14px; }
@@ -311,67 +312,16 @@
             opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none;
         }
 
-        /* ─── RIGHT SIDEBAR: Action Buttons (20%) ─────────────────── */
-        .action-sidebar {
-            width: 20%; min-width: 160px; max-width: 220px;
-            background: #1d1d1f; color: #f5f5f7;
-            display: flex; flex-direction: column;
-            padding: 16px 12px; gap: 10px;
-            overflow-y: auto; border-left: 1px solid #333;
+        /* ─── Action Bar Buttons ──────────────────────────────────── */
+        .pos-action-btn {
+            padding: 6px 12px; border-radius: 8px; border: 1px solid #3a3a3d;
+            background: #2a2a2d; color: #f5f5f7; font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: all 0.15s; white-space: nowrap;
         }
-        .action-sidebar .sidebar-title {
-            font-size: 11px; color: #86868b; text-transform: uppercase;
-            letter-spacing: 1px; padding: 4px 0; margin-bottom: 4px;
-        }
-        .action-sidebar .action-btn {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px; border-radius: 12px;
-            background: #2a2a2d; border: 1px solid #3a3a3d;
-            color: #f5f5f7; font-size: 14px; font-weight: 500;
-            cursor: pointer; transition: all 0.15s;
-            text-align: left; width: 100%;
-        }
-        .action-sidebar .action-btn:hover {
-            background: #3a3a3d; border-color: #D4E157;
-            transform: translateY(-1px);
-        }
-        .action-sidebar .action-btn:active {
-            transform: translateY(0); background: #444;
-        }
-        .action-sidebar .action-btn .action-icon {
-            font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;
-        }
-        .action-sidebar .action-btn .action-label {
-            flex: 1; font-size: 13px; line-height: 1.3;
-        }
-        .action-sidebar .action-btn kbd {
-            padding: 2px 6px; background: #555; border: 1px solid #666;
-            border-radius: 4px; font-size: 10px; font-weight: 600;
-            color: #D4E157; font-family: inherit; flex-shrink: 0;
-        }
-        .action-sidebar .action-btn.btn-checkout-action {
-            background: #D4E157; color: #000; border-color: #D4E157;
-            font-weight: 700;
-        }
-        .action-sidebar .action-btn.btn-checkout-action:hover {
-            background: #c5d148;
-        }
-        .action-sidebar .action-btn.btn-checkout-action kbd {
-            background: rgba(0,0,0,0.2); border-color: rgba(0,0,0,0.3); color: #000;
-        }
-        .action-sidebar .action-btn.btn-danger-action {
-            border-color: #ff3b30;
-        }
-        .action-sidebar .action-btn.btn-danger-action:hover {
-            background: #ff3b30; color: #fff;
-        }
-        .action-sidebar .sidebar-divider {
-            height: 1px; background: #3a3a3d; margin: 6px 0;
-        }
-        .action-sidebar .lang-info {
-            margin-top: auto; padding: 8px 0; text-align: center;
-            font-size: 12px; color: #86868b;
-        }
+        .pos-action-btn:hover { background: #3a3a3d; border-color: #D4E157; }
+        .pos-action-btn:active { background: #444; }
+        .pos-action-primary { background: #D4E157; color: #000; border-color: #D4E157; font-weight: 700; }
+        .pos-action-primary:hover { background: #c5d148; }
 
         /* ─── Toast / Success Message ──────────────────────────────── */
         .toast {
@@ -528,13 +478,27 @@
 
         <!-- RIGHT: Cart + Checkout -->
         <div class="right-panel">
+            <!-- Action Bar -->
+            <div style="display:flex;gap:6px;padding:10px 16px;background:#1d1d1f;flex-wrap:wrap;align-items:center;">
+                <button class="pos-action-btn pos-action-primary" id="sidebarCheckout" onclick="doCheckout()">✅ <span id="scCheckout">Checkout</span></button>
+                <button class="pos-action-btn" onclick="openDiscountModal()">🏷️ <span id="scDiscount">Discount</span></button>
+                <button class="pos-action-btn" onclick="window.open('/inv-transactions.html','_blank')">📋 <span id="scOrderSearch">Orders</span></button>
+                <button class="pos-action-btn" onclick="clearCartAction()">🧹 <span id="scClear">Clear</span></button>
+                <div style="flex:1;"></div>
+                <button class="pos-action-btn" style="font-size:11px;" onclick="window._navCart(-1)">⬆</button>
+                <button class="pos-action-btn" style="font-size:11px;" onclick="window._navCart(1)">⬇</button>
+                <button class="pos-action-btn" style="font-size:11px;" onclick="window._removeSelectedItem()">🗑</button>
+                <button class="lang-toggle" id="langToggle2" style="padding:4px 10px;border-radius:980px;border:1px solid #555;background:#2a2a2d;color:#f5f5f7;font-size:11px;cursor:pointer;">中/EN</button>
+            </div>
+
+            <!-- Cart Header -->
             <div class="right-header">
                 <div style="display:flex;align-items:center;">
-                    <h2 id="cartTitle">购物车</h2>
+                    <h2 id="cartTitle" style="font-size:16px;">Cart</h2>
                     <span class="cart-count" id="cartCount">0</span>
                 </div>
                 <button class="btn-clear-cart" id="btnClearCart" disabled>
-                    <span id="clearCartText">清空</span>
+                    <span id="clearCartText">Clear</span>
                 </button>
             </div>
 
@@ -606,61 +570,6 @@
             </div>
         </div>
 
-        <!-- RIGHT SIDEBAR: Action Buttons -->
-        <div class="action-sidebar" id="actionSidebar">
-            <div class="sidebar-title" id="sidebarTitle">操作</div>
-            <button class="action-btn btn-checkout-action" onclick="doCheckout()" id="sidebarCheckout">
-                <span class="action-icon">✅</span>
-                <span class="action-label" id="scCheckout">结账</span>
-                <kbd>Enter</kbd>
-            </button>
-            <div class="sidebar-divider"></div>
-            <button class="action-btn" onclick="document.getElementById('searchInput').focus();document.getElementById('searchInput').select();">
-                <span class="action-icon">🔍</span>
-                <span class="action-label" id="scSearch">搜索</span>
-                <kbd>F1</kbd>
-            </button>
-            <button class="action-btn" onclick="openDiscountModal()">
-                <span class="action-icon">🏷️</span>
-                <span class="action-label" id="scDiscount">折扣</span>
-                <kbd>F2</kbd>
-            </button>
-            <button class="action-btn" onclick="document.getElementById('cardAmount').focus();document.getElementById('cardAmount').select();">
-                <span class="action-icon">💳</span>
-                <span class="action-label" id="scPayment">卡/现金</span>
-                <kbd>F3</kbd>
-            </button>
-            <button class="action-btn" onclick="window.open('/inv-transactions.html','_blank')">
-                <span class="action-icon">📋</span>
-                <span class="action-label" id="scOrderSearch">Orders</span>
-                <kbd>F6</kbd>
-            </button>
-            <div class="sidebar-divider"></div>
-            <button class="action-btn" onclick="window._removeSelectedItem()">
-                <span class="action-icon">🗑️</span>
-                <span class="action-label" id="scRemove">移除</span>
-                <kbd>Del</kbd>
-            </button>
-            <button class="action-btn btn-danger-action" onclick="clearCartAction()">
-                <span class="action-icon">🧹</span>
-                <span class="action-label" id="scClear">清空</span>
-                <kbd>Esc</kbd>
-            </button>
-            <div class="sidebar-divider"></div>
-            <button class="action-btn" onclick="window._navCart(-1)">
-                <span class="action-icon">⬆️</span>
-                <span class="action-label" id="scNavUp">上移</span>
-                <kbd>↑</kbd>
-            </button>
-            <button class="action-btn" onclick="window._navCart(1)">
-                <span class="action-icon">⬇️</span>
-                <span class="action-label" id="scNavDown">下移</span>
-                <kbd>↓</kbd>
-            </button>
-            <div class="lang-info">
-                <button class="lang-toggle" id="langToggle2" title="Switch Language" style="padding:6px 14px;border-radius:980px;border:1px solid #555;background:#2a2a2d;color:#f5f5f7;font-size:12px;cursor:pointer;">中/EN</button>
-            </div>
-        </div>
     </div>
 
     <!-- Quick Add Product Modal -->
