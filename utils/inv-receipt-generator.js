@@ -62,10 +62,11 @@ const DEFAULT_COMPANY_INFO = {
 const TERMS_TEXT =
   'Warranty & Store Policy\n' +
   'Repairs - 3 Months: Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair. Customer must back up data before repair.\n' +
+  'Pre-owned devices - 7-day refund policy: Device must be returned in the same condition, pass inspection, and be free from account locks.\n' +
   'Accessories - 14 Days: Exchange/return only if unopened, sealed, and resalable.';
 
 const SECOND_HAND_TERMS_TEXT =
-  'Pre-owned Devices - 7 Days: No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable. Refund after inspection via original payment method.';
+  'IMPORTANT - Pre-owned Devices - 7 Days: No physical/liquid damage. Must be fully erased with no Apple ID, Google ID, or passcode. Locked devices are non-refundable. Warranty covers hardware defects only. Refund after inspection via original payment method.';
 
 const QR_CODE_URL = 'https://techcross.ie/receipt-terms.html';
 const REPAIR_TC_URL = 'https://techcross.ie/terms.html';

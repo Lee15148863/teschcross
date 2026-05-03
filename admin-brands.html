@@ -189,19 +189,19 @@
 
 <script src="/api-client.js"></script>
 <script>
-// Auth: inv admin auto-login, or secondary PIN only
+// Auth: inventory admin only.
 function checkAdminAuth() {
     try {
         var invUser = JSON.parse(localStorage.getItem('inv_user'));
         var invToken = localStorage.getItem('inv_token');
         if (invUser && invUser.role === 'admin' && invToken) return true;
     } catch(e) {}
-    if (sessionStorage.getItem('admin_pin_ok')) return true;
-    var pin = prompt('Enter admin PIN:');
-    if (pin === '0331') { sessionStorage.setItem('admin_pin_ok', '1'); return true; }
-    alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return false;
+    sessionStorage.removeItem('admin_logged_in');
+    window.location.href = '/staff-portal.html';
+    return false;
 }
 if (!checkAdminAuth()) throw new Error('Not authorized');
+sessionStorage.setItem('admin_logged_in', 'true');
 
 const ADMIN_TOKEN = '';
 function getBrandsAuthHeaders() {

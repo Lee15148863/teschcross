@@ -151,19 +151,19 @@
     <script>
         const DEFAULT_USERNAME = '';
         const DEFAULT_PASSWORD = '';
-        // Auth: inv admin auto-login, or secondary PIN only
+        // Auth: inventory admin only.
         function checkAdminAuthApple() {
             try {
                 var invUser = JSON.parse(localStorage.getItem('inv_user'));
                 var invToken = localStorage.getItem('inv_token');
                 if (invUser && invUser.role === 'admin' && invToken) return true;
             } catch(e) {}
-            if (sessionStorage.getItem('admin_pin_ok')) return true;
-            var pin = prompt('Enter admin PIN:');
-            if (pin === '0331') { sessionStorage.setItem('admin_pin_ok', '1'); return true; }
-            alert('Incorrect PIN'); window.location.href = '/staff-portal.html'; return false;
+            sessionStorage.removeItem('admin_logged_in');
+            window.location.href = '/staff-portal.html';
+            return false;
         }
         if (!checkAdminAuthApple()) throw new Error('Not authorized');
+        sessionStorage.setItem('admin_logged_in', 'true');
         const ADMIN_TOKEN = '';
         
         let currentDevice = 'iphone';
@@ -176,6 +176,18 @@
             pricingData = loadApplePricingData(); // fallback
         });
 
+        async function showAppleAdmin() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('adminNav').style.display = 'block';
+            document.getElementById('adminContainer').classList.add('show');
+            await pricingDataReady;
+            renderPricingEditor();
+        }
+
+        if (sessionStorage.getItem('admin_logged_in') === 'true') {
+            showAppleAdmin();
+        }
+
         // Login
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -183,12 +195,7 @@
             const password = document.getElementById('passwordInput').value;
             
             if (username === DEFAULT_USERNAME && password === DEFAULT_PASSWORD) {
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('adminNav').style.display = 'block';
-                document.getElementById('adminContainer').classList.add('show');
-                // Wait for data before rendering
-                await pricingDataReady;
-                renderPricingEditor();
+                await showAppleAdmin();
             } else {
                 document.getElementById('loginError').classList.add('show');
             }

@@ -50,6 +50,7 @@ class EnhancedAdmin {
 
     // Initialize the admin interface
     init() {
+        if (!this.pricingData) return;
         this.setupTabs();
         this.setupDeviceButtons();
         this.renderPricingEditor();

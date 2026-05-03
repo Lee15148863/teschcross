@@ -115,8 +115,21 @@
     <script src="/api-client.js"></script>
     <script src="admin-enhanced-core.js"></script>
     <script>
-        if (sessionStorage.getItem('admin_logged_in') !== 'true') {
-            window.location.href = 'admin-brands.html';
+        // Check auth: only inventory admins can access website pricing admin.
+        try {
+            var invUser = JSON.parse(localStorage.getItem('inv_user'));
+            var invToken = localStorage.getItem('inv_token');
+            if (invUser && invUser.role === 'admin' && invToken) {
+                sessionStorage.setItem('admin_logged_in', 'true');
+            } else {
+                sessionStorage.removeItem('admin_logged_in');
+                window.location.href = '/staff-portal.html';
+                throw new Error('Not authorized');
+            }
+        } catch(e) {
+            sessionStorage.removeItem('admin_logged_in');
+            window.location.href = '/staff-portal.html';
+            throw e;
         }
 
         const admin = new EnhancedAdmin({
