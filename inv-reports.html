@@ -22,8 +22,8 @@
         .content{flex:1;overflow-y:auto;padding:24px;}
         .card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:24px;margin-bottom:20px;}
         .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;}
-        .toolbar input,.toolbar select{padding:8px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;background:#fff;}
-        .toolbar input:focus,.toolbar select:focus{outline:none;border-color:#D4E157;}
+        .toolbar input{padding:8px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:14px;background:#fff;}
+        .toolbar input:focus{outline:none;border-color:#D4E157;}
         .btn{padding:8px 18px;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;}
         .btn-primary{background:#D4E157;color:#000;}.btn-primary:hover{background:#c5d148;}
         .btn-secondary{background:#f5f5f7;border:1px solid #d2d2d7;color:#1d1d1f;}.btn-secondary:hover{background:#e5e5e7;}
@@ -37,11 +37,13 @@
         .sum-card{background:#f7f8fc;border-radius:10px;padding:16px 12px;text-align:center;border:1px solid #e2e8f0;}
         .sum-card .sum-label{font-size:12px;color:#64748b;margin-bottom:4px;}
         .sum-card .sum-value{font-size:20px;font-weight:700;color:#1d1d1f;}
+        .sum-card .sum-value.green{color:#34c759;}.sum-card .sum-value.red{color:#ff3b30;}
         .tx-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;}
         .tx-table th{background:#f5f7fa;padding:11px 8px;text-align:left;font-weight:600;color:#333;font-size:12px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid #e5e5e7;}
         .tx-table td{padding:9px 8px;border-bottom:1px solid #f0f0f2;vertical-align:middle;}
         .tx-table tbody tr:hover{background:#f9f9f9;}
         .tx-table tbody tr:nth-child(even){background:#fbfbfb;}
+        .tx-table .total-row{font-weight:700;background:#f0f4c3 !important;}
         .tx-no{font-family:Consolas,monospace;font-size:12px;color:#222;}
         .tx-amount{font-weight:600;text-align:right;}
         .tx-qty,.tx-pay{text-align:center;}
@@ -55,7 +57,6 @@
         .vat-table th{background:#f5f7fa;padding:10px 8px;text-align:left;font-weight:600;font-size:12px;border-bottom:1px solid #e5e5e7;}
         .vat-table td{padding:8px;border-bottom:1px solid #f0f0f2;}
         .vat-table tr.total-row{font-weight:700;background:#f0f4c3;}
-        .monthly-summary{background:#f0f4c3;border-radius:12px;padding:20px;margin-top:16px;font-family:monospace;font-size:13px;line-height:1.8;white-space:pre-wrap;}
         .toast{position:fixed;top:20px;right:20px;z-index:10000;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.15);transform:translateX(120%);transition:transform .3s ease;max-width:400px;}
         .toast.show{transform:translateX(0);}.toast.success{background:#34c759;color:#fff;}.toast.error{background:#ff3b30;color:#fff;}
         .detail-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
@@ -68,7 +69,7 @@
 </head>
 <body>
 <div class="toast" id="toast"></div>
-<div class="detail-overlay" id="detailModal"><div class="detail-box"><h3 style="font-size:20px;margin-bottom:20px;">交易详情</h3><div id="detailContent"></div><div style="text-align:right;margin-top:20px;"><button class="btn btn-secondary" id="btnCloseDetail">关闭 / Close</button></div></div></div>
+<div class="detail-overlay" id="detailModal"><div class="detail-box"><h3 style="font-size:20px;margin-bottom:20px;">交易详情</h3><div id="detailContent"></div><div style="text-align:right;margin-top:20px;"><button class="btn btn-secondary" id="btnCloseDetail">关闭</button></div></div></div>
 <div class="layout">
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
@@ -92,7 +93,7 @@
     <div class="main">
         <div class="topbar">
             <h2>报表中心 / Reports</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" id="btnLogout">退出登录 / Logout</button></div>
+            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" id="btnLogout">退出登录</button></div>
         </div>
         <div class="content">
             <div class="tabs">
@@ -100,65 +101,25 @@
                 <div class="tab" data-tab="weekly">周报表</div>
                 <div class="tab" data-tab="monthly">月度报税报表</div>
             </div>
-
-            <!-- 日结报表 -->
-            <div class="tab-content active" id="tab-daily">
-                <div class="card">
-                    <div class="toolbar">
-                        <input type="date" id="dailyDate">
-                        <button class="btn btn-primary" id="btnLoadDaily">查询 / Search</button>
-                        <div style="flex:1;"></div>
-                        <button class="btn btn-secondary" id="btnPrintDaily">🖨️ 打印</button>
-                        <button class="btn btn-secondary" id="btnExportDaily">📥 导出Excel</button>
-                    </div>
-                    <div class="sum-row" id="dailySummary"></div>
-                    <div id="dailyVat"></div>
-                    <div style="overflow-x:auto;margin-top:16px;">
-                        <table class="tx-table"><thead><tr><th>订单号</th><th>交易时间</th><th>商品数</th><th>金额 (€)</th><th>支付方式</th><th>操作</th></tr></thead>
-                        <tbody id="dailyBody"><tr><td colspan="6" class="no-data">请选择日期查询</td></tr></tbody></table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 周报表 -->
-            <div class="tab-content" id="tab-weekly">
-                <div class="card">
-                    <div class="toolbar">
-                        <input type="week" id="weeklyDate">
-                        <button class="btn btn-primary" id="btnLoadWeekly">查询 / Search</button>
-                        <div style="flex:1;"></div>
-                        <button class="btn btn-secondary" id="btnPrintWeekly">🖨️ 打印</button>
-                        <button class="btn btn-secondary" id="btnExportWeekly">📥 导出Excel</button>
-                    </div>
-                    <div class="sum-row" id="weeklySummary"></div>
-                    <div id="weeklyVat"></div>
-                    <div style="overflow-x:auto;margin-top:16px;">
-                        <table class="tx-table"><thead><tr><th>订单号</th><th>交易时间</th><th>商品数</th><th>金额 (€)</th><th>支付方式</th><th>操作</th></tr></thead>
-                        <tbody id="weeklyBody"><tr><td colspan="6" class="no-data">请选择周查询</td></tr></tbody></table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 月度报税报表 -->
-            <div class="tab-content" id="tab-monthly">
-                <div class="card">
-                    <div class="toolbar">
-                        <input type="month" id="monthlyDate">
-                        <button class="btn btn-primary" id="btnLoadMonthly">查询 / Search</button>
-                        <div style="flex:1;"></div>
-                        <button class="btn btn-secondary" id="btnPrintMonthly">🖨️ 打印</button>
-                        <button class="btn btn-secondary" id="btnExportMonthly">📥 导出Excel</button>
-                    </div>
-                    <div class="sum-row" id="monthlySummary"></div>
-                    <div id="monthlyVat"></div>
-                    <div style="overflow-x:auto;margin-top:16px;">
-                        <table class="tx-table" id="monthlyTaxTable">
-                            <thead><tr><th>日期</th><th>商品销售 (23%)</th><th>服务维修 (13.5%)</th><th>差价税 Margin</th><th>现金收入</th><th>现金支出</th><th>银行卡</th></tr></thead>
-                            <tbody id="monthlyBody"><tr><td colspan="7" class="no-data">请选择月份查询</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            <!-- 日结 -->
+            <div class="tab-content active" id="tab-daily"><div class="card">
+                <div class="toolbar"><input type="date" id="dailyDate"><button class="btn btn-primary" id="btnLoadDaily">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintDaily">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportDaily">📥 导出</button></div>
+                <div class="sum-row" id="dailySummary"></div>
+                <div id="dailyVat"></div>
+                <div style="overflow-x:auto;margin-top:16px;"><table class="tx-table"><thead><tr><th>订单号</th><th>时间</th><th>商品数</th><th>金额</th><th>支付</th><th>操作</th></tr></thead><tbody id="dailyBody"><tr><td colspan="6" class="no-data">请选择日期查询</td></tr></tbody></table></div>
+            </div></div>
+            <!-- 周报 -->
+            <div class="tab-content" id="tab-weekly"><div class="card">
+                <div class="toolbar"><input type="week" id="weeklyDate"><button class="btn btn-primary" id="btnLoadWeekly">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintWeekly">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportWeekly">📥 导出</button></div>
+                <div class="sum-row" id="weeklySummary"></div>
+                <div style="overflow-x:auto;margin-top:16px;"><table class="tx-table"><thead><tr><th>日期</th><th>商品销售</th><th>服务维修</th><th>差价税</th><th>现金</th><th>支出</th><th>卡</th></tr></thead><tbody id="weeklyBody"><tr><td colspan="7" class="no-data">选择周查询</td></tr></tbody></table></div>
+            </div></div>
+            <!-- 月报 -->
+            <div class="tab-content" id="tab-monthly"><div class="card">
+                <div class="toolbar"><input type="month" id="monthlyDate"><button class="btn btn-primary" id="btnLoadMonthly">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintMonthly">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportMonthly">📥 导出</button></div>
+                <div class="sum-row" id="monthlySummary"></div>
+                <div style="overflow-x:auto;margin-top:16px;"><table class="tx-table"><thead><tr><th>日期</th><th>商品销售</th><th>服务维修</th><th>差价税</th><th>23%税额</th><th>13.5%税额</th><th>Margin税额</th><th>现金</th><th>支出</th><th>卡</th></tr></thead><tbody id="monthlyBody"><tr><td colspan="10" class="no-data">选择月份查询</td></tr></tbody></table></div>
+            </div></div>
         </div>
     </div>
 </div>
@@ -185,338 +146,250 @@ document.getElementById('btnLogout').addEventListener('click',logout);
 async function apiFetch(url,opts){opts=opts||{};opts.headers=hdrs();var r=await fetch(API+url,opts);if(r.status===401){logout();return null;}return r;}
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function fmt(v){return'€'+Number(v||0).toFixed(2);}
-function fmtN(v){return Number(v||0).toFixed(2);}
+function fN(v){return Number(v||0).toFixed(2);}
 function pmIcon(m){return m==='split'?'💳+💵':m==='card'?'💳 Card':'💵 Cash';}
+function sc(label,value,cls){return'<div class="sum-card"><div class="sum-label">'+label+'</div><div class="sum-value'+(cls?' '+cls:'')+'">'+value+'</div></div>';}
 
-// 默认日期
 var today=new Date();
 document.getElementById('dailyDate').value=today.toISOString().split('T')[0];
 var dd=new Date(today);var dday=dd.getDay()||7;dd.setDate(dd.getDate()+4-dday);var ys=new Date(dd.getFullYear(),0,1);var wn=Math.ceil(((dd-ys)/86400000+1)/7);
 document.getElementById('weeklyDate').value=today.getFullYear()+'-W'+String(wn).padStart(2,'0');
 document.getElementById('monthlyDate').value=today.toISOString().slice(0,7);
 
-// Tab 切换
-document.querySelectorAll('.tab[data-tab]').forEach(function(tab){
-    tab.addEventListener('click',function(){
-        document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
-        document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active');});
-        tab.classList.add('active');
-        document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
-    });
-});
+document.querySelectorAll('.tab[data-tab]').forEach(function(tab){tab.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+    document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active');});
+    tab.classList.add('active');document.getElementById('tab-'+tab.dataset.tab).classList.add('active');
+});});
 
-// ═══ 渲染统计卡片 ═══
-function renderSummary(containerId,d){
-    var cashAmt=(d.payment?d.payment.cash:0)||0;
-    var cardAmt=(d.payment?d.payment.card:0)||0;
-    var vat=d.vatBreakdown||{};
-    var std23=(vat.standard23||{}).vatPayable||0;
-    var marginV=(vat.margin||{}).vatPayable||0;
-    document.getElementById(containerId).innerHTML=
-        '<div class="sum-card"><div class="sum-label">交易笔数 / Transactions</div><div class="sum-value">'+(d.totalTransactions||0)+'</div></div>'+
-        '<div class="sum-card"><div class="sum-label">总销售额 / Total Sales</div><div class="sum-value">'+fmt(d.totalSales)+'</div></div>'+
-        '<div class="sum-card"><div class="sum-label">标准VAT / Std VAT</div><div class="sum-value">'+fmt(std23)+'</div></div>'+
-        '<div class="sum-card"><div class="sum-label">Margin VAT</div><div class="sum-value">'+fmt(marginV)+'</div></div>'+
-        '<div class="sum-card"><div class="sum-label">💵 现金 / Cash</div><div class="sum-value">'+fmt(cashAmt)+'</div></div>'+
-        '<div class="sum-card"><div class="sum-label">💳 银行卡 / Card</div><div class="sum-value">'+fmt(cardAmt)+'</div></div>';
+// ═══ 获取支出按天 ═══
+async function getExpensesByDate(startDate,endDate){
+    var map={};
+    try{var r=await apiFetch('/expenses?startDate='+startDate+'&endDate='+endDate);if(!r)return map;
+    var resp=await r.json();(resp.data||[]).forEach(function(ex){var dk=new Date(ex.date).toISOString().split('T')[0];map[dk]=(map[dk]||0)+ex.amount;});}catch(e){}
+    return map;
 }
-
-// ═══ 渲染 VAT 明细（4项固定名称） ═══
-function renderVatBreakdown(containerId,d){
-    var vat=d.vatBreakdown||{};
-    var std23=vat.standard23||{};var margin=vat.margin||{};var reduced=vat.reduced135||{};var lyca=vat.lycaCredit||{};
-    var exp=d.expenses||{};
-    var html='<table class="vat-table"><thead><tr><th>VAT Category</th><th>Sales (€)</th><th>VAT Payable (€)</th></tr></thead><tbody>'+
-        '<tr><td>Standard 23% (Sales)</td><td>'+fmt(std23.sales)+'</td><td>'+fmt(std23.vatPayable)+'</td></tr>'+
-        '<tr><td>Service & Repair 13.5%</td><td>'+fmt(reduced.sales)+'</td><td>'+fmt(reduced.vatPayable)+'</td></tr>'+
-        '<tr><td>Margin Scheme</td><td>'+fmt(margin.sales)+'</td><td>'+fmt(margin.vatPayable)+'</td></tr>'+
-        '<tr><td>Lyca Credit</td><td>'+fmt(lyca.sales)+'</td><td>'+fmt(lyca.vatPayable)+'</td></tr>'+
-        '<tr class="total-row"><td>Total</td><td>'+fmt(d.totalSales)+'</td><td>'+fmt(d.totalVatPayable)+'</td></tr>'+
-        '</tbody></table>';
-    if(exp.count>0){
-        html+='<div style="margin-top:12px;padding:12px;background:#fff8f0;border-radius:8px;font-size:13px;">'+
-            '💸 支出 / Expenses: <strong>'+fmt(exp.total)+'</strong> (💵'+fmt(exp.cash)+' / 💳'+fmt(exp.card)+') &nbsp;|&nbsp; 净现金 / Net Cash: <strong style="color:'+(d.netCash<0?'#ff3b30':'#34c759')+'">'+fmt(d.netCash)+'</strong>'+(d.cashWarning?' ⚠️':'')+
-        '</div>';
-    }
-    document.getElementById(containerId).innerHTML=html;
-}
-
-// ═══ 渲染交易列表 ═══
-function renderTxList(tbodyId,transactions){
-    var tb=document.getElementById(tbodyId);
-    if(!transactions||!transactions.length){tb.innerHTML='<tr><td colspan="6" class="no-data">📭 暂无交易记录 / No transactions</td></tr>';return;}
-    tb.innerHTML=transactions.map(function(tx){
-        var isRefund=tx.totalAmount<0;
-        var amtStyle=isRefund?'color:#ff3b30;':'';
-        var itemCount=tx.items?tx.items.length:0;
-        return '<tr data-id="'+tx._id+'">'+
-            '<td class="tx-no">'+(isRefund?'↩️ ':'')+esc(tx.receiptNumber)+'</td>'+
-            '<td>'+new Date(tx.createdAt).toLocaleString('en-IE')+'</td>'+
-            '<td class="tx-qty">'+itemCount+'</td>'+
-            '<td class="tx-amount" style="'+amtStyle+'">'+fmt(tx.totalAmount)+'</td>'+
-            '<td class="tx-pay">'+pmIcon(tx.paymentMethod)+'</td>'+
-            '<td>'+
-                '<button class="btn-sm btn-view" data-action="view" data-id="'+tx._id+'">详情</button>'+
-                '<button class="btn-sm btn-print" data-action="reprint" data-id="'+tx._id+'">🖨️</button>'+
-                (tx.totalAmount>=0?'<button class="btn-sm btn-refund" data-action="refund" data-receipt="'+esc(tx.receiptNumber)+'">退款</button>':'')+
-                (isAdmin?'<button class="btn-sm btn-delete" data-action="delete" data-id="'+tx._id+'">删除</button>':'')+
-            '</td></tr>';
-    }).join('');
-}
-
-// ═══ 事件委托：交易列表按钮 ═══
-document.querySelectorAll('.tx-table').forEach(function(table){
-    table.addEventListener('click',function(e){
-        var btn=e.target.closest('[data-action]');if(!btn)return;
-        var action=btn.dataset.action;
-        if(action==='view')viewDetail(btn.dataset.id);
-        else if(action==='reprint')reprintReceipt(btn.dataset.id);
-        else if(action==='refund')refundTx(btn.dataset.receipt);
-        else if(action==='delete')deleteTx(btn.dataset.id);
-    });
-});
 
 // ═══ 日报 ═══
 async function loadDaily(){
-    var date=document.getElementById('dailyDate').value;
-    if(!date){toast('请选择日期','error');return;}
+    var date=document.getElementById('dailyDate').value;if(!date){toast('请选择日期','error');return;}
     document.getElementById('dailyBody').innerHTML='<tr><td colspan="6" class="no-data">加载中...</td></tr>';
     try{
         var r=await apiFetch('/reports/daily?startDate='+date+'&endDate='+date);if(!r)return;
         var resp=await r.json();
-        if(resp.message||!resp.data){
-            document.getElementById('dailySummary').innerHTML='';
-            document.getElementById('dailyVat').innerHTML='';
-            document.getElementById('dailyBody').innerHTML='<tr><td colspan="6" class="no-data">📭 '+(resp.message||'当日无交易记录')+'</td></tr>';return;
-        }
-        renderSummary('dailySummary',resp.data);
-        renderVatBreakdown('dailyVat',resp.data);
+        if(resp.message||!resp.data){document.getElementById('dailySummary').innerHTML='';document.getElementById('dailyVat').innerHTML='';
+            document.getElementById('dailyBody').innerHTML='<tr><td colspan="6" class="no-data">📭 当日无交易记录</td></tr>';return;}
+        var d=resp.data;var vat=d.vatBreakdown||{};
+        var std23=vat.standard23||{};var reduced=vat.reduced135||{};var margin=vat.margin||{};var lyca=vat.lycaCredit||{};
+        var cashIn=(d.payment?d.payment.cash:0)||0;var cardIn=(d.payment?d.payment.card:0)||0;
+        var exp=d.expenses||{};var cashOut=exp.cash||0;var cashNet=cashIn-cashOut;
+
+        document.getElementById('dailySummary').innerHTML=
+            sc('交易笔数',d.totalTransactions||0)+
+            sc('总销售额',fmt(d.totalSales))+
+            sc('23% 销售税额',fmt(std23.vatPayable))+
+            sc('13.5% 维修税额',fmt(reduced.vatPayable))+
+            sc('Margin 税额',fmt(margin.vatPayable))+
+            sc('💵 现金收入',fmt(cashIn))+
+            sc('💸 现金支出',fmt(cashOut),'red')+
+            sc('💰 现金盈余',fmt(cashNet),cashNet>=0?'green':'red')+
+            sc('💳 银行卡收入',fmt(cardIn));
+
+        document.getElementById('dailyVat').innerHTML=
+            '<table class="vat-table"><thead><tr><th>VAT 类型</th><th>销售额</th><th>应缴税额</th></tr></thead><tbody>'+
+            '<tr><td>Standard 23% (商品销售)</td><td>'+fmt(std23.sales)+'</td><td>'+fmt(std23.vatPayable)+'</td></tr>'+
+            '<tr><td>Service & Repair 13.5% (服务维修)</td><td>'+fmt(reduced.sales)+'</td><td>'+fmt(reduced.vatPayable)+'</td></tr>'+
+            '<tr><td>Margin Scheme (差价税)</td><td>'+fmt(margin.sales)+'</td><td>'+fmt(margin.vatPayable)+'</td></tr>'+
+            '<tr><td>Lyca Credit (话费)</td><td>'+fmt(lyca.sales)+'</td><td>'+fmt(lyca.vatPayable)+'</td></tr>'+
+            '<tr class="total-row"><td>合计</td><td>'+fmt(d.totalSales)+'</td><td>'+fmt(d.totalVatPayable)+'</td></tr>'+
+            '</tbody></table>';
+
         var r2=await apiFetch('/transactions?startDate='+date+'&endDate='+date+'&limit=500');if(!r2)return;
-        var resp2=await r2.json();
-        renderTxList('dailyBody',resp2.data||[]);
-    }catch(e){toast('加载失败: '+e.message,'error');}
+        var resp2=await r2.json();renderTxList('dailyBody',resp2.data||[]);
+    }catch(e){toast('加载失败','error');}
 }
 document.getElementById('btnLoadDaily').addEventListener('click',loadDaily);
 
 // ═══ 周报 ═══
 async function loadWeekly(){
-    var week=document.getElementById('weeklyDate').value;
-    if(!week){toast('请选择周','error');return;}
-    document.getElementById('weeklyBody').innerHTML='<tr><td colspan="6" class="no-data">加载中...</td></tr>';
+    var week=document.getElementById('weeklyDate').value;if(!week){toast('请选择周','error');return;}
+    document.getElementById('weeklyBody').innerHTML='<tr><td colspan="7" class="no-data">加载中...</td></tr>';
     try{
-        var match=week.match(/^(\d{4})-W(\d{1,2})$/);
-        var weekStart='',weekEnd='';
-        if(match){
-            var y=parseInt(match[1]),w=parseInt(match[2]);
-            var jan4=new Date(y,0,4);var dow=jan4.getDay()||7;
-            var mon=new Date(jan4);mon.setDate(jan4.getDate()-dow+1+(w-1)*7);
-            var sun=new Date(mon);sun.setDate(mon.getDate()+6);
-            weekStart=mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
-            weekEnd=sun.getFullYear()+'-'+String(sun.getMonth()+1).padStart(2,'0')+'-'+String(sun.getDate()).padStart(2,'0');
-        }
-        var r=await apiFetch('/reports/weekly?startDate='+weekStart+'&week='+week);if(!r)return;
+        var match=week.match(/^(\d{4})-W(\d{1,2})$/);var ws='',we='';
+        if(match){var y=parseInt(match[1]),w=parseInt(match[2]);var j4=new Date(y,0,4);var dow=j4.getDay()||7;
+            var mon=new Date(j4);mon.setDate(j4.getDate()-dow+1+(w-1)*7);var sun=new Date(mon);sun.setDate(mon.getDate()+6);
+            ws=mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
+            we=sun.getFullYear()+'-'+String(sun.getMonth()+1).padStart(2,'0')+'-'+String(sun.getDate()).padStart(2,'0');}
+        var r=await apiFetch('/reports/weekly?startDate='+ws+'&week='+week);if(!r)return;
         var resp=await r.json();
-        if(!resp.data){
-            document.getElementById('weeklySummary').innerHTML='';document.getElementById('weeklyVat').innerHTML='';
-            document.getElementById('weeklyBody').innerHTML='<tr><td colspan="6" class="no-data">📭 该周无交易记录</td></tr>';return;
-        }
-        var d=resp.data;var s=d.summary||{};
-        var fakeD={totalTransactions:0,totalSales:s.totalSales||0,payment:{cash:s.totalCash||0,card:s.totalCard||0},
-            vatBreakdown:{standard23:{sales:0,vatPayable:s.standard23VatTotal||0},margin:{sales:0,vatPayable:s.marginVatTotal||0},reduced135:{sales:0,vatPayable:s.reduced135VatTotal||0},lycaCredit:{sales:0,vatPayable:s.lycaCreditVatTotal||0}},
-            totalVatPayable:s.totalVatPayable||0,expenses:s.expenses||{},netCash:s.netCash||0,cashWarning:s.cashWarning};
-        renderSummary('weeklySummary',fakeD);
-        renderVatBreakdown('weeklyVat',fakeD);
-        var sd=weekStart||d.weekStart;var ed=weekEnd||d.weekEnd;
-        var r2=await apiFetch('/transactions?startDate='+sd+'&endDate='+ed+'&limit=500');if(!r2)return;
-        var resp2=await r2.json();
-        fakeD.totalTransactions=(resp2.data||[]).length;
-        renderSummary('weeklySummary',fakeD);
-        renderTxList('weeklyBody',resp2.data||[]);
-    }catch(e){toast('加载失败: '+e.message,'error');}
+        if(!resp.data){document.getElementById('weeklySummary').innerHTML='';
+            document.getElementById('weeklyBody').innerHTML='<tr><td colspan="7" class="no-data">📭 该周无交易记录</td></tr>';return;}
+        var d=resp.data;var s=d.summary||{};var days=d.dailyData||[];
+        var expMap=await getExpensesByDate(ws,we);
+
+        var gSales=0,gService=0,gMargin=0,gLyca=0,gCashIn=0,gCashOut=0,gCard=0;
+        var html=days.map(function(day){
+            var salesAmt=(day.standard23||{}).sales||0;var serviceAmt=(day.reduced135||{}).sales||0;
+            var marginAmt=(day.margin||{}).sales||0;var lycaAmt=(day.lycaCredit||{}).sales||0;
+            var cashIn=day.cash||0;var cashOut=expMap[day.date]||0;var cardAmt=day.card||0;
+            gSales+=salesAmt;gService+=serviceAmt;gMargin+=marginAmt;gLyca+=lycaAmt;
+            gCashIn+=cashIn;gCashOut+=cashOut;gCard+=cardAmt;
+            return '<tr><td>'+esc(day.date)+'</td><td>'+fmt(salesAmt)+'</td><td>'+fmt(serviceAmt)+'</td><td>'+fmt(marginAmt)+'</td>'+
+                '<td>'+fmt(cashIn)+'</td><td style="color:#ff3b30;">'+fmt(cashOut)+'</td><td>'+fmt(cardAmt)+'</td></tr>';
+        }).join('');
+        html+='<tr class="total-row"><td>TOTAL</td><td>'+fmt(gSales)+'</td><td>'+fmt(gService)+'</td><td>'+fmt(gMargin)+'</td>'+
+            '<td>'+fmt(gCashIn)+'</td><td style="color:#ff3b30;">'+fmt(gCashOut)+'</td><td>'+fmt(gCard)+'</td></tr>';
+        document.getElementById('weeklyBody').innerHTML=html;
+
+        var cashNet=gCashIn-gCashOut;
+        var totalCardExpected=(s.totalCard||gCard);
+        document.getElementById('weeklySummary').innerHTML=
+            sc('本周商品销售',fmt(gSales))+sc('本周服务维修',fmt(gService))+sc('本周差价税',fmt(gMargin))+
+            sc('本周话费 Lyca',fmt(gLyca))+
+            sc('💵 现金总收入',fmt(gCashIn))+sc('💸 现金总支出',fmt(gCashOut),'red')+
+            sc('💰 现金盈余',fmt(cashNet),cashNet>=0?'green':'red')+
+            sc('💳 银行卡总收入',fmt(gCard))+sc('📥 应进卡收款',fmt(totalCardExpected));
+    }catch(e){toast('加载失败','error');}
 }
 document.getElementById('btnLoadWeekly').addEventListener('click',loadWeekly);
 
-// ═══ 月报（按天汇总：商品销售/服务维修/差价税/现金收入/现金支出/银行卡） ═══
-var _monthlyDayData=[];// 缓存给导出用
+// ═══ 月报 ═══
+var _mData=[];
 async function loadMonthly(){
-    var month=document.getElementById('monthlyDate').value;
-    if(!month){toast('请选择月份','error');return;}
-    document.getElementById('monthlyBody').innerHTML='<tr><td colspan="7" class="no-data">加载中...</td></tr>';
-    _monthlyDayData=[];
+    var month=document.getElementById('monthlyDate').value;if(!month){toast('请选择月份','error');return;}
+    document.getElementById('monthlyBody').innerHTML='<tr><td colspan="10" class="no-data">加载中...</td></tr>';
+    _mData=[];
     try{
         var r=await apiFetch('/reports/monthly?month='+month);if(!r)return;
         var resp=await r.json();
-        if(!resp.data){
-            document.getElementById('monthlySummary').innerHTML='';document.getElementById('monthlyVat').innerHTML='';
-            document.getElementById('monthlyBody').innerHTML='<tr><td colspan="7" class="no-data">📭 该月无交易记录</td></tr>';return;
-        }
+        if(!resp.data){document.getElementById('monthlySummary').innerHTML='';
+            document.getElementById('monthlyBody').innerHTML='<tr><td colspan="10" class="no-data">📭 该月无交易记录</td></tr>';return;}
         var d=resp.data;var s=d.summary||{};var days=d.dailyData||[];
-        // 汇总卡片
-        var fakeD={totalTransactions:0,totalSales:s.totalSales||0,payment:{cash:s.totalCash||0,card:s.totalCard||0},
-            vatBreakdown:{standard23:{sales:0,vatPayable:s.standard23VatTotal||0},margin:{sales:0,vatPayable:s.marginVatTotal||0},reduced135:{sales:0,vatPayable:s.reduced135VatTotal||0},lycaCredit:{sales:0,vatPayable:s.lycaCreditVatTotal||0}},
-            totalVatPayable:s.totalVatPayable||0,expenses:s.expenses||{},netCash:s.netCash||0,cashWarning:s.cashWarning};
-        renderSummary('monthlySummary',fakeD);
-        renderVatBreakdown('monthlyVat',fakeD);
+        var parts=month.split('-');var sd=month+'-01';var ed=month+'-'+String(new Date(parseInt(parts[0]),parseInt(parts[1]),0).getDate()).padStart(2,'0');
+        var expMap=await getExpensesByDate(sd,ed);
 
-        // 查支出按天
-        var expByDate={};
-        if(s.expenses&&s.expenses.byDate){expByDate=s.expenses.byDate;}
-        // 也单独查支出明细
-        var parts=month.split('-');
-        var startDate=month+'-01';
-        var endDay=new Date(parseInt(parts[0]),parseInt(parts[1]),0).getDate();
-        var endDate=month+'-'+String(endDay).padStart(2,'0');
-        try{
-            var re=await apiFetch('/expenses?startDate='+startDate+'&endDate='+endDate);
-            if(re){var expResp=await re.json();(expResp.data||[]).forEach(function(ex){
-                var dk=new Date(ex.date).toISOString().split('T')[0];
-                if(!expByDate[dk])expByDate[dk]=0;
-                expByDate[dk]+=ex.amount;
-            });}
-        }catch(e){}
-
-        // 按天渲染表格
-        var gSales=0,gService=0,gMargin=0,gCashIn=0,gCashOut=0,gCard=0;
+        var gSales=0,gService=0,gMargin=0,gV23=0,gV135=0,gVM=0,gCash=0,gOut=0,gCard=0;
         var html=days.map(function(day){
-            var salesAmt=(day.standard23||{}).sales||0;
-            var serviceAmt=(day.reduced135||{}).sales||0;
-            var marginAmt=(day.margin||{}).sales||0;
-            var cashIn=day.cash||0;
-            var cashOut=expByDate[day.date]||0;
-            var cardAmt=day.card||0;
-            gSales+=salesAmt;gService+=serviceAmt;gMargin+=marginAmt;
-            gCashIn+=cashIn;gCashOut+=cashOut;gCard+=cardAmt;
-            _monthlyDayData.push({date:day.date,sales:salesAmt,service:serviceAmt,margin:marginAmt,cashIn:cashIn,cashOut:cashOut,card:cardAmt});
-            return '<tr>'+
-                '<td>'+esc(day.date)+'</td>'+
-                '<td>'+fmt(salesAmt)+'</td>'+
-                '<td>'+fmt(serviceAmt)+'</td>'+
-                '<td>'+fmt(marginAmt)+'</td>'+
-                '<td>'+fmt(cashIn)+'</td>'+
-                '<td style="color:#ff3b30;">'+fmt(cashOut)+'</td>'+
-                '<td>'+fmt(cardAmt)+'</td></tr>';
+            var salesAmt=(day.standard23||{}).sales||0;var serviceAmt=(day.reduced135||{}).sales||0;var marginAmt=(day.margin||{}).sales||0;
+            var v23=(day.standard23||{}).vatPayable||0;var v135=(day.reduced135||{}).vatPayable||0;var vm=(day.margin||{}).vatPayable||0;
+            var cashIn=day.cash||0;var cashOut=expMap[day.date]||0;var cardAmt=day.card||0;
+            gSales+=salesAmt;gService+=serviceAmt;gMargin+=marginAmt;gV23+=v23;gV135+=v135;gVM+=vm;
+            gCash+=cashIn;gOut+=cashOut;gCard+=cardAmt;
+            _mData.push({date:day.date,sales:salesAmt,repair:serviceAmt,margin:marginAmt,vat23:v23,vat135:v135,marginVat:vm,cashIn:cashIn,cashOut:cashOut,card:cardAmt});
+            return '<tr><td>'+esc(day.date)+'</td><td>'+fmt(salesAmt)+'</td><td>'+fmt(serviceAmt)+'</td><td>'+fmt(marginAmt)+'</td>'+
+                '<td>'+fmt(v23)+'</td><td>'+fmt(v135)+'</td><td>'+fmt(vm)+'</td>'+
+                '<td>'+fmt(cashIn)+'</td><td style="color:#ff3b30;">'+fmt(cashOut)+'</td><td>'+fmt(cardAmt)+'</td></tr>';
         }).join('');
-        // 汇总行
-        html+='<tr class="total-row" style="font-weight:700;background:#f0f4c3;">'+
-            '<td>TOTAL</td>'+
-            '<td>'+fmt(gSales)+'</td>'+
-            '<td>'+fmt(gService)+'</td>'+
-            '<td>'+fmt(gMargin)+'</td>'+
-            '<td>'+fmt(gCashIn)+'</td>'+
-            '<td style="color:#ff3b30;">'+fmt(gCashOut)+'</td>'+
-            '<td>'+fmt(gCard)+'</td></tr>';
-        document.getElementById('monthlyBody').innerHTML=html||'<tr><td colspan="7" class="no-data">📭 该月无交易记录</td></tr>';
-    }catch(e){toast('加载失败: '+e.message,'error');}
+        html+='<tr class="total-row"><td>TOTAL</td><td>'+fmt(gSales)+'</td><td>'+fmt(gService)+'</td><td>'+fmt(gMargin)+'</td>'+
+            '<td>'+fmt(gV23)+'</td><td>'+fmt(gV135)+'</td><td>'+fmt(gVM)+'</td>'+
+            '<td>'+fmt(gCash)+'</td><td style="color:#ff3b30;">'+fmt(gOut)+'</td><td>'+fmt(gCard)+'</td></tr>';
+        document.getElementById('monthlyBody').innerHTML=html;
+
+        var totalVat=gV23+gV135+gVM;
+        document.getElementById('monthlySummary').innerHTML=
+            sc('月总销售额',fmt(gSales+gService+gMargin))+
+            sc('23% 应缴税额',fmt(gV23))+sc('13.5% 应缴税额',fmt(gV135))+
+            sc('Margin 应缴税额',fmt(gVM))+
+            sc('当月总应缴税额',fmt(totalVat),'red');
+    }catch(e){toast('加载失败','error');}
 }
 document.getElementById('btnLoadMonthly').addEventListener('click',loadMonthly);
 
-// ═══ 详情弹窗 ═══
+// ═══ 交易列表渲染 ═══
+function renderTxList(tbodyId,txs){
+    var tb=document.getElementById(tbodyId);
+    if(!txs||!txs.length){tb.innerHTML='<tr><td colspan="6" class="no-data">📭 暂无交易记录</td></tr>';return;}
+    tb.innerHTML=txs.map(function(tx){
+        var isR=tx.totalAmount<0;
+        return '<tr data-id="'+tx._id+'"><td class="tx-no">'+(isR?'↩️ ':'')+esc(tx.receiptNumber)+'</td>'+
+            '<td>'+new Date(tx.createdAt).toLocaleString('en-IE')+'</td><td class="tx-qty">'+(tx.items?tx.items.length:0)+'</td>'+
+            '<td class="tx-amount" style="'+(isR?'color:#ff3b30;':'')+'">'+fmt(tx.totalAmount)+'</td>'+
+            '<td class="tx-pay">'+pmIcon(tx.paymentMethod)+'</td><td>'+
+            '<button class="btn-sm btn-view" data-action="view" data-id="'+tx._id+'">详情</button>'+
+            '<button class="btn-sm btn-print" data-action="reprint" data-id="'+tx._id+'">🖨️</button>'+
+            (tx.totalAmount>=0?'<button class="btn-sm btn-refund" data-action="refund" data-receipt="'+esc(tx.receiptNumber)+'">退款</button>':'')+
+            (isAdmin?'<button class="btn-sm btn-delete" data-action="delete" data-id="'+tx._id+'">删除</button>':'')+
+            '</td></tr>';
+    }).join('');
+}
+
+// ═══ 事件委托 ═══
+document.querySelectorAll('.tx-table').forEach(function(t){t.addEventListener('click',function(e){
+    var b=e.target.closest('[data-action]');if(!b)return;
+    if(b.dataset.action==='view')viewDetail(b.dataset.id);
+    else if(b.dataset.action==='reprint')reprintReceipt(b.dataset.id);
+    else if(b.dataset.action==='refund')window.open('/inv-transactions.html','_blank');
+    else if(b.dataset.action==='delete')deleteTx(b.dataset.id);
+});});
+
+// ═══ 详情 ═══
 async function viewDetail(id){
-    try{
-        var r=await apiFetch('/transactions/'+id);if(!r)return;
-        var tx=await r.json();
-        var html=
-            '<div class="detail-row"><span class="label">单号</span><span class="value">'+esc(tx.receiptNumber)+'</span></div>'+
-            '<div class="detail-row"><span class="label">时间</span><span class="value">'+new Date(tx.createdAt).toLocaleString('en-IE')+'</span></div>'+
-            '<div class="detail-row"><span class="label">支付方式</span><span class="value">'+pmIcon(tx.paymentMethod)+'</span></div>'+
-            '<div class="detail-row"><span class="label">总金额</span><span class="value">'+fmt(tx.totalAmount)+'</span></div>'+
-            '<div class="detail-row"><span class="label">Standard VAT</span><span class="value">'+fmt(tx.standardVatTotal)+'</span></div>'+
-            '<div class="detail-row"><span class="label">Margin VAT</span><span class="value">'+fmt(tx.marginVatTotal)+'</span></div>';
-        if(tx.paymentMethod==='cash'||tx.paymentMethod==='split'){
-            html+='<div class="detail-row"><span class="label">实收</span><span class="value">'+fmt(tx.cashReceived)+'</span></div>';
-            if(tx.changeGiven>0)html+='<div class="detail-row"><span class="label">找零</span><span class="value">'+fmt(tx.changeGiven)+'</span></div>';
-        }
-        if(tx.paymentMethod==='split')html+='<div class="detail-row"><span class="label">卡付</span><span class="value">'+fmt(tx.cardAmount)+'</span></div>';
-        html+='<h4 style="margin:16px 0 8px;">商品明细</h4><table class="tx-table"><thead><tr><th>商品</th><th>数量</th><th>单价</th><th>小计</th></tr></thead><tbody>'+
-            (tx.items||[]).map(function(it){return '<tr><td>'+esc(it.name)+(it.serialNumber?' <br><small style="color:#0071e3;">SN: '+esc(it.serialNumber)+'</small>':'')+'</td><td>'+it.quantity+'</td><td>'+fmt(it.unitPrice)+'</td><td>'+fmt(it.subtotal)+'</td></tr>';}).join('')+
-            '</tbody></table>';
-        document.getElementById('detailContent').innerHTML=html;
-        document.getElementById('detailModal').classList.add('show');
-    }catch(e){toast('加载详情失败','error');}
+    try{var r=await apiFetch('/transactions/'+id);if(!r)return;var tx=await r.json();
+    var h='<div class="detail-row"><span class="label">单号</span><span class="value">'+esc(tx.receiptNumber)+'</span></div>'+
+        '<div class="detail-row"><span class="label">时间</span><span class="value">'+new Date(tx.createdAt).toLocaleString('en-IE')+'</span></div>'+
+        '<div class="detail-row"><span class="label">支付</span><span class="value">'+pmIcon(tx.paymentMethod)+'</span></div>'+
+        '<div class="detail-row"><span class="label">总金额</span><span class="value">'+fmt(tx.totalAmount)+'</span></div>';
+    if(tx.cashReceived)h+='<div class="detail-row"><span class="label">实收</span><span class="value">'+fmt(tx.cashReceived)+'</span></div>';
+    if(tx.changeGiven>0)h+='<div class="detail-row"><span class="label">找零</span><span class="value">'+fmt(tx.changeGiven)+'</span></div>';
+    if(tx.cardAmount)h+='<div class="detail-row"><span class="label">卡付</span><span class="value">'+fmt(tx.cardAmount)+'</span></div>';
+    h+='<h4 style="margin:16px 0 8px;">商品明细</h4><table class="tx-table"><thead><tr><th>商品</th><th>数量</th><th>单价</th><th>小计</th></tr></thead><tbody>'+
+        (tx.items||[]).map(function(it){return '<tr><td>'+esc(it.name)+(it.serialNumber?'<br><small style="color:#0071e3;">SN:'+esc(it.serialNumber)+'</small>':'')+'</td><td>'+it.quantity+'</td><td>'+fmt(it.unitPrice)+'</td><td>'+fmt(it.subtotal)+'</td></tr>';}).join('')+'</tbody></table>';
+    document.getElementById('detailContent').innerHTML=h;document.getElementById('detailModal').classList.add('show');
+    }catch(e){toast('加载失败','error');}
 }
 document.getElementById('btnCloseDetail').addEventListener('click',function(){document.getElementById('detailModal').classList.remove('show');});
 
-// ═══ 重打印（Print Agent → fallback browser） ═══
+// ═══ 重打印 ═══
 async function reprintReceipt(id){
-    try{
-        var r=await apiFetch('/transactions/'+id);if(!r)return;
-        var tx=await r.json();
-        try{var pr=await fetch('http://localhost:9100/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transaction:tx}),signal:AbortSignal.timeout(5000)});if(pr.ok){toast('已发送到打印机');return;}}catch(e){}
-        toast('Print Agent 未运行，请手动打印','error');
-    }catch(e){toast('打印失败','error');}
+    try{var r=await apiFetch('/transactions/'+id);if(!r)return;var tx=await r.json();
+    try{var pr=await fetch('http://localhost:9100/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transaction:tx}),signal:AbortSignal.timeout(5000)});
+    if(pr.ok){toast('已发送到打印机');return;}}catch(e){}
+    toast('Print Agent 未运行','error');}catch(e){toast('打印失败','error');}
 }
-function refundTx(receiptNumber){window.open('/inv-transactions.html','_blank');}
 
 // ═══ 删除 ═══
 async function deleteTx(id){
-    if(!confirm('⚠️ 确定删除此交易？\n删除后数据不可恢复！'))return;
-    if(!confirm('再次确认：此操作不可撤销，确定删除？'))return;
-    try{
-        var r=await apiFetch('/transactions/'+id+'/delete',{method:'DELETE',body:JSON.stringify({confirm:true})});
-        if(!r)return;if(!r.ok){var e=await r.json();toast(e.error||'删除失败','error');return;}
-        toast('交易已删除');
-        var activeTab=document.querySelector('.tab.active');
-        if(activeTab){var t=activeTab.dataset.tab;if(t==='daily')loadDaily();else if(t==='weekly')loadWeekly();else if(t==='monthly')loadMonthly();}
-    }catch(e){toast('删除失败','error');}
+    if(!confirm('⚠️ 确定删除？不可恢复！'))return;if(!confirm('再次确认删除？'))return;
+    try{var r=await apiFetch('/transactions/'+id+'/delete',{method:'DELETE',body:JSON.stringify({confirm:true})});
+    if(!r)return;if(!r.ok){var e=await r.json();toast(e.error||'失败','error');return;}toast('已删除');
+    var at=document.querySelector('.tab.active');if(at){var t=at.dataset.tab;if(t==='daily')loadDaily();else if(t==='weekly')loadWeekly();else loadMonthly();}
+    }catch(e){toast('失败','error');}
 }
 
-// ═══ 导出 — 日报/周报用表格导出 ═══
+// ═══ 导出日报/周报 ═══
 function exportTableCSV(tabType){
-    var table;
-    if(tabType==='daily')table=document.querySelector('#tab-daily .tx-table');
-    else table=document.querySelector('#tab-weekly .tx-table');
-    if(!table){toast('无数据可导出','error');return;}
-    var rows=table.querySelectorAll('tr');
-    var csv='\uFEFF';
-    rows.forEach(function(row){
-        var cols=row.querySelectorAll('th,td');
-        var line=[];
-        cols.forEach(function(col){var text=col.innerText.replace(/"/g,'""').replace(/\n/g,' ');line.push('"'+text+'"');});
-        csv+=line.join(',')+'\n';
-    });
-    var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download='report-'+tabType+'-'+new Date().toISOString().split('T')[0]+'.csv';
-    a.click();URL.revokeObjectURL(a.href);
-    toast('导出成功');
+    var table=document.querySelector('#tab-'+tabType+' .tx-table');if(!table)return;
+    var csv='\uFEFF';table.querySelectorAll('tr').forEach(function(row){var line=[];
+    row.querySelectorAll('th,td').forEach(function(c){line.push('"'+c.innerText.replace(/"/g,'""').replace(/\n/g,' ')+'"');});csv+=line.join(',')+'\n';});
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='report-'+tabType+'-'+new Date().toISOString().split('T')[0]+'.csv';a.click();toast('导出成功');
 }
 
-// ═══ 导出 — 月报专用格式 ═══
+// ═══ 导出月报（含税金+汇总） ═══
 function exportMonthlyTax(){
     var month=document.getElementById('monthlyDate').value;
-    if(!_monthlyDayData.length){toast('请先查询月报数据','error');return;}
-    var csv='\uFEFF'+'Date,Sales Total,Service & Repair,Margin Total,Cash In,Cash Out,Card Total\n';
-    var gS=0,gSv=0,gM=0,gCI=0,gCO=0,gCd=0;
-    _monthlyDayData.forEach(function(d){
-        csv+=d.date+','+fmtN(d.sales)+','+fmtN(d.service)+','+fmtN(d.margin)+','+fmtN(d.cashIn)+','+fmtN(d.cashOut)+','+fmtN(d.card)+'\n';
-        gS+=d.sales;gSv+=d.service;gM+=d.margin;gCI+=d.cashIn;gCO+=d.cashOut;gCd+=d.card;
-    });
-    csv+='TOTAL,'+fmtN(gS)+','+fmtN(gSv)+','+fmtN(gM)+','+fmtN(gCI)+','+fmtN(gCO)+','+fmtN(gCd)+'\n';
-    var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-    a.download='Monthly_Tax_Report_'+(month||'unknown')+'.csv';
-    a.click();URL.revokeObjectURL(a.href);
-    toast('导出成功: Monthly_Tax_Report_'+month+'.csv');
+    if(!_mData.length){toast('请先查询','error');return;}
+    var csv='\uFEFF'+'Date,Sales,Repair,Margin,VAT 23%,VAT 13.5%,Margin VAT,Cash In,Cash Out,Card\n';
+    var tS=0,tR=0,tM=0,tV23=0,tV135=0,tVM=0,tCI=0,tCO=0,tCd=0;
+    _mData.forEach(function(d){csv+=d.date+','+fN(d.sales)+','+fN(d.repair)+','+fN(d.margin)+','+fN(d.vat23)+','+fN(d.vat135)+','+fN(d.marginVat)+','+fN(d.cashIn)+','+fN(d.cashOut)+','+fN(d.card)+'\n';
+    tS+=d.sales;tR+=d.repair;tM+=d.margin;tV23+=d.vat23;tV135+=d.vat135;tVM+=d.marginVat;tCI+=d.cashIn;tCO+=d.cashOut;tCd+=d.card;});
+    csv+='TOTAL,'+fN(tS)+','+fN(tR)+','+fN(tM)+','+fN(tV23)+','+fN(tV135)+','+fN(tVM)+','+fN(tCI)+','+fN(tCO)+','+fN(tCd)+'\n';
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    a.download='Monthly_Tax_'+month+'.csv';a.click();toast('导出: Monthly_Tax_'+month+'.csv');
 }
 
 document.getElementById('btnExportDaily').addEventListener('click',function(){exportTableCSV('daily');});
 document.getElementById('btnExportWeekly').addEventListener('click',function(){exportTableCSV('weekly');});
 document.getElementById('btnExportMonthly').addEventListener('click',function(){exportMonthlyTax();});
 
-// ═══ 打印（Print Agent 静默 → fallback browser） ═══
-function silentPrint(cardEl){
-    var content=cardEl.innerText;
-    fetch('http://localhost:9100/print',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({content:content}),signal:AbortSignal.timeout(5000)
-    }).then(function(r){if(r.ok)toast('已发送到打印机');else throw new Error();})
-    .catch(function(){window.print();});
-}
-document.getElementById('btnPrintDaily').addEventListener('click',function(){silentPrint(this.closest('.card'));});
-document.getElementById('btnPrintWeekly').addEventListener('click',function(){silentPrint(this.closest('.card'));});
-document.getElementById('btnPrintMonthly').addEventListener('click',function(){silentPrint(this.closest('.card'));});
+// ═══ 静默打印 ═══
+function silentPrint(el){var content=el.closest('.card').innerText;
+fetch('http://localhost:9100/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:content}),signal:AbortSignal.timeout(5000)})
+.then(function(r){if(r.ok)toast('已发送到打印机');else throw 0;}).catch(function(){window.print();});}
+document.getElementById('btnPrintDaily').addEventListener('click',function(){silentPrint(this);});
+document.getElementById('btnPrintWeekly').addEventListener('click',function(){silentPrint(this);});
+document.getElementById('btnPrintMonthly').addEventListener('click',function(){silentPrint(this);});
 
-// 页面加载自动查日报
 loadDaily();
 })();
 </script>
