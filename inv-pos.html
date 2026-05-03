@@ -2058,19 +2058,23 @@
           '<option value="PAID">Paid - 已付款</option>' +
           '<option value="REPAIR_ONLY">Customer Drop-off - 送修未付款</option>' +
         '</select></div>' +
-        // 故障类型
-        '<div style="margin-bottom:6px;"><select id="ipFault" style="width:100%;' + _panelInputs + '">' +
-          '<option value="">Select Fault * 故障类型</option>' +
-          '<option value="Broken Screen">Broken Screen 坏屏</option>' +
-          '<option value="No Charging">No Charging 不充电</option>' +
-          '<option value="Camera Fault">Camera Fault 相机损坏</option>' +
-          '<option value="No Power">No Power 不开机</option>' +
-          '<option value="Water Damage">Water Damage 进水</option>' +
-          '<option value="Battery Issue">Battery Issue 电池问题</option>' +
-          '<option value="Speaker/Mic">Speaker/Mic 听筒/麦克风</option>' +
-          '<option value="Software Issue">Software Issue 软件问题</option>' +
-          '<option value="Other">Other 其他</option>' +
-        '</select></div>' +
+        // 故障类型（多选）
+        '<div style="margin-bottom:6px;">' +
+          '<label style="font-size:12px;font-weight:600;">Fault Type / 故障类型（可多选）</label>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="Broken Screen"> Broken Screen 坏屏</label>' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="No Charging"> No Charging 不充电</label>' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="Camera Fault"> Camera Fault 相机损坏</label>' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="No Power"> No Power 不开机</label>' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="Water Damage"> Water Damage 进水</label>' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="Battery Issue"> Battery Issue 电池问题</label>' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="Speaker/Mic"> Speaker/Mic 听筒/麦克风</label>' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="Software Issue"> Software Issue 软件问题</label>' +
+            '<label style="display:flex;align-items:center;gap:4px;font-size:13px;"><input type="checkbox" name="ipFault" value="Other"> Other 其他</label>' +
+          '</div>' +
+        '</div>' +
+        // 自定义故障备注
+        '<div style="margin-bottom:6px;"><input id="ipFaultCustom" placeholder="Other Fault Details / 其他故障详情（选填）" style="' + _panelInputs + '"></div>' +
         // 外观状态
         '<div style="margin-bottom:6px;"><select id="ipCondition" style="width:100%;' + _panelInputs + '">' +
           '<option value="">Physical Condition 外观状态</option>' +
@@ -2229,12 +2233,17 @@
       var repairInfo = null;
       if (cat === '维修') {
         var orderType = (document.getElementById('ipOrderType') || {}).value || 'PAID';
-        var fault = (document.getElementById('ipFault') || {}).value || '';
+        // 多选故障类型
+        var faultArr = [];
+        document.querySelectorAll('input[name="ipFault"]:checked').forEach(function(cb){ faultArr.push(cb.value); });
+        var faultCustom = (document.getElementById('ipFaultCustom') || {}).value || '';
+        var fault = faultArr.join(', ');
+        if (faultCustom.trim()) fault += (fault ? ' | ' : '') + faultCustom.trim();
         var condition = (document.getElementById('ipCondition') || {}).value || '';
         var testStatus = (document.getElementById('ipTestStatus') || {}).value || '';
         var notes = (document.getElementById('ipNotes') || {}).value || '';
 
-        if (!fault) { errEl.textContent = 'Please select fault type / 请选择故障类型'; errEl.style.display = 'block'; return; }
+        if (!fault) { errEl.textContent = 'Please select at least one fault / 请至少选择一个故障类型'; errEl.style.display = 'block'; return; }
 
         // 存维修信息供收据打印（全英文）
         repairInfo = {
