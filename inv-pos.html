@@ -2050,7 +2050,8 @@
     function buildRepairPanel() {
       return '<div style="background:#f0f7ff;border:1px solid #0071e3;border-radius:10px;padding:12px;margin-top:8px;">' +
         '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">+ 🔧 <span class="ip-repair-title">Quick Repair</span></div>' +
-        '<div style="margin-bottom:6px;"><input id="ipName" placeholder="e.g. Screen Repair iPhone 15 *" style="' + _panelInputs + '"></div>' +
+        '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="ipModel" placeholder="Model 型号 * e.g. iPhone 15" style="flex:1;' + _panelInputs + '"><input id="ipRepairItem" placeholder="Repair 维修项目 * e.g. Screen Repair" style="flex:1;' + _panelInputs + '"></div>' +
+        '<input type="hidden" id="ipName" value="">' +
         '<div style="display:flex;gap:6px;margin-bottom:6px;"><input id="ipSku" placeholder="SKU (any format)" style="flex:1;' + _panelInputs + '"><input id="ipPrice" type="number" step="0.01" placeholder="Price € *" style="flex:1;' + _panelInputs + '"></div>' +
         '<div style="margin-bottom:6px;"><input id="ipSerial" placeholder="IMEI / SN *" style="' + _panelInputs + '"></div>' +
         // 付款 / 送修
@@ -2216,6 +2217,14 @@
     window.submitInlineProduct = async function(defaultCat) {
       var errEl = document.getElementById('ipError');
       errEl.style.display = 'none';
+      // 维修面板：从型号+维修项目拼接 name
+      var ipModel = document.getElementById('ipModel');
+      var ipRepairItem = document.getElementById('ipRepairItem');
+      if (ipModel && ipRepairItem) {
+        var m = ipModel.value.trim(), ri = ipRepairItem.value.trim();
+        var nameEl = document.getElementById('ipName');
+        if (nameEl) nameEl.value = (ri && m) ? ri + ' ' + m : (ri || m || '');
+      }
       var name = document.getElementById('ipName').value.trim();
       var sku = (document.getElementById('ipSku') || {}).value || (name.replace(/\s+/g, '-').substring(0, 20) + '-' + Date.now().toString(36));
       sku = sku.trim();
