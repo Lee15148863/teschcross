@@ -483,6 +483,18 @@ window.toggleDeadStock=toggleDeadStock;
 
 window.loadProducts=loadProducts;
 loadProducts(1);
+
+// ─── 店员权限控制 ───────────────────────────────────────────
+if(!isAdmin){
+    // 监听商品列表渲染，隐藏删除按钮和成本价
+    var _staffObs=new MutationObserver(function(){
+        // 隐藏删除按钮（永久删除 + 死库存标记）
+        document.querySelectorAll('#productTable [onclick*="deleteProduct"]').forEach(function(el){el.style.display='none';});
+        document.querySelectorAll('#productTable [onclick*="toggleDeadStock"]').forEach(function(el){el.style.display='none';});
+    });
+    _staffObs.observe(document.getElementById('productTable'),{childList:true,subtree:true});
+}
+
 })();
 </script>
 </body>

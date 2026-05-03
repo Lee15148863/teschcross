@@ -371,6 +371,18 @@ window.cancelRefund = function() {
 };
 
 loadTransactions();
+
+// ─── 店员权限控制 ───────────────────────────────────────────
+if(!isAdmin){
+    // 隐藏批量删除按钮
+    document.querySelectorAll('.btn-danger.btn-sm.admin-only').forEach(function(el){el.style.display='none';});
+    // 监听动态渲染的删除按钮
+    var _staffObs=new MutationObserver(function(){
+        document.querySelectorAll('.btn-danger.btn-sm[onclick*="silentDelete"]').forEach(function(el){el.style.display='none';});
+    });
+    _staffObs.observe(document.getElementById('txTable'),{childList:true,subtree:true});
+}
+
 })();
 </script>
 </body>

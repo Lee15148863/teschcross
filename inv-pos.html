@@ -822,6 +822,9 @@
     // Auth check
     const token = localStorage.getItem('inv_token');
     if (!token) { window.location.href = 'inv-login.html'; return; }
+    // 读取用户角色
+    var isAdmin = false;
+    try { var _u = JSON.parse(localStorage.getItem('inv_user')); if (_u && _u.role === 'admin') isAdmin = true; } catch(e) {}
     const API_BASE = '/api/inv';
     const VAT_RATE = 0.23;
     const headers = () => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token });
@@ -2403,6 +2406,30 @@
     updateLang();
     renderCart();
     searchInput.focus();
+
+    // ─── 店员权限控制 ───────────────────────────────────────────
+    // 店员：隐藏成本价字段、隐藏删除按钮
+    if (!isAdmin) {
+      // 隐藏 Quick Add 模态框的成本价
+      var qaCostLabel = document.getElementById('qaLblCost');
+      var qaCostInput = document.getElementById('qaCost');
+      if (qaCostLabel) qaCostLabel.parentElement.style.display = 'none';
+      if (qaCostInput) qaCostInput.parentElement.style.display = 'none';
+
+      // 用 MutationObserver 监听动态面板，隐藏成本价和删除按钮
+      var observer = new MutationObserver(function() {
+        // 隐藏 inline panel 的成本价输入框
+        document.querySelectorAll('#inlinePanel [id="ipCost"], #inlinePanel [id="buyCost"]').forEach(function(el) {
+          if (el.closest('div')) el.closest('div').style.display = 'none';
+        });
+        // 隐藏所有删除按钮
+        document.querySelectorAll('.btn-delete, [data-action="delete"]').forEach(function(el) {
+          el.style.display = 'none';
+        });
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+
     })();
     </script>
 </body>
