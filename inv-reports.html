@@ -110,7 +110,7 @@
             </div></div>
             <!-- 周报 -->
             <div class="tab-content" id="tab-weekly"><div class="card">
-                <div class="toolbar"><input type="week" id="weeklyDate"><button class="btn btn-primary" id="btnLoadWeekly">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintWeekly">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportWeekly">📥 导出</button></div>
+                <div class="toolbar"><input type="week" id="weeklyDate"><span id="weeklyRange" style="font-size:13px;color:#6e6e73;margin-left:4px;"></span><button class="btn btn-primary" id="btnLoadWeekly">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintWeekly">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportWeekly">📥 导出</button></div>
                 <div class="sum-row" id="weeklySummary"></div>
                 <div style="overflow-x:auto;margin-top:16px;"><table class="tx-table"><thead><tr><th>日期</th><th>商品销售</th><th>服务维修</th><th>差价税</th><th>现金</th><th>支出</th><th>卡</th></tr></thead><tbody id="weeklyBody"><tr><td colspan="7" class="no-data">选择周查询</td></tr></tbody></table></div>
             </div></div>
@@ -210,16 +210,42 @@ async function loadDaily(){
 }
 document.getElementById('btnLoadDaily').addEventListener('click',loadDaily);
 
+// ═══ 周日期范围计算 ═══
+function calcWeekRange(weekVal){
+    var match=weekVal.match(/^(\d{4})-W(\d{1,2})$/);if(!match)return null;
+    var y=parseInt(match[1]),w=parseInt(match[2]);
+    var j4=new Date(y,0,4);var dow=j4.getDay()||7;
+    var mon=new Date(j4);mon.setDate(j4.getDate()-dow+1+(w-1)*7);
+    var sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    function fd(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
+    function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+    return{mon:mon,sun:sun,start:iso(mon),end:iso(sun),label:fd(mon)+' - '+fd(sun)};
+}
+// 周选择器变化时显示日期范围
+function updateWeekRange(){
+    var week=document.getElementById('weeklyDate').value;
+    var span=document.getElementById('weeklyRange');
+    if(!week){span.textContent='';return;}
+    var rng=calcWeekRange(week);
+    if(rng)span.textContent='('+rng.label+')';
+    else span.textContent='';
+}
+document.getElementById('weeklyDate').addEventListener('change',updateWeekRange);
+updateWeekRange();// 初始化
+
 // ═══ 周报 ═══
 async function loadWeekly(){
     var week=document.getElementById('weeklyDate').value;if(!week){toast('请选择周','error');return;}
     document.getElementById('weeklyBody').innerHTML='<tr><td colspan="7" class="no-data">加载中...</td></tr>';
     try{
-        var match=week.match(/^(\d{4})-W(\d{1,2})$/);var ws='',we='';
-        if(match){var y=parseInt(match[1]),w=parseInt(match[2]);var j4=new Date(y,0,4);var dow=j4.getDay()||7;
-            var mon=new Date(j4);mon.setDate(j4.getDate()-dow+1+(w-1)*7);var sun=new Date(mon);sun.setDate(mon.getDate()+6);
-            ws=mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
-            we=sun.getFullYear()+'-'+String(sun.getMonth()+1).padStart(2,'0')+'-'+String(sun.getDate()).padStart(2,'0');}
+        var rng=calcWeekRange(week);
+        var ws=rng?rng.start:'';var we=rng?rng.end:'';
+        updateWeekRange();
+
+        // 判断是否当前周
+        var now=new Date();var isCurrent=rng&&(now>=rng.mon&&now<=rng.sun);
+        var sfx=isCurrent?' (So far)':'';
+
         var r=await apiFetch('/reports/weekly?startDate='+ws+'&week='+week);if(!r)return;
         var resp=await r.json();
         if(!resp.data){document.getElementById('weeklySummary').innerHTML='';
@@ -237,18 +263,19 @@ async function loadWeekly(){
             return '<tr><td>'+esc(day.date)+'</td><td>'+fmt(salesAmt)+'</td><td>'+fmt(serviceAmt)+'</td><td>'+fmt(marginAmt)+'</td>'+
                 '<td>'+fmt(cashIn)+'</td><td style="color:#ff3b30;">'+fmt(cashOut)+'</td><td>'+fmt(cardAmt)+'</td></tr>';
         }).join('');
-        html+='<tr class="total-row"><td>TOTAL</td><td>'+fmt(gSales)+'</td><td>'+fmt(gService)+'</td><td>'+fmt(gMargin)+'</td>'+
+        var totalLabel=isCurrent?'TOTAL (So far)':'TOTAL';
+        html+='<tr class="total-row"><td>'+totalLabel+'</td><td>'+fmt(gSales)+'</td><td>'+fmt(gService)+'</td><td>'+fmt(gMargin)+'</td>'+
             '<td>'+fmt(gCashIn)+'</td><td style="color:#ff3b30;">'+fmt(gCashOut)+'</td><td>'+fmt(gCard)+'</td></tr>';
         document.getElementById('weeklyBody').innerHTML=html;
 
         var cashNet=gCashIn-gCashOut;
         var totalCardExpected=(s.totalCard||gCard);
         document.getElementById('weeklySummary').innerHTML=
-            sc('本周商品销售',fmt(gSales))+sc('本周服务维修',fmt(gService))+sc('本周差价税',fmt(gMargin))+
-            sc('本周话费 Lyca',fmt(gLyca))+
-            sc('💵 现金总收入',fmt(gCashIn))+sc('💸 现金总支出',fmt(gCashOut),'red')+
-            sc('💰 现金盈余',fmt(cashNet),cashNet>=0?'green':'red')+
-            sc('💳 银行卡总收入',fmt(gCard))+sc('📥 应进卡收款',fmt(totalCardExpected));
+            sc('本周商品销售'+sfx,fmt(gSales))+sc('本周服务维修'+sfx,fmt(gService))+sc('本周差价税'+sfx,fmt(gMargin))+
+            sc('本周话费 Lyca'+sfx,fmt(gLyca))+
+            sc('💵 现金总收入'+sfx,fmt(gCashIn))+sc('💸 现金总支出'+sfx,fmt(gCashOut),'red')+
+            sc('💰 现金盈余'+sfx,fmt(cashNet),cashNet>=0?'green':'red')+
+            sc('💳 银行卡总收入'+sfx,fmt(gCard))+sc('📥 应进卡收款'+sfx,fmt(totalCardExpected));
     }catch(e){toast('加载失败','error');}
 }
 document.getElementById('btnLoadWeekly').addEventListener('click',loadWeekly);
@@ -268,6 +295,11 @@ async function loadMonthly(){
         var parts=month.split('-');var sd=month+'-01';var ed=month+'-'+String(new Date(parseInt(parts[0]),parseInt(parts[1]),0).getDate()).padStart(2,'0');
         var expMap=await getExpensesByDate(sd,ed);
 
+        // 判断是否当前月（未结束）
+        var now=new Date();var curMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+        var isCurrent=(month===curMonth);
+        var sfx=isCurrent?' (So far / 至今)':'';
+
         var gSales=0,gService=0,gMargin=0,gV23=0,gV135=0,gVM=0,gCash=0,gOut=0,gCard=0;
         var html=days.map(function(day){
             var salesAmt=(day.standard23||{}).sales||0;var serviceAmt=(day.reduced135||{}).sales||0;var marginAmt=(day.margin||{}).sales||0;
@@ -280,17 +312,18 @@ async function loadMonthly(){
                 '<td>'+fmt(v23)+'</td><td>'+fmt(v135)+'</td><td>'+fmt(vm)+'</td>'+
                 '<td>'+fmt(cashIn)+'</td><td style="color:#ff3b30;">'+fmt(cashOut)+'</td><td>'+fmt(cardAmt)+'</td></tr>';
         }).join('');
-        html+='<tr class="total-row"><td>TOTAL</td><td>'+fmt(gSales)+'</td><td>'+fmt(gService)+'</td><td>'+fmt(gMargin)+'</td>'+
+        var totalLabel=isCurrent?'TOTAL (So far)':'TOTAL';
+        html+='<tr class="total-row"><td>'+totalLabel+'</td><td>'+fmt(gSales)+'</td><td>'+fmt(gService)+'</td><td>'+fmt(gMargin)+'</td>'+
             '<td>'+fmt(gV23)+'</td><td>'+fmt(gV135)+'</td><td>'+fmt(gVM)+'</td>'+
             '<td>'+fmt(gCash)+'</td><td style="color:#ff3b30;">'+fmt(gOut)+'</td><td>'+fmt(gCard)+'</td></tr>';
         document.getElementById('monthlyBody').innerHTML=html;
 
         var totalVat=gV23+gV135+gVM;
         document.getElementById('monthlySummary').innerHTML=
-            sc('月总销售额',fmt(gSales+gService+gMargin))+
-            sc('23% 应缴税额',fmt(gV23))+sc('13.5% 应缴税额',fmt(gV135))+
-            sc('Margin 应缴税额',fmt(gVM))+
-            sc('当月总应缴税额',fmt(totalVat),'red');
+            sc('月总销售额'+sfx,fmt(gSales+gService+gMargin))+
+            sc('23% 应缴税额'+sfx,fmt(gV23))+sc('13.5% 应缴税额'+sfx,fmt(gV135))+
+            sc('Margin 应缴税额'+sfx,fmt(gVM))+
+            sc('当月总应缴税额'+sfx,fmt(totalVat),'red');
     }catch(e){toast('加载失败','error');}
 }
 document.getElementById('btnLoadMonthly').addEventListener('click',loadMonthly);
