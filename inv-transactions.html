@@ -153,9 +153,17 @@ function esc(s){if(!s)return'';const d=document.createElement('div');d.textConte
 
 // Set default dates
 const today=new Date();
-document.getElementById('endDate').value=today.toISOString().split('T')[0];
-const weekAgo=new Date(today);weekAgo.setDate(weekAgo.getDate()-30);
-document.getElementById('startDate').value=weekAgo.toISOString().split('T')[0];
+// 读取 URL 参数 ?date=YYYY-MM-DD，有则默认显示当日
+var urlParams=new URLSearchParams(window.location.search);
+var urlDate=urlParams.get('date');
+if(urlDate){
+    document.getElementById('startDate').value=urlDate;
+    document.getElementById('endDate').value=urlDate;
+}else{
+    document.getElementById('endDate').value=today.toISOString().split('T')[0];
+    const weekAgo=new Date(today);weekAgo.setDate(weekAgo.getDate()-30);
+    document.getElementById('startDate').value=weekAgo.toISOString().split('T')[0];
+}
 
 async function loadTransactions(){
     const q=document.getElementById('searchReceipt').value.trim();

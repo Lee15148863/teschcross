@@ -909,7 +909,10 @@
     // Action bar buttons
     document.getElementById('sidebarCheckout').addEventListener('click', function() { doCheckout(); });
     document.getElementById('btnOpenDiscount').addEventListener('click', function() { openDiscountModal(); });
-    document.getElementById('btnOpenOrders').addEventListener('click', function() { window.open('/inv-transactions.html', '_blank'); });
+    document.getElementById('btnOpenOrders').addEventListener('click', function() {
+      var today = new Date().toISOString().split('T')[0];
+      window.open('/inv-transactions.html?date=' + today, '_blank');
+    });
     document.getElementById('btnClearAction').addEventListener('click', function() { clearCartAction(); });
     document.getElementById('btnNavUp').addEventListener('click', function() { window._navCart(-1); });
     document.getElementById('btnNavDown').addEventListener('click', function() { window._navCart(1); });
