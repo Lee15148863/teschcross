@@ -184,24 +184,27 @@ async function loadDaily(){
         var cashIn=(d.payment?d.payment.cash:0)||0;var cardIn=(d.payment?d.payment.card:0)||0;
         var exp=d.expenses||{};var cashOut=exp.cash||0;var cashNet=cashIn-cashOut;
 
+        // 当天未结束显示 So far
+        var isToday=(date===new Date().toISOString().split('T')[0]);
+        var sfx=isToday?' (So far)':'';
+
         document.getElementById('dailySummary').innerHTML=
-            sc('交易笔数',d.totalTransactions||0)+
-            sc('总销售额',fmt(d.totalSales))+
-            sc('23% 销售税额',fmt(std23.vatPayable))+
-            sc('13.5% 维修税额',fmt(reduced.vatPayable))+
-            sc('Margin 税额',fmt(margin.vatPayable))+
-            sc('💵 现金收入',fmt(cashIn))+
-            sc('💸 现金支出',fmt(cashOut),'red')+
-            sc('💰 现金盈余',fmt(cashNet),cashNet>=0?'green':'red')+
-            sc('💳 银行卡收入',fmt(cardIn));
+            sc('今日总销售额'+sfx,fmt(d.totalSales))+
+            sc('商品销售 (23%)'+sfx,fmt(std23.sales))+
+            sc('维修服务 (13.5%)'+sfx,fmt(reduced.sales))+
+            sc('差价税销售'+sfx,fmt(margin.sales))+
+            sc('23% 应缴税额'+sfx,fmt(std23.vatPayable))+
+            sc('13.5% 应缴税额'+sfx,fmt(reduced.vatPayable))+
+            sc('💵 现金收入'+sfx,fmt(cashIn))+
+            sc('💳 银行卡收入'+sfx,fmt(cardIn));
 
         document.getElementById('dailyVat').innerHTML=
-            '<table class="vat-table"><thead><tr><th>VAT 类型</th><th>销售额</th><th>应缴税额</th></tr></thead><tbody>'+
-            '<tr><td>Standard 23% (商品销售)</td><td>'+fmt(std23.sales)+'</td><td>'+fmt(std23.vatPayable)+'</td></tr>'+
-            '<tr><td>Service & Repair 13.5% (服务维修)</td><td>'+fmt(reduced.sales)+'</td><td>'+fmt(reduced.vatPayable)+'</td></tr>'+
-            '<tr><td>Margin Scheme (差价税)</td><td>'+fmt(margin.sales)+'</td><td>'+fmt(margin.vatPayable)+'</td></tr>'+
-            '<tr><td>Lyca Credit (话费)</td><td>'+fmt(lyca.sales)+'</td><td>'+fmt(lyca.vatPayable)+'</td></tr>'+
-            '<tr class="total-row"><td>合计</td><td>'+fmt(d.totalSales)+'</td><td>'+fmt(d.totalVatPayable)+'</td></tr>'+
+            '<table class="vat-table"><thead><tr><th>Tax Type</th><th>Total Sales</th><th>VAT Payable</th></tr></thead><tbody>'+
+            '<tr><td>Standard 23% (Sales)</td><td>'+fmt(std23.sales)+'</td><td>'+fmt(std23.vatPayable)+'</td></tr>'+
+            '<tr><td>Service & Repair 13.5%</td><td>'+fmt(reduced.sales)+'</td><td>'+fmt(reduced.vatPayable)+'</td></tr>'+
+            '<tr><td>Margin Scheme</td><td>'+fmt(margin.sales)+'</td><td>'+fmt(margin.vatPayable)+'</td></tr>'+
+            '<tr><td>Lyca Credit</td><td>'+fmt(lyca.sales)+'</td><td>'+fmt(lyca.vatPayable)+'</td></tr>'+
+            '<tr class="total-row"><td>TOTAL</td><td>'+fmt(d.totalSales)+'</td><td>'+fmt(d.totalVatPayable)+'</td></tr>'+
             '</tbody></table>';
 
         var r2=await apiFetch('/transactions?startDate='+date+'&endDate='+date+'&limit=500');if(!r2)return;
