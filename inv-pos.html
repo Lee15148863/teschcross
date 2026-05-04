@@ -890,6 +890,7 @@
     let lastTransaction = null;
     let searchTimer = null;
     let orderDiscount = null;
+    let _transactionComplete = false; // Lock flag: true after checkout until new transaction starts
 
     // i18n
     const i18n = {
@@ -1115,6 +1116,10 @@
 
     // Add to cart
     window._addToCart = async function(productId) {
+      // If previous transaction is complete, auto-start new transaction first
+      if (_transactionComplete) {
+        startNewTransaction();
+      }
       try {
         var res = await apiFetch('/products/' + productId);
         if (!res) return;
@@ -1524,6 +1529,7 @@
         // Use an overlay div instead of replacing innerHTML (preserves cart DOM)
         var successOverlay = document.createElement('div');
         successOverlay.id = 'checkoutSuccessOverlay';
+        _transactionComplete = true;
         successOverlay.innerHTML = '<div style="text-align:center;padding:30px 20px;">' +
           '<div style="font-size:60px;margin-bottom:10px;">✅</div>' +
           '<h2 style="font-size:24px;font-weight:700;margin:0 0 8px;">Transaction Complete</h2>' +
@@ -1598,6 +1604,7 @@
       if (overlay) overlay.remove();
       // Reset cart state
       cart = []; selectedCartIndex = -1; orderDiscount = null;
+      _transactionComplete = false;
       window._lastRepairInfo = null;
       window._repairInfoMap = {};
       window._lastUsedDeviceInfo = null;
