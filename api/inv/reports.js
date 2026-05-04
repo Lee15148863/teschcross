@@ -83,6 +83,8 @@ router.get('/daily', async (req, res) => {
     // Round helper — must be defined before the loop that uses it
     const r = v => Math.round(v * 100) / 100;
 
+    // Separate sales and refunds
+    let grossSales = 0, refundTotal = 0, refundCount = 0;
     // Aggregate by VAT category
     let totalSales = 0, cashTotal = 0, cardTotal = 0, splitCardTotal = 0, splitCashTotal = 0;
     let stdRate23Sales = 0, stdRate23Vat = 0;
@@ -94,6 +96,15 @@ router.get('/daily', async (req, res) => {
 
     for (const txn of transactions) {
       totalSales += txn.totalAmount;
+
+      // Track refunds separately
+      if (txn.totalAmount < 0 || (txn.receiptNumber && txn.receiptNumber.startsWith('R'))) {
+        refundTotal += txn.totalAmount; // negative value
+        refundCount++;
+      } else {
+        grossSales += txn.totalAmount;
+      }
+
       if (txn.paymentMethod === 'cash') cashTotal += txn.totalAmount;
       else if (txn.paymentMethod === 'card') cardTotal += txn.totalAmount;
       else if (txn.paymentMethod === 'split') {
@@ -165,6 +176,9 @@ router.get('/daily', async (req, res) => {
       data: {
         date: startDate && endDate ? { startDate, endDate } : (date || new Date().toISOString().split('T')[0]),
         totalTransactions: transactions.length,
+        grossSales: r(grossSales),
+        refundTotal: r(refundTotal),
+        refundCount: refundCount,
         totalSales: r(totalSales),
         payment: {
           cash: r(cashTotal + splitCashTotal),
@@ -225,13 +239,14 @@ router.get('/monthly', async (req, res) => {
     let monthCash = 0, monthCard = 0;
     let monthStd23Vat = 0, monthMarginVat = 0, monthReduced135Vat = 0;
     let monthLycaVat = 0;
+    let monthGrossSales = 0, monthRefundTotal = 0;
 
     for (const txn of transactions) {
       const dayKey = txn.createdAt.toISOString().split('T')[0];
 
       if (!dailyMap[dayKey]) {
         dailyMap[dayKey] = {
-          date: dayKey, totalSales: 0, cash: 0, card: 0,
+          date: dayKey, totalSales: 0, grossSales: 0, refundTotal: 0, cash: 0, card: 0,
           std23Sales: 0, std23Vat: 0,
           marginSales: 0, marginVat: 0, marginItems: [],
           reduced135Sales: 0, reduced135Vat: 0,
@@ -240,6 +255,15 @@ router.get('/monthly', async (req, res) => {
       }
       const d = dailyMap[dayKey];
       d.totalSales += txn.totalAmount;
+
+      // Track refunds separately
+      if (txn.totalAmount < 0 || (txn.receiptNumber && txn.receiptNumber.startsWith('R'))) {
+        d.refundTotal += txn.totalAmount;
+        monthRefundTotal += txn.totalAmount;
+      } else {
+        d.grossSales += txn.totalAmount;
+        monthGrossSales += txn.totalAmount;
+      }
 
       if (txn.paymentMethod === 'cash') { d.cash += txn.totalAmount; monthCash += txn.totalAmount; }
       else if (txn.paymentMethod === 'card') { d.card += txn.totalAmount; monthCard += txn.totalAmount; }
@@ -317,6 +341,7 @@ router.get('/monthly', async (req, res) => {
       const dayCashNet = r(d.cash - dayExpense);
       return {
         date: d.date,
+        grossSales: r(d.grossSales), refundTotal: r(d.refundTotal),
         totalSales: r(d.totalSales), cash: r(d.cash), card: r(d.card),
         standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
         margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
@@ -334,6 +359,8 @@ router.get('/monthly', async (req, res) => {
         month: `${year}-${String(mon).padStart(2, '0')}`,
         dailyData,
         summary: {
+          grossSales: r(monthGrossSales),
+          refundTotal: r(monthRefundTotal),
           totalCash: r(monthCash),
           totalCard: r(monthCard),
           totalSales: r(monthCash + monthCard),
@@ -407,12 +434,13 @@ router.get('/weekly', async (req, res) => {
     let weekCash = 0, weekCard = 0;
     let weekStd23Vat = 0, weekMarginVat = 0, weekReduced135Vat = 0;
     let weekLycaVat = 0;
+    let weekGrossSales = 0, weekRefundTotal = 0;
 
     for (const txn of transactions) {
       const dayKey = txn.createdAt.toISOString().split('T')[0];
       if (!dailyMap[dayKey]) {
         dailyMap[dayKey] = {
-          date: dayKey, totalSales: 0, cash: 0, card: 0,
+          date: dayKey, totalSales: 0, grossSales: 0, refundTotal: 0, cash: 0, card: 0,
           std23Sales: 0, std23Vat: 0,
           marginSales: 0, marginVat: 0, marginItems: [],
           reduced135Sales: 0, reduced135Vat: 0,
@@ -421,6 +449,15 @@ router.get('/weekly', async (req, res) => {
       }
       const d = dailyMap[dayKey];
       d.totalSales += txn.totalAmount;
+
+      // Track refunds separately
+      if (txn.totalAmount < 0 || (txn.receiptNumber && txn.receiptNumber.startsWith('R'))) {
+        d.refundTotal += txn.totalAmount;
+        weekRefundTotal += txn.totalAmount;
+      } else {
+        d.grossSales += txn.totalAmount;
+        weekGrossSales += txn.totalAmount;
+      }
 
       if (txn.paymentMethod === 'cash') { d.cash += txn.totalAmount; weekCash += txn.totalAmount; }
       else if (txn.paymentMethod === 'card') { d.card += txn.totalAmount; weekCard += txn.totalAmount; }
@@ -496,6 +533,7 @@ router.get('/weekly', async (req, res) => {
       const dayCashNet = r(d.cash - dayExpense);
       return {
         date: d.date,
+        grossSales: r(d.grossSales), refundTotal: r(d.refundTotal),
         totalSales: r(d.totalSales), cash: r(d.cash), card: r(d.card),
         standard23: { sales: r(d.std23Sales), vatPayable: r(d.std23Vat) },
         margin: { sales: r(d.marginSales), vatPayable: r(d.marginVat), items: d.marginItems },
@@ -514,6 +552,8 @@ router.get('/weekly', async (req, res) => {
         weekEnd: weekEnd.toISOString().split('T')[0],
         dailyData,
         summary: {
+          grossSales: r(weekGrossSales),
+          refundTotal: r(weekRefundTotal),
           totalCash: r(weekCash),
           totalCard: r(weekCard),
           totalSales: r(weekCash + weekCard),

@@ -1521,7 +1521,10 @@
 
         var pmLabel = txn.paymentMethod === 'split' ? 'Card+Cash' : txn.paymentMethod === 'card' ? 'Card' : 'Cash';
 
-        cartArea.innerHTML = '<div style="text-align:center;padding:30px 20px;">' +
+        // Use an overlay div instead of replacing innerHTML (preserves cart DOM)
+        var successOverlay = document.createElement('div');
+        successOverlay.id = 'checkoutSuccessOverlay';
+        successOverlay.innerHTML = '<div style="text-align:center;padding:30px 20px;">' +
           '<div style="font-size:60px;margin-bottom:10px;">✅</div>' +
           '<h2 style="font-size:24px;font-weight:700;margin:0 0 8px;">Transaction Complete</h2>' +
           '<p style="font-size:16px;color:#6e6e73;margin:0;">Receipt #' + receiptNum + '</p>' +
@@ -1552,6 +1555,7 @@
           '</div>' +
           '<button style="margin-top:16px;background:none;border:none;color:#6e6e73;font-size:14px;cursor:pointer;" id="btnNoReceiptNeeded">No Receipt Needed</button>' +
           '</div>';
+        cartArea.appendChild(successOverlay);
 
         // Attach event listeners to dynamically created buttons
         document.getElementById('btnPrintReceipt').addEventListener('click', function() { doPrintReceipt(); });
@@ -1589,12 +1593,23 @@
 
     // Start new transaction — restore cart UI
     window.startNewTransaction = function() {
-      var cartArea = document.getElementById('cartArea');
-      cartArea.innerHTML = '';
-      cartArea.appendChild(document.getElementById('cartEmpty') || createCartEmpty());
-      cartArea.appendChild(document.getElementById('cartTable') || createCartTable());
-      // Re-create the empty and table elements since innerHTML wiped them
-      location.reload(); // simplest way to reset the full UI state
+      // Remove the checkout success overlay and restore cart DOM
+      var overlay = document.getElementById('checkoutSuccessOverlay');
+      if (overlay) overlay.remove();
+      // Reset cart state
+      cart = []; selectedCartIndex = -1; orderDiscount = null;
+      window._lastRepairInfo = null;
+      window._repairInfoMap = {};
+      window._lastUsedDeviceInfo = null;
+      window._lastReceiptData = null;
+      // Reset payment inputs
+      document.getElementById('cashReceived').value = '';
+      document.getElementById('cardAmount').value = '';
+      // Restore cart UI
+      renderCart();
+      searchInput.value = '';
+      showSearchHint();
+      searchInput.focus();
     };
 
     // Keep old printReceipt for reprint from sidebar

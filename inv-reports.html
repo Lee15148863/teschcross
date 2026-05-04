@@ -184,7 +184,8 @@ async function loadDaily(){
             // 即使无交易也显示空汇总（当天显示 So far）
             if(isToday){
                 document.getElementById('dailySummary').innerHTML=
-                    sc('今日总销售额'+sfx,'€0.00')+sc('商品销售 (23%)'+sfx,'€0.00')+sc('维修服务 (13.5%)'+sfx,'€0.00')+
+                    sc('销售额（退货前）'+sfx,'€0.00')+sc('🔻 退款金额'+sfx,'€0.00','red')+sc('📊 全天汇总'+sfx,'€0.00')+
+                    sc('商品销售 (23%)'+sfx,'€0.00')+sc('维修服务 (13.5%)'+sfx,'€0.00')+
                     sc('差价税销售'+sfx,'€0.00')+sc('23% 应缴税额'+sfx,'€0.00')+sc('13.5% 应缴税额'+sfx,'€0.00')+
                     sc('💵 现金收入'+sfx,'€0.00')+sc('💳 银行卡收入'+sfx,'€0.00');
             } else {
@@ -202,7 +203,9 @@ async function loadDaily(){
         var sfx=isToday?' (So far)':'';
 
         document.getElementById('dailySummary').innerHTML=
-            sc('今日总销售额'+sfx,fmt(d.totalSales))+
+            sc('销售额（退货前）'+sfx,fmt(d.grossSales||0))+
+            sc('🔻 退款金额'+sfx,fmt(d.refundTotal||0),'red')+
+            sc('📊 全天汇总'+sfx,fmt(d.totalSales))+
             sc('商品销售 (23%)'+sfx,fmt(std23.sales))+
             sc('维修服务 (13.5%)'+sfx,fmt(reduced.sales))+
             sc('差价税销售'+sfx,fmt(margin.sales))+
@@ -287,6 +290,8 @@ async function loadWeekly(){
         var cashNet=gCashIn-gCashOut;
         var totalCardExpected=(s.totalCard||gCard);
         document.getElementById('weeklySummary').innerHTML=
+            sc('本周销售（退货前）'+sfx,fmt(s.grossSales||0))+
+            sc('🔻 本周退款'+sfx,fmt(s.refundTotal||0),'red')+
             sc('本周商品销售'+sfx,fmt(gSales))+sc('本周服务维修'+sfx,fmt(gService))+sc('本周差价税'+sfx,fmt(gMargin))+
             sc('本周话费 Lyca'+sfx,fmt(gLyca))+
             sc('💵 现金总收入'+sfx,fmt(gCashIn))+sc('💸 现金总支出'+sfx,fmt(gCashOut),'red')+
@@ -336,7 +341,9 @@ async function loadMonthly(){
 
         var totalVat=gV23+gV135+gVM;
         document.getElementById('monthlySummary').innerHTML=
-            sc('月总销售额'+sfx,fmt(gSales+gService+gMargin))+
+            sc('月销售额（退货前）'+sfx,fmt(s.grossSales||0))+
+            sc('🔻 月退款金额'+sfx,fmt(s.refundTotal||0),'red')+
+            sc('月总销售额（汇总）'+sfx,fmt(gSales+gService+gMargin))+
             sc('23% 应缴税额'+sfx,fmt(gV23))+sc('13.5% 应缴税额'+sfx,fmt(gV135))+
             sc('Margin 应缴税额'+sfx,fmt(gVM))+
             sc('当月总应缴税额'+sfx,fmt(totalVat),'red');
