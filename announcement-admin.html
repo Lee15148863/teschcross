@@ -352,6 +352,21 @@
         // Check if already logged in
         window.addEventListener('DOMContentLoaded', () => {
             console.log('Page loaded, checking login status...');
+            
+            // Auto-login if coming from staff portal (admin already authenticated)
+            const params = new URLSearchParams(window.location.search);
+            const invToken = localStorage.getItem('inv_token');
+            const invUser = localStorage.getItem('inv_user');
+            if (params.get('from') === 'portal' && invToken && invUser) {
+                try {
+                    const user = JSON.parse(invUser);
+                    if (user.role === 'admin') {
+                        console.log('Auto-login: admin from staff portal');
+                        sessionStorage.setItem('announcement_admin_logged_in', 'true');
+                    }
+                } catch(e) {}
+            }
+            
             const isLoggedIn = sessionStorage.getItem('announcement_admin_logged_in');
             if (isLoggedIn === 'true') {
                 console.log('Already logged in');
