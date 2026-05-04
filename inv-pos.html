@@ -770,6 +770,15 @@
 
     </div>
 
+    <!-- Payment Method Selection Modal -->
+    <div id="payMethodModal" style="position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; display:none; justify-content:center; align-items:center;">
+      <div style="width:320px; background:#fff; border-radius:16px; padding:24px; box-shadow:0 10px 30px rgba(0,0,0,0.2); text-align:center;">
+        <h3 style="margin:0 0 16px; font-size:16px;">Select Payment Method</h3>
+        <button id="payCardBtn" style="width:100%; padding:14px; margin:6px 0; border:none; border-radius:12px; background:#007aff; color:#fff; font-size:15px; font-weight:bold; cursor:pointer;">💳 Card Payment</button>
+        <button id="payCashBtn" style="width:100%; padding:14px; margin:6px 0; border:none; border-radius:12px; background:#34c759; color:#fff; font-size:15px; font-weight:bold; cursor:pointer;">💵 Cash Payment</button>
+      </div>
+    </div>
+
     <!-- Quick Add Product Modal -->
     <div id="quickAddOverlay" class="pos-modal-overlay">
         <div class="pos-modal-box">
@@ -1376,8 +1385,45 @@
       });
     });
 
-    // Checkout
-    document.getElementById('btnCheckout').addEventListener('click', doCheckout);
+    // Checkout - show payment method modal if no amounts entered
+    document.getElementById('btnCheckout').addEventListener('click', function() {
+      if (cart.length === 0) return;
+      var card = document.getElementById('cardAmount').value.trim();
+      var cash = document.getElementById('cashReceived').value.trim();
+      // If user hasn't entered any amount, show payment method selection
+      if (card === '' && cash === '') {
+        document.getElementById('payMethodModal').style.display = 'flex';
+        return;
+      }
+      // Otherwise proceed with normal checkout
+      doCheckout();
+    });
+
+    // Payment method modal - Card
+    document.getElementById('payCardBtn').addEventListener('click', function() {
+      var totalText = document.getElementById('valTotal').textContent.replace('€', '');
+      var total = parseFloat(totalText) || 0;
+      document.getElementById('cardAmount').value = total.toFixed(2);
+      document.getElementById('cashReceived').value = '';
+      document.getElementById('payMethodModal').style.display = 'none';
+      doCheckout();
+    });
+
+    // Payment method modal - Cash
+    document.getElementById('payCashBtn').addEventListener('click', function() {
+      var totalText = document.getElementById('valTotal').textContent.replace('€', '');
+      var total = parseFloat(totalText) || 0;
+      document.getElementById('cashReceived').value = total.toFixed(2);
+      document.getElementById('cardAmount').value = '';
+      document.getElementById('payMethodModal').style.display = 'none';
+      doCheckout();
+    });
+
+    // Close modal on background click
+    document.getElementById('payMethodModal').addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+
     async function doCheckout() {
       if (cart.length === 0) return;
       var totalText = document.getElementById('valTotal').textContent.replace('€', '');
