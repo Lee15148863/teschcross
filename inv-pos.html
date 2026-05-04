@@ -1077,10 +1077,9 @@
     function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
     // ─── Receipt images ────────────────────────────────────────
-    // QR codes are fixed content, hardcoded as base64 data URIs.
-    // Logo is loaded from local static file at page load.
+    // Logo and QR code are loaded from local static files at page load.
     var _logoDataUri = '';
-    var _qrTermsDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAD4AQAAAADpqhamAAABeElEQVR4nOWZwZLDMAhDpU7//5ffHgDb3UNvMWmcTicZOEQELIRt9PV6fXf/vF983BFitXbju9r/zlgtSVgICw9rN74dftuSkIwlE8GH9Q749fidGcdENWx+f4//PZ7wWAiepNiNb0f8Fa2RRH0AboFvI/9//tLaje9q/yx1C9XSP6f+I9dIgvhLAkQ4uvFtiZ/5GYBa+8Dz43e0uyB/Cym1T5jb8e3hv8h61bzy8Yz8R8KtVAAe7GfRj29H/mvZZ9xZBVER3fiuj39p94iFAI+I/5UNPwLG2BK4ekI/vmv9Xhd7GoILgg+68W3Q/57MV+RvJA6Zf01seqz7PshhvwG+q/0pfGb2jeWSwv34rvVP/k8GHPJXEjye/z/mP5NKeNJBN77N8/+YALP/PT7+Zf/X1fUXDdyOb8/8L3L8pwRx2h6f/+l3lr4hWp85ZP8/L1cLjN1vOEH/zP1fZDnVoOMs6AD9++/8T2MMDl3w+PW/HHW0vL/b/wesNvJJvsiCTwAAAABJRU5ErkJggg==';
+    var _qrTermsDataUri = '';
 
     // Preload logo from local static file
     (function preloadLogo() {
@@ -1096,6 +1095,22 @@
       };
       img.onerror = function() { _logoDataUri = ''; };
       img.src = 'logo.png';
+    })();
+
+    // Preload QR code from local static file (same approach as logo)
+    (function preloadQr() {
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var c = document.createElement('canvas');
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          c.getContext('2d').drawImage(img, 0, 0);
+          _qrTermsDataUri = c.toDataURL('image/png');
+        } catch(e) { _qrTermsDataUri = ''; }
+      };
+      img.onerror = function() { _qrTermsDataUri = ''; };
+      img.src = 'qr-terms.png';
     })();
 
     // Add to cart
