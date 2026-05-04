@@ -80,6 +80,9 @@ router.get('/daily', async (req, res) => {
       return res.json({ message: 'No transactions for this date', data: null });
     }
 
+    // Round helper — must be defined before the loop that uses it
+    const r = v => Math.round(v * 100) / 100;
+
     // Aggregate by VAT category
     let totalSales = 0, cashTotal = 0, cardTotal = 0, splitCardTotal = 0, splitCashTotal = 0;
     let stdRate23Sales = 0, stdRate23Vat = 0;
@@ -144,8 +147,6 @@ router.get('/daily', async (req, res) => {
         }
       }
     }
-
-    const r = v => Math.round(v * 100) / 100;
 
     // Query actual expenses from Expense table
     const expenses = await Expense.find({ date: { $gte: dateStart, $lte: dateEnd } });
