@@ -2567,7 +2567,8 @@
     }
 
     // ─── 店员权限控制 ───────────────────────────────────────────
-    // 店员：隐藏成本价字段、隐藏删除按钮
+    // 店员：隐藏成本价字段（仅出售相关）、隐藏删除按钮
+    // 注意：Buy Used 的 buyCost 是收购价，店员必须能看到和填写
     if (!isAdmin) {
       // 隐藏 Quick Add 模态框的成本价
       var qaCostLabel = document.getElementById('qaLblCost');
@@ -2575,13 +2576,10 @@
       if (qaCostLabel) qaCostLabel.parentElement.style.display = 'none';
       if (qaCostInput) qaCostInput.parentElement.style.display = 'none';
 
-      // 用 MutationObserver 监听动态面板，隐藏成本价和删除按钮
+      // 用 MutationObserver 监听动态面板，隐藏出售面板的成本价和删除按钮
       var observer = new MutationObserver(function() {
-        // 隐藏 inline panel 的成本价输入框（只隐藏输入框本身，不隐藏父容器）
+        // 只隐藏 Sale/Used Sell 面板的成本价（ipCost），不隐藏 Buy Used 的收购价（buyCost）
         document.querySelectorAll('#inlinePanel [id="ipCost"]').forEach(function(el) {
-          el.style.display = 'none';
-        });
-        document.querySelectorAll('#inlinePanel [id="buyCost"]').forEach(function(el) {
           el.style.display = 'none';
         });
         // 隐藏所有删除按钮
