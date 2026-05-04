@@ -1022,6 +1022,29 @@
 
     function escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
+    // ─── Receipt images ────────────────────────────────────────
+    // QR codes are fixed content, hardcoded as base64 data URIs.
+    // Logo is loaded from local static file at page load.
+    var _logoDataUri = '';
+    var _qrSalesDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAD4AQAAAADpqhamAAABeElEQVR4nOWZwZLDMAhDpU7//5ffHgDb3UNvMWmcTicZOEQELIRt9PV6fXf/vF983BFitXbju9r/zlgtSVgICw9rN74dftuSkIwlE8GH9Q749fidGcdENWx+f4//PZ7wWAiepNiNb0f8Fa2RRH0AboFvI/9//tLaje9q/yx1C9XSP6f+I9dIgvhLAkQ4uvFtiZ/5GYBa+8Dz43e0uyB/Cym1T5jb8e3hv8h61bzy8Yz8R8KtVAAe7GfRj29H/mvZZ9xZBVER3fiuj39p94iFAI+I/5UNPwLG2BK4ekI/vmv9Xhd7GoILgg+68W3Q/57MV+RvJA6Zf01seqz7PshhvwG+q/0pfGb2jeWSwv34rvVP/k8GHPJXEjye/z/mP5NKeNJBN77N8/+YALP/PT7+Zf/X1fUXDdyOb8/8L3L8pwRx2h6f/+l3lr4hWp85ZP8/L1cLjN1vOEH/zP1fZDnVoOMs6AD9++/8T2MMDl3w+PW/HHW0vL/b/wesNvJJvsiCTwAAAABJRU5ErkJggg==';
+    var _qrRepairDataUri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAD4AQAAAADpqhamAAABeElEQVR4nOWZyXLDMAxDHzL6/19GDqRkpe3kZtGVnJl4wUGQSYKLZb4er+/wv8fxr7Oxx101v7vxljtXP8lYuN9W81uBSwIQYX0p9i49hN8aXCi8wH/jd69fj88SULF+Bd4Y+7Zsehj0p9X8Fur/5y+fVvO7G9dwdQGWRej/ovWr8YYMsW0AjHAkBKPt7Y/BBjuLngj9Y/y/AbKR5SsWSHfYv/7JhG8DjtqX/McH2D8jXzguAYYYyOX8lui/8g1Mj/O8vf0bsVmF7tPjnkyE1fyW1D8Z8nYKv0cTvL39XxDGN4oSqNsfYP/4v+zPlP/H5fb2byl7mQAMkwocEP8x/4AogkMEs/zFega/O/Gr+OlVbxY/hAxW81vj/7316VO/cIcn8Fva/8/vIX2imt+C+uea/zonAB535fwW2H+K/h/DnyPyXz9C9+MDQB8L7W//Cbei+VVv/nVA/z/NfzFX3gcfkf/b6HWjAY7iLzvCA/x/mnmVrF+NvwFlIdd8Pt386AAAAABJRU5ErkJggg==';
+
+    // Preload logo from local static file
+    (function preloadLogo() {
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var c = document.createElement('canvas');
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          c.getContext('2d').drawImage(img, 0, 0);
+          _logoDataUri = c.toDataURL('image/png');
+        } catch(e) { _logoDataUri = ''; }
+      };
+      img.onerror = function() { _logoDataUri = ''; };
+      img.src = 'logo.png';
+    })();
+
     // Add to cart
     window._addToCart = async function(productId) {
       try {
@@ -1512,17 +1535,18 @@
       var doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
       doc.write('<html><head><title>Receipt</title><style>');
-      doc.write('@page{size:68mm auto;margin:0;}');
-      doc.write('body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}');
+      doc.write('@page{size:72mm auto;margin:0;}');
+      doc.write('body{font-family:Calibri,"Trebuchet MS",Arial,sans-serif;font-size:11px;font-weight:500;padding:4px;max-width:72mm;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}');
+      doc.write('img{max-width:100%;}');
       doc.write('</style></head><body>');
       doc.write(html);
       doc.write('</body></html>');
       doc.close();
-      // Wait for content to render then print
+      // Images are base64 data URIs — load instantly, short delay for render
       setTimeout(function() {
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
-      }, 200);
+      }, 150);
     }
 
     // ─── Print Agent Status Check ───────────────────────────────
@@ -1561,51 +1585,55 @@
 
     function buildReceiptPreviewHtml(r) {
       if (!r) return '<p style="text-align:center;color:#86868b;">No receipt data</p>';
-      var S = 'style="'; // shorthand
       var h = '';
 
+      // ═══ LOGO ═══
+      if (_logoDataUri) {
+        h += '<div style="text-align:center;margin-bottom:6px;">';
+        h += '<img src="' + _logoDataUri + '" alt="Tech Cross" style="max-width:180px;max-height:60px;">';
+        h += '</div>';
+      }
+
       // ═══ HEADER ═══
-      h += '<div style="text-align:center;padding-bottom:10px;margin-bottom:10px;border-bottom:2px solid #000;">';
-      h += '<div style="font-size:20px;font-weight:900;letter-spacing:1px;">' + (r.companyName || 'Tech Cross Repair Centre') + '</div>';
-      h += '<div style="font-size:13px;margin-top:6px;line-height:1.5;">' + (r.companyAddress || 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658') + '</div>';
-      h += '<div style="font-size:13px;">Tel: ' + (r.companyPhone || '046 905 9854') + '</div>';
-      h += '<div style="font-size:13px;">Mob: 089 482 5300</div>';
-      h += '<div style="font-size:13px;">navantechcross@gmail.com</div>';
+      h += '<div style="text-align:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1.5px solid #000;">';
+      h += '<div style="font-size:11px;margin-top:4px;line-height:1.5;">' + (r.companyAddress || 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658') + '</div>';
+      h += '<div style="font-size:11px;">Tel: ' + (r.companyPhone || '046 905 9854') + ' | Mob: 089 482 5300</div>';
+      h += '<div style="font-size:11px;">navantechcross@gmail.com</div>';
       h += '</div>';
 
       // ═══ RECEIPT INFO ═══
-      h += '<div style="margin-bottom:10px;font-size:14px;">';
+      h += '<div style="margin-bottom:8px;font-size:11px;">';
       h += '<div style="display:flex;justify-content:space-between;"><span>Receipt #</span><strong>' + (r.receiptNumber || '-') + '</strong></div>';
       h += '<div style="display:flex;justify-content:space-between;"><span>Date</span><span>' + (r.date || '-') + '</span></div>';
       h += '</div>';
 
       // ═══ ITEMS ═══
-      h += '<div style="border-top:2px solid #000;border-bottom:2px solid #000;padding:10px 0;margin-bottom:10px;">';
+      h += '<div style="border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:6px 0;margin-bottom:8px;">';
       if (r.items && r.items.length) {
         r.items.forEach(function(item) {
           var price = (item.discountedPrice != null ? item.discountedPrice : item.unitPrice) || 0;
           var total = price * (item.quantity || 1);
-          h += '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">';
+          h += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">';
           h += '<span style="flex:1;">' + (item.quantity > 1 ? item.quantity + ' x ' : '') + escHtml(item.name) + '</span>';
-          h += '<strong style="white-space:nowrap;margin-left:8px;">€' + total.toFixed(2) + '</strong>';
+          h += '<strong style="white-space:nowrap;margin-left:6px;">€' + total.toFixed(2) + '</strong>';
           h += '</div>';
           if (item.serialNumber) {
-            h += '<div style="font-size:13px;font-weight:700;margin-bottom:4px;">  IMEI/SN: ' + escHtml(item.serialNumber) + '</div>';
+            h += '<div style="font-size:11px;font-weight:700;margin-bottom:3px;">  IMEI/SN: ' + escHtml(item.serialNumber) + '</div>';
           }
           if (item.discountedPrice != null && item.discountedPrice < item.unitPrice) {
-            h += '<div style="font-size:12px;text-decoration:line-through;margin-bottom:4px;">  Was €' + item.unitPrice.toFixed(2) + '</div>';
+            h += '<div style="font-size:10px;text-decoration:line-through;margin-bottom:3px;">  Was €' + item.unitPrice.toFixed(2) + '</div>';
           }
         });
       }
       h += '</div>';
 
       // ═══ TOTAL ═══
-      h += '<div style="display:flex;justify-content:space-between;font-size:20px;font-weight:900;margin-bottom:10px;">';
+      h += '<div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;margin-bottom:8px;">';
       h += '<span>TOTAL</span><span>€' + (r.totalAmount || 0).toFixed(2) + '</span>';
       h += '</div>';
 
       // ═══ PAYMENT ═══
-      h += '<div style="margin-bottom:10px;font-size:14px;border-bottom:1px dashed #000;padding-bottom:10px;">';
+      h += '<div style="margin-bottom:8px;font-size:12px;border-bottom:1px dashed #000;padding-bottom:8px;">';
       var pm = r.paymentMethod || 'cash';
       if (pm === 'split') {
         h += '<div style="display:flex;justify-content:space-between;"><span>💳 Card</span><span>€' + (r.cardAmount || 0).toFixed(2) + '</span></div>';
@@ -1622,7 +1650,7 @@
 
       // ═══ VAT ═══
       if (r.standardVatTotal > 0 || r.marginVatTotal > 0) {
-        h += '<div style="margin-bottom:10px;font-size:13px;border-bottom:1px dashed #000;padding-bottom:10px;">';
+        h += '<div style="margin-bottom:8px;font-size:11px;border-bottom:1px dashed #000;padding-bottom:8px;">';
         if (r.standardVatTotal > 0) h += '<div style="display:flex;justify-content:space-between;"><span>VAT (23%)</span><span>€' + r.standardVatTotal.toFixed(2) + '</span></div>';
         if (r.marginVatTotal > 0) h += '<div style="display:flex;justify-content:space-between;"><span>Margin VAT</span><span>€' + r.marginVatTotal.toFixed(2) + '</span></div>';
         h += '</div>';
@@ -1631,10 +1659,10 @@
       // ═══ REPAIR INFO (always English) ═══
       if (window._lastRepairInfo) {
         var ri = window._lastRepairInfo;
-        h += '<div style="border-top:2px solid #000;padding:10px 0;margin-bottom:10px;">';
-        h += '<div style="text-align:center;font-weight:700;font-size:13px;margin-bottom:6px;">🔧 REPAIR DETAILS</div>';
-        h += '<div style="font-size:13px;font-weight:700;margin-bottom:4px;">[' + ri.orderTypeLabel + ']</div>';
-        h += '<div style="font-size:12px;line-height:1.6;">';
+        h += '<div style="border-top:1.5px solid #000;padding:8px 0;margin-bottom:8px;">';
+        h += '<div style="text-align:center;font-weight:700;font-size:11px;margin-bottom:4px;">🔧 REPAIR DETAILS</div>';
+        h += '<div style="font-size:11px;font-weight:700;margin-bottom:3px;">[' + ri.orderTypeLabel + ']</div>';
+        h += '<div style="font-size:10px;line-height:1.5;">';
         h += 'Fault: ' + escHtml(ri.fault) + '<br>';
         h += 'Condition: ' + escHtml(ri.condition) + '<br>';
         h += 'Test Status: ' + escHtml(ri.testStatus) + '<br>';
@@ -1645,8 +1673,8 @@
       // ═══ USED DEVICE INFO (always English) ═══
       if (window._lastUsedDeviceInfo) {
         var ui = window._lastUsedDeviceInfo;
-        h += '<div style="border-top:1px dashed #000;padding:8px 0;margin-bottom:10px;font-size:12px;line-height:1.6;">';
-        h += '<div style="font-weight:700;margin-bottom:4px;">📱 PRE-OWNED DEVICE</div>';
+        h += '<div style="border-top:1px dashed #000;padding:6px 0;margin-bottom:8px;font-size:10px;line-height:1.5;">';
+        h += '<div style="font-weight:700;margin-bottom:3px;">📱 PRE-OWNED DEVICE</div>';
         if (ui.serial) h += 'Serial/IMEI: ' + escHtml(ui.serial) + '<br>';
         if (ui.cost > 0) h += 'Cost: €' + Number(ui.cost).toFixed(2) + '<br>';
         if (ui.notes) h += 'Notes: ' + escHtml(ui.notes) + '<br>';
@@ -1655,23 +1683,35 @@
       }
 
       // ═══ T&C ═══
-      h += '<div style="font-size:12px;text-align:left;line-height:1.6;margin-bottom:10px;">';
-      h += '<div style="font-weight:700;font-size:13px;text-align:center;margin-bottom:6px;">Warranty & Store Policy</div>';
+      h += '<div style="font-size:10px;text-align:left;line-height:1.5;margin-bottom:8px;">';
+      h += '<div style="font-weight:700;font-size:11px;text-align:center;margin-bottom:4px;">Warranty & Store Policy</div>';
       h += '<div><strong>Repairs – 3 Months</strong> Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair. Customer must back up data before repair.</div>';
       if (r.hasSecondHandItems) {
-        h += '<div style="margin-top:4px;"><strong>Pre-owned Devices – 7 Days</strong> No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable. Refund after inspection via original payment method.</div>';
+        h += '<div style="margin-top:3px;"><strong>Pre-owned Devices – 7 Days</strong> No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable. Refund after inspection via original payment method.</div>';
       }
-      h += '<div style="margin-top:4px;"><strong>Accessories – 14 Days</strong> Exchange/return only if unopened, sealed, and resalable.</div>';
+      h += '<div style="margin-top:3px;"><strong>Accessories – 14 Days</strong> Exchange/return only if unopened, sealed, and resalable.</div>';
       h += '</div>';
 
-      // ═══ LINKS ═══
-      h += '<div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;line-height:1.6;">';
-      h += 'Sales T&C: techcross.ie/receipt-terms.html<br>';
-      h += 'Repair T&C: techcross.ie/terms.html';
-      h += '</div>';
+      // ═══ QR CODES — side by side ═══
+      if (_qrSalesDataUri || _qrRepairDataUri) {
+        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px;">';
+        if (_qrSalesDataUri) {
+          h += '<div style="text-align:center;">';
+          h += '<div style="font-size:9px;font-weight:700;margin-bottom:3px;">Sales T&C</div>';
+          h += '<img src="' + _qrSalesDataUri + '" style="width:80px;height:80px;">';
+          h += '</div>';
+        }
+        if (_qrRepairDataUri) {
+          h += '<div style="text-align:center;">';
+          h += '<div style="font-size:9px;font-weight:700;margin-bottom:3px;">Repair T&C</div>';
+          h += '<img src="' + _qrRepairDataUri + '" style="width:80px;height:80px;">';
+          h += '</div>';
+        }
+        h += '</div>';
+      }
 
       // ═══ THANK YOU ═══
-      h += '<div style="text-align:center;font-size:16px;font-weight:900;padding:8px 0;border-top:2px solid #000;">Thank you!</div>';
+      h += '<div style="text-align:center;font-size:14px;font-weight:900;padding:6px 0;border-top:1.5px solid #000;">Thank you!</div>';
 
       return h;
     }
