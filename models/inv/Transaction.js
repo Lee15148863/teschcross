@@ -3,13 +3,13 @@ const mongoose = require('mongoose');
 const TransactionSchema = new mongoose.Schema({
   receiptNumber: { type: String, required: true, unique: true }, // YYYYMMDDHHmmss
   items: [{
-    product:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    product:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
     name:         { type: String, required: true },
-    sku:          { type: String, required: true },
+    sku:          { type: String, default: '' },
     serialNumber: { type: String },
     quantity:     { type: Number, required: true, min: 1 },
     unitPrice:    { type: Number, required: true },
-    costPrice:    { type: Number, required: true },
+    costPrice:    { type: Number, default: 0 },
     isSecondHand: { type: Boolean, default: false },
     purchasedFromCustomer: { type: Boolean, default: false },
     marginScheme: { type: Boolean, default: false },

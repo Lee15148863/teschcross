@@ -177,7 +177,20 @@ async function loadDaily(){
     try{
         var r=await apiFetch('/reports/daily?startDate='+date+'&endDate='+date);if(!r)return;
         var resp=await r.json();
-        if(resp.message||!resp.data){document.getElementById('dailySummary').innerHTML='';document.getElementById('dailyVat').innerHTML='';
+        var isToday=(date===new Date().toISOString().split('T')[0]);
+        var sfx=isToday?' (So far)':'';
+
+        if(resp.message||!resp.data){
+            // 即使无交易也显示空汇总（当天显示 So far）
+            if(isToday){
+                document.getElementById('dailySummary').innerHTML=
+                    sc('今日总销售额'+sfx,'€0.00')+sc('商品销售 (23%)'+sfx,'€0.00')+sc('维修服务 (13.5%)'+sfx,'€0.00')+
+                    sc('差价税销售'+sfx,'€0.00')+sc('23% 应缴税额'+sfx,'€0.00')+sc('13.5% 应缴税额'+sfx,'€0.00')+
+                    sc('💵 现金收入'+sfx,'€0.00')+sc('💳 银行卡收入'+sfx,'€0.00');
+            } else {
+                document.getElementById('dailySummary').innerHTML='';
+            }
+            document.getElementById('dailyVat').innerHTML='';
             document.getElementById('dailyBody').innerHTML='<tr><td colspan="6" class="no-data">📭 当日无交易记录</td></tr>';return;}
         var d=resp.data;var vat=d.vatBreakdown||{};
         var std23=vat.standard23||{};var reduced=vat.reduced135||{};var margin=vat.margin||{};var lyca=vat.lycaCredit||{};

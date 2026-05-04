@@ -153,8 +153,7 @@ function esc(s){if(!s)return'';const d=document.createElement('div');d.textConte
 
 // Preload logo and QR codes for receipt printing
 window._txLogoDataUri='';
-window._txQrSales='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAD4AQAAAADpqhamAAABeElEQVR4nOWZwZLDMAhDpU7//5ffHgDb3UNvMWmcTicZOEQELIRt9PV6fXf/vF983BFitXbju9r/zlgtSVgICw9rN74dftuSkIwlE8GH9Q749fidGcdENWx+f4//PZ7wWAiepNiNb0f8Fa2RRH0AboFvI/9//tLaje9q/yx1C9XSP6f+I9dIgvhLAkQ4uvFtiZ/5GYBa+8Dz43e0uyB/Cym1T5jb8e3hv8h61bzy8Yz8R8KtVAAe7GfRj29H/mvZZ9xZBVER3fiuj39p94iFAI+I/5UNPwLG2BK4ekI/vmv9Xhd7GoILgg+68W3Q/57MV+RvJA6Zf01seqz7PshhvwG+q/0pfGb2jeWSwv34rvVP/k8GHPJXEjye/z/mP5NKeNJBN77N8/+YALP/PT7+Zf/X1fUXDdyOb8/8L3L8pwRx2h6f/+l3lr4hWp85ZP8/L1cLjN1vOEH/zP1fZDnVoOMs6AD9++/8T2MMDl3w+PW/HHW0vL/b/wesNvJJvsiCTwAAAABJRU5ErkJggg==';
-window._txQrRepair='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAD4AQAAAADpqhamAAABeElEQVR4nOWZyXLDMAxDHzL6/19GDqRkpe3kZtGVnJl4wUGQSYKLZb4er+/wv8fxr7Oxx101v7vxljtXP8lYuN9W81uBSwIQYX0p9i49hN8aXCi8wH/jd69fj88SULF+Bd4Y+7Zsehj0p9X8Fur/5y+fVvO7G9dwdQGWRej/ovWr8YYMsW0AjHAkBKPt7Y/BBjuLngj9Y/y/AbKR5SsWSHfYv/7JhG8DjtqX/McH2D8jXzguAYYYyOX8lui/8g1Mj/O8vf0bsVmF7tPjnkyE1fyW1D8Z8nYKv0cTvL39XxDGN4oSqNsfYP/4v+zPlP/H5fb2byl7mQAMkwocEP8x/4AogkMEs/zFega/O/Gr+OlVbxY/hAxW81vj/7316VO/cIcn8Fva/8/vIX2imt+C+uea/zonAB535fwW2H+K/h/DnyPyXz9C9+MDQB8L7W//Cbei+VVv/nVA/z/NfzFX3gcfkf/b6HWjAY7iLzvCA/x/mnmVrF+NvwFlIdd8Pt386AAAAABJRU5ErkJggg==';
+window._txQrTerms='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAD4AQAAAADpqhamAAABeElEQVR4nOWZwZLDMAhDpU7//5ffHgDb3UNvMWmcTicZOEQELIRt9PV6fXf/vF983BFitXbju9r/zlgtSVgICw9rN74dftuSkIwlE8GH9Q749fidGcdENWx+f4//PZ7wWAiepNiNb0f8Fa2RRH0AboFvI/9//tLaje9q/yx1C9XSP6f+I9dIgvhLAkQ4uvFtiZ/5GYBa+8Dz43e0uyB/Cym1T5jb8e3hv8h61bzy8Yz8R8KtVAAe7GfRj29H/mvZZ9xZBVER3fiuj39p94iFAI+I/5UNPwLG2BK4ekI/vmv9Xhd7GoILgg+68W3Q/57MV+RvJA6Zf01seqz7PshhvwG+q/0pfGb2jeWSwv34rvVP/k8GHPJXEjye/z/mP5NKeNJBN77N8/+YALP/PT7+Zf/X1fUXDdyOb8/8L3L8pwRx2h6f/+l3lr4hWp85ZP8/L1cLjN1vOEH/zP1fZDnVoOMs6AD9++/8T2MMDl3w+PW/HHW0vL/b/wesNvJJvsiCTwAAAABJRU5ErkJggg==';
 (function(){var img=new Image();img.onload=function(){try{var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext('2d').drawImage(img,0,0);window._txLogoDataUri=c.toDataURL('image/png');}catch(e){}};img.src='logo.png';})();
 
 // Set default dates
@@ -212,7 +211,7 @@ async function viewDetail(id){
         let html=`
             <div class="detail-row"><span class="label">单号</span><span class="value">${esc(tx.receiptNumber)}</span></div>
             <div class="detail-row"><span class="label">时间</span><span class="value">${new Date(tx.createdAt).toLocaleString('zh-CN')}</span></div>
-            <div class="detail-row"><span class="label">支付方式</span><span class="value">${tx.paymentMethod==='cash'?'现金':'银行卡'}</span></div>
+            <div class="detail-row"><span class="label">支付方式</span><span class="value">${tx.paymentMethod==='cash'?'现金':tx.paymentMethod==='split'?'Card+Cash':'银行卡'}</span></div>
             <div class="detail-row"><span class="label">总金额</span><span class="value">€${Number(tx.totalAmount).toFixed(2)}</span></div>
             <div class="detail-row"><span class="label">Standard VAT</span><span class="value">€${Number(tx.standardVatTotal||0).toFixed(2)}</span></div>
             <div class="detail-row"><span class="label">Margin VAT</span><span class="value">€${Number(tx.marginVatTotal||0).toFixed(2)}</span></div>`;
@@ -231,11 +230,66 @@ async function viewDetail(id){
                 <td>€${Number(it.unitPrice).toFixed(2)}${it.discount&&it.discount.value?' <small style="color:#ff3b30;">(折扣: '+(it.discount.type==='percentage'?it.discount.value+'%':'€'+it.discount.value)+')</small>':''}</td>
                 <td>€${Number(it.subtotal).toFixed(2)}</td>
             </tr>`).join('')}</tbody></table></div>`;
+        // Partial refund section (only for non-refund transactions)
+        if(tx.totalAmount>=0&&(isAdmin||perms.refund)){
+            html+=`<div style="margin-top:20px;padding-top:16px;border-top:2px solid #e5e5ea;">
+                <h4 style="margin:0 0 10px;font-size:15px;">↩️ Refund from this order</h4>
+                <div id="detailRefundItems" style="max-height:180px;overflow-y:auto;border:1px solid #e5e5ea;border-radius:10px;padding:8px;margin-bottom:12px;">
+                ${(tx.items||[]).map((it,idx)=>{
+                    const price=(it.discountedPrice!=null?it.discountedPrice:it.unitPrice)||0;
+                    const total=price*(it.quantity||1);
+                    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #f0f0f0;font-size:13px;cursor:pointer;">'+
+                    '<input type="checkbox" name="detailRefundItem" value="'+idx+'" checked style="width:18px;height:18px;">'+
+                    '<span style="flex:1;">'+esc(it.name)+(it.quantity>1?' x'+it.quantity:'')+'</span>'+
+                    '<strong>€'+total.toFixed(2)+'</strong></label>';
+                }).join('')}
+                </div>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <button onclick="detailRefund('${esc(tx.receiptNumber)}','cash')" style="padding:10px 20px;border:none;border-radius:10px;background:#34c759;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">💵 Cash Refund</button>
+                    <button onclick="detailRefund('${esc(tx.receiptNumber)}','card')" style="padding:10px 20px;border:none;border-radius:10px;background:#0071e3;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">💳 Card Refund</button>
+                </div>
+                <div id="detailRefundError" style="display:none;color:#ff3b30;font-size:13px;margin-top:8px;"></div>
+            </div>`;
+            // Store items for refund
+            window._detailRefundItems=tx.items||[];
+        }
         document.getElementById('detailContent').innerHTML=html;
         document.getElementById('detailModal').classList.add('show');
     }catch(e){showToast('加载详情失败','error');}
 }
 window.viewDetail=viewDetail;
+
+// Refund from detail modal with partial item selection
+window.detailRefund=async function(receiptNumber,method){
+    var errEl=document.getElementById('detailRefundError');
+    if(errEl)errEl.style.display='none';
+    var checkboxes=document.querySelectorAll('#detailRefundItems input[name="detailRefundItem"]');
+    var selectedItems=[];
+    checkboxes.forEach(function(cb){
+        if(cb.checked){
+            var item=window._detailRefundItems[parseInt(cb.value)];
+            if(item)selectedItems.push({product:item.product,name:item.name,quantity:item.quantity});
+        }
+    });
+    if(!selectedItems.length){
+        if(errEl){errEl.textContent='请至少选择一个商品 / Select at least one item';errEl.style.display='block';}
+        return;
+    }
+    var body={receiptNumber:receiptNumber,refundMethod:method};
+    // Partial refund if not all items selected
+    if(selectedItems.length<window._detailRefundItems.length){
+        body.items=selectedItems;
+    }
+    try{
+        var r=await apiFetch('/transactions/refund',{method:'POST',body:JSON.stringify(body)});
+        if(!r)return;
+        var data=await r.json();
+        if(!r.ok){if(errEl){errEl.textContent=data.error||'Refund failed';errEl.style.display='block';}return;}
+        showToast('Refund OK: #'+data.refund.receiptNumber);
+        document.getElementById('detailModal').classList.remove('show');
+        loadTransactions();
+    }catch(e){if(errEl){errEl.textContent='Error: '+e.message;errEl.style.display='block';}}
+};
 
 async function silentDelete(id){
     if(!confirm('⚠️ 无痕删除\n\n此操作将永久删除该交易记录并恢复库存。\n确定要继续吗？'))return;
@@ -335,11 +389,12 @@ async function reprintReceipt(id){
         receiptHtml+='<div><strong>Repairs – 3 Months</strong> Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair.</div>';
         if((tx.items||[]).some(i=>i.isSecondHand))receiptHtml+='<div style="margin-top:3px;"><strong>Pre-owned Devices – 7 Days</strong> No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable.</div>';
         receiptHtml+='<div style="margin-top:3px;"><strong>Accessories – 14 Days</strong> Exchange/return only if unopened, sealed, and resalable.</div></div>';
-        // QR codes
-        if(window._txQrSales||window._txQrRepair){
-            receiptHtml+='<div style="display:flex;justify-content:center;gap:4px;margin-bottom:8px;">';
-            if(window._txQrSales)receiptHtml+='<div style="text-align:center;max-width:45%;"><div style="font-size:8px;font-weight:700;margin-bottom:2px;">Sales T&C</div><img src="'+window._txQrSales+'" style="width:60px;height:60px;display:block;margin:0 auto;"></div>';
-            if(window._txQrRepair)receiptHtml+='<div style="text-align:center;max-width:45%;"><div style="font-size:8px;font-weight:700;margin-bottom:2px;">Repair T&C</div><img src="'+window._txQrRepair+'" style="width:60px;height:60px;display:block;margin:0 auto;"></div>';
+        // QR code
+        if(window._txQrTerms){
+            receiptHtml+='<div style="text-align:center;margin-bottom:8px;">';
+            receiptHtml+='<div style="font-size:8px;font-weight:700;margin-bottom:2px;">Terms & Conditions</div>';
+            receiptHtml+='<img src="'+window._txQrTerms+'" style="width:60px;height:60px;display:block;margin:0 auto;">';
+            receiptHtml+='<div style="font-size:7px;color:#666;margin-top:2px;">techcross.ie/terms</div>';
             receiptHtml+='</div>';
         }
         receiptHtml+='<div style="text-align:center;font-size:14px;font-weight:900;padding:6px 0;border-top:1.5px solid #000;">Thank you!</div>';
