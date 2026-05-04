@@ -619,6 +619,64 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// ─── PATCH /api/inv/transactions/:id/edit-items ─────────────────────────────
+// Admin only: edit item fields (costPrice, unitPrice) for tax correction
+router.patch('/:id/edit-items', requireRole('admin'), async (req, res) => {
+  try {
+    const { updates } = req.body;
+    if (!updates || !Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ error: 'No updates provided' });
+    }
+
+    const transaction = await Transaction.findById(req.params.id);
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+
+    // Apply updates to items
+    for (const u of updates) {
+      const { idx, field, value } = u;
+      if (idx < 0 || idx >= transaction.items.length) continue;
+      // Only allow editing specific fields
+      if (!['costPrice', 'unitPrice', 'sellingPrice'].includes(field)) continue;
+      transaction.items[idx][field] = value;
+
+      // Recalculate subtotal and margin VAT if costPrice or unitPrice changed
+      const item = transaction.items[idx];
+      const effectivePrice = item.discountedPrice || item.unitPrice || 0;
+      item.subtotal = effectivePrice * (item.quantity || 1);
+
+      // Recalculate margin VAT for margin scheme items
+      if (item.marginScheme || item.isSecondHand) {
+        const margin = effectivePrice - (item.costPrice || 0);
+        if (margin > 0) {
+          item.marginVat = Math.round((margin / 1.23) * 0.23 * (item.quantity || 1) * 100) / 100;
+        } else {
+          item.marginVat = 0;
+        }
+      }
+    }
+
+    // Recalculate transaction totals
+    let totalAmount = 0;
+    let standardVatTotal = 0;
+    let marginVatTotal = 0;
+    for (const item of transaction.items) {
+      totalAmount += item.subtotal || 0;
+      standardVatTotal += item.vatAmount || 0;
+      marginVatTotal += item.marginVat || 0;
+    }
+    transaction.totalAmount = Math.round(totalAmount * 100) / 100;
+    transaction.standardVatTotal = Math.round(standardVatTotal * 100) / 100;
+    transaction.marginVatTotal = Math.round(marginVatTotal * 100) / 100;
+
+    await transaction.save();
+    res.json({ success: true, transaction });
+  } catch (err) {
+    res.status(500).json({ error: '服务器错误: ' + err.message });
+  }
+});
+
 // ─── DELETE /api/inv/transactions/:id/delete ────────────────────────────────
 // Silent delete (Admin only)
 router.delete('/:id/delete', requireRole('admin'), async (req, res) => {
