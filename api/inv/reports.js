@@ -7,26 +7,24 @@ const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 // All routes require Staff+ access
 router.use(jwtAuth, requireRole('admin', 'staff'));
 
-// ─── Helper: build date range filter ────────────────────────────────────────
+// ─── Helper: build date range filter (UTC-based) ─────────────────────────────
 function buildDateFilter(startDate, endDate) {
   const filter = {};
   if (startDate) {
-    // Parse as local date start: YYYY-MM-DD 00:00:00
-    const parts = startDate.split('-');
-    filter.$gte = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
+    // Parse as UTC date start
+    filter.$gte = new Date(startDate + 'T00:00:00.000Z');
   }
   if (endDate) {
-    // Parse as local date end: YYYY-MM-DD 23:59:59.999
-    const parts = endDate.split('-');
-    filter.$lte = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59, 999);
+    // Parse as UTC date end
+    filter.$lte = new Date(endDate + 'T23:59:59.999Z');
   }
   return Object.keys(filter).length > 0 ? filter : null;
 }
 
-// ─── Helper: parse YYYY-MM-DD as local midnight (not UTC) ───────────────────
-function parseLocalDate(dateStr) {
-  const parts = dateStr.split('-');
-  return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+// ─── Helper: parse YYYY-MM-DD as UTC midnight ───────────────────────────────
+// Changed to UTC to match how MongoDB stores dates
+function parseUTCDate(dateStr) {
+  return new Date(dateStr + 'T00:00:00.000Z');
 }
 
 // ─── Helper: aggregate product ranking from transactions ────────────────────
@@ -60,16 +58,14 @@ router.get('/daily', async (req, res) => {
 
     let dateStart, dateEnd;
     if (startDate && endDate) {
-      dateStart = parseLocalDate(startDate);
-      dateStart.setHours(0, 0, 0, 0);
-      dateEnd = parseLocalDate(endDate);
-      dateEnd.setHours(23, 59, 59, 999);
+      // Use UTC-based date parsing
+      dateStart = parseUTCDate(startDate);
+      dateEnd = new Date(endDate + 'T23:59:59.999Z');
     } else {
-      const targetDate = date ? parseLocalDate(date) : new Date();
-      dateStart = new Date(targetDate);
-      dateStart.setHours(0, 0, 0, 0);
-      dateEnd = new Date(targetDate);
-      dateEnd.setHours(23, 59, 59, 999);
+      // Get today's date in UTC
+      const todayUTC = date || new Date().toISOString().split('T')[0];
+      dateStart = parseUTCDate(todayUTC);
+      dateEnd = new Date(todayUTC + 'T23:59:59.999Z');
     }
 
     if (isNaN(dateStart.getTime()) || isNaN(dateEnd.getTime())) {
@@ -212,12 +208,13 @@ router.get('/monthly', async (req, res) => {
       }
     } else {
       const now = new Date();
-      year = now.getFullYear();
-      mon = now.getMonth() + 1;
+      year = now.getUTCFullYear();
+      mon = now.getUTCMonth() + 1;
     }
 
-    const startDate = new Date(year, mon - 1, 1, 0, 0, 0, 0);
-    const endDate = new Date(year, mon, 0, 23, 59, 59, 999);
+    // Use UTC dates for consistency with stored transaction dates
+    const startDate = new Date(Date.UTC(year, mon - 1, 1, 0, 0, 0, 0));
+    const endDate = new Date(Date.UTC(year, mon, 0, 23, 59, 59, 999));
 
     const transactions = await Transaction.find({
       createdAt: { $gte: startDate, $lte: endDate }
@@ -378,21 +375,21 @@ router.get('/weekly', async (req, res) => {
       weekEnd.setDate(weekStart.getDate() + 6);
       weekEnd.setHours(23, 59, 59, 999);
     } else if (qStart) {
-      weekStart = parseLocalDate(qStart);
-      weekStart.setHours(0, 0, 0, 0);
-      weekEnd = new Date(weekStart);
+      // Use UTC-based date parsing
+      weekStart = parseUTCDate(qStart);
+      weekEnd = new Date(qStart + 'T23:59:59.999Z');
       weekEnd.setDate(weekStart.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
     } else {
-      // Default: current week (Monday to Sunday)
+      // Default: current week (Monday to Sunday) in UTC
       const now = new Date();
-      const day = now.getDay() || 7;
-      weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - day + 1);
-      weekStart.setHours(0, 0, 0, 0);
+      const todayStr = now.toISOString().split('T')[0];
+      const today = new Date(todayStr + 'T00:00:00.000Z');
+      const day = today.getUTCDay() || 7;
+      weekStart = new Date(today);
+      weekStart.setUTCDate(today.getUTCDate() - day + 1);
       weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
+      weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
+      weekEnd.setUTCHours(23, 59, 59, 999);
     }
 
     if (isNaN(weekStart.getTime()) || isNaN(weekEnd.getTime())) {
@@ -548,10 +545,8 @@ router.get('/product-ranking', async (req, res) => {
       });
     }
 
-    const start = parseLocalDate(startDate);
-    start.setHours(0, 0, 0, 0);
-    const end = parseLocalDate(endDate);
-    end.setHours(23, 59, 59, 999);
+    const start = parseUTCDate(startDate);
+    const end = new Date(endDate + 'T23:59:59.999Z');
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return res.status(400).json({ error: 'Invalid date format', code: 'VALIDATION_ERROR' });
@@ -586,20 +581,15 @@ router.get('/export', async (req, res) => {
       let dateStart, dateEnd;
 
       if (startDate && endDate) {
-        dateStart = parseLocalDate(startDate);
-        dateStart.setHours(0, 0, 0, 0);
-        dateEnd = parseLocalDate(endDate);
-        dateEnd.setHours(23, 59, 59, 999);
+        dateStart = parseUTCDate(startDate);
+        dateEnd = new Date(endDate + 'T23:59:59.999Z');
       } else if (date) {
-        dateStart = parseLocalDate(date);
-        dateStart.setHours(0, 0, 0, 0);
-        dateEnd = parseLocalDate(date);
-        dateEnd.setHours(23, 59, 59, 999);
+        dateStart = parseUTCDate(date);
+        dateEnd = new Date(date + 'T23:59:59.999Z');
       } else {
-        dateStart = new Date();
-        dateStart.setHours(0, 0, 0, 0);
-        dateEnd = new Date();
-        dateEnd.setHours(23, 59, 59, 999);
+        const today = new Date().toISOString().split('T')[0];
+        dateStart = parseUTCDate(today);
+        dateEnd = new Date(today + 'T23:59:59.999Z');
       }
 
       if (isNaN(dateStart.getTime()) || isNaN(dateEnd.getTime())) {
