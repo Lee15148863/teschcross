@@ -554,6 +554,39 @@
         .refund-method-btn.active {
             border-color: #D4E157; background: #fafff0;
         }
+
+        /* ─── Left Shortcut Bar (20 Quick Keys) ────────────────────── */
+        .left-shortcut-bar {
+            width: 90px; min-width: 90px; flex-shrink: 0;
+            display: flex; flex-direction: column;
+            gap: 4px; padding: 8px 4px;
+            background: #f7f7f9; border-right: 1px solid #e5e5e7;
+            overflow-y: auto;
+        }
+        .left-shortcut-bar::-webkit-scrollbar { width: 4px; }
+        .left-shortcut-bar::-webkit-scrollbar-thumb { background: #d2d2d7; border-radius: 2px; }
+
+        .shortcut-item {
+            flex: 1; min-height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 4px 3px;
+            background: #fff; border: 1px solid #d2d2d7; border-radius: 8px;
+            font-size: 11px; font-weight: 500; text-align: center;
+            cursor: pointer; white-space: normal; line-height: 1.2;
+            transition: all 0.15s; user-select: none;
+            overflow: hidden; word-break: break-all;
+        }
+        .shortcut-item.empty {
+            background: #f1f1f3; border: 1px dashed #c9c9cd;
+            cursor: default;
+        }
+        .shortcut-item:not(.empty):hover {
+            background: #eef5ff; border-color: #007aff;
+            transform: scale(1.02);
+        }
+        .shortcut-item:not(.empty):active {
+            transform: scale(0.97); background: #d4e8ff;
+        }
     </style>
 </head>
 <body>
@@ -607,6 +640,11 @@
 
     <!-- Main Layout -->
     <div class="pos-container">
+        <!-- LEFT SHORTCUT BAR: 20 Quick Keys -->
+        <div class="left-shortcut-bar" id="leftShortcutBar">
+            <!-- JS 自动生成 1-20 个快捷按钮 -->
+        </div>
+
         <!-- LEFT: Product Search -->
         <div class="left-panel">
             <div class="left-header">
@@ -2446,6 +2484,37 @@
     updateLang();
     renderCart();
     searchInput.focus();
+    loadShortcuts(); // 加载左侧快捷按钮
+
+    // ─── 左侧快捷按钮栏加载 ─────────────────────────────────────
+    async function loadShortcuts() {
+      var bar = document.getElementById('leftShortcutBar');
+      if (!bar) return;
+      var totalKeys = 20;
+      var list = [];
+      try {
+        var res = await apiFetch('/pos-shortcuts');
+        if (res && res.ok) list = await res.json();
+      } catch (e) {
+        list = [];
+      }
+      bar.innerHTML = '';
+      for (var i = 1; i <= totalKeys; i++) {
+        var item = list.find(function(x) { return x.sort_no === i; }) || null;
+        var div = document.createElement('div');
+        if (item && item.product_id && item.status !== false) {
+          div.className = 'shortcut-item';
+          div.textContent = item.title || ('Key' + i);
+          div.dataset.productId = item.product_id;
+          div.addEventListener('click', (function(pid) {
+            return function() { window._addToCart(pid); };
+          })(item.product_id));
+        } else {
+          div.className = 'shortcut-item empty';
+        }
+        bar.appendChild(div);
+      }
+    }
 
     // ─── 店员权限控制 ───────────────────────────────────────────
     // 店员：隐藏成本价字段、隐藏删除按钮

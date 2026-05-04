@@ -50,6 +50,7 @@ app.use('/api/inv/reports', require('./api/inv/reports'));
 app.use('/api/inv/settings', require('./api/inv/settings'));
 app.use('/api/inv/invoices', require('./api/inv/invoices'));
 app.use('/api/inv/expenses', require('./api/inv/expenses'));
+app.use('/api/inv/pos-shortcuts', require('./api/inv/pos-shortcuts'));
 
 // Fallback: serve index.html for all non-API routes
 app.get('/{*splat}', (req, res) => {
