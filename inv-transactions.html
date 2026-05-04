@@ -151,6 +151,12 @@ window.logout=logout;
 async function apiFetch(url,opts){opts=opts||{};opts.headers=headers();const r=await fetch(API+url,opts);if(r.status===401){logout();return null;}return r;}
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
+// Preload logo and QR codes for receipt printing
+window._txLogoDataUri='';
+window._txQrSales='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAD4AQAAAADpqhamAAABeElEQVR4nOWZwZLDMAhDpU7//5ffHgDb3UNvMWmcTicZOEQELIRt9PV6fXf/vF983BFitXbju9r/zlgtSVgICw9rN74dftuSkIwlE8GH9Q749fidGcdENWx+f4//PZ7wWAiepNiNb0f8Fa2RRH0AboFvI/9//tLaje9q/yx1C9XSP6f+I9dIgvhLAkQ4uvFtiZ/5GYBa+8Dz43e0uyB/Cym1T5jb8e3hv8h61bzy8Yz8R8KtVAAe7GfRj29H/mvZZ9xZBVER3fiuj39p94iFAI+I/5UNPwLG2BK4ekI/vmv9Xhd7GoILgg+68W3Q/57MV+RvJA6Zf01seqz7PshhvwG+q/0pfGb2jeWSwv34rvVP/k8GHPJXEjye/z/mP5NKeNJBN77N8/+YALP/PT7+Zf/X1fUXDdyOb8/8L3L8pwRx2h6f/+l3lr4hWp85ZP8/L1cLjN1vOEH/zP1fZDnVoOMs6AD9++/8T2MMDl3w+PW/HHW0vL/b/wesNvJJvsiCTwAAAABJRU5ErkJggg==';
+window._txQrRepair='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAD4AQAAAADpqhamAAABeElEQVR4nOWZyXLDMAxDHzL6/19GDqRkpe3kZtGVnJl4wUGQSYKLZb4er+/wv8fxr7Oxx101v7vxljtXP8lYuN9W81uBSwIQYX0p9i49hN8aXCi8wH/jd69fj88SULF+Bd4Y+7Zsehj0p9X8Fur/5y+fVvO7G9dwdQGWRej/ovWr8YYMsW0AjHAkBKPt7Y/BBjuLngj9Y/y/AbKR5SsWSHfYv/7JhG8DjtqX/McH2D8jXzguAYYYyOX8lui/8g1Mj/O8vf0bsVmF7tPjnkyE1fyW1D8Z8nYKv0cTvL39XxDGN4oSqNsfYP/4v+zPlP/H5fb2byl7mQAMkwocEP8x/4AogkMEs/zFega/O/Gr+OlVbxY/hAxW81vj/7316VO/cIcn8Fva/8/vIX2imt+C+uea/zonAB535fwW2H+K/h/DnyPyXz9C9+MDQB8L7W//Cbei+VVv/nVA/z/NfzFX3gcfkf/b6HWjAY7iLzvCA/x/mnmVrF+NvwFlIdd8Pt386AAAAABJRU5ErkJggg==';
+(function(){var img=new Image();img.onload=function(){try{var c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext('2d').drawImage(img,0,0);window._txLogoDataUri=c.toDataURL('image/png');}catch(e){}};img.src='logo.png';})();
+
 // Set default dates
 const today=new Date();
 // 读取 URL 参数 ?date=YYYY-MM-DD，有则默认显示当日
@@ -289,44 +295,64 @@ async function reprintReceipt(id){
             const pr=await fetch('http://localhost:9100/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transaction:tx}),signal:AbortSignal.timeout(5000)});
             if(pr.ok){showToast('Sent to printer');return;}
         }catch(e){}
-        // Fallback: browser print with full receipt
-        const win=window.open('','_blank','width=320,height=500');
+        // Fallback: browser print with new receipt format (logo + QR)
         const pm=tx.paymentMethod==='split'?'Card+Cash':tx.paymentMethod==='card'?'Card':'Cash';
         let itemsHtml='';
         (tx.items||[]).forEach(it=>{
             const price=(it.discountedPrice!=null?it.discountedPrice:it.unitPrice)||0;
-            itemsHtml+='<div style="display:flex;justify-content:space-between;"><span>'+(it.quantity>1?it.quantity+'x ':'')+esc(it.name)+'</span><span>€'+(price*(it.quantity||1)).toFixed(2)+'</span></div>';
-            if(it.serialNumber)itemsHtml+='<div style="font-size:12px;font-weight:700;">SN: '+esc(it.serialNumber)+'</div>';
+            const total=price*(it.quantity||1);
+            itemsHtml+='<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(it.quantity>1?it.quantity+' x ':'')+esc(it.name)+'</span><strong style="white-space:nowrap;margin-left:4px;flex-shrink:0;">€'+total.toFixed(2)+'</strong></div>';
+            if(it.serialNumber)itemsHtml+='<div style="font-size:10px;font-weight:700;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;">SN: '+esc(it.serialNumber)+'</div>';
         });
-        win.document.write(`<html><head><title>Receipt</title><style>@page{size:68mm auto;margin:0;}body{font-family:"Courier New",monospace;font-size:12px;font-weight:600;padding:6px;max-width:238px;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}hr{border:none;border-top:1px dashed #000;margin:8px 0;}.center{text-align:center;}.right{text-align:right;}.small{font-size:11px;}</style></head><body>`);
-        win.document.write('<div class="center"><strong style="font-size:16px;">Tech Cross Repair Centre</strong></div>');
-        win.document.write('<div class="center small">Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658</div>');
-        win.document.write('<div class="center small">Tel: 046 905 9854 | Mob: 089 482 5300</div>');
-        win.document.write('<div class="center small">navantechcross@gmail.com | techcross.ie</div>');
-        win.document.write('<hr>');
-        win.document.write('<div>Receipt #: '+esc(tx.receiptNumber)+'</div>');
-        win.document.write('<div>Date: '+new Date(tx.createdAt).toLocaleString('en-IE')+'</div>');
-        win.document.write('<hr>');
-        win.document.write(itemsHtml);
-        win.document.write('<hr>');
-        win.document.write('<div class="right" style="font-size:16px;font-weight:bold;">TOTAL: €'+Number(tx.totalAmount).toFixed(2)+'</div>');
-        win.document.write('<div>Payment: '+pm+'</div>');
-        if(tx.cashReceived)win.document.write('<div>Cash: €'+Number(tx.cashReceived).toFixed(2)+'</div>');
-        if(tx.cardAmount)win.document.write('<div>Card: €'+Number(tx.cardAmount).toFixed(2)+'</div>');
-        if(tx.changeGiven>0)win.document.write('<div><strong>Change: €'+Number(tx.changeGiven).toFixed(2)+'</strong></div>');
-        win.document.write('<hr>');
-        if(tx.standardVatTotal>0)win.document.write('<div class="small">Standard VAT: €'+Number(tx.standardVatTotal).toFixed(2)+'</div>');
-        if(tx.marginVatTotal>0)win.document.write('<div class="small">Margin VAT: €'+Number(tx.marginVatTotal).toFixed(2)+'</div>');
-        win.document.write('<hr>');
-        win.document.write('<div class="small center">Warranty & Store Policy | Repairs - 3 Months: Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair. | Accessories - 14 Days: Exchange/return only if unopened, sealed, and resalable.</div>');
-        if((tx.items||[]).some(i=>i.isSecondHand))win.document.write('<div class="small center" style="margin-top:4px;">Pre-owned Devices - 7 Days: No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable.</div>');
-        win.document.write('<div class="center" style="margin-top:8px;font-size:12px;font-weight:700;">Sales T&C: techcross.ie/receipt-terms.html</div>');
-        win.document.write('<div class="center" style="font-size:12px;font-weight:700;">Repair T&C: techcross.ie/terms.html</div>');
-        win.document.write('<div class="center" style="margin-top:10px;font-weight:bold;">Thank you!</div>');
-        win.document.write('</body></html>');
-        win.document.close();
-        win.focus();
-        win.print();
+        let receiptHtml='';
+        // Logo
+        if(window._txLogoDataUri)receiptHtml+='<div style="text-align:center;margin-bottom:6px;"><img src="'+window._txLogoDataUri+'" style="max-width:180px;max-height:60px;"></div>';
+        // Header
+        receiptHtml+='<div style="text-align:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1.5px solid #000;">';
+        receiptHtml+='<div style="font-size:11px;margin-top:4px;line-height:1.5;">Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658</div>';
+        receiptHtml+='<div style="font-size:11px;">Tel: 046 905 9854 | Mob: 089 482 5300</div>';
+        receiptHtml+='<div style="font-size:11px;">navantechcross@gmail.com</div></div>';
+        // Receipt info
+        receiptHtml+='<div style="margin-bottom:8px;font-size:11px;">';
+        receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Receipt #</span><strong style="max-width:60%;text-align:right;overflow:hidden;text-overflow:ellipsis;">'+esc(tx.receiptNumber)+'</strong></div>';
+        receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Date</span><span>'+new Date(tx.createdAt).toLocaleString('en-IE')+'</span></div></div>';
+        // Items
+        receiptHtml+='<div style="border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:6px 0;margin-bottom:8px;">'+itemsHtml+'</div>';
+        // Total
+        receiptHtml+='<div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;margin-bottom:8px;"><span>TOTAL</span><span>€'+Number(tx.totalAmount).toFixed(2)+'</span></div>';
+        // Payment
+        receiptHtml+='<div style="margin-bottom:8px;font-size:12px;border-bottom:1px dashed #000;padding-bottom:8px;">';
+        if(tx.paymentMethod==='split'){receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>💳 Card</span><span>€'+(tx.cardAmount||0).toFixed(2)+'</span></div><div style="display:flex;justify-content:space-between;"><span>💵 Cash</span><span>€'+(tx.cashReceived||0).toFixed(2)+'</span></div>';}
+        else if(tx.paymentMethod==='cash'){receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>💵 Cash</span><span>€'+(tx.cashReceived||0).toFixed(2)+'</span></div>';}
+        else{receiptHtml+='<div>💳 Card Payment</div>';}
+        if(tx.changeGiven>0)receiptHtml+='<div style="display:flex;justify-content:space-between;font-weight:700;"><span>Change</span><span>€'+Number(tx.changeGiven).toFixed(2)+'</span></div>';
+        receiptHtml+='</div>';
+        // VAT
+        if(tx.standardVatTotal>0||tx.marginVatTotal>0){receiptHtml+='<div style="margin-bottom:8px;font-size:11px;border-bottom:1px dashed #000;padding-bottom:8px;">';if(tx.standardVatTotal>0)receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>VAT (23%)</span><span>€'+Number(tx.standardVatTotal).toFixed(2)+'</span></div>';if(tx.marginVatTotal>0)receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Margin VAT</span><span>€'+Number(tx.marginVatTotal).toFixed(2)+'</span></div>';receiptHtml+='</div>';}
+        // T&C
+        receiptHtml+='<div style="font-size:10px;text-align:left;line-height:1.5;margin-bottom:8px;">';
+        receiptHtml+='<div style="font-weight:700;font-size:11px;text-align:center;margin-bottom:4px;">Warranty & Store Policy</div>';
+        receiptHtml+='<div><strong>Repairs – 3 Months</strong> Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair.</div>';
+        if((tx.items||[]).some(i=>i.isSecondHand))receiptHtml+='<div style="margin-top:3px;"><strong>Pre-owned Devices – 7 Days</strong> No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable.</div>';
+        receiptHtml+='<div style="margin-top:3px;"><strong>Accessories – 14 Days</strong> Exchange/return only if unopened, sealed, and resalable.</div></div>';
+        // QR codes
+        if(window._txQrSales||window._txQrRepair){
+            receiptHtml+='<div style="display:flex;justify-content:center;gap:4px;margin-bottom:8px;">';
+            if(window._txQrSales)receiptHtml+='<div style="text-align:center;max-width:45%;"><div style="font-size:8px;font-weight:700;margin-bottom:2px;">Sales T&C</div><img src="'+window._txQrSales+'" style="width:60px;height:60px;display:block;margin:0 auto;"></div>';
+            if(window._txQrRepair)receiptHtml+='<div style="text-align:center;max-width:45%;"><div style="font-size:8px;font-weight:700;margin-bottom:2px;">Repair T&C</div><img src="'+window._txQrRepair+'" style="width:60px;height:60px;display:block;margin:0 auto;"></div>';
+            receiptHtml+='</div>';
+        }
+        receiptHtml+='<div style="text-align:center;font-size:14px;font-weight:900;padding:6px 0;border-top:1.5px solid #000;">Thank you!</div>';
+        // Print via iframe
+        var iframe=document.getElementById('_txPrintFrame');
+        if(!iframe){iframe=document.createElement('iframe');iframe.id='_txPrintFrame';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
+        var doc=iframe.contentDocument||iframe.contentWindow.document;
+        doc.open();
+        doc.write('<html><head><title>Receipt</title><style>@page{size:72mm auto;margin:0;}body{font-family:Calibri,"Trebuchet MS",Arial,sans-serif;font-size:11px;font-weight:500;padding:2px;width:72mm;max-width:72mm;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;overflow:hidden;word-wrap:break-word;}div{max-width:100%;overflow:hidden;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
+        doc.write(receiptHtml);
+        doc.write('</body></html>');
+        doc.close();
+        setTimeout(function(){iframe.contentWindow.focus();iframe.contentWindow.print();},200);
     }catch(e){showToast('Reprint failed','error');}
 }
 window.reprintReceipt=reprintReceipt;

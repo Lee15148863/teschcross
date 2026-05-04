@@ -453,7 +453,7 @@
             overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.2);
         }
         .pos-modal-box.narrow { max-width: 480px; width: 90%; max-height: 85vh; }
-        .pos-modal-box.receipt { padding: 0; max-width: 342px; width: 82%; box-shadow: 0 24px 64px rgba(0,0,0,.3); }
+        .pos-modal-box.receipt { padding: 0; max-width: 360px; width: 90%; box-shadow: 0 24px 64px rgba(0,0,0,.3); }
 
         /* ─── Modal Title ──────────────────────────────────────────── */
         .pos-modal-title { font-size: 20px; margin-bottom: 20px; }
@@ -1603,7 +1603,6 @@
         silentBrowserPrint(document.getElementById('receiptPreviewContent').innerHTML);
       }
       document.getElementById('receiptPreviewOverlay').classList.remove('show');
-      clearCartAfterCheckout();
     };
 
     // ─── Silent Browser Print (iframe, no popup) ────────────────
@@ -1622,7 +1621,8 @@
       doc.open();
       doc.write('<html><head><title>Receipt</title><style>');
       doc.write('@page{size:72mm auto;margin:0;}');
-      doc.write('body{font-family:Calibri,"Trebuchet MS",Arial,sans-serif;font-size:11px;font-weight:500;padding:4px;max-width:72mm;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}');
+      doc.write('body{font-family:Calibri,"Trebuchet MS",Arial,sans-serif;font-size:11px;font-weight:500;padding:2px;width:72mm;max-width:72mm;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;overflow:hidden;word-wrap:break-word;word-break:break-all;}');
+      doc.write('div{max-width:100%;overflow:hidden;}');
       doc.write('img{max-width:100%;height:auto;display:block;}');
       doc.write('</style></head><body>');
       doc.write(html);
@@ -1654,7 +1654,8 @@
 
     function closeReceiptPreview() {
       document.getElementById('receiptPreviewOverlay').classList.remove('show');
-      clearCartAfterCheckout();
+      // Only clear cart if this was triggered from a new checkout (not from Orders reprint)
+      if (window._lastReceiptData) clearCartAfterCheckout();
     }
     window.closeReceiptPreview = closeReceiptPreview;
 
@@ -1689,8 +1690,8 @@
 
       // ═══ RECEIPT INFO ═══
       h += '<div style="margin-bottom:8px;font-size:11px;">';
-      h += '<div style="display:flex;justify-content:space-between;"><span>Receipt #</span><strong>' + (r.receiptNumber || '-') + '</strong></div>';
-      h += '<div style="display:flex;justify-content:space-between;"><span>Date</span><span>' + (r.date || '-') + '</span></div>';
+      h += '<div style="display:flex;justify-content:space-between;"><span>Receipt #</span><strong style="max-width:60%;text-align:right;overflow:hidden;text-overflow:ellipsis;">' + (r.receiptNumber || '-') + '</strong></div>';
+      h += '<div style="display:flex;justify-content:space-between;"><span>Date</span><span style="max-width:60%;text-align:right;">' + (r.date || '-') + '</span></div>';
       h += '</div>';
 
       // ═══ ITEMS ═══
@@ -1700,11 +1701,11 @@
           var price = (item.discountedPrice != null ? item.discountedPrice : item.unitPrice) || 0;
           var total = price * (item.quantity || 1);
           h += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">';
-          h += '<span style="flex:1;">' + (item.quantity > 1 ? item.quantity + ' x ' : '') + escHtml(item.name) + '</span>';
-          h += '<strong style="white-space:nowrap;margin-left:6px;">€' + total.toFixed(2) + '</strong>';
+          h += '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (item.quantity > 1 ? item.quantity + ' x ' : '') + escHtml(item.name) + '</span>';
+          h += '<strong style="white-space:nowrap;margin-left:4px;flex-shrink:0;">€' + total.toFixed(2) + '</strong>';
           h += '</div>';
           if (item.serialNumber) {
-            h += '<div style="font-size:11px;font-weight:700;margin-bottom:3px;">  IMEI/SN: ' + escHtml(item.serialNumber) + '</div>';
+            h += '<div style="font-size:10px;font-weight:700;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">  SN: ' + escHtml(item.serialNumber) + '</div>';
           }
           if (item.discountedPrice != null && item.discountedPrice < item.unitPrice) {
             h += '<div style="font-size:10px;text-decoration:line-through;margin-bottom:3px;">  Was €' + item.unitPrice.toFixed(2) + '</div>';
@@ -1780,17 +1781,17 @@
 
       // ═══ QR CODES — side by side ═══
       if (_qrSalesDataUri || _qrRepairDataUri) {
-        h += '<div style="display:flex;justify-content:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">';
+        h += '<div style="display:flex;justify-content:center;gap:4px;margin-bottom:8px;">';
         if (_qrSalesDataUri) {
-          h += '<div style="text-align:center;">';
-          h += '<div style="font-size:9px;font-weight:700;margin-bottom:3px;">Sales T&C</div>';
-          h += '<img src="' + _qrSalesDataUri + '" style="width:70px;height:70px;display:block;margin:0 auto;">';
+          h += '<div style="text-align:center;max-width:45%;">';
+          h += '<div style="font-size:8px;font-weight:700;margin-bottom:2px;">Sales T&C</div>';
+          h += '<img src="' + _qrSalesDataUri + '" style="width:60px;height:60px;display:block;margin:0 auto;">';
           h += '</div>';
         }
         if (_qrRepairDataUri) {
-          h += '<div style="text-align:center;">';
-          h += '<div style="font-size:9px;font-weight:700;margin-bottom:3px;">Repair T&C</div>';
-          h += '<img src="' + _qrRepairDataUri + '" style="width:70px;height:70px;display:block;margin:0 auto;">';
+          h += '<div style="text-align:center;max-width:45%;">';
+          h += '<div style="font-size:8px;font-weight:700;margin-bottom:2px;">Repair T&C</div>';
+          h += '<img src="' + _qrRepairDataUri + '" style="width:60px;height:60px;display:block;margin:0 auto;">';
           h += '</div>';
         }
         h += '</div>';
@@ -2576,9 +2577,12 @@
 
       // 用 MutationObserver 监听动态面板，隐藏成本价和删除按钮
       var observer = new MutationObserver(function() {
-        // 隐藏 inline panel 的成本价输入框
-        document.querySelectorAll('#inlinePanel [id="ipCost"], #inlinePanel [id="buyCost"]').forEach(function(el) {
-          if (el.closest('div')) el.closest('div').style.display = 'none';
+        // 隐藏 inline panel 的成本价输入框（只隐藏输入框本身，不隐藏父容器）
+        document.querySelectorAll('#inlinePanel [id="ipCost"]').forEach(function(el) {
+          el.style.display = 'none';
+        });
+        document.querySelectorAll('#inlinePanel [id="buyCost"]').forEach(function(el) {
+          el.style.display = 'none';
         });
         // 隐藏所有删除按钮
         document.querySelectorAll('.btn-delete, [data-action="delete"]').forEach(function(el) {
