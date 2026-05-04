@@ -223,7 +223,7 @@ async function updateThresholds(){
 window.updateThresholds=updateThresholds;
 
 async function updateCompanyInfo(){
-    const body={companyInfo:{name:document.getElementById('compName').value.trim(),address:document.getElementById('compAddress').value.trim(),phone:document.getElementById('compPhone').value.trim(),vatNumber:document.getElementById('compVat').value.trim(),logo:document.getElementById('compLogo').value.trim()}};
+    const body={settings:{companyInfo:{name:document.getElementById('compName').value.trim(),address:document.getElementById('compAddress').value.trim(),phone:document.getElementById('compPhone').value.trim(),vatNumber:document.getElementById('compVat').value.trim(),logo:document.getElementById('compLogo').value.trim()}}};
     try{
         const r=await apiFetch('/settings',{method:'PUT',body:JSON.stringify(body)});
         if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}
