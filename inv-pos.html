@@ -414,6 +414,7 @@
 
         /* ─── Inline Panel Container ───────────────────────────────── */
         .inline-panel { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+        .inline-panel.open { overflow: visible; }
 
         /* ─── Action Bar ───────────────────────────────────────────── */
         .action-bar {
@@ -452,7 +453,7 @@
             overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.2);
         }
         .pos-modal-box.narrow { max-width: 480px; width: 90%; max-height: 85vh; }
-        .pos-modal-box.receipt { padding: 0; max-width: 380px; width: 90%; box-shadow: 0 24px 64px rgba(0,0,0,.3); }
+        .pos-modal-box.receipt { padding: 0; max-width: 342px; width: 82%; box-shadow: 0 24px 64px rgba(0,0,0,.3); }
 
         /* ─── Modal Title ──────────────────────────────────────────── */
         .pos-modal-title { font-size: 20px; margin-bottom: 20px; }
@@ -798,6 +799,7 @@
                         <button type="button" class="vat-preset-btn" data-vat="13.5">13.5%</button>
                     </div>
                 </div>
+            </div>
             <div class="pos-form-row">
                 <div class="pos-form-col"><label class="pos-form-label" id="qaLblCost">成本价 €</label><input type="text" inputmode="decimal" id="qaCost" class="pos-form-input" placeholder="0.00"></div>
                 <div class="pos-form-col"><label class="pos-form-label" id="qaLblPrice">售价 € *</label><input type="text" inputmode="decimal" id="qaPrice" class="pos-form-input" placeholder="0.00"></div>
@@ -1506,7 +1508,7 @@
           '<p style="font-size:16px;color:#6e6e73;margin:0;">Receipt #' + receiptNum + '</p>' +
           '<p style="font-size:30px;font-weight:700;margin:12px 0 20px;">€' + Number(totalAmt).toFixed(2) + '</p>' +
           // Receipt preview box
-          '<div style="background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px;margin:0 auto 20px;max-width:320px;text-align:left;font-family:Calibri,Trebuchet MS,Arial,sans-serif;font-size:13px;line-height:1.5;">' +
+          '<div style="background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px;margin:0 auto 20px;max-width:288px;text-align:left;font-family:Calibri,Trebuchet MS,Arial,sans-serif;font-size:13px;line-height:1.5;">' +
             '<div style="text-align:center;font-weight:700;font-size:15px;">Tech Cross</div>' +
             '<div style="text-align:center;color:#aaa;margin:4px 0;">──────────────────────</div>' +
             rxItems +
@@ -1621,7 +1623,7 @@
       doc.write('<html><head><title>Receipt</title><style>');
       doc.write('@page{size:72mm auto;margin:0;}');
       doc.write('body{font-family:Calibri,"Trebuchet MS",Arial,sans-serif;font-size:11px;font-weight:500;padding:4px;max-width:72mm;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;}');
-      doc.write('img{max-width:100%;}');
+      doc.write('img{max-width:100%;height:auto;display:block;}');
       doc.write('</style></head><body>');
       doc.write(html);
       doc.write('</body></html>');
@@ -1778,17 +1780,17 @@
 
       // ═══ QR CODES — side by side ═══
       if (_qrSalesDataUri || _qrRepairDataUri) {
-        h += '<div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px;">';
+        h += '<div style="display:flex;justify-content:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">';
         if (_qrSalesDataUri) {
           h += '<div style="text-align:center;">';
           h += '<div style="font-size:9px;font-weight:700;margin-bottom:3px;">Sales T&C</div>';
-          h += '<img src="' + _qrSalesDataUri + '" style="width:80px;height:80px;">';
+          h += '<img src="' + _qrSalesDataUri + '" style="width:70px;height:70px;display:block;margin:0 auto;">';
           h += '</div>';
         }
         if (_qrRepairDataUri) {
           h += '<div style="text-align:center;">';
           h += '<div style="font-size:9px;font-weight:700;margin-bottom:3px;">Repair T&C</div>';
-          h += '<img src="' + _qrRepairDataUri + '" style="width:80px;height:80px;">';
+          h += '<img src="' + _qrRepairDataUri + '" style="width:70px;height:70px;display:block;margin:0 auto;">';
           h += '</div>';
         }
         h += '</div>';
@@ -2146,12 +2148,12 @@
 
     // ─── Inline Panel System ────────────────────────────────────
     var _currentPanel = null;
-    var _panelInputs = 'padding:8px 10px;border:1px solid #d2d2d7;border-radius:8px;font-size:13px;width:100%;';
+    var _panelInputs = 'padding:8px 10px;border:1px solid #d2d2d7;border-radius:8px;font-size:13px;width:100%;min-width:0;box-sizing:border-box;';
     var _panelBtn = 'padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;';
 
     window.togglePanel = function(type) {
       var panel = document.getElementById('inlinePanel');
-      if (_currentPanel === type) { panel.style.maxHeight = '0'; _currentPanel = null; return; }
+      if (_currentPanel === type) { panel.style.maxHeight = '0'; panel.classList.remove('open'); _currentPanel = null; return; }
       _currentPanel = type;
       var html = '';
       if (type === 'sale') html = buildSalePanel();
@@ -2159,11 +2161,12 @@
       else if (type === 'used') html = buildUsedPanel();
       else if (type === 'buy-used') html = buildBuyUsedPanel();
       panel.innerHTML = html;
-      panel.style.maxHeight = '600px';
-      setTimeout(function() { var first = panel.querySelector('input'); if (first) first.focus(); }, 100);
+      panel.classList.remove('open');
+      panel.style.maxHeight = '900px';
+      setTimeout(function() { panel.classList.add('open'); var first = panel.querySelector('input'); if (first) first.focus(); }, 350);
     };
 
-    function closePanel() { document.getElementById('inlinePanel').style.maxHeight = '0'; _currentPanel = null; }
+    function closePanel() { var p = document.getElementById('inlinePanel'); p.style.maxHeight = '0'; p.classList.remove('open'); _currentPanel = null; }
     window.closePanel = closePanel;
 
     function buildSalePanel() {
