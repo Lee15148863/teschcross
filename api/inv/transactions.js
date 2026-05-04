@@ -327,7 +327,7 @@ router.post('/refund', async (req, res) => {
       if (items && items.length > 0) {
         // Partial refund: only specified items
         for (const ri of items) {
-          const found = txnItems.find(ti => ti.product.toString() === ri.product || ti.name === ri.name);
+          const found = txnItems.find(ti => (ti.product && ri.product && ti.product.toString() === ri.product) || ti.name === ri.name);
           if (!found) continue;
           const qty = Math.min(ri.quantity || found.quantity, found.quantity);
           refundItems.push({
