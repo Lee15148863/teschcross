@@ -38,6 +38,7 @@ const TransactionSchema = new mongoose.Schema({
   changeGiven:      { type: Number },
   operator:         { type: mongoose.Schema.Types.ObjectId, ref: 'InvUser', required: true },
   discountOperator: { type: mongoose.Schema.Types.ObjectId, ref: 'InvUser' },
+  originalReceipt:  { type: String, default: null },
   invoiceGenerated: { type: Boolean, default: false },
   exported:         { type: Boolean, default: false },
   createdAt:        { type: Date, default: Date.now }
@@ -46,5 +47,6 @@ const TransactionSchema = new mongoose.Schema({
 TransactionSchema.index({ createdAt: -1 });
 TransactionSchema.index({ receiptNumber: 1 }, { unique: true });
 TransactionSchema.index({ 'items.serialNumber': 1 });
+TransactionSchema.index({ originalReceipt: 1 }, { sparse: true });
 
 module.exports = mongoose.model('Transaction', TransactionSchema);

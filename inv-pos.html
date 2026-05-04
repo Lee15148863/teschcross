@@ -2084,18 +2084,78 @@
         body.items = [{ name: itemName, amount: itemAmount, quantity: 1 }];
       }
 
+      // Prevent double-click
+      var submitBtn = document.getElementById('btnRefundSubmit');
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Processing...'; }
+
       try {
         var res = await apiFetch('/transactions/refund', { method: 'POST', body: JSON.stringify(body) });
-        if (!res) return;
+        if (!res) { if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = lang === 'zh' ? '确认退款' : 'Refund'; } return; }
         var data = await res.json();
-        if (!res.ok) { errEl.textContent = data.error || 'Refund failed'; errEl.style.display = 'block'; return; }
+        if (!res.ok) { errEl.textContent = data.error || 'Refund failed'; errEl.style.display = 'block'; if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = lang === 'zh' ? '确认退款' : 'Refund'; } return; }
         showToast((lang === 'zh' ? '退款成功 #' : 'Refund OK #') + data.refund.receiptNumber, 'success');
         closeRefundModal();
+        // Auto-print refund receipt
+        printRefundReceiptFromPOS(data.refund);
       } catch(e) {
         errEl.textContent = 'Error: ' + e.message;
         errEl.style.display = 'block';
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = lang === 'zh' ? '确认退款' : 'Refund'; }
       }
     };
+
+    // ─── Print Refund Receipt from POS ──────────────────────────
+    function printRefundReceiptFromPOS(refund) {
+      var items = refund.items || [];
+      var totalRefund = refund.totalRefund || 0;
+      var method = refund.refundMethod || 'cash';
+      var receiptNum = refund.receiptNumber || '';
+      var originalReceipt = refund.originalReceipt || '';
+
+      var receiptData = {
+        receiptNumber: receiptNum,
+        date: new Date().toLocaleString('en-IE'),
+        items: items.map(function(i) { return { name: i.name, quantity: i.quantity, unitPrice: i.unitPrice, discountedPrice: i.unitPrice }; }),
+        totalAmount: -totalRefund,
+        paymentMethod: method,
+        isRefund: true,
+        originalReceipt: originalReceipt
+      };
+
+      // Build refund receipt HTML
+      var h = '';
+      if (_logoDataUri) h += '<div style="text-align:center;margin-bottom:6px;"><img src="' + _logoDataUri + '" style="max-width:180px;max-height:60px;"></div>';
+      h += '<div style="text-align:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1.5px solid #000;">';
+      h += '<div style="font-size:11px;margin-top:4px;line-height:1.5;">Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658</div>';
+      h += '<div style="font-size:11px;">Tel: 046 905 9854 | Mob: 089 482 5300</div>';
+      h += '<div style="font-size:11px;">navantechcross@gmail.com</div></div>';
+      h += '<div style="text-align:center;font-size:16px;font-weight:900;margin-bottom:8px;color:#c00;">↩️ REFUND</div>';
+      h += '<div style="margin-bottom:8px;font-size:11px;">';
+      h += '<div style="display:flex;justify-content:space-between;"><span>Refund #</span><strong>' + escHtml(receiptNum) + '</strong></div>';
+      if (originalReceipt) h += '<div style="display:flex;justify-content:space-between;"><span>Original #</span><span>' + escHtml(originalReceipt) + '</span></div>';
+      h += '<div style="display:flex;justify-content:space-between;"><span>Date</span><span>' + new Date().toLocaleString('en-IE') + '</span></div></div>';
+      h += '<div style="border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:6px 0;margin-bottom:8px;">';
+      items.forEach(function(it) {
+        var price = it.unitPrice || 0;
+        var total = price * (it.quantity || 1);
+        h += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (it.quantity > 1 ? it.quantity + ' x ' : '') + escHtml(it.name) + '</span><strong style="white-space:nowrap;margin-left:4px;">-€' + total.toFixed(2) + '</strong></div>';
+      });
+      h += '</div>';
+      h += '<div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;margin-bottom:8px;"><span>REFUND TOTAL</span><span>-€' + totalRefund.toFixed(2) + '</span></div>';
+      h += '<div style="margin-bottom:8px;font-size:12px;border-bottom:1px dashed #000;padding-bottom:8px;">';
+      h += '<div>' + (method === 'card' ? '💳 Refund to Card' : '💵 Cash Refund') + '</div></div>';
+      h += '<div style="text-align:center;font-size:11px;margin-bottom:8px;">This is a refund receipt.</div>';
+      h += '<div style="text-align:center;font-size:14px;font-weight:900;padding:6px 0;border-top:1.5px solid #000;">Thank you!</div>';
+
+      // Try Print Agent, fallback to browser print
+      fetch('http://localhost:9100/print', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(receiptData),
+        signal: AbortSignal.timeout(5000)
+      }).then(function(r) { if (r.ok) return; throw new Error(); }).catch(function() {
+        silentBrowserPrint(h);
+      });
+    }
 
     // Discount modal (F2)
     function openDiscountModal() {

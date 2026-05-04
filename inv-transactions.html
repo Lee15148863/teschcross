@@ -303,6 +303,9 @@ window.detailRefund=async function(receiptNumber,method){
         if(errEl){errEl.textContent='请至少选择一个商品 / Select at least one item';errEl.style.display='block';}
         return;
     }
+    // Prevent double-click
+    var btn=document.querySelector('#detailContent [onclick*="detailRefund"]');
+    if(btn){btn.disabled=true;btn.textContent='Processing...';}
     var body={receiptNumber:receiptNumber,refundMethod:method};
     // Partial refund if not all items selected
     if(selectedItems.length<window._detailRefundItems.length){
@@ -312,11 +315,13 @@ window.detailRefund=async function(receiptNumber,method){
         var r=await apiFetch('/transactions/refund',{method:'POST',body:JSON.stringify(body)});
         if(!r)return;
         var data=await r.json();
-        if(!r.ok){if(errEl){errEl.textContent=data.error||'Refund failed';errEl.style.display='block';}return;}
+        if(!r.ok){if(errEl){errEl.textContent=data.error||'Refund failed';errEl.style.display='block';}if(btn){btn.disabled=false;btn.textContent='↩️ Refund';}return;}
         showToast('Refund OK: #'+data.refund.receiptNumber);
         document.getElementById('detailModal').classList.remove('show');
         loadTransactions();
-    }catch(e){if(errEl){errEl.textContent='Error: '+e.message;errEl.style.display='block';}}
+        // Auto-print refund receipt
+        printRefundReceipt(data.refund);
+    }catch(e){if(errEl){errEl.textContent='Error: '+e.message;errEl.style.display='block';}if(btn){btn.disabled=false;btn.textContent='↩️ Refund';}}
 };
 
 async function silentDelete(id){
@@ -439,6 +444,69 @@ async function reprintReceipt(id){
     }catch(e){showToast('Reprint failed','error');}
 }
 window.reprintReceipt=reprintReceipt;
+
+// ─── Print Refund Receipt ───────────────────────────────────────────────────
+function printRefundReceipt(refund){
+    try{
+        var items=refund.items||[];
+        var totalRefund=refund.totalRefund||0;
+        var method=refund.refundMethod||'cash';
+        var receiptNum=refund.receiptNumber||'';
+        var originalReceipt=refund.originalReceipt||'';
+
+        // Try Print Agent first
+        try{
+            fetch('http://localhost:9100/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({transaction:{receiptNumber:receiptNum,items:items.map(function(i){return{name:i.name,quantity:i.quantity,unitPrice:i.unitPrice,discountedPrice:i.unitPrice};}),totalAmount:-totalRefund,paymentMethod:method,isRefund:true,originalReceipt:originalReceipt}}),signal:AbortSignal.timeout(5000)}).then(function(pr){if(pr.ok)return;throw new Error();}).catch(function(){browserPrintRefund();});
+            return;
+        }catch(e){}
+        browserPrintRefund();
+
+        function browserPrintRefund(){
+            var h='';
+            // Logo
+            if(window._txLogoDataUri)h+='<div style="text-align:center;margin-bottom:6px;"><img src="'+window._txLogoDataUri+'" style="max-width:180px;max-height:60px;"></div>';
+            // Header
+            h+='<div style="text-align:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1.5px solid #000;">';
+            h+='<div style="font-size:11px;margin-top:4px;line-height:1.5;">Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658</div>';
+            h+='<div style="font-size:11px;">Tel: 046 905 9854 | Mob: 089 482 5300</div>';
+            h+='<div style="font-size:11px;">navantechcross@gmail.com</div></div>';
+            // REFUND title
+            h+='<div style="text-align:center;font-size:16px;font-weight:900;margin-bottom:8px;color:#c00;">↩️ REFUND</div>';
+            // Receipt info
+            h+='<div style="margin-bottom:8px;font-size:11px;">';
+            h+='<div style="display:flex;justify-content:space-between;"><span>Refund #</span><strong>'+esc(receiptNum)+'</strong></div>';
+            if(originalReceipt)h+='<div style="display:flex;justify-content:space-between;"><span>Original #</span><span>'+esc(originalReceipt)+'</span></div>';
+            h+='<div style="display:flex;justify-content:space-between;"><span>Date</span><span>'+new Date().toLocaleString('en-IE')+'</span></div></div>';
+            // Items
+            h+='<div style="border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:6px 0;margin-bottom:8px;">';
+            items.forEach(function(it){
+                var price=it.unitPrice||0;
+                var total=price*(it.quantity||1);
+                h+='<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(it.quantity>1?it.quantity+' x ':'')+esc(it.name)+'</span><strong style="white-space:nowrap;margin-left:4px;">-€'+total.toFixed(2)+'</strong></div>';
+            });
+            h+='</div>';
+            // Total
+            h+='<div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;margin-bottom:8px;"><span>REFUND TOTAL</span><span>-€'+totalRefund.toFixed(2)+'</span></div>';
+            // Payment method
+            h+='<div style="margin-bottom:8px;font-size:12px;border-bottom:1px dashed #000;padding-bottom:8px;">';
+            h+='<div>'+(method==='card'?'💳 Refund to Card':'💵 Cash Refund')+'</div></div>';
+            // Footer
+            h+='<div style="text-align:center;font-size:11px;margin-bottom:8px;">This is a refund receipt.</div>';
+            h+='<div style="text-align:center;font-size:14px;font-weight:900;padding:6px 0;border-top:1.5px solid #000;">Thank you!</div>';
+            // Print via iframe
+            var iframe=document.getElementById('_txPrintFrame');
+            if(!iframe){iframe=document.createElement('iframe');iframe.id='_txPrintFrame';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
+            var doc=iframe.contentDocument||iframe.contentWindow.document;
+            doc.open();
+            doc.write('<html><head><title>Refund Receipt</title><style>@page{size:72mm auto;margin:0;}body{font-family:Calibri,"Trebuchet MS",Arial,sans-serif;font-size:11px;font-weight:500;padding:2px;width:72mm;max-width:72mm;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;overflow:hidden;word-wrap:break-word;}div{max-width:100%;overflow:hidden;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
+            doc.write(h);
+            doc.write('</body></html>');
+            doc.close();
+            setTimeout(function(){iframe.contentWindow.focus();iframe.contentWindow.print();},200);
+        }
+    }catch(e){console.error('Refund print failed',e);}
+}
+window.printRefundReceipt=printRefundReceipt;
 
 window.loadTransactions=loadTransactions;
 

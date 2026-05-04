@@ -322,6 +322,15 @@ router.post('/refund', async (req, res) => {
         return res.status(404).json({ error: 'Transaction not found', code: 'NOT_FOUND' });
       }
 
+      // Block duplicate refund: check if this receipt has already been refunded
+      const existingRefund = await Transaction.findOne({
+        originalReceipt: receiptNumber,
+        totalAmount: { $lt: 0 }
+      });
+      if (existingRefund) {
+        return res.status(400).json({ error: '该订单已退款，不可重复退款 / This order has already been refunded', code: 'ALREADY_REFUNDED' });
+      }
+
       const txnItems = originalTransaction.items || [];
 
       if (items && items.length > 0) {
@@ -393,10 +402,11 @@ router.post('/refund', async (req, res) => {
       }
     }
 
-    // Generate refund receipt number: R + timestamp
+    // Generate refund receipt number: R + timestamp + milliseconds
     const now = new Date();
     const pad = (n, l = 2) => String(n).padStart(l, '0');
-    const refundReceiptNumber = `R${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const ms = String(now.getMilliseconds()).padStart(3, '0');
+    const refundReceiptNumber = `R${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${ms}`;
 
     // Create refund transaction (negative amount)
     const refundTxn = await Transaction.create({
@@ -421,25 +431,30 @@ router.post('/refund', async (req, res) => {
       marginVatTotal: -marginVatRefund,
       paymentMethod: refundMethod,
       cashReceived: refundMethod === 'cash' ? -totalRefund : null,
+      originalReceipt: receiptNumber || null,
       operator: req.user.userId
     });
 
-    // Restore stock for refunded items
+    // Restore stock for refunded items (non-critical — don't fail the refund if stock update fails)
     for (const item of refundItems) {
       if (item.product) {
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: item.quantity },
-          updatedAt: new Date()
-        });
-        await StockMovement.create({
-          product: item.product,
-          type: 'entry',
-          quantity: item.quantity,
-          operator: req.user.userId,
-          referenceId: refundTxn._id.toString(),
-          referenceType: 'refund',
-          note: `Refund - ${refundReceiptNumber}${reason ? ' - ' + reason : ''}`
-        });
+        try {
+          await Product.findByIdAndUpdate(item.product, {
+            $inc: { stock: item.quantity },
+            updatedAt: new Date()
+          });
+          await StockMovement.create({
+            product: item.product,
+            type: 'entry',
+            quantity: item.quantity,
+            operator: req.user.userId,
+            referenceId: refundTxn._id.toString(),
+            referenceType: 'refund',
+            note: `Refund - ${refundReceiptNumber}${reason ? ' - ' + reason : ''}`
+          });
+        } catch (stockErr) {
+          console.error('Stock restore failed for product', item.product, stockErr.message);
+        }
       }
     }
 
@@ -457,6 +472,7 @@ router.post('/refund', async (req, res) => {
     if (err.code === 11000) {
       return res.status(409).json({ error: 'Refund receipt number conflict, please retry', code: 'DUPLICATE_RECEIPT' });
     }
+    console.error('Refund error:', err.message);
     res.status(500).json({ error: '服务器错误' });
   }
 });
