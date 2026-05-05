@@ -388,45 +388,45 @@ async function reprintReceipt(id){
         (tx.items||[]).forEach(it=>{
             const price=(it.discountedPrice!=null?it.discountedPrice:it.unitPrice)||0;
             const total=price*(it.quantity||1);
-            itemsHtml+='<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(it.quantity>1?it.quantity+' x ':'')+esc(it.name)+'</span><strong style="white-space:nowrap;margin-left:4px;flex-shrink:0;">€'+total.toFixed(2)+'</strong></div>';
-            if(it.serialNumber)itemsHtml+='<div style="font-size:10px;font-weight:700;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;">SN: '+esc(it.serialNumber)+'</div>';
+            itemsHtml+='<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:3px;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:4px;">'+(it.quantity>1?it.quantity+'x ':'')+esc(it.name)+'</span><span style="white-space:nowrap;flex-shrink:0;font-weight:700;">\u20AC'+total.toFixed(2)+'</span></div>';
+            if(it.serialNumber)itemsHtml+='<div style="font-size:10px;font-weight:700;margin-bottom:3px;padding-left:4px;">SN: '+esc(it.serialNumber)+'</div>';
         });
         let receiptHtml='';
         // Logo
-        if(window._txLogoDataUri)receiptHtml+='<div style="text-align:center;margin-bottom:6px;"><img src="'+window._txLogoDataUri+'" style="max-width:180px;max-height:60px;"></div>';
+        if(window._txLogoDataUri)receiptHtml+='<div style="text-align:center;margin-bottom:6px;"><img src="'+window._txLogoDataUri+'" style="max-width:160px;max-height:50px;"></div>';
         // Header
-        receiptHtml+='<div style="text-align:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1.5px solid #000;">';
-        receiptHtml+='<div style="font-size:11px;margin-top:4px;line-height:1.5;">Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658</div>';
-        receiptHtml+='<div style="font-size:11px;">Tel: 046 905 9854 | Mob: 089 482 5300</div>';
-        receiptHtml+='<div style="font-size:11px;">navantechcross@gmail.com</div></div>';
+        receiptHtml+='<div style="text-align:center;padding-bottom:8px;margin-bottom:8px;border-bottom:1.5px solid #000;font-size:11px;line-height:1.4;">';
+        receiptHtml+='<div>Unit 4, Navan Shopping Centre, Navan, Co. Meath, C15 F658</div>';
+        receiptHtml+='<div>Tel: 046 905 9854 | Mob: 089 482 5300</div>';
+        receiptHtml+='<div>navantechcross@gmail.com</div></div>';
         // Receipt info
         receiptHtml+='<div style="margin-bottom:8px;font-size:11px;">';
-        receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Receipt #</span><strong style="max-width:60%;text-align:right;overflow:hidden;text-overflow:ellipsis;">'+esc(tx.receiptNumber)+'</strong></div>';
+        receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Receipt #</span><span style="font-weight:700;">'+esc(tx.receiptNumber)+'</span></div>';
         receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Date</span><span>'+new Date(tx.createdAt).toLocaleString('en-IE')+'</span></div></div>';
         // Items
         receiptHtml+='<div style="border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:6px 0;margin-bottom:8px;">'+itemsHtml+'</div>';
         // Total
-        receiptHtml+='<div style="display:flex;justify-content:space-between;font-size:18px;font-weight:900;margin-bottom:8px;"><span>TOTAL</span><span>€'+Number(tx.totalAmount).toFixed(2)+'</span></div>';
+        receiptHtml+='<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:16px;font-weight:900;margin-bottom:8px;"><span>TOTAL</span><span>\u20AC'+Number(tx.totalAmount).toFixed(2)+'</span></div>';
         // Payment
-        receiptHtml+='<div style="margin-bottom:8px;font-size:12px;border-bottom:1px dashed #000;padding-bottom:8px;">';
-        if(tx.paymentMethod==='split'){receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>💳 Card</span><span>€'+(tx.cardAmount||0).toFixed(2)+'</span></div><div style="display:flex;justify-content:space-between;"><span>💵 Cash</span><span>€'+(tx.cashReceived||0).toFixed(2)+'</span></div>';}
-        else if(tx.paymentMethod==='cash'){receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>💵 Cash</span><span>€'+(tx.cashReceived||0).toFixed(2)+'</span></div>';}
-        else{receiptHtml+='<div>💳 Card Payment</div>';}
-        if(tx.changeGiven>0)receiptHtml+='<div style="display:flex;justify-content:space-between;font-weight:700;"><span>Change</span><span>€'+Number(tx.changeGiven).toFixed(2)+'</span></div>';
+        receiptHtml+='<div style="margin-bottom:8px;font-size:11px;border-bottom:1px dashed #000;padding-bottom:8px;">';
+        if(tx.paymentMethod==='split'){receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Card</span><span>\u20AC'+(tx.cardAmount||0).toFixed(2)+'</span></div><div style="display:flex;justify-content:space-between;"><span>Cash</span><span>\u20AC'+(tx.cashReceived||0).toFixed(2)+'</span></div>';}
+        else if(tx.paymentMethod==='cash'){receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Cash</span><span>\u20AC'+(tx.cashReceived||0).toFixed(2)+'</span></div>';}
+        else{receiptHtml+='<div>Card Payment</div>';}
+        if(tx.changeGiven>0)receiptHtml+='<div style="display:flex;justify-content:space-between;font-weight:700;"><span>Change</span><span>\u20AC'+Number(tx.changeGiven).toFixed(2)+'</span></div>';
         receiptHtml+='</div>';
         // VAT
-        if(tx.standardVatTotal>0||tx.marginVatTotal>0){receiptHtml+='<div style="margin-bottom:8px;font-size:11px;border-bottom:1px dashed #000;padding-bottom:8px;">';if(tx.standardVatTotal>0)receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>VAT (23%)</span><span>€'+Number(tx.standardVatTotal).toFixed(2)+'</span></div>';if(tx.marginVatTotal>0)receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Margin VAT</span><span>€'+Number(tx.marginVatTotal).toFixed(2)+'</span></div>';receiptHtml+='</div>';}
+        if(tx.standardVatTotal>0||tx.marginVatTotal>0){receiptHtml+='<div style="margin-bottom:8px;font-size:11px;border-bottom:1px dashed #000;padding-bottom:8px;">';if(tx.standardVatTotal>0)receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>VAT (23%)</span><span>\u20AC'+Number(tx.standardVatTotal).toFixed(2)+'</span></div>';if(tx.marginVatTotal>0)receiptHtml+='<div style="display:flex;justify-content:space-between;"><span>Margin VAT</span><span>\u20AC'+Number(tx.marginVatTotal).toFixed(2)+'</span></div>';receiptHtml+='</div>';}
         // T&C
-        receiptHtml+='<div style="font-size:10px;text-align:left;line-height:1.5;margin-bottom:8px;">';
-        receiptHtml+='<div style="font-weight:700;font-size:11px;text-align:center;margin-bottom:4px;">Warranty & Store Policy</div>';
-        receiptHtml+='<div><strong>Repairs – 3 Months</strong> Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair.</div>';
-        if((tx.items||[]).some(i=>i.isSecondHand))receiptHtml+='<div style="margin-top:3px;"><strong>Pre-owned Devices – 7 Days</strong> No physical/liquid damage. Must be fully erased (no ID/passcode). Locked devices are non-refundable.</div>';
-        receiptHtml+='<div style="margin-top:3px;"><strong>Accessories – 14 Days</strong> Exchange/return only if unopened, sealed, and resalable.</div></div>';
+        receiptHtml+='<div style="font-size:9px;text-align:left;line-height:1.4;margin-bottom:8px;">';
+        receiptHtml+='<div style="font-weight:700;font-size:10px;text-align:center;margin-bottom:4px;">Warranty & Store Policy</div>';
+        receiptHtml+='<div><strong>Repairs - 3 Months</strong> Covers replaced parts for hardware defects only. Void if physical/liquid damage or third-party repair.</div>';
+        if((tx.items||[]).some(i=>i.isSecondHand))receiptHtml+='<div style="margin-top:3px;"><strong>Pre-owned - 7 Days</strong> No physical/liquid damage. Must be fully erased. Locked devices non-refundable.</div>';
+        receiptHtml+='<div style="margin-top:3px;"><strong>Accessories - 14 Days</strong> Exchange/return only if unopened, sealed, and resalable.</div></div>';
         // QR code
         if(window._txQrTerms){
             receiptHtml+='<div style="text-align:center;margin-bottom:8px;">';
             receiptHtml+='<div style="font-size:8px;font-weight:700;margin-bottom:2px;">Terms & Conditions</div>';
-            receiptHtml+='<img src="'+window._txQrTerms+'" style="width:60px;height:60px;display:block;margin:0 auto;">';
+            receiptHtml+='<img src="'+window._txQrTerms+'" style="width:50px;height:50px;display:block;margin:0 auto;">';
             receiptHtml+='<div style="font-size:7px;color:#666;margin-top:2px;">techcross.ie/terms</div>';
             receiptHtml+='</div>';
         }
@@ -436,7 +436,7 @@ async function reprintReceipt(id){
         if(!iframe){iframe=document.createElement('iframe');iframe.id='_txPrintFrame';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
         var doc=iframe.contentDocument||iframe.contentWindow.document;
         doc.open();
-        doc.write('<html><head><title>Receipt</title><style>@page{size:72mm auto;margin:0;}body{font-family:Calibri,"Trebuchet MS",Arial,sans-serif;font-size:11px;font-weight:500;padding:2px;width:72mm;max-width:72mm;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;overflow:hidden;word-wrap:break-word;}div{max-width:100%;overflow:hidden;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
+        doc.write('<html><head><title>Receipt</title><style>@page{size:80mm auto;margin:0;}@media print{html,body{width:80mm;margin:0;padding:0;}}*{box-sizing:border-box;}body{font-family:"Courier New",Courier,monospace;font-size:12px;font-weight:500;padding:0 2mm;width:80mm;max-width:80mm;margin:0;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;overflow-x:hidden;word-wrap:break-word;}div{max-width:100%;overflow:visible;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
         doc.write(receiptHtml);
         doc.write('</body></html>');
         doc.close();
@@ -498,7 +498,7 @@ function printRefundReceipt(refund){
             if(!iframe){iframe=document.createElement('iframe');iframe.id='_txPrintFrame';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
             var doc=iframe.contentDocument||iframe.contentWindow.document;
             doc.open();
-            doc.write('<html><head><title>Refund Receipt</title><style>@page{size:72mm auto;margin:0;}body{font-family:Calibri,"Trebuchet MS",Arial,sans-serif;font-size:11px;font-weight:500;padding:2px;width:72mm;max-width:72mm;margin:0 auto;color:#000;-webkit-print-color-adjust:exact;overflow:hidden;word-wrap:break-word;}div{max-width:100%;overflow:hidden;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
+            doc.write('<html><head><title>Refund Receipt</title><style>@page{size:80mm auto;margin:0;}@media print{html,body{width:80mm;margin:0;padding:0;}}*{box-sizing:border-box;}body{font-family:"Courier New",Courier,monospace;font-size:12px;font-weight:500;padding:0 2mm;width:80mm;max-width:80mm;margin:0;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;overflow-x:hidden;word-wrap:break-word;}div{max-width:100%;overflow:visible;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
             doc.write(h);
             doc.write('</body></html>');
             doc.close();
