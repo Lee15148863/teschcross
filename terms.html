@@ -41,7 +41,7 @@
         .tc-footer { text-align: center; margin-top: 40px; font-size: 13px; color: #86868b; line-height: 1.6; }
         .tc-footer a { color: #0071e3; text-decoration: none; font-weight: 600; }
         @media (max-width: 768px) {
-            .tc-columns { flex-direction: column; }
+            .tc-columns { flex-direction: column-reverse; }
             .tc-col-header { position: static; }
         }
     </style>
@@ -67,8 +67,8 @@
 
     <div class="tc-columns">
         <!-- LEFT: Repair T&C (original terms.html content) -->
-        <div class="tc-col">
-            <div class="tc-col-header repair">🔧 Repair Terms & Conditions</div>
+        <div class="tc-col" id="repair">
+            <div class="tc-col-header repair">Repair Terms & Conditions</div>
             <div class="tc-col-body">
 
                 <p style="font-size:15px;line-height:1.8;color:#3a3a3c;margin-bottom:24px;">Thank you for choosing our repair service. We aim to provide professional, transparent, and reliable repair services.<br>Please read the following terms carefully before submitting your device.<br><strong>By submitting your device, you acknowledge and agree to the terms outlined below.</strong></p>
@@ -249,8 +249,8 @@
         </div>
 
         <!-- RIGHT: Sales T&C (original receipt-terms.html content) -->
-        <div class="tc-col">
-            <div class="tc-col-header sales">🛒 Sales Terms & Conditions</div>
+        <div class="tc-col" id="sales">
+            <div class="tc-col-header sales">Sales Terms & Conditions</div>
             <div class="tc-col-body">
 
                 <div style="background:#f0f6ff;border:1.5px solid #b3d1f7;border-radius:14px;padding:20px 24px;margin-bottom:28px;font-size:14px;line-height:1.7;color:#1d1d1f;">
@@ -299,6 +299,10 @@
 
                 <p style="font-size:14px;line-height:1.7;color:#3a3a3c;"><strong>Statutory Rights:</strong> These terms do not affect your legal rights under Irish Consumer Law.</p>
                 <p style="font-size:14px;line-height:1.7;color:#3a3a3c;">For assistance, visit our store or <a href="https://wa.me/353894825300?text=Hi%20I%20have%20a%20question%20about%20terms" target="_blank" rel="noopener" style="color:#0071e3;text-decoration:none;font-weight:600;">contact us via WhatsApp</a>.</p>
+
+                <div style="text-align:center;margin-top:24px;">
+                    <a href="#repair" style="display:inline-block;padding:12px 24px;background:#0071e3;color:#fff;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;">View Repair Terms & Conditions</a>
+                </div>
 
             </div>
         </div>
