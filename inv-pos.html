@@ -1670,7 +1670,7 @@
       doc.write('@page{margin:0;size:auto;}');
       doc.write('html,body{margin:0;padding:0;width:100%;background:#fff;}');
       doc.write('body{width:420px;max-width:420px;padding:8px 10px;margin:0 auto;');
-      doc.write('font-family:"Courier New",Courier,monospace;font-size:12px;line-height:1.4;color:#000;');
+      doc.write('font-family:"Courier New",Courier,monospace;font-size:12px;font-weight:700;line-height:1.4;color:#000;');
       doc.write('-webkit-print-color-adjust:exact;print-color-adjust:exact;}');
       doc.write('*{box-sizing:border-box;}');
       doc.write('img{max-width:100%;height:auto;display:block;}');
@@ -1831,9 +1831,9 @@
       // ═══ QR CODE — Terms & Conditions ═══
       if (_qrTermsDataUri) {
         h += '<div style="text-align:center;margin-bottom:8px;">';
-        h += '<div style="font-size:9px;font-weight:700;margin-bottom:2px;">Terms & Conditions</div>';
-        h += '<img src="' + _qrTermsDataUri + '" style="width:60px;height:60px;display:block;margin:0 auto;">';
-        h += '<div style="font-size:8px;margin-top:2px;">techcross.ie/terms</div>';
+        h += '<div style="font-size:9px;font-weight:700;margin-bottom:4px;">Terms & Conditions</div>';
+        h += '<img src="' + _qrTermsDataUri + '" style="width:180px;height:180px;display:block;margin:0 auto;">';
+        h += '<div style="font-size:8px;margin-top:4px;">techcross.ie/terms</div>';
         h += '</div>';
       }
 
