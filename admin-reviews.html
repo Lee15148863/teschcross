@@ -70,15 +70,13 @@ if (!checkAdminAuth()) throw new Error('Not authorized');
 
 // Build auth headers for API calls
 function getReviewAuthHeaders() {
-    try {
-        var invUser = JSON.parse(localStorage.getItem('inv_user'));
-        var invToken = localStorage.getItem('inv_token');
-        if (invUser && invUser.role === 'admin' && invToken) {
-            return { 'Authorization': 'Bearer ' + invToken };
-        }
-    } catch(e) {}
-    var t = localStorage.getItem('admin_token') || '';
-    return { 'x-admin-token': t };
+    var invToken = localStorage.getItem('inv_token');
+    if (!invToken) {
+        alert('请先登录');
+        window.location.href = 'inv-login.html';
+        return {};
+    }
+    return { 'Authorization': 'Bearer ' + invToken };
 }
 
 let currentFilter = 'all';

@@ -164,7 +164,6 @@
         }
         if (!checkAdminAuthApple()) throw new Error('Not authorized');
         sessionStorage.setItem('admin_logged_in', 'true');
-        const ADMIN_TOKEN = '';
         
         let currentDevice = 'iphone';
         let pricingData = null;
@@ -334,7 +333,7 @@
                 }
             });
             
-            PricingAPI.save('apple', pricingData, ADMIN_TOKEN).catch(e => console.error('Save failed:', e));
+            PricingAPI.save('apple', pricingData).catch(e => console.error('Save failed:', e));
             
             const message = document.getElementById('save-message');
             message.classList.add('show');
@@ -348,7 +347,7 @@
                 const modelKey = input.dataset.model;
                 pricingData[currentDevice].models[modelKey].name = input.value;
             });
-            PricingAPI.save('apple', pricingData, ADMIN_TOKEN).catch(e => console.error('Save failed:', e));
+            PricingAPI.save('apple', pricingData).catch(e => console.error('Save failed:', e));
             alert('Model names saved successfully!');
         }
 
@@ -360,7 +359,7 @@
                 const field = input.dataset.field;
                 pricingData[currentDevice].serviceTypes[serviceKey][field] = input.value;
             });
-            PricingAPI.save('apple', pricingData, ADMIN_TOKEN).catch(e => console.error('Save failed:', e));
+            PricingAPI.save('apple', pricingData).catch(e => console.error('Save failed:', e));
             const message = document.getElementById('services-message');
             message.classList.add('show');
             setTimeout(() => message.classList.remove('show'), 3000);
@@ -409,7 +408,7 @@
                 lastUpdated: new Date().toISOString()
             };
             
-            PricingAPI.save('apple', pricingData, ADMIN_TOKEN).catch(e => console.error('Save failed:', e));
+            PricingAPI.save('apple', pricingData).catch(e => console.error('Save failed:', e));
             closeModal('addModelModal');
             renderModelsEditor();
             alert('Model added successfully!');
@@ -423,7 +422,7 @@
         function deleteModel(modelKey) {
             if (confirm(`Are you sure you want to delete ${pricingData[currentDevice].models[modelKey].name}?`)) {
                 delete pricingData[currentDevice].models[modelKey];
-                PricingAPI.save('apple', pricingData, ADMIN_TOKEN).catch(e => console.error('Save failed:', e));
+                PricingAPI.save('apple', pricingData).catch(e => console.error('Save failed:', e));
                 renderModelsEditor();
                 alert('Model deleted successfully!');
             }
@@ -459,7 +458,7 @@
                 pricingData[currentDevice].models[modelKey].serviceUpdates[serviceId] = new Date().toISOString();
             }
             
-            PricingAPI.save('apple', pricingData, ADMIN_TOKEN).catch(e => console.error('Save failed:', e));
+            PricingAPI.save('apple', pricingData).catch(e => console.error('Save failed:', e));
             closeModal('addServiceModal');
             renderServicesEditor();
             alert('Service added successfully!');
@@ -483,7 +482,7 @@
                     }
                 }
                 
-                PricingAPI.save('apple', pricingData, ADMIN_TOKEN).catch(e => console.error('Save failed:', e));
+                PricingAPI.save('apple', pricingData).catch(e => console.error('Save failed:', e));
                 renderServicesEditor();
                 alert('Service deleted successfully!');
             }

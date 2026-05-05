@@ -207,7 +207,6 @@ function esc(s){if(!s)return'';const d=document.createElement('div');d.textConte
 if (!checkAdminAuth()) throw new Error('Not authorized');
 sessionStorage.setItem('admin_logged_in', 'true');
 
-const ADMIN_TOKEN = '';
 function getBrandsAuthHeaders() {
     try {
         var invUser = JSON.parse(localStorage.getItem('inv_user'));
