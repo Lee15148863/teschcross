@@ -20,7 +20,7 @@ const PricingAPI = {
     },
 
     async save(brand, data, adminToken) {
-        // Build auth headers: support JWT or legacy token
+        // Build auth headers: JWT only
         const headers = { 'Content-Type': 'application/json' };
         try {
             var invUser = JSON.parse(localStorage.getItem('inv_user'));
@@ -28,10 +28,10 @@ const PricingAPI = {
             if (invUser && invUser.role === 'admin' && invToken) {
                 headers['Authorization'] = 'Bearer ' + invToken;
             } else {
-                headers['x-admin-token'] = adminToken;
+                throw new Error('Admin authentication required');
             }
         } catch(e) {
-            headers['x-admin-token'] = adminToken;
+            throw new Error('Admin authentication required');
         }
 
         const res = await fetch(`/api/pricing/${brand}`, {

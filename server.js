@@ -10,7 +10,19 @@ const PORT = process.env.PORT || 8080;
 
 // ─── Security: Helmet (default security headers) ────────────────────────────
 app.use(helmet({
-  contentSecurityPolicy: false,  // disabled to avoid breaking inline scripts in HTML pages
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // 暂时允许内联脚本，后续清理
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://techcross.ie", "https://www.techcross.ie", "http://localhost:*"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"]
+    }
+  },
   crossOriginEmbedderPolicy: false
 }));
 
@@ -27,7 +39,26 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname)));
+
+// Block access to sensitive application files when serving static assets.
+app.use((req, res, next) => {
+  const blockedFiles = [
+    '.env', '.env.local', 'package.json', 'package-lock.json',
+    'Dockerfile', 'docker-compose.yml', 'README.md', 'README', '.gitignore',
+    'gitignore', '.gitmodules', 'config.json', 'trigger-config.yaml'
+  ];
+  const reqPath = path.normalize(req.path).replace(/\\/g, '/');
+  const baseName = path.basename(reqPath);
+  if (blockedFiles.includes(baseName) || reqPath.includes('/.git')) {
+    return res.status(404).end();
+  }
+  next();
+});
+
+app.use(express.static(path.join(__dirname), {
+  dotfiles: 'deny',
+  index: false
+}));
 
 // Connect to MongoDB
 mongoose.connect(process.env.DBCon, { dbName: 'techcross' })
@@ -52,8 +83,8 @@ app.use('/api/inv/invoices', require('./api/inv/invoices'));
 app.use('/api/inv/expenses', require('./api/inv/expenses'));
 app.use('/api/inv/pos-shortcuts', require('./api/inv/pos-shortcuts'));
 
-// Fallback: serve index.html for all non-API routes
-app.get('/{*splat}', (req, res) => {
+// Fallback: serve index.html for all remaining non-API routes
+app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 

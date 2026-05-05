@@ -88,114 +88,199 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
 function renderPricingEditor() {
     const editor = document.getElementById('pricing-editor');
     editor.innerHTML = '';
-    
-    // Add filter/search controls
+
     const filterSection = document.createElement('div');
     filterSection.style.cssText = 'background: #f5f5f7; padding: 20px; border-radius: 12px; margin-bottom: 24px;';
-    filterSection.innerHTML = `
-        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 200px;">
-                <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Search Model</label>
-                <input type="text" id="model-search" placeholder="Type to search models..." 
-                       style="width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px;"
-                       oninput="filterModels()">
-            </div>
-            <div>
-                <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Filter by Brand</label>
-                <select id="brand-filter" onchange="filterModels()" 
-                        style="padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px;">
-                    <option value="">All Brands</option>
-                    ${Object.entries(pricingData).map(([key, brand]) => `<option value="${key}">${brand.name}</option>`).join('')}
-                </select>
-            </div>
-            <div style="margin-top: 24px;">
-                <button onclick="expandAll()" style="padding: 10px 20px; background: #0071e3; color: white; border: none; border-radius: 8px; cursor: pointer; margin-right: 8px;">Expand All</button>
-                <button onclick="collapseAll()" style="padding: 10px 20px; background: #6e6e73; color: white; border: none; border-radius: 8px; cursor: pointer;">Collapse All</button>
-            </div>
-        </div>
-    `;
+
+    const filterRow = document.createElement('div');
+    filterRow.style.cssText = 'display: flex; gap: 16px; align-items: center; flex-wrap: wrap;';
+
+    const searchWrapper = document.createElement('div');
+    searchWrapper.style.cssText = 'flex: 1; min-width: 200px;';
+    const searchLabel = document.createElement('label');
+    searchLabel.style.cssText = 'display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;';
+    searchLabel.textContent = 'Search Model';
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.id = 'model-search';
+    searchInput.placeholder = 'Type to search models...';
+    searchInput.style.cssText = 'width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px;';
+    searchInput.addEventListener('input', filterModels);
+    searchWrapper.appendChild(searchLabel);
+    searchWrapper.appendChild(searchInput);
+
+    const brandWrapper = document.createElement('div');
+    const brandLabel = document.createElement('label');
+    brandLabel.style.cssText = 'display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;';
+    brandLabel.textContent = 'Filter by Brand';
+    const brandSelect = document.createElement('select');
+    brandSelect.id = 'brand-filter';
+    brandSelect.style.cssText = 'padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px;';
+    brandSelect.addEventListener('change', filterModels);
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'All Brands';
+    brandSelect.appendChild(defaultOption);
+    Object.entries(pricingData).forEach(([key, brand]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = brand.name;
+        brandSelect.appendChild(option);
+    });
+    brandWrapper.appendChild(brandLabel);
+    brandWrapper.appendChild(brandSelect);
+
+    const buttonWrapper = document.createElement('div');
+    buttonWrapper.style.cssText = 'margin-top: 24px;';
+    const expandButton = document.createElement('button');
+    expandButton.type = 'button';
+    expandButton.textContent = 'Expand All';
+    expandButton.style.cssText = 'padding: 10px 20px; background: #0071e3; color: white; border: none; border-radius: 8px; cursor: pointer; margin-right: 8px;';
+    expandButton.addEventListener('click', expandAll);
+    const collapseButton = document.createElement('button');
+    collapseButton.type = 'button';
+    collapseButton.textContent = 'Collapse All';
+    collapseButton.style.cssText = 'padding: 10px 20px; background: #6e6e73; color: white; border: none; border-radius: 8px; cursor: pointer;';
+    collapseButton.addEventListener('click', collapseAll);
+    buttonWrapper.appendChild(expandButton);
+    buttonWrapper.appendChild(collapseButton);
+
+    filterRow.appendChild(searchWrapper);
+    filterRow.appendChild(brandWrapper);
+    filterRow.appendChild(buttonWrapper);
+    filterSection.appendChild(filterRow);
     editor.appendChild(filterSection);
-    
-    for (const [brandKey, brand] of Object.entries(pricingData)) {
+
+    Object.entries(pricingData).forEach(([brandKey, brand]) => {
         const brandSection = document.createElement('div');
         brandSection.className = 'brand-section';
         brandSection.dataset.brand = brandKey;
-        
+
         const modelCount = Object.keys(brand.models).length;
         const brandHeader = document.createElement('div');
         brandHeader.className = 'brand-header';
-        brandHeader.innerHTML = `
-            <h3>${brand.name} <span style="font-size: 14px; color: #86868b; font-weight: normal;">(${modelCount} models)</span></h3>
-            <span class="toggle-icon">▼</span>
-        `;
-        brandHeader.onclick = function() {
-            brandContent.classList.toggle('show');
-            const icon = this.querySelector('.toggle-icon');
-            icon.textContent = brandContent.classList.contains('show') ? '▼' : '▶';
-        };
-        
+
+        const headerTitle = document.createElement('h3');
+        headerTitle.textContent = brand.name + ' ';
+        const countSpan = document.createElement('span');
+        countSpan.style.cssText = 'font-size: 14px; color: #86868b; font-weight: normal;';
+        countSpan.textContent = `(${modelCount} models)`;
+        headerTitle.appendChild(countSpan);
+
+        const toggleIcon = document.createElement('span');
+        toggleIcon.className = 'toggle-icon';
+        toggleIcon.textContent = '▼';
+
+        brandHeader.appendChild(headerTitle);
+        brandHeader.appendChild(toggleIcon);
+
         const brandContent = document.createElement('div');
         brandContent.className = 'brand-content';
-        
-        // Create table with all service columns
-        let serviceHeaders = '';
-        for (const [key, service] of Object.entries(serviceTypes)) {
-            serviceHeaders += `<th style="min-width: 120px;">${service.name}</th>`;
-        }
-        
-        const table = document.createElement('div');
-        table.className = 'pricing-table';
-        table.style.overflowX = 'auto';
-        table.innerHTML = `
-            <table style="min-width: 2000px;">
-                <thead>
-                    <tr>
-                        <th style="position: sticky; left: 0; background: #1d1d1f; z-index: 10; min-width: 200px; color: white;">Model</th>
-                        ${serviceHeaders}
-                        <th style="min-width: 100px;">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-${brandKey}">
-                </tbody>
-            </table>
-        `;
-        
-        brandContent.appendChild(table);
+
+        brandHeader.addEventListener('click', function() {
+            brandContent.classList.toggle('show');
+            toggleIcon.textContent = brandContent.classList.contains('show') ? '▼' : '▶';
+        });
+
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'pricing-table';
+        tableWrapper.style.overflowX = 'auto';
+
+        const table = document.createElement('table');
+        table.style.minWidth = '2000px';
+
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+
+        const thModel = document.createElement('th');
+        thModel.style.cssText = 'position: sticky; left: 0; background: #1d1d1f; z-index: 10; min-width: 200px; color: white;';
+        thModel.textContent = 'Model';
+        headerRow.appendChild(thModel);
+
+        Object.values(serviceTypes).forEach(service => {
+            const th = document.createElement('th');
+            th.style.minWidth = '120px';
+            th.textContent = service.name;
+            headerRow.appendChild(th);
+        });
+
+        const thAction = document.createElement('th');
+        thAction.style.minWidth = '100px';
+        thAction.textContent = 'Action';
+        headerRow.appendChild(thAction);
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        tbody.id = `tbody-${brandKey}`;
+        table.appendChild(tbody);
+        tableWrapper.appendChild(table);
+
+        brandContent.appendChild(tableWrapper);
         brandSection.appendChild(brandHeader);
         brandSection.appendChild(brandContent);
         editor.appendChild(brandSection);
-        
-        // Add model rows
-        const tbody = document.getElementById(`tbody-${brandKey}`);
-        for (const [modelKey, model] of Object.entries(brand.models)) {
+
+        Object.entries(brand.models).forEach(([modelKey, model]) => {
             const row = document.createElement('tr');
             row.dataset.modelKey = modelKey;
             row.dataset.modelName = model.name.toLowerCase();
-            
-            let serviceCells = '';
-            for (const serviceKey in serviceTypes) {
+
+            const tdModel = document.createElement('td');
+            tdModel.style.cssText = 'position: sticky; left: 0; background: #fff; z-index: 5;';
+            const nameStrong = document.createElement('strong');
+            nameStrong.id = `model-name-${brandKey}-${modelKey}`;
+            nameStrong.textContent = model.name;
+            tdModel.appendChild(nameStrong);
+
+            const editButton = document.createElement('button');
+            editButton.type = 'button';
+            editButton.style.cssText = 'margin-left: 8px; color: #0071e3; background: none; border: none; cursor: pointer; font-size: 12px;';
+            editButton.textContent = '✏️ Edit';
+            editButton.addEventListener('click', function() {
+                editModelName(brandKey, modelKey);
+            });
+            tdModel.appendChild(editButton);
+
+            const lastUpdatedText = document.createElement('div');
+            lastUpdatedText.style.cssText = 'font-size: 11px; color: #86868b; margin-top: 4px;';
+            lastUpdatedText.textContent = model.lastUpdated ? `Last updated: ${new Date(model.lastUpdated).toLocaleString('en-IE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : 'N/A';
+            tdModel.appendChild(lastUpdatedText);
+            row.appendChild(tdModel);
+
+            Object.keys(serviceTypes).forEach(serviceKey => {
                 const price = model.services[serviceKey] || 0;
-                const isNetworkUnlock = serviceKey === 'network_unlock';
-                serviceCells += `<td><input type="number" value="${price}" data-brand="${brandKey}" data-model="${modelKey}" data-service="${serviceKey}" ${isNetworkUnlock ? 'disabled style="background: #f5f5f7; cursor: not-allowed;"' : ''}></td>`;
-            }
-            
-            row.innerHTML = `
-                <td style="position: sticky; left: 0; background: #fff; z-index: 5;">
-                    <strong id="model-name-${brandKey}-${modelKey}">${model.name}</strong>
-                    <button onclick="editModelName('${brandKey}', '${modelKey}')" 
-                            style="margin-left: 8px; color: #0071e3; background: none; border: none; cursor: pointer; font-size: 12px;">
-                        ✏️ Edit
-                    </button>
-                    <div style="font-size: 11px; color: #86868b; margin-top: 4px;">
-                        Last updated: ${model.lastUpdated ? new Date(model.lastUpdated).toLocaleString('en-IE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                    </div>
-                </td>
-                ${serviceCells}
-                <td><button onclick="deleteModel('${brandKey}', '${modelKey}')" style="color: #ff3b30; background: none; border: none; cursor: pointer; font-size: 14px;">Delete</button></td>
-            `;
+                const td = document.createElement('td');
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.value = price;
+                input.dataset.brand = brandKey;
+                input.dataset.model = modelKey;
+                input.dataset.service = serviceKey;
+
+                if (serviceKey === 'network_unlock') {
+                    input.disabled = true;
+                    input.style.cssText = 'background: #f5f5f7; cursor: not-allowed;';
+                }
+
+                td.appendChild(input);
+                row.appendChild(td);
+            });
+
+            const actionTd = document.createElement('td');
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.textContent = 'Delete';
+            deleteButton.style.cssText = 'color: #ff3b30; background: none; border: none; cursor: pointer; font-size: 14px;';
+            deleteButton.addEventListener('click', function() {
+                deleteModel(brandKey, modelKey);
+            });
+            actionTd.appendChild(deleteButton);
+            row.appendChild(actionTd);
             tbody.appendChild(row);
-        }
-    }
+        });
+    });
 }
 
 // Filter models based on search and brand filter
@@ -331,20 +416,26 @@ function addNewModel() {
 function renderNewModelServices() {
     const container = document.getElementById('new-model-services');
     container.innerHTML = '';
-    
-    for (const [key, service] of Object.entries(serviceTypes)) {
+
+    Object.entries(serviceTypes).forEach(([key, service]) => {
         const div = document.createElement('div');
         div.className = 'form-group';
-        
-        const isNetworkUnlock = key === 'network_unlock';
-        const defaultValue = isNetworkUnlock ? 9999 : (key.includes('screen') && key !== 'screen_compatible' ? 0 : 99);
-        
-        div.innerHTML = `
-            <label>${service.name}</label>
-            <input type="number" id="new-${key}" value="${defaultValue}" ${isNetworkUnlock ? 'disabled' : ''}>
-        `;
+
+        const label = document.createElement('label');
+        label.textContent = service.name;
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = `new-${key}`;
+        input.value = key === 'network_unlock' ? 9999 : (key.includes('screen') && key !== 'screen_compatible' ? 0 : 99);
+        if (key === 'network_unlock') {
+            input.disabled = true;
+        }
+
+        div.appendChild(label);
+        div.appendChild(input);
         container.appendChild(div);
-    }
+    });
 }
 
 // Render brand select dropdown
@@ -364,26 +455,39 @@ function renderBrandSelect() {
 function renderCurrentBrands() {
     const container = document.getElementById('current-brands-list');
     container.innerHTML = '';
-    
-    for (const [key, brand] of Object.entries(pricingData)) {
+
+    Object.entries(pricingData).forEach(([key, brand]) => {
         const modelCount = Object.keys(brand.models).length;
         const div = document.createElement('div');
         div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f5f5f7;';
-        
-        const isCoreBrand = ['apple', 'samsung', 'xiaomi', 'other'].includes(key);
-        div.innerHTML = `
-            <div>
-                <strong>${brand.name}</strong>
-                <p style="font-size: 12px; color: #6e6e73; margin: 4px 0 0 0;">${modelCount} models</p>
-            </div>
-            <button onclick="deleteBrand('${key}')" 
-                    style="color: #ff3b30; background: none; border: none; cursor: pointer; font-size: 14px; padding: 8px 16px;"
-                    ${isCoreBrand ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
-                Delete
-            </button>
-        `;
+
+        const brandInfo = document.createElement('div');
+        const nameStrong = document.createElement('strong');
+        nameStrong.textContent = brand.name;
+        const infoP = document.createElement('p');
+        infoP.style.cssText = 'font-size: 12px; color: #6e6e73; margin: 4px 0 0 0;';
+        infoP.textContent = `${modelCount} models`;
+        brandInfo.appendChild(nameStrong);
+        brandInfo.appendChild(infoP);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.textContent = 'Delete';
+        deleteButton.style.cssText = 'color: #ff3b30; background: none; border: none; cursor: pointer; font-size: 14px; padding: 8px 16px;';
+        if (['apple', 'samsung', 'xiaomi', 'other'].includes(key)) {
+            deleteButton.disabled = true;
+            deleteButton.style.opacity = '0.3';
+            deleteButton.style.cursor = 'not-allowed';
+        } else {
+            deleteButton.addEventListener('click', function() {
+                deleteBrand(key);
+            });
+        }
+
+        div.appendChild(brandInfo);
+        div.appendChild(deleteButton);
         container.appendChild(div);
-    }
+    });
 }
 
 // Add new brand
@@ -466,26 +570,45 @@ function editModelName(brandKey, modelKey) {
 function renderCurrentServices() {
     const container = document.getElementById('current-services-list');
     container.innerHTML = '';
-    
-    for (const [key, service] of Object.entries(serviceTypes)) {
+
+    Object.entries(serviceTypes).forEach(([key, service]) => {
         const div = document.createElement('div');
         div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f5f5f7;';
-        
-        const isNetworkUnlock = key === 'network_unlock';
-        div.innerHTML = `
-            <div>
-                <strong>${service.name}</strong>
-                <p style="font-size: 12px; color: #6e6e73; margin: 4px 0 0 0;">${service.description}</p>
-                ${isNetworkUnlock ? '<span style="font-size: 11px; color: #ff3b30;">Fixed price (contact required)</span>' : ''}
-            </div>
-            <button onclick="deleteService('${key}')" 
-                    style="color: #ff3b30; background: none; border: none; cursor: pointer; font-size: 14px; padding: 8px 16px;"
-                    ${isNetworkUnlock ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
-                Delete
-            </button>
-        `;
+
+        const infoWrapper = document.createElement('div');
+        const nameStrong = document.createElement('strong');
+        nameStrong.textContent = service.name;
+        const descP = document.createElement('p');
+        descP.style.cssText = 'font-size: 12px; color: #6e6e73; margin: 4px 0 0 0;';
+        descP.textContent = service.description;
+        infoWrapper.appendChild(nameStrong);
+        infoWrapper.appendChild(descP);
+
+        if (key === 'network_unlock') {
+            const note = document.createElement('span');
+            note.style.cssText = 'font-size: 11px; color: #ff3b30;';
+            note.textContent = 'Fixed price (contact required)';
+            infoWrapper.appendChild(note);
+        }
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.textContent = 'Delete';
+        deleteButton.style.cssText = 'color: #ff3b30; background: none; border: none; cursor: pointer; font-size: 14px; padding: 8px 16px;';
+        if (key === 'network_unlock') {
+            deleteButton.disabled = true;
+            deleteButton.style.opacity = '0.3';
+            deleteButton.style.cursor = 'not-allowed';
+        } else {
+            deleteButton.addEventListener('click', function() {
+                deleteService(key);
+            });
+        }
+
+        div.appendChild(infoWrapper);
+        div.appendChild(deleteButton);
         container.appendChild(div);
-    }
+    });
 }
 
 // Add new service type

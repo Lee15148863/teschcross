@@ -232,26 +232,130 @@ async function loadProducts(page){
         totalPages=data.pagination.totalPages||1;
         const tb=document.getElementById('productTable');
         if(!data.data||data.data.length===0){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">暂无商品数据</td></tr>';renderPagination();return;}
-        tb.innerHTML=data.data.map(p=>{
-            if(p.category)categories.add(p.category);
-            var stockWarn=p.stock>4?'<span style="color:#ff9500;font-weight:600;" title="库存>4，检查是否死库存">⚠️ '+p.stock+'</span>':(p.stock>0&&p.stock<=p.lowStockThreshold?'<span style="color:#ff3b30;font-weight:600;">'+p.stock+'</span>':''+p.stock);
-            var deadBadge=p.deadStock?'<span class="badge" style="background:#fef2f2;color:#991b1b;margin-left:4px;">死库存</span>':'';
-            var deadBtn=p.stock>4||p.deadStock?(isAdmin?'<button class="btn btn-sm" style="background:'+(p.deadStock?'#34c759':'#ff9500')+';color:#fff;" onclick="toggleDeadStock(\''+p._id+'\','+!!p.deadStock+')">'+(p.deadStock?'取消死库存':'标记死库存')+'</button>':''):'';
-            return `<tr style="${p.deadStock?'background:#fef2f2;':''}">
-                <td><strong>${esc(p.name)}</strong>${p.isSecondHand?' <span class="badge badge-secondhand">二手</span>':''}${deadBadge}</td>
-                <td style="font-family:monospace;font-size:13px;">${esc(p.sku)}</td>
-                <td>${esc(p.category||'-')}</td>
-                <td>${stockWarn}</td>
-                <td>€${Number(p.sellingPrice).toFixed(2)}</td>
-                <td>${p.active?'<span class="badge badge-active">启用</span>':'<span class="badge badge-inactive">停用</span>'}</td>
-                <td>
-                    <button class="btn btn-secondary btn-sm" onclick="editProduct('${p._id}')">编辑</button>
-                    ${deadBtn}
-                    <button class="btn ${p.active?'btn-danger':'btn-success'} btn-sm" onclick="toggleProduct('${p._id}',${p.active})">${p.active?'停用':'启用'}</button>
-                    <button class="btn btn-sm" style="background:#6e6e73;color:#fff;" onclick="deleteProduct('${p._id}','${esc(p.name)}')">删除</button>
-                </td>
-            </tr>`;
-        }).join('');
+        // Clear existing content
+        tb.innerHTML = '';
+
+        // Build DOM elements safely
+        data.data.forEach(p => {
+            if (p.category) categories.add(p.category);
+
+            const tr = document.createElement('tr');
+            if (p.deadStock) tr.style.background = '#fef2f2';
+
+            // Name cell
+            const td1 = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = p.name;
+            td1.appendChild(strong);
+
+            if (p.isSecondHand) {
+                const secondHandBadge = document.createElement('span');
+                secondHandBadge.className = 'badge badge-secondhand';
+                secondHandBadge.textContent = '二手';
+                td1.appendChild(document.createTextNode(' '));
+                td1.appendChild(secondHandBadge);
+            }
+
+            if (p.deadStock) {
+                const deadBadge = document.createElement('span');
+                deadBadge.className = 'badge';
+                deadBadge.style.background = '#fef2f2';
+                deadBadge.style.color = '#991b1b';
+                deadBadge.style.marginLeft = '4px';
+                deadBadge.textContent = '死库存';
+                td1.appendChild(deadBadge);
+            }
+            tr.appendChild(td1);
+
+            // SKU cell
+            const td2 = document.createElement('td');
+            td2.style.fontFamily = 'monospace';
+            td2.style.fontSize = '13px';
+            td2.textContent = p.sku;
+            tr.appendChild(td2);
+
+            // Category cell
+            const td3 = document.createElement('td');
+            td3.textContent = p.category || '-';
+            tr.appendChild(td3);
+
+            // Stock cell
+            const td4 = document.createElement('td');
+            if (p.stock > 4) {
+                const warnSpan = document.createElement('span');
+                warnSpan.style.color = '#ff9500';
+                warnSpan.style.fontWeight = '600';
+                warnSpan.title = '库存>4，检查是否死库存';
+                warnSpan.textContent = '⚠️ ' + p.stock;
+                td4.appendChild(warnSpan);
+            } else if (p.stock > 0 && p.stock <= p.lowStockThreshold) {
+                const lowSpan = document.createElement('span');
+                lowSpan.style.color = '#ff3b30';
+                lowSpan.style.fontWeight = '600';
+                lowSpan.textContent = p.stock;
+                td4.appendChild(lowSpan);
+            } else {
+                td4.textContent = p.stock;
+            }
+            tr.appendChild(td4);
+
+            // Price cell
+            const td5 = document.createElement('td');
+            td5.textContent = '€' + Number(p.sellingPrice).toFixed(2);
+            tr.appendChild(td5);
+
+            // Active status cell
+            const td6 = document.createElement('td');
+            const statusSpan = document.createElement('span');
+            statusSpan.className = `badge ${p.active ? 'badge-active' : 'badge-inactive'}`;
+            statusSpan.textContent = p.active ? '启用' : '停用';
+            td6.appendChild(statusSpan);
+            tr.appendChild(td6);
+
+            // Actions cell
+            const td7 = document.createElement('td');
+
+            // Edit button
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-secondary btn-sm';
+            editBtn.textContent = '编辑';
+            editBtn.onclick = () => editProduct(p._id);
+            td7.appendChild(editBtn);
+
+            // Dead stock button
+            if ((p.stock > 4 || p.deadStock) && isAdmin) {
+                const deadBtn = document.createElement('button');
+                deadBtn.className = 'btn btn-sm';
+                deadBtn.style.background = p.deadStock ? '#34c759' : '#ff9500';
+                deadBtn.style.color = '#fff';
+                deadBtn.textContent = p.deadStock ? '取消死库存' : '标记死库存';
+                deadBtn.onclick = () => toggleDeadStock(p._id, !!p.deadStock);
+                td7.appendChild(document.createTextNode(' '));
+                td7.appendChild(deadBtn);
+            }
+
+            // Toggle active button
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = `btn ${p.active ? 'btn-danger' : 'btn-success'} btn-sm`;
+            toggleBtn.textContent = p.active ? '停用' : '启用';
+            toggleBtn.onclick = () => toggleProduct(p._id, p.active);
+            td7.appendChild(document.createTextNode(' '));
+            td7.appendChild(toggleBtn);
+
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-sm';
+            deleteBtn.style.background = '#6e6e73';
+            deleteBtn.style.color = '#fff';
+            deleteBtn.textContent = '删除';
+            deleteBtn.onclick = () => deleteProduct(p._id, p.name);
+            td7.appendChild(document.createTextNode(' '));
+            td7.appendChild(deleteBtn);
+
+            tr.appendChild(td7);
+            tb.appendChild(tr);
+        });
+
         renderPagination();
         updateCategoryFilter();
     }catch(e){showToast('加载失败','error');}
@@ -259,18 +363,69 @@ async function loadProducts(page){
 
 function renderPagination(){
     const pg=document.getElementById('pagination');
-    pg.innerHTML=`<button ${currentPage<=1?'disabled':''} onclick="loadProducts(${currentPage-1})">上一页</button>
-        <span>第 ${currentPage} / ${totalPages} 页</span>
-        <button ${currentPage>=totalPages?'disabled':''} onclick="loadProducts(${currentPage+1})">下一页</button>`;
+    pg.innerHTML = '';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.disabled = currentPage <= 1;
+    prevBtn.textContent = '上一页';
+    prevBtn.onclick = () => loadProducts(currentPage - 1);
+    pg.appendChild(prevBtn);
+
+    const span = document.createElement('span');
+    span.textContent = `第 ${currentPage} / ${totalPages} 页`;
+    pg.appendChild(span);
+
+    const nextBtn = document.createElement('button');
+    nextBtn.disabled = currentPage >= totalPages;
+    nextBtn.textContent = '下一页';
+    nextBtn.onclick = () => loadProducts(currentPage + 1);
+    pg.appendChild(nextBtn);
 }
 
 function updateCategoryFilter(){
     const sel=document.getElementById('categoryFilter');
     const cur=sel.value;
-    const opts=['<option value="">全部分类</option>'];
-    categories.forEach(c=>opts.push(`<option value="${esc(c)}">${esc(c)}</option>`));
-    sel.innerHTML=opts.join('');
-    sel.value=cur;
+    sel.innerHTML = '';
+
+    const optAll = document.createElement('option');
+    optAll.value = '';
+    optAll.textContent = '全部分类';
+    sel.appendChild(optAll);
+
+    categories.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c;
+        option.textContent = c;
+        sel.appendChild(option);
+    });
+    sel.value = cur;
+}
+
+function addAttrRow(key,val){
+    const div=document.createElement('div');div.className='attr-row';
+
+    const inputKey = document.createElement('input');
+    inputKey.type = 'text';
+    inputKey.placeholder = '属性名';
+    inputKey.className = 'attr-key';
+    inputKey.value = key || '';
+    div.appendChild(inputKey);
+
+    const inputVal = document.createElement('input');
+    inputVal.type = 'text';
+    inputVal.placeholder = '属性值';
+    inputVal.className = 'attr-val';
+    inputVal.value = val || '';
+    div.appendChild(inputVal);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn-remove-attr';
+    removeBtn.textContent = '✕';
+    removeBtn.onclick = function() { this.parentElement.remove(); };
+    div.appendChild(removeBtn);
+
+    document.getElementById('attrRows').appendChild(div);
 }
 
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -351,11 +506,6 @@ document.getElementById('fCategory').addEventListener('change',async function(){
 });
 
 // Attribute rows
-function addAttrRow(key,val){
-    const div=document.createElement('div');div.className='attr-row';
-    div.innerHTML=`<input type="text" placeholder="属性名" class="attr-key" value="${esc(key||'')}"><input type="text" placeholder="属性值" class="attr-val" value="${esc(val||'')}"><button type="button" class="btn-remove-attr" onclick="this.parentElement.remove()">✕</button>`;
-    document.getElementById('attrRows').appendChild(div);
-}
 window.addAttrRow=addAttrRow;
 
 function getAttributes(){

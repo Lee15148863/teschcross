@@ -163,17 +163,68 @@ async function loadPOs(){
         const list=await r.json();
         const tb=document.getElementById('poTable');
         if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">暂无采购单</td></tr>';return;}
-        tb.innerHTML=list.map(po=>`<tr>
-            <td style="font-family:monospace;">${esc(po.orderNumber)}</td>
-            <td>${po.supplier?esc(po.supplier.name||''):'-'}</td>
-            <td>${po.items?po.items.length:0}</td>
-            <td>€${Number(po.totalAmount).toFixed(2)}</td>
-            <td><span class="badge ${statusBadge[po.status]||''}">${statusMap[po.status]||po.status}</span></td>
-            <td>${new Date(po.purchaseDate||po.createdAt).toLocaleDateString('zh-CN')}</td>
-            <td>
-                ${po.status==='pending'?`<button class="btn btn-success btn-sm" onclick="receivePO('${po._id}')">确认到货</button> <button class="btn btn-danger btn-sm" onclick="cancelPO('${po._id}')">取消</button>`:''}
-            </td>
-        </tr>`).join('');
+        // Clear existing content
+        tb.innerHTML = '';
+
+        // Build DOM elements safely
+        list.forEach(po => {
+            const tr = document.createElement('tr');
+
+            // Order number cell
+            const td1 = document.createElement('td');
+            td1.style.fontFamily = 'monospace';
+            td1.textContent = po.orderNumber;
+            tr.appendChild(td1);
+
+            // Supplier cell
+            const td2 = document.createElement('td');
+            td2.textContent = po.supplier ? (po.supplier.name || '') : '-';
+            tr.appendChild(td2);
+
+            // Items count cell
+            const td3 = document.createElement('td');
+            td3.textContent = po.items ? po.items.length : 0;
+            tr.appendChild(td3);
+
+            // Total amount cell
+            const td4 = document.createElement('td');
+            td4.textContent = '€' + Number(po.totalAmount).toFixed(2);
+            tr.appendChild(td4);
+
+            // Status cell
+            const td5 = document.createElement('td');
+            const statusSpan = document.createElement('span');
+            statusSpan.className = `badge ${statusBadge[po.status] || ''}`;
+            statusSpan.textContent = statusMap[po.status] || po.status;
+            td5.appendChild(statusSpan);
+            tr.appendChild(td5);
+
+            // Date cell
+            const td6 = document.createElement('td');
+            td6.textContent = new Date(po.purchaseDate || po.createdAt).toLocaleDateString('zh-CN');
+            tr.appendChild(td6);
+
+            // Actions cell
+            const td7 = document.createElement('td');
+            if (po.status === 'pending') {
+                const receiveBtn = document.createElement('button');
+                receiveBtn.className = 'btn btn-success btn-sm';
+                receiveBtn.textContent = '确认到货';
+                receiveBtn.onclick = () => receivePO(po._id);
+                td7.appendChild(receiveBtn);
+
+                td7.appendChild(document.createTextNode(' '));
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn btn-danger btn-sm';
+                cancelBtn.textContent = '取消';
+                cancelBtn.onclick = () => cancelPO(po._id);
+                td7.appendChild(cancelBtn);
+            }
+            tr.appendChild(td7);
+
+            tb.appendChild(tr);
+        });
     }catch(e){showToast('加载失败','error');}
 }
 
@@ -181,8 +232,28 @@ document.getElementById('statusFilter').addEventListener('change',loadPOs);
 
 function showCreateModal(){
     // Populate supplier select (core first)
-    const sorted=[...suppliers].sort((a,b)=>{if(a.level==='core'&&b.level!=='core')return -1;if(b.level==='core'&&a.level!=='core')return 1;return 0;});
-    document.getElementById('poSupplier').innerHTML='<option value="">请选择供应商</option>'+sorted.map(s=>`<option value="${s._id}">${esc(s.name)}${s.level==='core'?' ⭐':''}</option>`).join('');
+    const sorted = [...suppliers].sort((a, b) => {
+        if (a.level === 'core' && b.level !== 'core') return -1;
+        if (b.level === 'core' && a.level !== 'core') return 1;
+        return 0;
+    });
+
+    const supplierSelect = document.getElementById('poSupplier');
+    supplierSelect.innerHTML = '';
+
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = '请选择供应商';
+    supplierSelect.appendChild(defaultOption);
+
+    // Add supplier options
+    sorted.forEach(s => {
+        const option = document.createElement('option');
+        option.value = s._id;
+        option.textContent = s.name + (s.level === 'core' ? ' ⭐' : '');
+        supplierSelect.appendChild(option);
+    });
     document.getElementById('poItems').innerHTML='';
     document.getElementById('poTotal').textContent='0.00';
     document.getElementById('poExpected').value='';
@@ -196,8 +267,39 @@ window.closeModal=closeModal;
 
 function addPoItem(){
     const div=document.createElement('div');div.className='po-item-row';
-    div.innerHTML=`<select class="po-product" onchange="calcTotal()"><option value="">选择商品</option>${products.map(p=>`<option value="${p._id}" data-cost="${p.costPrice}">${esc(p.name)} (${esc(p.sku)})</option>`).join('')}</select>
-        <input type="number" class="po-qty" min="1" value="1" placeholder="数量" onchange="calcTotal()" oninput="calcTotal()">
+
+    // Create product select
+    const select = document.createElement('select');
+    select.className = 'po-product';
+    select.onchange = calcTotal;
+
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = '选择商品';
+    select.appendChild(defaultOption);
+
+    // Add product options
+    products.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p._id;
+        option.setAttribute('data-cost', p.costPrice);
+        option.textContent = p.name + ' (' + p.sku + ')';
+        select.appendChild(option);
+    });
+
+    div.appendChild(select);
+
+    // Create quantity input
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.className = 'po-qty';
+    qtyInput.min = '1';
+    qtyInput.value = '1';
+    qtyInput.placeholder = '数量';
+    qtyInput.onchange = calcTotal;
+    qtyInput.oninput = calcTotal;
+    div.appendChild(qtyInput);
         <input type="number" class="po-price" step="0.01" min="0" placeholder="单价" onchange="calcTotal()" oninput="calcTotal()">
         <button type="button" class="btn-remove" onclick="this.parentElement.remove();calcTotal();">✕</button>`;
     document.getElementById('poItems').appendChild(div);

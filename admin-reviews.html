@@ -110,23 +110,75 @@ function renderReviews() {
 
     if (!filtered.length) { el.innerHTML = '<div class="ar-empty">No reviews found.</div>'; return; }
 
-    el.innerHTML = filtered.map(r => `
-        <div class="ar-card ${r.approved ? 'approved' : 'pending'}">
-            <div class="ar-meta">
-                <span class="ar-name">${r.name}</span>
-                <span>
-                    <span class="ar-status ${r.approved ? 'approved' : 'pending'}">${r.approved ? 'Approved' : 'Pending'}</span>
-                    <span class="ar-date">${new Date(r.createdAt).toLocaleDateString()}</span>
-                </span>
-            </div>
-            <div class="ar-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
-            <div class="ar-msg">${r.message}</div>
-            <div class="ar-actions">
-                ${!r.approved ? `<button class="ar-btn ar-btn-approve" onclick="approveReview('${r._id}')">Approve</button>` : `<button class="ar-btn ar-btn-reject" onclick="rejectReview('${r._id}')">Hide</button>`}
-                <button class="ar-btn ar-btn-delete" onclick="deleteReview('${r._id}')">Delete</button>
-            </div>
-        </div>
-    `).join('');
+    // Clear existing content
+    el.innerHTML = '';
+
+    // Build DOM elements safely
+    filtered.forEach(r => {
+        const card = document.createElement('div');
+        card.className = `ar-card ${r.approved ? 'approved' : 'pending'}`;
+
+        const meta = document.createElement('div');
+        meta.className = 'ar-meta';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'ar-name';
+        nameSpan.textContent = r.name;
+
+        const statusSpan = document.createElement('span');
+
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `ar-status ${r.approved ? 'approved' : 'pending'}`;
+        statusBadge.textContent = r.approved ? 'Approved' : 'Pending';
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'ar-date';
+        dateSpan.textContent = new Date(r.createdAt).toLocaleDateString();
+
+        statusSpan.appendChild(statusBadge);
+        statusSpan.appendChild(dateSpan);
+
+        meta.appendChild(nameSpan);
+        meta.appendChild(statusSpan);
+
+        const stars = document.createElement('div');
+        stars.className = 'ar-stars';
+        stars.textContent = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+
+        const msg = document.createElement('div');
+        msg.className = 'ar-msg';
+        msg.textContent = r.message;
+
+        const actions = document.createElement('div');
+        actions.className = 'ar-actions';
+
+        if (!r.approved) {
+            const approveBtn = document.createElement('button');
+            approveBtn.className = 'ar-btn ar-btn-approve';
+            approveBtn.textContent = 'Approve';
+            approveBtn.onclick = () => approveReview(r._id);
+            actions.appendChild(approveBtn);
+        } else {
+            const rejectBtn = document.createElement('button');
+            rejectBtn.className = 'ar-btn ar-btn-reject';
+            rejectBtn.textContent = 'Hide';
+            rejectBtn.onclick = () => rejectReview(r._id);
+            actions.appendChild(rejectBtn);
+        }
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'ar-btn ar-btn-delete';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = () => deleteReview(r._id);
+        actions.appendChild(deleteBtn);
+
+        card.appendChild(meta);
+        card.appendChild(stars);
+        card.appendChild(msg);
+        card.appendChild(actions);
+
+        el.appendChild(card);
+    });
 }
 
 async function approveReview(id) {

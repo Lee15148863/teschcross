@@ -247,14 +247,48 @@ async function loadHistory(){
         const data=await r.json();
         const tb=document.getElementById('historyTable');
         if(!data.movements||data.movements.length===0){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#86868b;padding:40px;">暂无流水记录</td></tr>';return;}
-        tb.innerHTML=data.movements.map(m=>`<tr>
-            <td>${new Date(m.createdAt).toLocaleString('zh-CN')}</td>
-            <td><span class="badge ${m.type==='entry'?'badge-entry':'badge-exit'}">${m.type==='entry'?'入库':'出库'}</span></td>
-            <td>${m.quantity}</td>
-            <td>${m.operator?esc(m.operator.displayName||m.operator.username):'-'}</td>
-            <td>${esc(m.referenceType||'-')}</td>
-            <td>${esc(m.note||'-')}</td>
-        </tr>`).join('');
+        // Clear existing content
+        tb.innerHTML = '';
+
+        // Build DOM elements safely
+        data.movements.forEach(m => {
+            const tr = document.createElement('tr');
+
+            // Date cell
+            const td1 = document.createElement('td');
+            td1.textContent = new Date(m.createdAt).toLocaleString('zh-CN');
+            tr.appendChild(td1);
+
+            // Type cell
+            const td2 = document.createElement('td');
+            const typeSpan = document.createElement('span');
+            typeSpan.className = `badge ${m.type === 'entry' ? 'badge-entry' : 'badge-exit'}`;
+            typeSpan.textContent = m.type === 'entry' ? '入库' : '出库';
+            td2.appendChild(typeSpan);
+            tr.appendChild(td2);
+
+            // Quantity cell
+            const td3 = document.createElement('td');
+            td3.textContent = m.quantity;
+            tr.appendChild(td3);
+
+            // Operator cell
+            const td4 = document.createElement('td');
+            td4.textContent = m.operator ? (m.operator.displayName || m.operator.username) : '-';
+            tr.appendChild(td4);
+
+            // Reference type cell
+            const td5 = document.createElement('td');
+            td5.textContent = m.referenceType || '-';
+            tr.appendChild(td5);
+
+            // Note cell
+            const td6 = document.createElement('td');
+            td6.textContent = m.note || '-';
+            tr.appendChild(td6);
+
+            tb.appendChild(tr);
+        });
     }catch(e){showToast('查询失败','error');}
 }
 window.loadHistory=loadHistory;
@@ -265,11 +299,56 @@ async function loadAlerts(){
         const r=await apiFetch('/stock/alerts');if(!r)return;
         const alerts=await r.json();
         const el=document.getElementById('alertsList');
-        if(!alerts||alerts.length===0){el.innerHTML='<p style="color:#34c759;font-weight:500;">✅ 所有商品库存正常</p>';return;}
-        el.innerHTML=alerts.map(a=>`<div class="alert-item">
-            <div><span class="name">${esc(a.name)}</span> <span style="color:#86868b;font-size:13px;">${esc(a.sku)}</span> <span style="color:#86868b;font-size:13px;">[${esc(a.category)}]</span></div>
-            <div>当前: <span class="stock">${a.stock}</span> / 阈值: ${a.lowStockThreshold}</div>
-        </div>`).join('');
+        if(!alerts||alerts.length===0){
+            el.innerHTML='<p style="color:#34c759;font-weight:500;">✅ 所有商品库存正常</p>';
+            return;
+        }
+
+        // Clear existing content
+        el.innerHTML = '';
+
+        // Build DOM elements safely
+        alerts.forEach(a => {
+            const alertItem = document.createElement('div');
+            alertItem.className = 'alert-item';
+
+            const div1 = document.createElement('div');
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'name';
+            nameSpan.textContent = a.name;
+            div1.appendChild(nameSpan);
+
+            div1.appendChild(document.createTextNode(' '));
+
+            const skuSpan = document.createElement('span');
+            skuSpan.style.color = '#86868b';
+            skuSpan.style.fontSize = '13px';
+            skuSpan.textContent = a.sku;
+            div1.appendChild(skuSpan);
+
+            div1.appendChild(document.createTextNode(' '));
+
+            const categorySpan = document.createElement('span');
+            categorySpan.style.color = '#86868b';
+            categorySpan.style.fontSize = '13px';
+            categorySpan.textContent = '[' + a.category + ']';
+            div1.appendChild(categorySpan);
+
+            alertItem.appendChild(div1);
+
+            const div2 = document.createElement('div');
+            div2.appendChild(document.createTextNode('当前: '));
+
+            const stockSpan = document.createElement('span');
+            stockSpan.className = 'stock';
+            stockSpan.textContent = a.stock;
+            div2.appendChild(stockSpan);
+
+            div2.appendChild(document.createTextNode(' / 阈值: ' + a.lowStockThreshold));
+
+            alertItem.appendChild(div2);
+            el.appendChild(alertItem);
+        });
     }catch(e){showToast('加载预警失败','error');}
 }
 
@@ -281,14 +360,48 @@ async function doReconcile(){
         if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}
         const data=await r.json();
         const el=document.getElementById('reconcileReport');
-        el.innerHTML=`<p style="margin:12px 0;font-weight:500;">共 ${data.totalProducts} 个商品, ${data.discrepancyCount} 个差异</p>`;
-        if(data.discrepancies.length===0){el.innerHTML+='<p style="color:#34c759;">✅ 所有商品库存一致</p>';return;}
-        el.innerHTML+=data.discrepancies.map(d=>`<div class="reconcile-item ${d.difference===0?'ok':'diff'}">
-            <span style="flex:1;font-weight:500;">${esc(d.product.name)} (${esc(d.product.sku)})</span>
-            <span>账面: ${d.actualStock}</span>
-            <span>计算: ${d.expectedStock}</span>
-            <span style="font-weight:600;color:${d.difference===0?'#34c759':'#ff3b30'};">差异: ${d.difference>0?'+':''}${d.difference}</span>
-        </div>`).join('');
+        el.innerHTML = '';
+
+        const summaryP = document.createElement('p');
+        summaryP.style.margin = '12px 0';
+        summaryP.style.fontWeight = '500';
+        summaryP.textContent = `共 ${data.totalProducts} 个商品, ${data.discrepancyCount} 个差异`;
+        el.appendChild(summaryP);
+
+        if (data.discrepancies.length === 0) {
+            const okP = document.createElement('p');
+            okP.style.color = '#34c759';
+            okP.textContent = '✅ 所有商品库存一致';
+            el.appendChild(okP);
+            return;
+        }
+
+        data.discrepancies.forEach(d => {
+            const item = document.createElement('div');
+            item.className = 'reconcile-item ' + (d.difference === 0 ? 'ok' : 'diff');
+
+            const nameSpan = document.createElement('span');
+            nameSpan.style.flex = '1';
+            nameSpan.style.fontWeight = '500';
+            nameSpan.textContent = `${d.product.name} (${d.product.sku})`;
+            item.appendChild(nameSpan);
+
+            const bookSpan = document.createElement('span');
+            bookSpan.textContent = `账面: ${d.actualStock}`;
+            item.appendChild(bookSpan);
+
+            const expectedSpan = document.createElement('span');
+            expectedSpan.textContent = `计算: ${d.expectedStock}`;
+            item.appendChild(expectedSpan);
+
+            const diffSpan = document.createElement('span');
+            diffSpan.style.fontWeight = '600';
+            diffSpan.style.color = d.difference === 0 ? '#34c759' : '#ff3b30';
+            diffSpan.textContent = `差异: ${d.difference > 0 ? '+' : ''}${d.difference}`;
+            item.appendChild(diffSpan);
+
+            el.appendChild(item);
+        });
     }catch(e){showToast('核对失败','error');}
 }
 window.doReconcile=doReconcile;

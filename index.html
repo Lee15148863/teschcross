@@ -393,12 +393,31 @@
                     const reviews = await res.json();
                     const el = document.getElementById('reviewsList');
                     if (!reviews.length) { el.innerHTML = '<p style="text-align:center;color:#86868b;">No reviews yet. Be the first!</p>'; return; }
-                    el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">' +
-                        reviews.map(r => `<div style="background:#fff;border:1.5px solid #e5e5ea;border-radius:14px;padding:20px;">
-                            <div style="color:#ff9500;font-size:18px;margin-bottom:6px;">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
-                            <p style="font-size:15px;color:#1d1d1f;margin-bottom:10px;line-height:1.5;">${r.message}</p>
-                            <p style="font-size:13px;color:#86868b;font-weight:600;">— ${r.name}</p>
-                        </div>`).join('') + '</div>';
+                    el.innerHTML = '';
+                    const grid = document.createElement('div');
+                    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;';
+                    reviews.forEach(r => {
+                        const card = document.createElement('div');
+                        card.style.cssText = 'background:#fff;border:1.5px solid #e5e5ea;border-radius:14px;padding:20px;';
+
+                        const stars = document.createElement('div');
+                        stars.style.cssText = 'color:#ff9500;font-size:18px;margin-bottom:6px;';
+                        stars.textContent = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+
+                        const messageEl = document.createElement('p');
+                        messageEl.style.cssText = 'font-size:15px;color:#1d1d1f;margin-bottom:10px;line-height:1.5;';
+                        messageEl.textContent = r.message;
+
+                        const authorEl = document.createElement('p');
+                        authorEl.style.cssText = 'font-size:13px;color:#86868b;font-weight:600;';
+                        authorEl.textContent = '— ' + r.name;
+
+                        card.appendChild(stars);
+                        card.appendChild(messageEl);
+                        card.appendChild(authorEl);
+                        grid.appendChild(card);
+                    });
+                    el.appendChild(grid);
                 } catch(e) { console.error('Failed to load reviews'); }
             }
             loadReviews();

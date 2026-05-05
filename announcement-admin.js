@@ -216,7 +216,11 @@ function updatePreview() {
 function showMessage(text, type) {
     const messageDiv = document.getElementById('message');
     if (messageDiv) {
-        messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+        messageDiv.innerHTML = '';
+        const msg = document.createElement('div');
+        msg.className = 'message ' + type;
+        msg.textContent = text;
+        messageDiv.appendChild(msg);
         
         setTimeout(() => {
             messageDiv.innerHTML = '';

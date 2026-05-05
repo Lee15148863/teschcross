@@ -3,6 +3,10 @@ const router = express.Router();
 const Review = require('../models/Review');
 const jwt = require('jsonwebtoken');
 
+function sanitizeText(value) {
+    return String(value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').trim();
+}
+
 // Dual-mode admin auth: JWT admin OR legacy x-admin-token
 function adminAuth(req, res, next) {
     const authHeader = req.headers['authorization'];
@@ -40,7 +44,11 @@ router.post('/', async (req, res) => {
         const { name, rating, message } = req.body;
         if (!name || !rating || !message) return res.status(400).json({ error: 'All fields required' });
         if (rating < 1 || rating > 5) return res.status(400).json({ error: 'Rating must be 1-5' });
-        const review = await Review.create({ name: name.trim(), rating, message: message.trim() });
+        const review = await Review.create({
+            name: sanitizeText(name),
+            rating,
+            message: sanitizeText(message)
+        });
         res.json({ success: true, message: 'Thank you! Your review will appear after approval.' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });

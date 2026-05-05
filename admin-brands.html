@@ -198,6 +198,10 @@ function checkAdminAuth() {
     } catch(e) {}
     sessionStorage.removeItem('admin_logged_in');
     window.location.href = '/staff-portal.html';
+
+// HTML escape function
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
     return false;
 }
 if (!checkAdminAuth()) throw new Error('Not authorized');
@@ -212,8 +216,7 @@ function getBrandsAuthHeaders() {
             return { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + invToken };
         }
     } catch(e) {}
-    var t = localStorage.getItem('admin_token') || '';
-    return { 'Content-Type':'application/json', 'x-admin-token': t };
+    return { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('inv_token') };
 }
 const USERNAME = '';
 const PASSWORD = '';
@@ -249,13 +252,37 @@ async function showAdmin() {
 // ── Sidebar ───────────────────────────────────────────────
 function renderSidebar() {
     const list = document.getElementById('brandList');
-    list.innerHTML = Object.entries(allData).map(([id, b]) => {
+    list.innerHTML = '';
+
+    // Build DOM elements safely
+    const entries = Object.entries(allData);
+    if (entries.length === 0) {
+        const p = document.createElement('p');
+        p.style.fontSize = '13px';
+        p.style.color = '#86868b';
+        p.style.padding = '4px 8px';
+        p.textContent = 'No brands yet';
+        list.appendChild(p);
+        return;
+    }
+
+    entries.forEach(([id, b]) => {
         const typeCount = Object.keys(b.types || {}).length;
-        return `<div class="nav-item ${currentBrand===id?'active':''}" onclick="selectBrand('${id}')">
-            <span>${b.name}</span>
-            <span class="nav-badge">${typeCount}</span>
-        </div>`;
-    }).join('') || '<p style="font-size:13px;color:#86868b;padding:4px 8px;">No brands yet</p>';
+        const div = document.createElement('div');
+        div.className = `nav-item ${currentBrand === id ? 'active' : ''}`;
+        div.onclick = () => selectBrand(id);
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = b.name;
+
+        const badgeSpan = document.createElement('span');
+        badgeSpan.className = 'nav-badge';
+        badgeSpan.textContent = typeCount;
+
+        div.appendChild(nameSpan);
+        div.appendChild(badgeSpan);
+        list.appendChild(div);
+    });
 }
 
 // ── Brand select ──────────────────────────────────────────
@@ -274,26 +301,61 @@ function renderTypeView() {
     const brand = allData[currentBrand];
     const types = Object.entries(brand.types || {});
     const main = document.getElementById('mainArea');
+    main.innerHTML = '';
 
-    main.innerHTML = `
-        <div class="breadcrumb"><b>${brand.name}</b></div>
-        <div class="main-header">
-            <h3>${brand.name}</h3>
-            <button class="btn-danger" onclick="deleteBrand('${currentBrand}')">Delete Brand</button>
-        </div>
-        <div class="cards">
-            ${types.map(([tid, t]) => {
-                const mc = Object.keys(t.models||{}).length;
-                return `<div class="card" onclick="selectType('${tid}')">
-                    <h4>${t.name}</h4>
-                    <small>${mc} model${mc!==1?'s':''}</small>
-                </div>`;
-            }).join('')}
-            <div class="card card-add" onclick="openModal('addTypeModal')">
-                <span style="font-size:24px;">+</span>
-                <span>Add Type</span>
-            </div>
-        </div>`;
+    const breadcrumb = document.createElement('div');
+    breadcrumb.className = 'breadcrumb';
+    const breadcrumbText = document.createElement('b');
+    breadcrumbText.textContent = brand.name;
+    breadcrumb.appendChild(breadcrumbText);
+    main.appendChild(breadcrumb);
+
+    const header = document.createElement('div');
+    header.className = 'main-header';
+    const h3 = document.createElement('h3');
+    h3.textContent = brand.name;
+    header.appendChild(h3);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-danger';
+    deleteBtn.textContent = 'Delete Brand';
+    deleteBtn.onclick = () => deleteBrand(currentBrand);
+    header.appendChild(deleteBtn);
+    main.appendChild(header);
+
+    const cards = document.createElement('div');
+    cards.className = 'cards';
+
+    types.forEach(([tid, t]) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.onclick = () => selectType(tid);
+
+        const title = document.createElement('h4');
+        title.textContent = t.name;
+        card.appendChild(title);
+
+        const subtitle = document.createElement('small');
+        const mc = Object.keys(t.models || {}).length;
+        subtitle.textContent = `${mc} model${mc !== 1 ? 's' : ''}`;
+        card.appendChild(subtitle);
+
+        cards.appendChild(card);
+    });
+
+    const addCard = document.createElement('div');
+    addCard.className = 'card card-add';
+    addCard.onclick = () => openModal('addTypeModal');
+    const plus = document.createElement('span');
+    plus.style.fontSize = '24px';
+    plus.textContent = '+';
+    addCard.appendChild(plus);
+    const addLabel = document.createElement('span');
+    addLabel.textContent = 'Add Type';
+    addCard.appendChild(addLabel);
+    cards.appendChild(addCard);
+
+    main.appendChild(cards);
 }
 
 // ── Type select → Model view ──────────────────────────────
@@ -307,39 +369,106 @@ function renderModelView() {
     const type  = brand.types[currentType];
     const models = Object.entries(type.models || {});
     const main = document.getElementById('mainArea');
+    main.innerHTML = '';
 
-    main.innerHTML = `
-        <div class="breadcrumb">
-            <span onclick="renderTypeView(); currentType=null;">${brand.name}</span>
-            <span class="sep">›</span>
-            <b>${type.name}</b>
-        </div>
-        <div class="main-header">
-            <h3>${type.name}</h3>
-            <div style="display:flex;gap:8px;">
-                <button class="btn-secondary" onclick="openModal('addModelModal')">+ Add Model</button>
-                <button class="btn-danger" onclick="deleteType('${currentType}')">Delete Type</button>
-            </div>
-        </div>
-        <table class="data-table">
-            <thead><tr><th>Model</th><th>Issues</th><th style="width:100px;"></th></tr></thead>
-            <tbody>
-            ${models.length === 0
-                ? `<tr><td colspan="3" style="text-align:center;color:#86868b;padding:24px;">No models yet</td></tr>`
-                : models.map(([mid, model]) => {
-                    const ic = Object.keys(model.issues||{}).length;
-                    return `<tr>
-                        <td style="font-weight:600;cursor:pointer;" onclick="selectModel('${mid}')">${model.name}</td>
-                        <td style="color:#86868b;cursor:pointer;" onclick="selectModel('${mid}')">${ic} issue${ic!==1?'s':''}</td>
-                        <td>
-                            <button class="btn-ghost" onclick="selectModel('${mid}')" title="Edit issues">✏️</button>
-                            <button class="btn-ghost" onclick="deleteModel('${mid}')" title="Delete">🗑</button>
-                        </td>
-                    </tr>`;
-                }).join('')
-            }
-            </tbody>
-        </table>`;
+    const breadcrumb = document.createElement('div');
+    breadcrumb.className = 'breadcrumb';
+    const brandLink = document.createElement('span');
+    brandLink.textContent = brand.name;
+    brandLink.onclick = () => { renderTypeView(); currentType = null; };
+    breadcrumb.appendChild(brandLink);
+    const sep = document.createElement('span');
+    sep.className = 'sep';
+    sep.textContent = '›';
+    breadcrumb.appendChild(sep);
+    const current = document.createElement('b');
+    current.textContent = type.name;
+    breadcrumb.appendChild(current);
+    main.appendChild(breadcrumb);
+
+    const header = document.createElement('div');
+    header.className = 'main-header';
+    const h3 = document.createElement('h3');
+    h3.textContent = type.name;
+    header.appendChild(h3);
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = '8px';
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-secondary';
+    addBtn.textContent = '+ Add Model';
+    addBtn.onclick = () => openModal('addModelModal');
+    buttonContainer.appendChild(addBtn);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-danger';
+    deleteBtn.textContent = 'Delete Type';
+    deleteBtn.onclick = () => deleteType(currentType);
+    buttonContainer.appendChild(deleteBtn);
+
+    header.appendChild(buttonContainer);
+    main.appendChild(header);
+
+    const table = document.createElement('table');
+    table.className = 'data-table';
+    const thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Model</th><th>Issues</th><th style="width:100px;"></th></tr>';
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    if (models.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 3;
+        cell.style.textAlign = 'center';
+        cell.style.color = '#86868b';
+        cell.style.padding = '24px';
+        cell.textContent = 'No models yet';
+        row.appendChild(cell);
+        tbody.appendChild(row);
+    } else {
+        models.forEach(([mid, model]) => {
+            const row = document.createElement('tr');
+
+            const td1 = document.createElement('td');
+            td1.style.fontWeight = '600';
+            td1.style.cursor = 'pointer';
+            td1.textContent = model.name;
+            td1.onclick = () => selectModel(mid);
+            row.appendChild(td1);
+
+            const td2 = document.createElement('td');
+            td2.style.color = '#86868b';
+            td2.style.cursor = 'pointer';
+            td2.textContent = `${Object.keys(model.issues || {}).length} issue${Object.keys(model.issues || {}).length !== 1 ? 's' : ''}`;
+            td2.onclick = () => selectModel(mid);
+            row.appendChild(td2);
+
+            const td3 = document.createElement('td');
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn-ghost';
+            editBtn.title = 'Edit issues';
+            editBtn.textContent = '✏️';
+            editBtn.onclick = () => selectModel(mid);
+            td3.appendChild(editBtn);
+
+            td3.appendChild(document.createTextNode(' '));
+            const deleteBtnRow = document.createElement('button');
+            deleteBtnRow.className = 'btn-ghost';
+            deleteBtnRow.title = 'Delete';
+            deleteBtnRow.textContent = '🗑';
+            deleteBtnRow.onclick = () => deleteModel(mid);
+            td3.appendChild(deleteBtnRow);
+            row.appendChild(td3);
+
+            tbody.appendChild(row);
+        });
+    }
+
+    table.appendChild(tbody);
+    main.appendChild(table);
 }
 
 // ── Model select → Issue view ─────────────────────────────
@@ -349,42 +478,116 @@ function selectModel(modelId) {
     const model = type.models[modelId];
     const issues = Object.entries(model.issues || {});
     const main = document.getElementById('mainArea');
+    main.innerHTML = '';
 
-    main.innerHTML = `
-        <div class="breadcrumb">
-            <span onclick="renderTypeView();currentType=null;">${brand.name}</span>
-            <span class="sep">›</span>
-            <span onclick="renderModelView()">${type.name}</span>
-            <span class="sep">›</span>
-            <b>${model.name}</b>
-        </div>
-        <div class="main-header">
-            <h3>${model.name}</h3>
-            <button class="btn-secondary" onclick="openAddIssue('${modelId}')">+ Add Issue</button>
-        </div>
-        <table class="data-table" id="issueTable">
-            <thead><tr><th>Issue / Service</th><th style="width:140px;">Price (€)</th><th style="width:60px;"></th></tr></thead>
-            <tbody>
-            ${issues.length === 0
-                ? `<tr><td colspan="3" style="text-align:center;color:#86868b;padding:24px;">No issues yet — click "+ Add Issue"</td></tr>`
-                : issues.map(([iid, issue]) => `
-                    <tr>
-                        <td>${issue.name}<br><small style="color:#aaa;font-size:11px;">${iid}</small></td>
-                        <td>
-                            <input class="price-input" type="number" min="-1"
-                                value="${issue.price}"
-                                data-brand="${currentBrand}"
-                                data-type="${currentType}"
-                                data-model="${modelId}"
-                                data-issue="${iid}"
-                                onchange="updatePrice('${modelId}','${iid}',this.value)" />
-                            <div style="font-size:10px;color:#aaa;margin-top:2px;">0=Contact Us &nbsp;-1=Hidden</div>
-                        </td>
-                        <td><button class="btn-ghost" onclick="deleteIssue('${modelId}','${iid}')">🗑</button></td>
-                    </tr>`).join('')
-            }
-            </tbody>
-        </table>`;
+    const breadcrumb = document.createElement('div');
+    breadcrumb.className = 'breadcrumb';
+
+    const brandLink = document.createElement('span');
+    brandLink.textContent = brand.name;
+    brandLink.onclick = () => { renderTypeView(); currentType = null; };
+    breadcrumb.appendChild(brandLink);
+
+    const sep1 = document.createElement('span');
+    sep1.className = 'sep';
+    sep1.textContent = '›';
+    breadcrumb.appendChild(sep1);
+
+    const typeLink = document.createElement('span');
+    typeLink.textContent = type.name;
+    typeLink.onclick = () => renderModelView();
+    breadcrumb.appendChild(typeLink);
+
+    const sep2 = document.createElement('span');
+    sep2.className = 'sep';
+    sep2.textContent = '›';
+    breadcrumb.appendChild(sep2);
+
+    const modelLabel = document.createElement('b');
+    modelLabel.textContent = model.name;
+    breadcrumb.appendChild(modelLabel);
+    main.appendChild(breadcrumb);
+
+    const header = document.createElement('div');
+    header.className = 'main-header';
+    const h3 = document.createElement('h3');
+    h3.textContent = model.name;
+    header.appendChild(h3);
+
+    const addIssueBtn = document.createElement('button');
+    addIssueBtn.className = 'btn-secondary';
+    addIssueBtn.textContent = '+ Add Issue';
+    addIssueBtn.onclick = () => openAddIssue(modelId);
+    header.appendChild(addIssueBtn);
+    main.appendChild(header);
+
+    const table = document.createElement('table');
+    table.className = 'data-table';
+
+    const thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Issue / Service</th><th style="width:140px;">Price (€)</th><th style="width:60px;"></th></tr>';
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    if (issues.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 3;
+        cell.style.textAlign = 'center';
+        cell.style.color = '#86868b';
+        cell.style.padding = '24px';
+        cell.textContent = 'No issues yet — click "+ Add Issue"';
+        row.appendChild(cell);
+        tbody.appendChild(row);
+    } else {
+        issues.forEach(([iid, issue]) => {
+            const row = document.createElement('tr');
+
+            const td1 = document.createElement('td');
+            td1.textContent = issue.name;
+            const small = document.createElement('small');
+            small.style.color = '#aaa';
+            small.style.fontSize = '11px';
+            small.textContent = iid;
+            td1.appendChild(document.createElement('br')); // line break
+            td1.appendChild(small);
+            row.appendChild(td1);
+
+            const td2 = document.createElement('td');
+            const input = document.createElement('input');
+            input.className = 'price-input';
+            input.type = 'number';
+            input.min = '-1';
+            input.value = issue.price;
+            input.dataset.brand = currentBrand;
+            input.dataset.type = currentType;
+            input.dataset.model = modelId;
+            input.dataset.issue = iid;
+            input.onchange = function() { updatePrice(modelId, iid, this.value); };
+            td2.appendChild(input);
+
+            const infoDiv = document.createElement('div');
+            infoDiv.style.fontSize = '10px';
+            infoDiv.style.color = '#aaa';
+            infoDiv.style.marginTop = '2px';
+            infoDiv.textContent = '0=Contact Us -1=Hidden';
+            td2.appendChild(infoDiv);
+            row.appendChild(td2);
+
+            const td3 = document.createElement('td');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-ghost';
+            deleteBtn.textContent = '🗑';
+            deleteBtn.onclick = () => deleteIssue(modelId, iid);
+            td3.appendChild(deleteBtn);
+            row.appendChild(td3);
+
+            tbody.appendChild(row);
+        });
+    }
+
+    table.appendChild(tbody);
+    main.appendChild(table);
 
     // Store current model context for add issue modal
     document.getElementById('addIssueModal').dataset.modelId = modelId;

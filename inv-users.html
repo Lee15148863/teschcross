@@ -167,20 +167,97 @@ async function loadUsers(){
         const r=await apiFetch('/auth/users');if(!r)return;
         const users=await r.json();
         const tb=document.getElementById('userTable');
-        if(!users.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#86868b;padding:40px;">暂无用户</td></tr>';return;}
-        tb.innerHTML=users.map(u=>`<tr data-uid="${u._id}" data-perms='${JSON.stringify(u.permissions||{})}'>
-            <td><strong>${esc(u.username)}</strong></td>
-            <td>${esc(u.displayName||'-')}</td>
-            <td><span class="badge ${roleBadge[u.role]||'badge-staff'}">${roleMap[u.role]||u.role}</span></td>
-            <td>${u.active!==false?'<span class="badge badge-active">启用</span>':'<span class="badge badge-inactive">停用</span>'}</td>
-            <td>${new Date(u.createdAt).toLocaleDateString('zh-CN')}</td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="editUser('${u._id}','${esc(u.username)}','${esc(u.displayName||'')}','${u.role}')">编辑</button>
-                ${u.active!==false?`<button class="btn btn-danger btn-sm" onclick="disableUser('${u._id}')">停用</button>`:`<button class="btn btn-success btn-sm" onclick="enableUser('${u._id}')">启用</button>`}
-                <button class="btn btn-secondary btn-sm" onclick="showResetModal('${u._id}','${esc(u.username)}')">重置密码</button>
-                <button class="btn btn-sm" style="background:#6e6e73;color:#fff;" onclick="deleteUser('${u._id}','${esc(u.username)}')">删除</button>
-            </td>
-        </tr>`).join('');
+        if(!users.length){
+            tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#86868b;padding:40px;">暂无用户</td></tr>';
+            return;
+        }
+
+        // Clear existing content
+        tb.innerHTML = '';
+
+        // Build DOM elements safely
+        users.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-uid', u._id);
+            tr.setAttribute('data-perms', JSON.stringify(u.permissions || {}));
+
+            // Username cell
+            const td1 = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = u.username;
+            td1.appendChild(strong);
+            tr.appendChild(td1);
+
+            // Display name cell
+            const td2 = document.createElement('td');
+            td2.textContent = u.displayName || '-';
+            tr.appendChild(td2);
+
+            // Role cell
+            const td3 = document.createElement('td');
+            const roleSpan = document.createElement('span');
+            roleSpan.className = `badge ${roleBadge[u.role] || 'badge-staff'}`;
+            roleSpan.textContent = roleMap[u.role] || u.role;
+            td3.appendChild(roleSpan);
+            tr.appendChild(td3);
+
+            // Status cell
+            const td4 = document.createElement('td');
+            const statusSpan = document.createElement('span');
+            statusSpan.className = `badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}`;
+            statusSpan.textContent = u.active !== false ? '启用' : '停用';
+            td4.appendChild(statusSpan);
+            tr.appendChild(td4);
+
+            // Created date cell
+            const td5 = document.createElement('td');
+            td5.textContent = new Date(u.createdAt).toLocaleDateString('zh-CN');
+            tr.appendChild(td5);
+
+            // Actions cell
+            const td6 = document.createElement('td');
+
+            // Edit button
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-secondary btn-sm';
+            editBtn.textContent = '编辑';
+            editBtn.onclick = () => editUser(u._id, u.username, u.displayName || '', u.role);
+            td6.appendChild(editBtn);
+
+            // Active/Deactivate button
+            if (u.active !== false) {
+                const disableBtn = document.createElement('button');
+                disableBtn.className = 'btn btn-danger btn-sm';
+                disableBtn.textContent = '停用';
+                disableBtn.onclick = () => disableUser(u._id);
+                td6.appendChild(disableBtn);
+            } else {
+                const enableBtn = document.createElement('button');
+                enableBtn.className = 'btn btn-success btn-sm';
+                enableBtn.textContent = '启用';
+                enableBtn.onclick = () => enableUser(u._id);
+                td6.appendChild(enableBtn);
+            }
+
+            // Reset password button
+            const resetBtn = document.createElement('button');
+            resetBtn.className = 'btn btn-secondary btn-sm';
+            resetBtn.textContent = '重置密码';
+            resetBtn.onclick = () => showResetModal(u._id, u.username);
+            td6.appendChild(resetBtn);
+
+            // Delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-sm';
+            deleteBtn.style.background = '#6e6e73';
+            deleteBtn.style.color = '#fff';
+            deleteBtn.textContent = '删除';
+            deleteBtn.onclick = () => deleteUser(u._id, u.username);
+            td6.appendChild(deleteBtn);
+
+            tr.appendChild(td6);
+            tb.appendChild(tr);
+        });
     }catch(e){showToast('加载失败','error');}
 }
 

@@ -1917,35 +1917,109 @@
           '</div>';
 
         if (!matches.length) {
-          resultEl.innerHTML = '<div style="text-align:center;color:#86868b;padding:20px;">No orders found</div>';
+          resultEl.textContent = '';
+          const emptyDiv = document.createElement('div');
+          emptyDiv.style.textAlign = 'center';
+          emptyDiv.style.color = '#86868b';
+          emptyDiv.style.padding = '20px';
+          emptyDiv.textContent = 'No orders found';
+          resultEl.appendChild(emptyDiv);
           return;
         }
 
-        resultEl.innerHTML = matches.map(function(t) {
-          var dateStr = new Date(t.createdAt).toLocaleString('en-IE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-          var pm = t.paymentMethod === 'split' ? '💳+💵' : (t.paymentMethod === 'card' ? '💳' : '💵');
-          var isRefund = t.totalAmount < 0;
-          var amountStyle = isRefund ? 'color:#ff3b30;' : '';
-          var items = (t.items || []).map(function(i) { return i.name; }).join(', ');
-          return '<div style="padding:12px;border:1px solid #e5e5e7;border-radius:10px;margin-bottom:8px;background:#fff;">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-            '<div><strong>' + (isRefund ? '↩️ ' : '') + '#' + escHtml(t.receiptNumber) + '</strong> <span style="color:#86868b;font-size:12px;">' + dateStr + ' ' + pm + '</span></div>' +
-            '<strong style="font-size:16px;' + amountStyle + '">€' + t.totalAmount.toFixed(2) + '</strong>' +
-            '</div>' +
-            '<div style="font-size:12px;color:#6e6e73;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(items) + '</div>' +
-            '<div style="display:flex;gap:8px;margin-top:8px;">' +
-            '<button class="op-view-receipt" data-id="' + t._id + '" style="padding:6px 12px;border:1px solid #d2d2d7;border-radius:8px;background:#fff;font-size:12px;cursor:pointer;">📄 View Receipt</button>' +
-            (!isRefund ? '<button class="op-refund" data-receipt="' + escHtml(t.receiptNumber) + '" style="padding:6px 12px;border:1px solid #ff3b30;border-radius:8px;background:#fff;color:#ff3b30;font-size:12px;cursor:pointer;">↩️ Refund</button>' : '') +
-            '</div></div>';
-        }).join('');
+        resultEl.innerHTML = '';
+        const fragment = document.createDocumentFragment();
 
-        // Event delegation for order panel buttons
-        resultEl.addEventListener('click', function(e) {
+        matches.forEach(function(t) {
+          const card = document.createElement('div');
+          card.style.padding = '12px';
+          card.style.border = '1px solid #e5e5e7';
+          card.style.borderRadius = '10px';
+          card.style.marginBottom = '8px';
+          card.style.background = '#fff';
+
+          const topRow = document.createElement('div');
+          topRow.style.display = 'flex';
+          topRow.style.justifyContent = 'space-between';
+          topRow.style.alignItems = 'center';
+
+          const info = document.createElement('div');
+          const title = document.createElement('strong');
+          title.textContent = (t.totalAmount < 0 ? '↩️ ' : '') + '#' + t.receiptNumber;
+          info.appendChild(title);
+
+          const meta = document.createElement('span');
+          meta.style.color = '#86868b';
+          meta.style.fontSize = '12px';
+          meta.textContent = new Date(t.createdAt).toLocaleString('en-IE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) + ' ' +
+            (t.paymentMethod === 'split' ? '💳+💵' : (t.paymentMethod === 'card' ? '💳' : '💵'));
+          info.appendChild(document.createTextNode(' '));
+          info.appendChild(meta);
+
+          topRow.appendChild(info);
+
+          const amount = document.createElement('strong');
+          amount.style.fontSize = '16px';
+          if (t.totalAmount < 0) amount.style.color = '#ff3b30';
+          amount.textContent = '€' + t.totalAmount.toFixed(2);
+          topRow.appendChild(amount);
+
+          card.appendChild(topRow);
+
+          const itemLine = document.createElement('div');
+          itemLine.style.fontSize = '12px';
+          itemLine.style.color = '#6e6e73';
+          itemLine.style.marginTop = '4px';
+          itemLine.style.whiteSpace = 'nowrap';
+          itemLine.style.overflow = 'hidden';
+          itemLine.style.textOverflow = 'ellipsis';
+          itemLine.textContent = (t.items || []).map(function(i) { return i.name; }).join(', ');
+          card.appendChild(itemLine);
+
+          const actionRow = document.createElement('div');
+          actionRow.style.display = 'flex';
+          actionRow.style.gap = '8px';
+          actionRow.style.marginTop = '8px';
+
+          const viewBtn = document.createElement('button');
+          viewBtn.className = 'op-view-receipt';
+          viewBtn.dataset.id = t._id;
+          viewBtn.style.padding = '6px 12px';
+          viewBtn.style.border = '1px solid #d2d2d7';
+          viewBtn.style.borderRadius = '8px';
+          viewBtn.style.background = '#fff';
+          viewBtn.style.fontSize = '12px';
+          viewBtn.style.cursor = 'pointer';
+          viewBtn.textContent = '📄 View Receipt';
+          actionRow.appendChild(viewBtn);
+
+          if (t.totalAmount >= 0) {
+            const refundBtn = document.createElement('button');
+            refundBtn.className = 'op-refund';
+            refundBtn.dataset.receipt = t.receiptNumber;
+            refundBtn.style.padding = '6px 12px';
+            refundBtn.style.border = '1px solid #ff3b30';
+            refundBtn.style.borderRadius = '8px';
+            refundBtn.style.background = '#fff';
+            refundBtn.style.color = '#ff3b30';
+            refundBtn.style.fontSize = '12px';
+            refundBtn.style.cursor = 'pointer';
+            refundBtn.textContent = '↩️ Refund';
+            actionRow.appendChild(refundBtn);
+          }
+
+          card.appendChild(actionRow);
+          fragment.appendChild(card);
+        });
+
+        resultEl.appendChild(fragment);
+
+        resultEl.onclick = function(e) {
           var viewBtn = e.target.closest('.op-view-receipt');
           if (viewBtn) { viewOrderDetail(viewBtn.dataset.id); return; }
           var refundBtn = e.target.closest('.op-refund');
           if (refundBtn) { refundFromOrder(refundBtn.dataset.receipt); return; }
-        });
+        };
       } catch(e) {
         resultEl.innerHTML = '<div style="color:#ff3b30;padding:20px;">Error: ' + e.message + '</div>';
       }

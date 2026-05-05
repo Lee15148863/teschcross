@@ -148,7 +148,54 @@ function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent
 function fmt(v){return'€'+Number(v||0).toFixed(2);}
 function fN(v){return Number(v||0).toFixed(2);}
 function pmIcon(m){return m==='split'?'💳+💵':m==='card'?'💳 Card':'💵 Cash';}
-function sc(label,value,cls){return'<div class="sum-card"><div class="sum-label">'+label+'</div><div class="sum-value'+(cls?' '+cls:'')+'">'+value+'</div></div>';}
+function createSumCard(label,value,cls){
+    var card=document.createElement('div');
+    card.className='sum-card';
+    if(cls)card.classList.add(cls);
+    var lbl=document.createElement('div');
+    lbl.className='sum-label';
+    lbl.textContent=label;
+    var val=document.createElement('div');
+    val.className='sum-value';
+    if(cls)val.classList.add(cls);
+    val.textContent=value;
+    card.appendChild(lbl);
+    card.appendChild(val);
+    return card;
+}
+function renderSummaryCards(containerId, items){
+    var container=document.getElementById(containerId);
+    if(!container)return;
+    container.innerHTML='';
+    items.forEach(function(item){
+        container.appendChild(createSumCard(item.label,item.value,item.cls));
+    });
+}
+function createVatTable(rows){
+    var table=document.createElement('table');
+    table.className='vat-table';
+    var thead=document.createElement('thead');
+    var headRow=document.createElement('tr');
+    ['Tax Type','Total Sales','VAT Payable'].forEach(function(text){
+        var th=document.createElement('th');
+        th.textContent=text;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+    var tbody=document.createElement('tbody');
+    rows.forEach(function(row){
+        var tr=document.createElement('tr');
+        if(row.isTotal) tr.className='total-row';
+        var tdLabel=document.createElement('td'); tdLabel.textContent=row.label; tr.appendChild(tdLabel);
+        var tdSales=document.createElement('td'); tdSales.textContent=row.sales; tr.appendChild(tdSales);
+        var tdVat=document.createElement('td'); tdVat.textContent=row.vat; tr.appendChild(tdVat);
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+}
+
 
 var today=new Date();
 document.getElementById('dailyDate').value=today.toISOString().split('T')[0];
@@ -183,11 +230,18 @@ async function loadDaily(){
         if(resp.message||!resp.data){
             // 即使无交易也显示空汇总（当天显示 So far）
             if(isToday){
-                document.getElementById('dailySummary').innerHTML=
-                    sc('销售额（退货前）'+sfx,'€0.00')+sc('🔻 退款金额'+sfx,'€0.00','red')+sc('📊 全天汇总'+sfx,'€0.00')+
-                    sc('商品销售 (23%)'+sfx,'€0.00')+sc('维修服务 (13.5%)'+sfx,'€0.00')+
-                    sc('差价税销售'+sfx,'€0.00')+sc('23% 应缴税额'+sfx,'€0.00')+sc('13.5% 应缴税额'+sfx,'€0.00')+
-                    sc('💵 现金收入'+sfx,'€0.00')+sc('💳 银行卡收入'+sfx,'€0.00');
+                renderSummaryCards('dailySummary', [
+                    {label:'销售额（退货前）'+sfx, value:'€0.00'},
+                    {label:'🔻 退款金额'+sfx, value:'€0.00', cls:'red'},
+                    {label:'📊 全天汇总'+sfx, value:'€0.00'},
+                    {label:'商品销售 (23%)'+sfx, value:'€0.00'},
+                    {label:'维修服务 (13.5%)'+sfx, value:'€0.00'},
+                    {label:'差价税销售'+sfx, value:'€0.00'},
+                    {label:'23% 应缴税额'+sfx, value:'€0.00'},
+                    {label:'13.5% 应缴税额'+sfx, value:'€0.00'},
+                    {label:'💵 现金收入'+sfx, value:'€0.00'},
+                    {label:'💳 银行卡收入'+sfx, value:'€0.00'}
+                ]);
             } else {
                 document.getElementById('dailySummary').innerHTML='';
             }
@@ -202,26 +256,28 @@ async function loadDaily(){
         var isToday=(date===new Date().toISOString().split('T')[0]);
         var sfx=isToday?' (So far)':'';
 
-        document.getElementById('dailySummary').innerHTML=
-            sc('销售额（退货前）'+sfx,fmt(d.grossSales||0))+
-            sc('🔻 退款金额'+sfx,fmt(d.refundTotal||0),'red')+
-            sc('📊 全天汇总'+sfx,fmt(d.totalSales))+
-            sc('商品销售 (23%)'+sfx,fmt(std23.sales))+
-            sc('维修服务 (13.5%)'+sfx,fmt(reduced.sales))+
-            sc('差价税销售'+sfx,fmt(margin.sales))+
-            sc('23% 应缴税额'+sfx,fmt(std23.vatPayable))+
-            sc('13.5% 应缴税额'+sfx,fmt(reduced.vatPayable))+
-            sc('💵 现金收入'+sfx,fmt(cashIn))+
-            sc('💳 银行卡收入'+sfx,fmt(cardIn));
+renderSummaryCards('dailySummary', [
+            {label:'销售额（退货前）'+sfx, value:fmt(d.grossSales||0)},
+            {label:'🔻 退款金额'+sfx, value:fmt(d.refundTotal||0), cls:'red'},
+            {label:'📊 全天汇总'+sfx, value:fmt(d.totalSales)},
+            {label:'商品销售 (23%)'+sfx, value:fmt(std23.sales)},
+            {label:'维修服务 (13.5%)'+sfx, value:fmt(reduced.sales)},
+            {label:'差价税销售'+sfx, value:fmt(margin.sales)},
+            {label:'23% 应缴税额'+sfx, value:fmt(std23.vatPayable)},
+            {label:'13.5% 应缴税额'+sfx, value:fmt(reduced.vatPayable)},
+            {label:'💵 现金收入'+sfx, value:fmt(cashIn)},
+            {label:'💳 银行卡收入'+sfx, value:fmt(cardIn)}
+        ]);
 
-        document.getElementById('dailyVat').innerHTML=
-            '<table class="vat-table"><thead><tr><th>Tax Type</th><th>Total Sales</th><th>VAT Payable</th></tr></thead><tbody>'+
-            '<tr><td>Standard 23% (Sales)</td><td>'+fmt(std23.sales)+'</td><td>'+fmt(std23.vatPayable)+'</td></tr>'+
-            '<tr><td>Service & Repair 13.5%</td><td>'+fmt(reduced.sales)+'</td><td>'+fmt(reduced.vatPayable)+'</td></tr>'+
-            '<tr><td>Margin Scheme</td><td>'+fmt(margin.sales)+'</td><td>'+fmt(margin.vatPayable)+'</td></tr>'+
-            '<tr><td>Lyca Credit</td><td>'+fmt(lyca.sales)+'</td><td>'+fmt(lyca.vatPayable)+'</td></tr>'+
-            '<tr class="total-row"><td>TOTAL</td><td>'+fmt(d.totalSales)+'</td><td>'+fmt(d.totalVatPayable)+'</td></tr>'+
-            '</tbody></table>';
+        var dailyVat = document.getElementById('dailyVat');
+        dailyVat.innerHTML='';
+        dailyVat.appendChild(createVatTable([
+            {label:'Standard 23% (Sales)', sales:fmt(std23.sales), vat:fmt(std23.vatPayable)},
+            {label:'Service & Repair 13.5%', sales:fmt(reduced.sales), vat:fmt(reduced.vatPayable)},
+            {label:'Margin Scheme', sales:fmt(margin.sales), vat:fmt(margin.vatPayable)},
+            {label:'Lyca Credit', sales:fmt(lyca.sales), vat:fmt(lyca.vatPayable)},
+            {label:'TOTAL', sales:fmt(d.totalSales), vat:fmt(d.totalVatPayable), isTotal:true}
+        ]));
 
         var r2=await apiFetch('/transactions?startDate='+date+'&endDate='+date+'&limit=500');if(!r2)return;
         var resp2=await r2.json();renderTxList('dailyBody',resp2.data||[]);
@@ -273,30 +329,52 @@ async function loadWeekly(){
         var expMap=await getExpensesByDate(ws,we);
 
         var gSales=0,gService=0,gMargin=0,gLyca=0,gCashIn=0,gCashOut=0,gCard=0;
-        var html=days.map(function(day){
+var weeklyBody = document.getElementById('weeklyBody');
+        weeklyBody.innerHTML = '';
+        days.forEach(function(day){
             var salesAmt=(day.standard23||{}).sales||0;var serviceAmt=(day.reduced135||{}).sales||0;
             var marginAmt=(day.margin||{}).sales||0;var lycaAmt=(day.lycaCredit||{}).sales||0;
             var cashIn=day.cash||0;var cashOut=expMap[day.date]||0;var cardAmt=day.card||0;
             gSales+=salesAmt;gService+=serviceAmt;gMargin+=marginAmt;gLyca+=lycaAmt;
             gCashIn+=cashIn;gCashOut+=cashOut;gCard+=cardAmt;
-            return '<tr><td>'+esc(day.date)+'</td><td>'+fmt(salesAmt)+'</td><td>'+fmt(serviceAmt)+'</td><td>'+fmt(marginAmt)+'</td>'+
-                '<td>'+fmt(cashIn)+'</td><td style="color:#ff3b30;">'+fmt(cashOut)+'</td><td>'+fmt(cardAmt)+'</td></tr>';
-        }).join('');
+
+            var tr = document.createElement('tr');
+            var tdDate = document.createElement('td'); tdDate.textContent = day.date || ''; tr.appendChild(tdDate);
+            var tdSales = document.createElement('td'); tdSales.textContent = fmt(salesAmt); tr.appendChild(tdSales);
+            var tdService = document.createElement('td'); tdService.textContent = fmt(serviceAmt); tr.appendChild(tdService);
+            var tdMargin = document.createElement('td'); tdMargin.textContent = fmt(marginAmt); tr.appendChild(tdMargin);
+            var tdCash = document.createElement('td'); tdCash.textContent = fmt(cashIn); tr.appendChild(tdCash);
+            var tdOut = document.createElement('td'); tdOut.textContent = fmt(cashOut); tdOut.style.color = '#ff3b30'; tr.appendChild(tdOut);
+            var tdCard = document.createElement('td'); tdCard.textContent = fmt(cardAmt); tr.appendChild(tdCard);
+            weeklyBody.appendChild(tr);
+        });
         var totalLabel=isCurrent?'TOTAL (So far)':'TOTAL';
-        html+='<tr class="total-row"><td>'+totalLabel+'</td><td>'+fmt(gSales)+'</td><td>'+fmt(gService)+'</td><td>'+fmt(gMargin)+'</td>'+
-            '<td>'+fmt(gCashIn)+'</td><td style="color:#ff3b30;">'+fmt(gCashOut)+'</td><td>'+fmt(gCard)+'</td></tr>';
-        document.getElementById('weeklyBody').innerHTML=html;
+        var totalRow = document.createElement('tr');
+        totalRow.className = 'total-row';
+        var tdLabel = document.createElement('td'); tdLabel.textContent = totalLabel; totalRow.appendChild(tdLabel);
+        var tdTotalSales = document.createElement('td'); tdTotalSales.textContent = fmt(gSales); totalRow.appendChild(tdTotalSales);
+        var tdTotalService = document.createElement('td'); tdTotalService.textContent = fmt(gService); totalRow.appendChild(tdTotalService);
+        var tdTotalMargin = document.createElement('td'); tdTotalMargin.textContent = fmt(gMargin); totalRow.appendChild(tdTotalMargin);
+        var tdTotalCash = document.createElement('td'); tdTotalCash.textContent = fmt(gCashIn); totalRow.appendChild(tdTotalCash);
+        var tdTotalOut = document.createElement('td'); tdTotalOut.textContent = fmt(gCashOut); tdTotalOut.style.color = '#ff3b30'; totalRow.appendChild(tdTotalOut);
+        var tdTotalCard = document.createElement('td'); tdTotalCard.textContent = fmt(gCard); totalRow.appendChild(tdTotalCard);
+        weeklyBody.appendChild(totalRow);
 
         var cashNet=gCashIn-gCashOut;
         var totalCardExpected=(s.totalCard||gCard);
-        document.getElementById('weeklySummary').innerHTML=
-            sc('本周销售（退货前）'+sfx,fmt(s.grossSales||0))+
-            sc('🔻 本周退款'+sfx,fmt(s.refundTotal||0),'red')+
-            sc('本周商品销售'+sfx,fmt(gSales))+sc('本周服务维修'+sfx,fmt(gService))+sc('本周差价税'+sfx,fmt(gMargin))+
-            sc('本周话费 Lyca'+sfx,fmt(gLyca))+
-            sc('💵 现金总收入'+sfx,fmt(gCashIn))+sc('💸 现金总支出'+sfx,fmt(gCashOut),'red')+
-            sc('💰 现金盈余'+sfx,fmt(cashNet),cashNet>=0?'green':'red')+
-            sc('💳 银行卡总收入'+sfx,fmt(gCard))+sc('📥 应进卡收款'+sfx,fmt(totalCardExpected));
+        renderSummaryCards('weeklySummary', [
+            {label:'本周销售（退货前）'+sfx, value:fmt(s.grossSales||0)},
+            {label:'🔻 本周退款'+sfx, value:fmt(s.refundTotal||0), cls:'red'},
+            {label:'本周商品销售'+sfx, value:fmt(gSales)},
+            {label:'本周服务维修'+sfx, value:fmt(gService)},
+            {label:'本周差价税'+sfx, value:fmt(gMargin)},
+            {label:'本周话费 Lyca'+sfx, value:fmt(gLyca)},
+            {label:'💵 现金总收入'+sfx, value:fmt(gCashIn)},
+            {label:'💸 现金总支出'+sfx, value:fmt(gCashOut), cls:'red'},
+            {label:'💰 现金盈余'+sfx, value:fmt(cashNet), cls: cashNet>=0 ? 'green' : 'red'},
+            {label:'💳 银行卡总收入'+sfx, value:fmt(gCard)},
+            {label:'📥 应进卡收款'+sfx, value:fmt(totalCardExpected)}
+        ]);
     }catch(e){toast('加载失败','error');}
 }
 document.getElementById('btnLoadWeekly').addEventListener('click',loadWeekly);
@@ -322,31 +400,54 @@ async function loadMonthly(){
         var sfx=isCurrent?' (So far / 至今)':'';
 
         var gSales=0,gService=0,gMargin=0,gV23=0,gV135=0,gVM=0,gCash=0,gOut=0,gCard=0;
-        var html=days.map(function(day){
+var monthlyBody = document.getElementById('monthlyBody');
+        monthlyBody.innerHTML = '';
+        days.forEach(function(day){
             var salesAmt=(day.standard23||{}).sales||0;var serviceAmt=(day.reduced135||{}).sales||0;var marginAmt=(day.margin||{}).sales||0;
             var v23=(day.standard23||{}).vatPayable||0;var v135=(day.reduced135||{}).vatPayable||0;var vm=(day.margin||{}).vatPayable||0;
             var cashIn=day.cash||0;var cashOut=expMap[day.date]||0;var cardAmt=day.card||0;
             gSales+=salesAmt;gService+=serviceAmt;gMargin+=marginAmt;gV23+=v23;gV135+=v135;gVM+=vm;
             gCash+=cashIn;gOut+=cashOut;gCard+=cardAmt;
             _mData.push({date:day.date,sales:salesAmt,repair:serviceAmt,margin:marginAmt,vat23:v23,vat135:v135,marginVat:vm,cashIn:cashIn,cashOut:cashOut,card:cardAmt});
-            return '<tr><td>'+esc(day.date)+'</td><td>'+fmt(salesAmt)+'</td><td>'+fmt(serviceAmt)+'</td><td>'+fmt(marginAmt)+'</td>'+
-                '<td>'+fmt(v23)+'</td><td>'+fmt(v135)+'</td><td>'+fmt(vm)+'</td>'+
-                '<td>'+fmt(cashIn)+'</td><td style="color:#ff3b30;">'+fmt(cashOut)+'</td><td>'+fmt(cardAmt)+'</td></tr>';
-        }).join('');
+
+            var tr = document.createElement('tr');
+            var tdDate = document.createElement('td'); tdDate.textContent = day.date || ''; tr.appendChild(tdDate);
+            var tdSales = document.createElement('td'); tdSales.textContent = fmt(salesAmt); tr.appendChild(tdSales);
+            var tdService = document.createElement('td'); tdService.textContent = fmt(serviceAmt); tr.appendChild(tdService);
+            var tdMargin = document.createElement('td'); tdMargin.textContent = fmt(marginAmt); tr.appendChild(tdMargin);
+            var tdV23 = document.createElement('td'); tdV23.textContent = fmt(v23); tr.appendChild(tdV23);
+            var tdV135 = document.createElement('td'); tdV135.textContent = fmt(v135); tr.appendChild(tdV135);
+            var tdVM = document.createElement('td'); tdVM.textContent = fmt(vm); tr.appendChild(tdVM);
+            var tdCash = document.createElement('td'); tdCash.textContent = fmt(cashIn); tr.appendChild(tdCash);
+            var tdOut = document.createElement('td'); tdOut.textContent = fmt(cashOut); tdOut.style.color = '#ff3b30'; tr.appendChild(tdOut);
+            var tdCard = document.createElement('td'); tdCard.textContent = fmt(cardAmt); tr.appendChild(tdCard);
+            monthlyBody.appendChild(tr);
+        });
         var totalLabel=isCurrent?'TOTAL (So far)':'TOTAL';
-        html+='<tr class="total-row"><td>'+totalLabel+'</td><td>'+fmt(gSales)+'</td><td>'+fmt(gService)+'</td><td>'+fmt(gMargin)+'</td>'+
-            '<td>'+fmt(gV23)+'</td><td>'+fmt(gV135)+'</td><td>'+fmt(gVM)+'</td>'+
-            '<td>'+fmt(gCash)+'</td><td style="color:#ff3b30;">'+fmt(gOut)+'</td><td>'+fmt(gCard)+'</td></tr>';
-        document.getElementById('monthlyBody').innerHTML=html;
+        var totalRow = document.createElement('tr');
+        totalRow.className = 'total-row';
+        var tdLabel = document.createElement('td'); tdLabel.textContent = totalLabel; totalRow.appendChild(tdLabel);
+        var tdTotalSales = document.createElement('td'); tdTotalSales.textContent = fmt(gSales); totalRow.appendChild(tdTotalSales);
+        var tdTotalService = document.createElement('td'); tdTotalService.textContent = fmt(gService); totalRow.appendChild(tdTotalService);
+        var tdTotalMargin = document.createElement('td'); tdTotalMargin.textContent = fmt(gMargin); totalRow.appendChild(tdTotalMargin);
+        var tdTotalV23 = document.createElement('td'); tdTotalV23.textContent = fmt(gV23); totalRow.appendChild(tdTotalV23);
+        var tdTotalV135 = document.createElement('td'); tdTotalV135.textContent = fmt(gV135); totalRow.appendChild(tdTotalV135);
+        var tdTotalVM = document.createElement('td'); tdTotalVM.textContent = fmt(gVM); totalRow.appendChild(tdTotalVM);
+        var tdTotalCash = document.createElement('td'); tdTotalCash.textContent = fmt(gCash); totalRow.appendChild(tdTotalCash);
+        var tdTotalOut = document.createElement('td'); tdTotalOut.textContent = fmt(gOut); tdTotalOut.style.color = '#ff3b30'; totalRow.appendChild(tdTotalOut);
+        var tdTotalCard = document.createElement('td'); tdTotalCard.textContent = fmt(gCard); totalRow.appendChild(tdTotalCard);
+        monthlyBody.appendChild(totalRow);
 
         var totalVat=gV23+gV135+gVM;
-        document.getElementById('monthlySummary').innerHTML=
-            sc('月销售额（退货前）'+sfx,fmt(s.grossSales||0))+
-            sc('🔻 月退款金额'+sfx,fmt(s.refundTotal||0),'red')+
-            sc('月总销售额（汇总）'+sfx,fmt(gSales+gService+gMargin))+
-            sc('23% 应缴税额'+sfx,fmt(gV23))+sc('13.5% 应缴税额'+sfx,fmt(gV135))+
-            sc('Margin 应缴税额'+sfx,fmt(gVM))+
-            sc('当月总应缴税额'+sfx,fmt(totalVat),'red');
+        renderSummaryCards('monthlySummary', [
+            {label:'月销售额（退货前）'+sfx, value:fmt(s.grossSales||0)},
+            {label:'🔻 月退款金额'+sfx, value:fmt(s.refundTotal||0), cls:'red'},
+            {label:'月总销售额（汇总）'+sfx, value:fmt(gSales+gService+gMargin)},
+            {label:'23% 应缴税额'+sfx, value:fmt(gV23)},
+            {label:'13.5% 应缴税额'+sfx, value:fmt(gV135)},
+            {label:'Margin 应缴税额'+sfx, value:fmt(gVM)},
+            {label:'当月总应缴税额'+sfx, value:fmt(totalVat), cls:'red'}
+        ]);
     }catch(e){toast('加载失败','error');}
 }
 document.getElementById('btnLoadMonthly').addEventListener('click',loadMonthly);
@@ -354,19 +455,92 @@ document.getElementById('btnLoadMonthly').addEventListener('click',loadMonthly);
 // ═══ 交易列表渲染 ═══
 function renderTxList(tbodyId,txs){
     var tb=document.getElementById(tbodyId);
-    if(!txs||!txs.length){tb.innerHTML='<tr><td colspan="6" class="no-data">📭 暂无交易记录</td></tr>';return;}
-    tb.innerHTML=txs.map(function(tx){
-        var isR=tx.totalAmount<0;
-        return '<tr data-id="'+tx._id+'"><td class="tx-no">'+(isR?'↩️ ':'')+esc(tx.receiptNumber)+'</td>'+
-            '<td>'+new Date(tx.createdAt).toLocaleString('en-IE')+'</td><td class="tx-qty">'+(tx.items?tx.items.length:0)+'</td>'+
-            '<td class="tx-amount" style="'+(isR?'color:#ff3b30;':'')+'">'+fmt(tx.totalAmount)+'</td>'+
-            '<td class="tx-pay">'+pmIcon(tx.paymentMethod)+'</td><td>'+
-            '<button class="btn-sm btn-view" data-action="view" data-id="'+tx._id+'">详情</button>'+
-            '<button class="btn-sm btn-print" data-action="reprint" data-id="'+tx._id+'">🖨️</button>'+
-            (tx.totalAmount>=0?'<button class="btn-sm btn-refund" data-action="refund" data-receipt="'+esc(tx.receiptNumber)+'">退款</button>':'')+
-            (isAdmin?'<button class="btn-sm btn-delete" data-action="delete" data-id="'+tx._id+'">删除</button>':'')+
-            '</td></tr>';
-    }).join('');
+    if(!txs||!txs.length){
+        tb.innerHTML='<tr><td colspan="6" class="no-data">📭 暂无交易记录</td></tr>';
+        return;
+    }
+
+    // Clear existing content
+    tb.innerHTML = '';
+
+    // Build DOM elements safely
+    txs.forEach(function(tx){
+        var isR = tx.totalAmount < 0;
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-id', tx._id);
+
+        // Receipt number cell
+        const td1 = document.createElement('td');
+        td1.className = 'tx-no';
+        td1.textContent = (isR ? '↩️ ' : '') + tx.receiptNumber;
+        tr.appendChild(td1);
+
+        // Date cell
+        const td2 = document.createElement('td');
+        td2.textContent = new Date(tx.createdAt).toLocaleString('en-IE');
+        tr.appendChild(td2);
+
+        // Quantity cell
+        const td3 = document.createElement('td');
+        td3.className = 'tx-qty';
+        td3.textContent = tx.items ? tx.items.length : 0;
+        tr.appendChild(td3);
+
+        // Amount cell
+        const td4 = document.createElement('td');
+        td4.className = 'tx-amount';
+        if (isR) td4.style.color = '#ff3b30';
+        td4.textContent = fmt(tx.totalAmount);
+        tr.appendChild(td4);
+
+        // Payment method cell
+        const td5 = document.createElement('td');
+        td5.className = 'tx-pay';
+        td5.innerHTML = pmIcon(tx.paymentMethod); // This is safe as pmIcon returns safe HTML
+        tr.appendChild(td5);
+
+        // Actions cell
+        const td6 = document.createElement('td');
+
+        // View button
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn-sm btn-view';
+        viewBtn.setAttribute('data-action', 'view');
+        viewBtn.setAttribute('data-id', tx._id);
+        viewBtn.textContent = '详情';
+        td6.appendChild(viewBtn);
+
+        // Print button
+        const printBtn = document.createElement('button');
+        printBtn.className = 'btn-sm btn-print';
+        printBtn.setAttribute('data-action', 'reprint');
+        printBtn.setAttribute('data-id', tx._id);
+        printBtn.textContent = '🖨️';
+        td6.appendChild(printBtn);
+
+        // Refund button (if not refund)
+        if (tx.totalAmount >= 0) {
+            const refundBtn = document.createElement('button');
+            refundBtn.className = 'btn-sm btn-refund';
+            refundBtn.setAttribute('data-action', 'refund');
+            refundBtn.setAttribute('data-receipt', tx.receiptNumber);
+            refundBtn.textContent = '退款';
+            td6.appendChild(refundBtn);
+        }
+
+        // Delete button (admin only)
+        if (isAdmin) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-sm btn-delete';
+            deleteBtn.setAttribute('data-action', 'delete');
+            deleteBtn.setAttribute('data-id', tx._id);
+            deleteBtn.textContent = '删除';
+            td6.appendChild(deleteBtn);
+        }
+
+        tr.appendChild(td6);
+        tb.appendChild(tr);
+    });
 }
 
 // ═══ 事件委托 ═══
@@ -380,19 +554,88 @@ document.querySelectorAll('.tx-table').forEach(function(t){t.addEventListener('c
 
 // ═══ 详情 ═══
 async function viewDetail(id){
-    try{var r=await apiFetch('/transactions/'+id);if(!r)return;var tx=await r.json();
-    var h='<div class="detail-row"><span class="label">单号</span><span class="value">'+esc(tx.receiptNumber)+'</span></div>'+
-        '<div class="detail-row"><span class="label">时间</span><span class="value">'+new Date(tx.createdAt).toLocaleString('en-IE')+'</span></div>'+
-        '<div class="detail-row"><span class="label">支付</span><span class="value">'+pmIcon(tx.paymentMethod)+'</span></div>'+
-        '<div class="detail-row"><span class="label">总金额</span><span class="value">'+fmt(tx.totalAmount)+'</span></div>';
-    if(tx.cashReceived)h+='<div class="detail-row"><span class="label">实收</span><span class="value">'+fmt(tx.cashReceived)+'</span></div>';
-    if(tx.changeGiven>0)h+='<div class="detail-row"><span class="label">找零</span><span class="value">'+fmt(tx.changeGiven)+'</span></div>';
-    if(tx.cardAmount)h+='<div class="detail-row"><span class="label">卡付</span><span class="value">'+fmt(tx.cardAmount)+'</span></div>';
-    h+='<h4 style="margin:16px 0 8px;">商品明细</h4><table class="tx-table"><thead><tr><th>商品</th><th>数量</th><th>单价</th><th>小计</th></tr></thead><tbody>'+
-        (tx.items||[]).map(function(it){return '<tr><td>'+esc(it.name)+(it.serialNumber?'<br><small style="color:#0071e3;">SN:'+esc(it.serialNumber)+'</small>':'')+'</td><td>'+it.quantity+'</td><td>'+fmt(it.unitPrice)+'</td><td>'+fmt(it.subtotal)+'</td></tr>';}).join('')+'</tbody></table>';
-    document.getElementById('detailContent').innerHTML=h;document.getElementById('detailModal').classList.add('show');
-    }catch(e){toast('加载失败','error');}
-}
+    try {
+        var r = await apiFetch('/transactions/'+id);
+        if(!r) return;
+        var tx = await r.json();
+
+        var detailContent = document.getElementById('detailContent');
+        detailContent.innerHTML = '';
+
+        function addDetailRow(label, value) {
+            var row = document.createElement('div');
+            row.className = 'detail-row';
+            var labelEl = document.createElement('span');
+            labelEl.className = 'label';
+            labelEl.textContent = label;
+            var valueEl = document.createElement('span');
+            valueEl.className = 'value';
+            valueEl.textContent = value;
+            row.appendChild(labelEl);
+            row.appendChild(valueEl);
+            detailContent.appendChild(row);
+        }
+
+        addDetailRow('单号', tx.receiptNumber || '');
+        addDetailRow('时间', new Date(tx.createdAt).toLocaleString('en-IE'));
+        addDetailRow('支付', pmIcon(tx.paymentMethod));
+        addDetailRow('总金额', fmt(tx.totalAmount));
+        if (tx.cashReceived) addDetailRow('实收', fmt(tx.cashReceived));
+        if (tx.changeGiven > 0) addDetailRow('找零', fmt(tx.changeGiven));
+        if (tx.cardAmount) addDetailRow('卡付', fmt(tx.cardAmount));
+
+        var heading = document.createElement('h4');
+        heading.style.margin = '16px 0 8px';
+        heading.textContent = '商品明细';
+        detailContent.appendChild(heading);
+
+        var table = document.createElement('table');
+        table.className = 'tx-table';
+        var thead = document.createElement('thead');
+        var headerRow = document.createElement('tr');
+        ['商品', '数量', '单价', '小计'].forEach(function(text) {
+            var th = document.createElement('th');
+            th.textContent = text;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+        (tx.items || []).forEach(function(it) {
+            var tr = document.createElement('tr');
+            var tdName = document.createElement('td');
+            tdName.textContent = it.name || '';
+            if (it.serialNumber) {
+                var br = document.createElement('br');
+                var sn = document.createElement('small');
+                sn.style.color = '#0071e3';
+                sn.textContent = 'SN:' + it.serialNumber;
+                tdName.appendChild(br);
+                tdName.appendChild(sn);
+            }
+            tr.appendChild(tdName);
+
+            var tdQty = document.createElement('td');
+            tdQty.textContent = it.quantity;
+            tr.appendChild(tdQty);
+
+            var tdUnit = document.createElement('td');
+            tdUnit.textContent = fmt(it.unitPrice);
+            tr.appendChild(tdUnit);
+
+            var tdSubtotal = document.createElement('td');
+            tdSubtotal.textContent = fmt(it.subtotal);
+            tr.appendChild(tdSubtotal);
+
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        detailContent.appendChild(table);
+        document.getElementById('detailModal').classList.add('show');
+    } catch(e) {
+        toast('加载失败','error');
+    }
 document.getElementById('btnCloseDetail').addEventListener('click',function(){document.getElementById('detailModal').classList.remove('show');});
 
 // ═══ 重打印 ═══

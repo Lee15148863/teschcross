@@ -32,20 +32,15 @@ class EnhancedAdmin {
     }
 
     async _saveToAPI() {
-        const token = localStorage.getItem('admin_token') || prompt('Enter admin token:');
-        if (!token) return false;
-        localStorage.setItem('admin_token', token);
         try {
             if (typeof PricingAPI !== 'undefined' && this.apiBrand) {
-                await PricingAPI.save(this.apiBrand, this.pricingData, token);
+                await PricingAPI.save(this.apiBrand, this.pricingData);
                 return true;
             }
         } catch(e) {
-            console.warn('API save failed, falling back to localStorage', e);
+            console.warn('API save failed', e);
         }
-        // Fallback
-        await this._saveToAPI();
-        return true;
+        return false;
     }
 
     // Initialize the admin interface

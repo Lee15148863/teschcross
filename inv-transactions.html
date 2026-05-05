@@ -185,22 +185,90 @@ async function loadTransactions(){
         const list=data.data||[];
         const tb=document.getElementById('txTable');
         if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">No transactions found</td></tr>';return;}
-        tb.innerHTML=list.map(tx=>{
-            const isRefund=tx.totalAmount<0;
-            const amountStyle=isRefund?'color:#ff3b30;':'';
-            return `<tr>
-            <td style="font-family:monospace;font-size:13px;">${isRefund?'↩️ ':''}${esc(tx.receiptNumber)}</td>
-            <td>${new Date(tx.createdAt).toLocaleString('en-IE')}</td>
-            <td>${tx.items?tx.items.length:0}</td>
-            <td style="${amountStyle}">€${Number(tx.totalAmount).toFixed(2)}</td>
-            <td>${tx.paymentMethod==='split'?'💳+💵':tx.paymentMethod==='cash'?'💵 Cash':'💳 Card'}</td>
-            <td>${tx.exported?'<span class="badge badge-exported">Exported</span>':''}</td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="viewDetail('${tx._id}')">详情</button>
-                <button class="btn btn-secondary btn-sm" onclick="reprintReceipt('${tx._id}')">🖨️</button>
-                ${isAdmin?`<button class="btn btn-danger btn-sm" onclick="silentDelete('${tx._id}')">删除</button>`:''}
-            </td>
-        </tr>`}).join('');
+        // Clear existing content
+        tb.innerHTML = '';
+
+        // Build DOM elements safely
+        list.forEach(tx => {
+            const isRefund = tx.totalAmount < 0;
+            const tr = document.createElement('tr');
+
+            // Receipt number cell
+            const td1 = document.createElement('td');
+            td1.style.fontFamily = 'monospace';
+            td1.style.fontSize = '13px';
+            td1.textContent = (isRefund ? '↩️ ' : '') + tx.receiptNumber;
+            tr.appendChild(td1);
+
+            // Date cell
+            const td2 = document.createElement('td');
+            td2.textContent = new Date(tx.createdAt).toLocaleString('en-IE');
+            tr.appendChild(td2);
+
+            // Items count cell
+            const td3 = document.createElement('td');
+            td3.textContent = tx.items ? tx.items.length : 0;
+            tr.appendChild(td3);
+
+            // Amount cell
+            const td4 = document.createElement('td');
+            if (isRefund) td4.style.color = '#ff3b30';
+            td4.textContent = '€' + Number(tx.totalAmount).toFixed(2);
+            tr.appendChild(td4);
+
+            // Payment method cell
+            const td5 = document.createElement('td');
+            if (tx.paymentMethod === 'split') {
+                td5.textContent = '💳+💵';
+            } else if (tx.paymentMethod === 'cash') {
+                td5.textContent = '💵 Cash';
+            } else {
+                td5.textContent = '💳 Card';
+            }
+            tr.appendChild(td5);
+
+            // Exported status cell
+            const td6 = document.createElement('td');
+            if (tx.exported) {
+                const exportedSpan = document.createElement('span');
+                exportedSpan.className = 'badge badge-exported';
+                exportedSpan.textContent = 'Exported';
+                td6.appendChild(exportedSpan);
+            }
+            tr.appendChild(td6);
+
+            // Actions cell
+            const td7 = document.createElement('td');
+
+            // View detail button
+            const viewBtn = document.createElement('button');
+            viewBtn.className = 'btn btn-secondary btn-sm';
+            viewBtn.textContent = '详情';
+            viewBtn.onclick = () => viewDetail(tx._id);
+            td7.appendChild(viewBtn);
+
+            td7.appendChild(document.createTextNode(' '));
+
+            // Print receipt button
+            const printBtn = document.createElement('button');
+            printBtn.className = 'btn btn-secondary btn-sm';
+            printBtn.textContent = '🖨️';
+            printBtn.onclick = () => reprintReceipt(tx._id);
+            td7.appendChild(printBtn);
+
+            // Delete button (admin only)
+            if (isAdmin) {
+                td7.appendChild(document.createTextNode(' '));
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-danger btn-sm';
+                deleteBtn.textContent = '删除';
+                deleteBtn.onclick = () => silentDelete(tx._id);
+                td7.appendChild(deleteBtn);
+            }
+
+            tr.appendChild(td7);
+            tb.appendChild(tr);
+        });
     }catch(e){showToast('加载失败','error');}
 }
 

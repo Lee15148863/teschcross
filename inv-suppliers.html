@@ -203,18 +203,101 @@ async function loadSuppliers(){
         suppliers=await r.json();
         const tb=document.getElementById('supplierTable');
         if(!suppliers.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">暂无供应商</td></tr>';return;}
-        tb.innerHTML=suppliers.map(s=>`<tr>
-            ${isAdmin?'<td class="check-col"><input type="checkbox" class="sup-check" value="'+s._id+'"></td>':''}
-            <td><strong>${esc(s.name)}</strong></td>
-            <td>${esc(s.contactName||'-')}</td>
-            <td>${esc(s.phone||'-')}</td>
-            <td><span class="badge ${levelBadge[s.level]||'badge-normal'}">${levelMap[s.level]||s.level}</span></td>
-            <td>${s.active?'<span class="badge badge-active">启用</span>':'<span class="badge badge-inactive">禁用</span>'}</td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="editSupplier('${s._id}')">编辑</button>
-                ${isAdmin?(s.active?`<button class="btn btn-danger btn-sm" onclick="showDisableModal('${s._id}')">禁用</button>`:`<button class="btn btn-success btn-sm" onclick="enableSupplier('${s._id}')">恢复</button>`):''}
-                ${isAdmin?`<button class="btn btn-sm" style="background:#6e6e73;color:#fff;" onclick="deleteSupplier('${s._id}','${esc(s.name)}')">删除</button>`:''}            </td>
-        </tr>`).join('');
+        // Clear existing content
+        tb.innerHTML = '';
+
+        // Build DOM elements safely
+        suppliers.forEach(s => {
+            const tr = document.createElement('tr');
+
+            // Checkbox column (admin only)
+            if (isAdmin) {
+                const tdCheck = document.createElement('td');
+                tdCheck.className = 'check-col';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'sup-check';
+                checkbox.value = s._id;
+                tdCheck.appendChild(checkbox);
+                tr.appendChild(tdCheck);
+            }
+
+            // Name cell
+            const td1 = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = s.name;
+            td1.appendChild(strong);
+            tr.appendChild(td1);
+
+            // Contact name cell
+            const td2 = document.createElement('td');
+            td2.textContent = s.contactName || '-';
+            tr.appendChild(td2);
+
+            // Phone cell
+            const td3 = document.createElement('td');
+            td3.textContent = s.phone || '-';
+            tr.appendChild(td3);
+
+            // Level cell
+            const td4 = document.createElement('td');
+            const levelSpan = document.createElement('span');
+            levelSpan.className = `badge ${levelBadge[s.level] || 'badge-normal'}`;
+            levelSpan.textContent = levelMap[s.level] || s.level;
+            td4.appendChild(levelSpan);
+            tr.appendChild(td4);
+
+            // Active status cell
+            const td5 = document.createElement('td');
+            const statusSpan = document.createElement('span');
+            statusSpan.className = `badge ${s.active ? 'badge-active' : 'badge-inactive'}`;
+            statusSpan.textContent = s.active ? '启用' : '禁用';
+            td5.appendChild(statusSpan);
+            tr.appendChild(td5);
+
+            // Actions cell
+            const td6 = document.createElement('td');
+
+            // Edit button
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-secondary btn-sm';
+            editBtn.textContent = '编辑';
+            editBtn.onclick = () => editSupplier(s._id);
+            td6.appendChild(editBtn);
+
+            if (isAdmin) {
+                td6.appendChild(document.createTextNode(' '));
+
+                // Active/Deactivate button
+                if (s.active) {
+                    const disableBtn = document.createElement('button');
+                    disableBtn.className = 'btn btn-danger btn-sm';
+                    disableBtn.textContent = '禁用';
+                    disableBtn.onclick = () => showDisableModal(s._id);
+                    td6.appendChild(disableBtn);
+                } else {
+                    const enableBtn = document.createElement('button');
+                    enableBtn.className = 'btn btn-success btn-sm';
+                    enableBtn.textContent = '恢复';
+                    enableBtn.onclick = () => enableSupplier(s._id);
+                    td6.appendChild(enableBtn);
+                }
+
+                td6.appendChild(document.createTextNode(' '));
+
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm';
+                deleteBtn.style.background = '#6e6e73';
+                deleteBtn.style.color = '#fff';
+                deleteBtn.textContent = '删除';
+                deleteBtn.onclick = () => deleteSupplier(s._id, s.name);
+                td6.appendChild(deleteBtn);
+            }
+
+            tr.appendChild(td6);
+            tb.appendChild(tr);
+        });
     }catch(e){showToast('加载失败','error');}
 }
 
@@ -314,7 +397,22 @@ async function loadSupplierSelect(){
     try{
         const r=await apiFetch('/suppliers?showDisabled=true');if(!r)return;
         const list=await r.json();
-        document.getElementById('accountSupplier').innerHTML='<option value="">请选择供应商</option>'+list.map(s=>`<option value="${s._id}">${esc(s.name)} (${levelMap[s.level]||s.level})</option>`).join('');
+        const select = document.getElementById('accountSupplier');
+        select.innerHTML = '';
+
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '请选择供应商';
+        select.appendChild(defaultOption);
+
+        // Add supplier options
+        list.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s._id;
+            option.textContent = s.name + ' (' + (levelMap[s.level] || s.level) + ')';
+            select.appendChild(option);
+        });
     }catch(e){}
 }
 

@@ -3,7 +3,7 @@ const router = express.Router();
 const Brand = require('../models/Brand');
 const jwt = require('jsonwebtoken');
 
-// Dual-mode admin auth: JWT admin OR legacy x-admin-token
+// Admin auth: JWT only
 function adminAuth(req, res, next) {
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -11,9 +11,6 @@ function adminAuth(req, res, next) {
             const decoded = jwt.verify(authHeader.slice(7), process.env.INV_JWT_SECRET);
             if (decoded.role === 'admin') { req.user = decoded; return next(); }
         } catch (e) { /* fall through */ }
-    }
-    if (req.headers['x-admin-token'] === process.env.ADMIN_TOKEN) {
-        return next();
     }
     return res.status(401).json({ error: 'Unauthorized' });
 }

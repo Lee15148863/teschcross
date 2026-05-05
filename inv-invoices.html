@@ -169,18 +169,69 @@ async function loadInvoices(){
         const list=await r.json();
         const tb=document.getElementById('invoiceTable');
         if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">暂无 Invoice</td></tr>';return;}
-        tb.innerHTML=list.map(inv=>`<tr>
-            <td style="font-family:monospace;">${esc(inv.invoiceNumber)}</td>
-            <td>${esc(inv.customerName||'-')}</td>
-            <td>€${Number(inv.grossTotal||0).toFixed(2)}</td>
-            <td>€${Number(inv.vatTotal||0).toFixed(2)}</td>
-            <td>${new Date(inv.createdAt).toLocaleDateString('zh-CN')}</td>
-            <td><span class="badge ${emailBadge[inv.emailStatus]||'badge-not-sent'}">${emailStatusMap[inv.emailStatus]||inv.emailStatus}</span></td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="downloadPdf('${inv._id}')">📄 PDF</button>
-                <button class="btn btn-secondary btn-sm" onclick="sendEmail('${inv._id}')">📧 发送</button>
-            </td>
-        </tr>`).join('');
+        // Clear existing content
+        tb.innerHTML = '';
+
+        // Build DOM elements safely
+        list.forEach(inv => {
+            const tr = document.createElement('tr');
+
+            // Invoice number cell
+            const td1 = document.createElement('td');
+            td1.style.fontFamily = 'monospace';
+            td1.textContent = inv.invoiceNumber;
+            tr.appendChild(td1);
+
+            // Customer name cell
+            const td2 = document.createElement('td');
+            td2.textContent = inv.customerName || '-';
+            tr.appendChild(td2);
+
+            // Gross total cell
+            const td3 = document.createElement('td');
+            td3.textContent = '€' + Number(inv.grossTotal || 0).toFixed(2);
+            tr.appendChild(td3);
+
+            // VAT total cell
+            const td4 = document.createElement('td');
+            td4.textContent = '€' + Number(inv.vatTotal || 0).toFixed(2);
+            tr.appendChild(td4);
+
+            // Date cell
+            const td5 = document.createElement('td');
+            td5.textContent = new Date(inv.createdAt).toLocaleDateString('zh-CN');
+            tr.appendChild(td5);
+
+            // Email status cell
+            const td6 = document.createElement('td');
+            const statusSpan = document.createElement('span');
+            statusSpan.className = `badge ${emailBadge[inv.emailStatus] || 'badge-not-sent'}`;
+            statusSpan.textContent = emailStatusMap[inv.emailStatus] || inv.emailStatus;
+            td6.appendChild(statusSpan);
+            tr.appendChild(td6);
+
+            // Actions cell
+            const td7 = document.createElement('td');
+
+            // Download PDF button
+            const pdfBtn = document.createElement('button');
+            pdfBtn.className = 'btn btn-secondary btn-sm';
+            pdfBtn.textContent = '📄 PDF';
+            pdfBtn.onclick = () => downloadPdf(inv._id);
+            td7.appendChild(pdfBtn);
+
+            td7.appendChild(document.createTextNode(' '));
+
+            // Send email button
+            const emailBtn = document.createElement('button');
+            emailBtn.className = 'btn btn-secondary btn-sm';
+            emailBtn.textContent = '📧 发送';
+            emailBtn.onclick = () => sendEmail(inv._id);
+            td7.appendChild(emailBtn);
+
+            tr.appendChild(td7);
+            tb.appendChild(tr);
+        });
     }catch(e){showToast('加载失败','error');}
 }
 
@@ -222,14 +273,47 @@ async function searchTransaction(){
         const list=await r.json();
         const el=document.getElementById('txResult');
         if(!list.length){el.innerHTML='<p style="color:#86868b;padding:12px;">未找到匹配的交易</p>';return;}
-        el.innerHTML=list.slice(0,5).map(tx=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid #e5e5e7;border-radius:10px;margin-bottom:8px;">
-            <div>
-                <strong>${esc(tx.receiptNumber)}</strong>
-                <span style="color:#86868b;margin-left:12px;">${new Date(tx.createdAt).toLocaleString('zh-CN')}</span>
-                <span style="margin-left:12px;">€${Number(tx.totalAmount).toFixed(2)}</span>
-            </div>
-            <button class="btn btn-primary btn-sm" onclick="showGenerateModal('${tx._id}')">生成 Invoice</button>
-        </div>`).join('');
+        // Clear existing content
+        el.innerHTML = '';
+
+        // Build DOM elements safely
+        list.slice(0, 5).forEach(tx => {
+            const div = document.createElement('div');
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.justifyContent = 'space-between';
+            div.style.padding = '12px';
+            div.style.border = '1px solid #e5e5e7';
+            div.style.borderRadius = '10px';
+            div.style.marginBottom = '8px';
+
+            const infoDiv = document.createElement('div');
+
+            const strong = document.createElement('strong');
+            strong.textContent = tx.receiptNumber;
+            infoDiv.appendChild(strong);
+
+            const dateSpan = document.createElement('span');
+            dateSpan.style.color = '#86868b';
+            dateSpan.style.marginLeft = '12px';
+            dateSpan.textContent = new Date(tx.createdAt).toLocaleString('zh-CN');
+            infoDiv.appendChild(dateSpan);
+
+            const amountSpan = document.createElement('span');
+            amountSpan.style.marginLeft = '12px';
+            amountSpan.textContent = '€' + Number(tx.totalAmount).toFixed(2);
+            infoDiv.appendChild(amountSpan);
+
+            div.appendChild(infoDiv);
+
+            const button = document.createElement('button');
+            button.className = 'btn btn-primary btn-sm';
+            button.textContent = '生成 Invoice';
+            button.onclick = () => showGenerateModal(tx._id);
+            div.appendChild(button);
+
+            el.appendChild(div);
+        });
     }catch(e){showToast('搜索失败','error');}
 }
 window.searchTransaction=searchTransaction;

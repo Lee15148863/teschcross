@@ -243,19 +243,64 @@ async function loadExpenses(){
         var list=data.data||[];
         var tb=document.getElementById('expTable');
         if(!list.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">暂无支出记录 / No expenses found</td></tr>';return;}
-        tb.innerHTML=list.map(function(e){
-            var pm=e.paymentMethod==='cash'?'💵 Cash':e.paymentMethod==='card'?'💳 Card':'🏦 Transfer';
-            var op=e.operator?(e.operator.displayName||e.operator.username):'—';
-            return '<tr>'+
-                '<td>'+new Date(e.date).toLocaleDateString('en-IE')+'</td>'+
-                '<td>'+esc(e.category)+'</td>'+
-                '<td style="font-weight:600;">€'+Number(e.amount).toFixed(2)+'</td>'+
-                '<td>'+pm+'</td>'+
-                '<td style="color:#6e6e73;">'+esc(e.description||'—')+'</td>'+
-                '<td>'+esc(op)+'</td>'+
-                '<td>'+(isAdmin?'<button class="btn btn-danger btn-sm exp-delete" data-id="'+e._id+'">删除 / Delete</button>':'')+'</td>'+
-            '</tr>';
-        }).join('');
+        // Clear existing content
+        tb.innerHTML = '';
+
+        // Build DOM elements safely
+        list.forEach(function(e){
+            const tr = document.createElement('tr');
+
+            // Date cell
+            const td1 = document.createElement('td');
+            td1.textContent = new Date(e.date).toLocaleDateString('en-IE');
+            tr.appendChild(td1);
+
+            // Category cell
+            const td2 = document.createElement('td');
+            td2.textContent = e.category;
+            tr.appendChild(td2);
+
+            // Amount cell
+            const td3 = document.createElement('td');
+            td3.style.fontWeight = '600';
+            td3.textContent = '€' + Number(e.amount).toFixed(2);
+            tr.appendChild(td3);
+
+            // Payment method cell
+            const td4 = document.createElement('td');
+            if (e.paymentMethod === 'cash') {
+                td4.textContent = '💵 Cash';
+            } else if (e.paymentMethod === 'card') {
+                td4.textContent = '💳 Card';
+            } else {
+                td4.textContent = '🏦 Transfer';
+            }
+            tr.appendChild(td4);
+
+            // Description cell
+            const td5 = document.createElement('td');
+            td5.style.color = '#6e6e73';
+            td5.textContent = e.description || '—';
+            tr.appendChild(td5);
+
+            // Operator cell
+            const td6 = document.createElement('td');
+            td6.textContent = e.operator ? (e.operator.displayName || e.operator.username) : '—';
+            tr.appendChild(td6);
+
+            // Actions cell
+            const td7 = document.createElement('td');
+            if (isAdmin) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-danger btn-sm exp-delete';
+                deleteBtn.setAttribute('data-id', e._id);
+                deleteBtn.textContent = '删除 / Delete';
+                td7.appendChild(deleteBtn);
+            }
+            tr.appendChild(td7);
+
+            tb.appendChild(tr);
+        });
     }catch(e){showToast('加载失败 / Load failed','error');}
 }
 
@@ -276,10 +321,17 @@ async function loadSummary(){
         document.getElementById('scCount').textContent=d.count||0;
         // Category summary
         var catEl=document.getElementById('catSummary');
+        catEl.innerHTML = '';
         var cats=d.byCategory||{};
-        catEl.innerHTML=Object.keys(cats).map(function(k){
-            return '<div class="cat-item">'+esc(k)+'<strong>€'+cats[k].toFixed(2)+'</strong></div>';
-        }).join('');
+        Object.keys(cats).forEach(function(k){
+            var item=document.createElement('div');
+            item.className='cat-item';
+            item.textContent = k + ' ';
+            var strong=document.createElement('strong');
+            strong.textContent = '€' + cats[k].toFixed(2);
+            item.appendChild(strong);
+            catEl.appendChild(item);
+        });
     }catch(e){}
 }
 

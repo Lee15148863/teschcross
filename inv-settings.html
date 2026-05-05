@@ -238,14 +238,39 @@ async function loadAuditLog(){
         const r=await apiFetch('/settings/audit-log');if(!r)return;
         const logs=await r.json();
         const tb=document.getElementById('auditTable');
-        if(!logs.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#86868b;padding:40px;">暂无审计日志</td></tr>';return;}
-        tb.innerHTML=logs.map(log=>`<tr>
-            <td>${new Date(log.createdAt).toLocaleString('zh-CN')}</td>
-            <td>${esc(log.action)}</td>
-            <td>${log.operator?esc(log.operator.displayName||log.operator.username||''):'-'}</td>
-            <td>${esc(log.targetType||'-')}</td>
-            <td style="font-family:monospace;font-size:12px;">${esc(log.targetId||'-')}</td>
-        </tr>`).join('');
+        tb.innerHTML = '';
+        if(!logs.length){
+            tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#86868b;padding:40px;">暂无审计日志</td></tr>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const tr = document.createElement('tr');
+
+            const tdDate = document.createElement('td');
+            tdDate.textContent = new Date(log.createdAt).toLocaleString('zh-CN');
+            tr.appendChild(tdDate);
+
+            const tdAction = document.createElement('td');
+            tdAction.textContent = log.action;
+            tr.appendChild(tdAction);
+
+            const tdOperator = document.createElement('td');
+            tdOperator.textContent = log.operator ? (log.operator.displayName || log.operator.username || '') : '-';
+            tr.appendChild(tdOperator);
+
+            const tdTargetType = document.createElement('td');
+            tdTargetType.textContent = log.targetType || '-';
+            tr.appendChild(tdTargetType);
+
+            const tdTargetId = document.createElement('td');
+            tdTargetId.style.fontFamily = 'monospace';
+            tdTargetId.style.fontSize = '12px';
+            tdTargetId.textContent = log.targetId || '-';
+            tr.appendChild(tdTargetId);
+
+            tb.appendChild(tr);
+        });
     }catch(e){showToast('加载审计日志失败','error');}
 }
 
