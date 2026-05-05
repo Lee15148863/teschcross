@@ -436,7 +436,7 @@ async function reprintReceipt(id){
         if(!iframe){iframe=document.createElement('iframe');iframe.id='_txPrintFrame';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
         var doc=iframe.contentDocument||iframe.contentWindow.document;
         doc.open();
-        doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title><style>@page{margin:0;size:auto;}html,body{margin:0;padding:0;width:100%;background:#fff;}body{width:500px;max-width:500px;padding:10px 15px;margin:0 auto;font-family:"Courier New",Courier,monospace;font-size:13px;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}*{box-sizing:border-box;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
+        doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title><style>@page{margin:0;size:auto;}html,body{margin:0;padding:0;width:100%;background:#fff;}body{width:420px;max-width:420px;padding:8px 10px;margin:0 auto;font-family:"Courier New",Courier,monospace;font-size:12px;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}*{box-sizing:border-box;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
         doc.write(receiptHtml);
         doc.write('</body></html>');
         doc.close();
@@ -498,7 +498,7 @@ function printRefundReceipt(refund){
             if(!iframe){iframe=document.createElement('iframe');iframe.id='_txPrintFrame';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
             var doc=iframe.contentDocument||iframe.contentWindow.document;
             doc.open();
-            doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Refund Receipt</title><style>@page{margin:0;size:auto;}html,body{margin:0;padding:0;width:100%;background:#fff;}body{width:500px;max-width:500px;padding:10px 15px;margin:0 auto;font-family:"Courier New",Courier,monospace;font-size:13px;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}*{box-sizing:border-box;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
+            doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Refund Receipt</title><style>@page{margin:0;size:auto;}html,body{margin:0;padding:0;width:100%;background:#fff;}body{width:420px;max-width:420px;padding:8px 10px;margin:0 auto;font-family:"Courier New",Courier,monospace;font-size:12px;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}*{box-sizing:border-box;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
             doc.write(h);
             doc.write('</body></html>');
             doc.close();
