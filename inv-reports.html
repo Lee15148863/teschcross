@@ -268,6 +268,8 @@ renderSummaryCards('dailySummary', [
             {label:'13.5% 应缴税额'+sfx, value:fmt(reduced.vatPayable)},
             {label:'Margin 应缴税额'+sfx, value:fmt(margin.vatPayable)},
             {label:'💵 现金收入'+sfx, value:fmt(cashIn)},
+            {label:'💸 现金支出'+sfx, value:fmt(cashOut), cls:'red'},
+            {label:'💰 现金盈余'+sfx, value:fmt(cashNet), cls: cashNet>=0?'green':'red'},
             {label:'💳 银行卡收入'+sfx, value:fmt(cardIn)}
         ]);
 
@@ -448,7 +450,11 @@ var monthlyBody = document.getElementById('monthlyBody');
             {label:'23% 应缴税额'+sfx, value:fmt(gV23)},
             {label:'13.5% 应缴税额'+sfx, value:fmt(gV135)},
             {label:'Margin 应缴税额'+sfx, value:fmt(gVM)},
-            {label:'当月总应缴税额'+sfx, value:fmt(totalVat), cls:'red'}
+            {label:'当月总应缴税额'+sfx, value:fmt(totalVat), cls:'red'},
+            {label:'💵 现金总收入'+sfx, value:fmt(gCash)},
+            {label:'💸 现金总支出'+sfx, value:fmt(gOut), cls:'red'},
+            {label:'💰 现金盈余'+sfx, value:fmt(gCash-gOut), cls: (gCash-gOut)>=0?'green':'red'},
+            {label:'💳 银行卡总收入'+sfx, value:fmt(gCard)}
         ]);
     }catch(e){toast('加载失败','error');}
 }
