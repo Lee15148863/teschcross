@@ -269,7 +269,7 @@ class EnhancedAdmin {
     }
 
     // Save model names
-    saveModelNames() {
+    async saveModelNames() {
         const inputs = document.querySelectorAll('#models-editor input[type="text"]');
         const data = this.getCurrentData();
         
@@ -283,7 +283,7 @@ class EnhancedAdmin {
     }
 
     // Save services
-    saveServices() {
+    async saveServices() {
         const inputs = document.querySelectorAll('#services-editor input[type="text"]');
         const data = this.getCurrentData();
         
@@ -298,7 +298,7 @@ class EnhancedAdmin {
     }
 
     // Add new model
-    addNewModel(modelId, modelName) {
+    async addNewModel(modelId, modelName) {
         const data = this.getCurrentData();
         
         if (!modelId || !modelName) {
@@ -335,7 +335,7 @@ class EnhancedAdmin {
     }
 
     // Delete model
-    deleteModel(modelKey) {
+    async deleteModel(modelKey) {
         const data = this.getCurrentData();
         
         if (confirm(`Are you sure you want to delete ${data.models[modelKey].name}?`)) {
@@ -347,7 +347,7 @@ class EnhancedAdmin {
     }
 
     // Add new service
-    addNewService(serviceId, serviceName, serviceDesc) {
+    async addNewService(serviceId, serviceName, serviceDesc) {
         const data = this.getCurrentData();
         
         if (!serviceId || !serviceName) {
@@ -382,7 +382,7 @@ class EnhancedAdmin {
     }
 
     // Delete service
-    deleteService(serviceKey) {
+    async deleteService(serviceKey) {
         const data = this.getCurrentData();
         
         if (confirm(`Are you sure you want to delete ${data.serviceTypes[serviceKey].name}? This will remove it from all models.`)) {
@@ -403,7 +403,7 @@ class EnhancedAdmin {
     }
 
     // Apply batch update
-    applyBatchUpdate() {
+    async applyBatchUpdate() {
         const serviceKey = document.getElementById('batchService').value;
         const operation = document.getElementById('batchOperation').value;
         const value = parseFloat(document.getElementById('batchValue').value);
