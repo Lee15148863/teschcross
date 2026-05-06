@@ -239,6 +239,7 @@ async function loadDaily(){
                     {label:'差价税销售'+sfx, value:'€0.00'},
                     {label:'23% 应缴税额'+sfx, value:'€0.00'},
                     {label:'13.5% 应缴税额'+sfx, value:'€0.00'},
+                    {label:'Margin 应缴税额'+sfx, value:'€0.00'},
                     {label:'💵 现金收入'+sfx, value:'€0.00'},
                     {label:'💳 银行卡收入'+sfx, value:'€0.00'}
                 ]);
@@ -265,6 +266,7 @@ renderSummaryCards('dailySummary', [
             {label:'差价税销售'+sfx, value:fmt(margin.sales)},
             {label:'23% 应缴税额'+sfx, value:fmt(std23.vatPayable)},
             {label:'13.5% 应缴税额'+sfx, value:fmt(reduced.vatPayable)},
+            {label:'Margin 应缴税额'+sfx, value:fmt(margin.vatPayable)},
             {label:'💵 现金收入'+sfx, value:fmt(cashIn)},
             {label:'💳 银行卡收入'+sfx, value:fmt(cardIn)}
         ]);
