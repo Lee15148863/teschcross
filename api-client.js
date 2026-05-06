@@ -19,7 +19,7 @@ const PricingAPI = {
         }
     },
 
-    async save(brand, data, adminToken) {
+    async save(brand, data) {
         // Build auth headers: JWT only
         const headers = { 'Content-Type': 'application/json' };
         try {
