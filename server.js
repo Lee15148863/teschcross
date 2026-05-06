@@ -14,6 +14,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"], // 暂时允许内联脚本，后续清理
+      scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers in HTML
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", "https://techcross.ie", "https://www.techcross.ie", "http://localhost:*"],
