@@ -5,7 +5,7 @@ const Expense = require('../../models/inv/Expense');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('admin', 'staff'));
+router.use(jwtAuth, requireRole('root', 'staff'));
 
 // ─── Helper: build date range filter (UTC-based) ─────────────────────────────
 function buildDateFilter(startDate, endDate) {
@@ -774,6 +774,78 @@ router.get('/export', async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// ─── GET /api/inv/reports/query ──────────────────────────────────────────────
+// Unified transaction query endpoint — filtering + aggregation + device P&L.
+// READ ONLY — never modifies data, never recalculates VAT.
+router.get('/query', async (req, res) => {
+  try {
+    const {
+      types,        // comma-separated: sale,refund,quick_sale,device_sale,service
+      paymentMethod,
+      vatType,      // standard23, reduced135, margin
+      startDate,
+      endDate,
+      includeLedger,  // 'true' to include cash ledger entries
+      includeDevices, // 'true' to include device P&L
+    } = req.query;
+
+    const { queryTransactions, aggregateTransactions, queryCashLedger, queryDeviceProfitLoss }
+      = require('../../services/inv-query-service');
+
+    // Normalise types from comma-separated string
+    const typeList = types
+      ? types.split(',').map(t => t.trim()).filter(Boolean)
+      : undefined;
+
+    const filters = {
+      types: typeList,
+      paymentMethod: paymentMethod || undefined,
+      vatType: vatType || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    };
+
+    // ── Fetch & aggregate transactions ────────────────────────────
+    const transactions = await queryTransactions(filters);
+    const aggregation = aggregateTransactions(transactions);
+
+    // ── Optional: cash ledger entries ─────────────────────────────
+    let cashLedger = null;
+    if (includeLedger === 'true') {
+      cashLedger = await queryCashLedger({
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        paymentMethod: paymentMethod || undefined,
+      });
+    }
+
+    // ── Optional: device profit/loss ──────────────────────────────
+    let deviceProfitLoss = null;
+    if (includeDevices === 'true') {
+      deviceProfitLoss = await queryDeviceProfitLoss({
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      });
+    }
+
+    res.json({
+      filters: {
+        types: typeList || null,
+        paymentMethod: paymentMethod || null,
+        vatType: vatType || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
+      },
+      ...aggregation,
+      ...(cashLedger ? { cashLedger } : {}),
+      ...(deviceProfitLoss ? { deviceProfitLoss } : {}),
+    });
+  } catch (err) {
+    console.error('Query error:', err.message);
+    res.status(500).json({ error: 'Query failed', code: 'QUERY_ERROR' });
   }
 });
 

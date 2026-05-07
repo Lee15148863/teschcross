@@ -6,11 +6,12 @@ const Product = require('../../models/inv/Product');
 const StockMovement = require('../../models/inv/StockMovement');
 const AuditLog = require('../../models/inv/AuditLog');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
-const { calculateDiscountedCart, validateDiscountFloor } = require('../../utils/inv-discount-calculator');
-const { DEFAULT_VAT_RATE } = require('../../utils/inv-vat-calculator');
+const { authorize, SOURCES } = require('../../utils/inv-integrity-layer');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('admin', 'staff'));
+router.use(jwtAuth, requireRole('root', 'staff'));
+
+const { generateReceiptNumber } = require('../../utils/inv-receipt-number');
 
 // ─── Helper: AES-256 encrypt ────────────────────────────────────────────────
 function encryptData(data) {
@@ -25,270 +26,97 @@ function encryptData(data) {
   return iv.toString('hex') + ':' + encrypted;
 }
 
-// ─── Helper: Generate receipt number ────────────────────────────────────────
-function generateReceiptNumber() {
-  const now = new Date();
-  const pad = (n, len = 2) => String(n).padStart(len, '0');
-  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-}
+// ─── Helper: Generate receipt number (delegates to inv-receipt-number) ──────
 
-// ─── POST /api/inv/transactions/checkout ────────────────────────────────────
-// Core checkout endpoint
-router.post('/checkout', async (req, res) => {
+// ─── POST /api/inv/transactions/calculate ──────────────────────────────────
+// Lightweight cart calculation — computes totals without persisting anything
+router.post('/calculate', async (req, res) => {
   try {
-    const { items, orderDiscount, paymentMethod, cashReceived, cardAmount } = req.body;
+    const { items, orderDiscount } = req.body;
 
-    // Validate cart is not empty
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: '购物车为空', code: 'EMPTY_CART' });
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Cart is empty', code: 'EMPTY_CART' });
     }
 
-    // Validate payment method
-    if (!paymentMethod || !['cash', 'card', 'split'].includes(paymentMethod)) {
-      return res.status(400).json({ error: '支付方式无效，必须为 cash、card 或 split', code: 'VALIDATION_ERROR' });
-    }
-
-    // Pre-validate: ensure all items have product IDs
-    for (let i = 0; i < items.length; i++) {
-      if (!items[i].product) {
-        return res.status(400).json({
-          error: `items[${i}] 缺少商品ID`,
-          code: 'VALIDATION_ERROR'
-        });
-      }
-    }
-
-    // Validate each item and fetch product data
-    const productIds = items.map(item => item.product);
+    const productIds = items.map(i => i.product).filter(Boolean);
     const products = await Product.find({ _id: { $in: productIds } });
     const productMap = {};
-    for (const p of products) {
-      productMap[p._id.toString()] = p;
-    }
+    for (const p of products) productMap[p._id.toString()] = { name: p.name, sellingPrice: p.sellingPrice, costPrice: p.costPrice, marginScheme: p.marginScheme || false, vatRate: p.vatRate || 0.23, active: p.active };
 
-    // Build cart items with product data
-    const cartItems = [];
+    const calcItems = [];
+    const resultItems = [];
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-
       const product = productMap[item.product];
-      if (!product) {
-        return res.status(400).json({
-          error: `商品不存在: ${item.product}`,
-          code: 'NOT_FOUND'
-        });
-      }
-
-      if (!product.active) {
-        return res.status(400).json({
-          error: `商品已停用: ${product.name}`,
-          code: 'PRODUCT_DISABLED'
-        });
-      }
+      if (!product || !product.active) continue;
 
       const quantity = item.quantity || 1;
-      if (!Number.isInteger(quantity) || quantity <= 0) {
-        return res.status(400).json({
-          error: `items[${i}] 数量必须为正整数`,
-          code: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Stock check: warn but don't block sale (stock can go negative)
-      // This allows selling items that aren't inventory-tracked (stock=0)
-
-      cartItems.push({
-        product: product._id,
-        name: product.name,
-        sku: product.sku,
-        serialNumber: product.serialNumber || item.serialNumber || '',
-        quantity,
+      calcItems.push({
         unitPrice: product.sellingPrice,
         costPrice: product.costPrice,
-        isSecondHand: product.isSecondHand || false,
-        purchasedFromCustomer: product.purchasedFromCustomer || false,
-        marginScheme: product.marginScheme || false,
-        source: product.source || '',
-        vatRate: product.vatRate || 0.23,
-        discount: item.discount || null
+        quantity,
+        isSecondHand: product.marginScheme,
+        vatRate: product.vatRate,
+        discount: item.discount || null,
+      });
+      resultItems.push({
+        product: item.product,
+        name: product.name,
+        vatRate: product.vatRate,
+        marginScheme: product.marginScheme,
       });
     }
 
-    // Calculate discounted cart using the discount engine
-    // Use marginScheme flag to determine VAT type (margin vs standard)
-    // Use per-item vatRate for calculation
-    const calcItems = cartItems.map(item => ({
-      unitPrice: item.unitPrice,
-      costPrice: item.costPrice,
-      quantity: item.quantity,
-      isSecondHand: item.marginScheme,  // discount engine uses isSecondHand to pick Margin VAT
-      vatRate: item.vatRate || 0.23,
-      discount: item.discount
-    }));
+    const { calculateDiscountedCart } = require('../../utils/inv-discount-calculator');
+    const { DEFAULT_VAT_RATE } = require('../../utils/inv-vat-calculator');
+    const result = calculateDiscountedCart(calcItems, orderDiscount || null, DEFAULT_VAT_RATE);
 
-    const cartResult = calculateDiscountedCart(calcItems, orderDiscount || null, DEFAULT_VAT_RATE);
-
-    // Validate discount floor for each item
-    for (let i = 0; i < cartResult.items.length; i++) {
-      const calcItem = cartResult.items[i];
-      const floorCheck = validateDiscountFloor(calcItem.discountedPrice, calcItem.costPrice, DEFAULT_VAT_RATE);
-      if (!floorCheck.valid) {
-        return res.status(400).json({
-          error: `${cartItems[i].name}: ${floorCheck.error}`,
-          code: 'DISCOUNT_BELOW_COST'
-        });
+    // Merge computed values back into item response
+    result.items.forEach((ci, i) => {
+      if (resultItems[i]) {
+        resultItems[i].quantity = ci.quantity;
+        resultItems[i].unitPrice = ci.unitPrice;
+        resultItems[i].discountedPrice = ci.discountedPrice;
+        resultItems[i].subtotal = ci.subtotal;
+        resultItems[i].vatAmount = ci.vatAmount;
+        resultItems[i].marginVat = ci.marginVat;
       }
-    }
-
-    // Payment validation and change calculation
-    let changeGiven = undefined;
-    let cashReceivedVal = undefined;
-    let cardAmountVal = undefined;
-
-    if (paymentMethod === 'cash') {
-      if (cashReceived === undefined || cashReceived === null || typeof cashReceived !== 'number') {
-        return res.status(400).json({ error: '现金支付需要提供实收金额', code: 'VALIDATION_ERROR' });
-      }
-      if (cashReceived < cartResult.totalAmount) {
-        return res.status(400).json({
-          error: `实收金额不足: 需要 ${cartResult.totalAmount}，实收 ${cashReceived}`,
-          code: 'VALIDATION_ERROR'
-        });
-      }
-      cashReceivedVal = cashReceived;
-      changeGiven = Math.round((cashReceived - cartResult.totalAmount) * 100) / 100;
-    } else if (paymentMethod === 'split') {
-      // Split payment: card + cash
-      if (cardAmount === undefined || cardAmount === null || typeof cardAmount !== 'number' || cardAmount < 0) {
-        return res.status(400).json({ error: '混合支付需要提供卡付金额', code: 'VALIDATION_ERROR' });
-      }
-      if (cardAmount > cartResult.totalAmount) {
-        return res.status(400).json({ error: '卡付金额不能超过应付总额', code: 'VALIDATION_ERROR' });
-      }
-      if (cashReceived === undefined || cashReceived === null || typeof cashReceived !== 'number') {
-        return res.status(400).json({ error: '混合支付需要提供现金金额', code: 'VALIDATION_ERROR' });
-      }
-      const remaining = Math.round((cartResult.totalAmount - cardAmount) * 100) / 100;
-      if (cashReceived < remaining) {
-        return res.status(400).json({
-          error: `现金不足: 卡付 ${cardAmount}，还需现金 ${remaining}，实收 ${cashReceived}`,
-          code: 'VALIDATION_ERROR'
-        });
-      }
-      cardAmountVal = cardAmount;
-      cashReceivedVal = cashReceived;
-      changeGiven = Math.round((cashReceived - remaining) * 100) / 100;
-    }
-
-    // Generate receipt number
-    const receiptNumber = generateReceiptNumber();
-
-    // Build transaction items
-    const transactionItems = cartItems.map((item, idx) => {
-      const calcItem = cartResult.items[idx];
-      return {
-        product: item.product,
-        name: item.name,
-        sku: item.sku,
-        serialNumber: item.serialNumber,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        costPrice: item.costPrice,
-        isSecondHand: item.isSecondHand,
-        purchasedFromCustomer: item.purchasedFromCustomer,
-        marginScheme: item.marginScheme,
-        source: item.source,
-        vatRate: item.vatRate,
-        discount: item.discount || undefined,
-        discountedPrice: calcItem.discountedPrice,
-        subtotal: calcItem.subtotal,
-        vatAmount: calcItem.vatAmount,
-        marginVat: calcItem.marginVat
-      };
     });
 
-    // Create Transaction record
-    const transactionData = {
-      receiptNumber,
-      items: transactionItems,
-      totalAmount: cartResult.totalAmount,
-      subtotalBeforeOrderDiscount: cartResult.subtotalBeforeOrderDiscount,
-      standardVatTotal: cartResult.standardVatTotal,
-      marginVatTotal: cartResult.marginVatTotal,
-      paymentMethod,
-      operator: req.user.userId
-    };
+    res.json({
+      items: resultItems,
+      subtotalBeforeOrderDiscount: result.subtotalBeforeOrderDiscount,
+      orderDiscountAmount: result.orderDiscountAmount,
+      totalAmount: result.totalAmount,
+      standardVatTotal: result.standardVatTotal,
+      marginVatTotal: result.marginVatTotal,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Calculation error', code: 'CALCULATION_ERROR' });
+  }
+});
 
-    if (orderDiscount && orderDiscount.type && orderDiscount.value) {
-      transactionData.orderDiscount = orderDiscount;
-    }
-    if (cashReceivedVal !== undefined) transactionData.cashReceived = cashReceivedVal;
-    if (cardAmountVal !== undefined) transactionData.cardAmount = cardAmountVal;
-    if (changeGiven !== undefined) transactionData.changeGiven = changeGiven;
-    if (req.body.discountOperator) transactionData.discountOperator = req.body.discountOperator;
+// ─── POST /api/inv/transactions/checkout ────────────────────────────────────
+// Core checkout endpoint — thin controller, delegates all business logic to service
+router.post('/checkout', async (req, res) => {
+  try {
+    const { checkout } = require('../../services/inv-checkout-service');
 
-    const transaction = await Transaction.create(transactionData);
+    const result = await checkout({
+      items: req.body.items,
+      orderDiscount: req.body.orderDiscount,
+      paymentMethod: req.body.paymentMethod,
+      cashReceived: req.body.cashReceived,
+      cardAmount: req.body.cardAmount,
+      operator: req.user.userId,
+      discountOperator: req.body.discountOperator,
+    });
 
-    // Auto-create StockMovement(exit) for each item and decrement stock
-    // With error compensation: if stock update fails, log to AuditLog for manual reconciliation
-    const stockErrors = [];
-    for (const item of transactionItems) {
-      try {
-        await StockMovement.create({
-          product: item.product,
-          type: 'exit',
-          quantity: item.quantity,
-          operator: req.user.userId,
-          referenceId: transaction._id.toString(),
-          referenceType: 'transaction',
-          serialNumber: item.serialNumber || undefined,
-          note: `销售出库 - 小票 ${receiptNumber}`
-        });
-
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: -item.quantity },
-          updatedAt: new Date()
-        });
-      } catch (stockErr) {
-        console.error(`Stock update failed for product ${item.product}:`, stockErr.message);
-        stockErrors.push({ product: item.product, name: item.name, quantity: item.quantity, error: stockErr.message });
-      }
-    }
-
-    // If any stock updates failed, write compensation audit log
-    if (stockErrors.length > 0) {
-      try {
-        await AuditLog.create({
-          action: 'stock_update_failed',
-          operator: req.user.userId,
-          targetType: 'transaction',
-          targetId: transaction._id.toString(),
-          encryptedData: JSON.stringify({ receiptNumber, stockErrors, timestamp: new Date().toISOString() }),
-          ip: req.ip || req.connection?.remoteAddress
-        });
-      } catch (auditErr) {
-        console.error('Failed to write stock error audit log:', auditErr.message);
-      }
-    }
-
-    // Generate formatted receipt data for Print Agent
-    const { generateReceipt } = require('../../utils/inv-receipt-generator');
-    let receiptData = null;
-    try {
-      const SystemSetting = require('../../models/inv/SystemSetting');
-      let companyInfo = null;
-      const setting = await SystemSetting.findOne({ key: 'companyInfo' });
-      if (setting && setting.value) companyInfo = setting.value;
-      receiptData = generateReceipt(transaction.toObject(), companyInfo);
-    } catch (e) {
-      // Receipt generation failure should not block checkout
-      console.error('Receipt generation error:', e.message);
-    }
-
-    const response = { transaction, receipt: receiptData };
-    if (stockErrors.length > 0) {
-      response.stockWarnings = stockErrors;
-      response.message = '交易成功，但部分库存更新失败，请管理员核对';
+    const response = { transaction: result.transaction, receipt: result.receiptData };
+    if (result.stockErrors && result.stockErrors.length > 0) {
+      response.stockWarnings = result.stockErrors;
+      response.message = '交易成功，但部分库存更新失败，请店主核对';
     }
     res.status(201).json(response);
   } catch (err) {
@@ -298,182 +126,153 @@ router.post('/checkout', async (req, res) => {
     if (err.code === 11000) {
       return res.status(409).json({ error: '小票号重复，请重试', code: 'DUPLICATE_RECEIPT' });
     }
-    res.status(500).json({ error: '服务器错误' });
+    // Map service-layer error codes to HTTP responses
+    switch (err.code) {
+      case 'EMPTY_CART':
+        return res.status(400).json({ error: '购物车为空', code: err.code });
+      case 'VALIDATION_ERROR':
+        return res.status(400).json({ error: err.message, code: err.code });
+      case 'NOT_FOUND':
+        return res.status(404).json({ error: err.message, code: err.code });
+      case 'PRODUCT_DISABLED':
+        return res.status(400).json({ error: err.message, code: err.code });
+      case 'DISCOUNT_BELOW_COST':
+        return res.status(400).json({ error: err.message, code: err.code });
+      case 'INSUFFICIENT_PAYMENT':
+        return res.status(400).json({ error: err.message, code: err.code });
+      case 'ATOMIC_FAILURE':
+        return res.status(500).json({ error: '交易处理失败，请重试', code: err.code });
+      default:
+        res.status(500).json({ error: '服务器错误' });
+    }
   }
 });
 
 // ─── POST /api/inv/transactions/refund ──────────────────────────────────────
-// Process refund — staff and admin can both refund
+// Process refund — delegates to refund service for receipt-based refunds.
+// Manual refunds (no receipt number) use a simplified path.
 router.post('/refund', async (req, res) => {
   try {
     const { receiptNumber, items, refundMethod, reason } = req.body;
 
     if (!refundMethod || !['cash', 'card'].includes(refundMethod)) {
-      return res.status(400).json({ error: 'Refund method must be cash or card', code: 'VALIDATION_ERROR' });
+      return res.status(400).json({ error: '退款方式必须是现金或银行卡', code: 'VALIDATION_ERROR' });
     }
 
-    let refundItems = [];
-    let originalTransaction = null;
-
-    // Mode 1: Refund by receipt number (full or partial)
     if (receiptNumber) {
-      originalTransaction = await Transaction.findOne({ receiptNumber });
-      if (!originalTransaction) {
-        return res.status(404).json({ error: 'Transaction not found', code: 'NOT_FOUND' });
-      }
-
-      // Block duplicate refund: check if this receipt has already been refunded
-      const existingRefund = await Transaction.findOne({
-        originalReceipt: receiptNumber,
-        totalAmount: { $lt: 0 }
+      // ── Receipt-based refund (full or partial) ──
+      // Delegates all business logic to the refund service, which handles:
+      //   - Original transaction lookup & duplicate prevention
+      //   - Atomic Transaction + CashLedger + Device lifecycle
+      //   - Best-effort stock restoration
+      const { processRefund } = require('../../services/inv-refund-service');
+      const result = await processRefund({
+        receiptNumber,
+        items,
+        refundMethod,
+        reason,
+        operator: req.user.userId,
       });
-      if (existingRefund) {
-        return res.status(400).json({ error: '该订单已退款，不可重复退款 / This order has already been refunded', code: 'ALREADY_REFUNDED' });
-      }
 
-      const txnItems = originalTransaction.items || [];
-
-      if (items && items.length > 0) {
-        // Partial refund: only specified items
-        for (const ri of items) {
-          const found = txnItems.find(ti => (ti.product && ri.product && ti.product.toString() === ri.product) || ti.name === ri.name);
-          if (!found) continue;
-          const qty = Math.min(ri.quantity || found.quantity, found.quantity);
-          refundItems.push({
-            product: found.product,
-            name: found.name,
-            sku: found.sku || '',
-            quantity: qty,
-            unitPrice: found.discountedPrice || found.unitPrice,
-            subtotal: Math.round((found.discountedPrice || found.unitPrice) * qty * 100) / 100,
-            isSecondHand: found.isSecondHand || false,
-            marginScheme: found.marginScheme || false,
-            vatRate: found.vatRate || 0.23
-          });
-        }
-      } else {
-        // Full refund
-        refundItems = txnItems.map(ti => ({
-          product: ti.product,
-          name: ti.name,
-          sku: ti.sku || '',
-          quantity: ti.quantity,
-          unitPrice: ti.discountedPrice || ti.unitPrice,
-          subtotal: ti.subtotal,
-          isSecondHand: ti.isSecondHand || false,
-          marginScheme: ti.marginScheme || false,
-          vatRate: ti.vatRate || 0.23
-        }));
-      }
-    }
-    // Mode 2: Manual refund (no receipt number)
-    else if (items && items.length > 0) {
-      for (const ri of items) {
-        if (!ri.name || !ri.amount) continue;
-        refundItems.push({
-          product: null,
-          name: ri.name,
-          sku: ri.sku || '',
-          quantity: ri.quantity || 1,
-          unitPrice: ri.amount,
-          subtotal: Math.round((ri.amount) * (ri.quantity || 1) * 100) / 100,
-          isSecondHand: false,
-          marginScheme: false,
-          vatRate: 0.23
-        });
-      }
+      return res.status(201).json({
+        message: '退款成功',
+        refund: {
+          receiptNumber: result.transaction.receiptNumber,
+          totalRefund: result.totalRefund,
+          refundMethod: result.refundMethod,
+          items: result.refundItems,
+          originalReceipt: result.originalReceipt,
+        },
+      });
     }
 
-    if (!refundItems.length) {
+    // ── Manual refund (no receipt number, simplified path) ─────────
+    // Limited: no atomicity, no CashLedger entry, no device lifecycle.
+    // Only creates a Transaction record for audit.
+    if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'No items to refund', code: 'VALIDATION_ERROR' });
     }
 
-    const totalRefund = Math.round(refundItems.reduce((sum, i) => sum + i.subtotal, 0) * 100) / 100;
-
-    // Calculate VAT for refund (negative)
-    let stdVatRefund = 0, marginVatRefund = 0;
-    for (const item of refundItems) {
-      const rate = item.vatRate || 0.23;
-      if (item.marginScheme) {
-        // Margin VAT not easily reversed without cost price, set to 0
-        marginVatRefund += 0;
-      } else {
-        stdVatRefund += Math.round(item.unitPrice * rate / (1 + rate) * item.quantity * 100) / 100;
-      }
+    const refundItems = [];
+    for (const ri of items) {
+      if (!ri.name || !ri.amount) continue;
+      refundItems.push({
+        name: ri.name,
+        sku: ri.sku || '',
+        quantity: ri.quantity || 1,
+        unitPrice: ri.amount,
+        vatRate: ri.vatRate || 0.23,
+      });
     }
 
-    // Generate refund receipt number: R + timestamp + milliseconds
-    const now = new Date();
-    const pad = (n, l = 2) => String(n).padStart(l, '0');
-    const ms = String(now.getMilliseconds()).padStart(3, '0');
-    const refundReceiptNumber = `R${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${ms}`;
+    if (!refundItems.length) {
+      return res.status(400).json({ error: 'No valid refund items', code: 'VALIDATION_ERROR' });
+    }
 
-    // Create refund transaction (negative amount)
-    const refundTxn = await Transaction.create({
-      receiptNumber: refundReceiptNumber,
-      items: refundItems.map(i => ({
-        product: i.product,
+    const totalRefund = Math.round(refundItems.reduce((sum, i) => sum + (i.unitPrice * i.quantity), 0) * 100) / 100;
+
+    const refundTxItems = refundItems.map(i => {
+      const rate = i.vatRate || 0.23;
+      const perUnit = Math.round(i.unitPrice * rate / (1 + rate) * 100) / 100;
+      const vatAmt = Math.round(perUnit * i.quantity * 100) / 100;
+      return {
         name: i.name,
         sku: i.sku,
         quantity: i.quantity,
         unitPrice: -i.unitPrice,
         costPrice: 0,
-        isSecondHand: i.isSecondHand,
-        marginScheme: i.marginScheme,
-        vatRate: i.vatRate,
+        vatRate: rate,
         discountedPrice: -i.unitPrice,
-        subtotal: -i.subtotal,
-        vatAmount: 0,
-        marginVat: 0
-      })),
-      totalAmount: -totalRefund,
-      standardVatTotal: -stdVatRefund,
-      marginVatTotal: -marginVatRefund,
-      paymentMethod: refundMethod,
-      cashReceived: refundMethod === 'cash' ? -totalRefund : null,
-      originalReceipt: receiptNumber || null,
-      operator: req.user.userId
+        subtotal: -(i.unitPrice * i.quantity),
+        vatAmount: -vatAmt,
+        marginVat: 0,
+      };
     });
 
-    // Restore stock for refunded items (non-critical — don't fail the refund if stock update fails)
-    for (const item of refundItems) {
-      if (item.product) {
-        try {
-          await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.quantity },
-            updatedAt: new Date()
-          });
-          await StockMovement.create({
-            product: item.product,
-            type: 'entry',
-            quantity: item.quantity,
-            operator: req.user.userId,
-            referenceId: refundTxn._id.toString(),
-            referenceType: 'refund',
-            note: `Refund - ${refundReceiptNumber}${reason ? ' - ' + reason : ''}`
-          });
-        } catch (stockErr) {
-          console.error('Stock restore failed for product', item.product, stockErr.message);
-        }
-      }
-    }
+    const refundReceiptNumber = generateReceiptNumber('refund');
 
-    res.status(201).json({
-      message: 'Refund processed',
+    const refundTxn = authorize(new Transaction({
+      receiptNumber: refundReceiptNumber,
+      items: refundTxItems,
+      totalAmount: -totalRefund,
+      standardVatTotal: refundTxItems.reduce((s, it) => s + (it.vatAmount || 0), 0),
+      marginVatTotal: 0,
+      paymentMethod: refundMethod,
+      cashReceived: refundMethod === 'cash' ? -totalRefund : null,
+      cardAmount: refundMethod === 'card' ? -totalRefund : null,
+      changeGiven: refundMethod === 'cash' ? 0 : null,
+      originalReceipt: null,
+      operator: req.user.userId,
+    }), SOURCES.REFUND);
+    await refundTxn.save();
+
+    return res.status(201).json({
+      message: '退款成功',
       refund: {
         receiptNumber: refundReceiptNumber,
         totalRefund,
         refundMethod,
-        items: refundItems,
-        originalReceipt: receiptNumber || null
-      }
+        items: refundItems.map(i => ({ name: i.name, quantity: i.quantity, unitPrice: i.unitPrice })),
+        originalReceipt: null,
+      },
     });
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(409).json({ error: 'Refund receipt number conflict, please retry', code: 'DUPLICATE_RECEIPT' });
+      return res.status(409).json({ error: '退款小票号重复，请重试', code: 'DUPLICATE_RECEIPT' });
     }
-    console.error('Refund error:', err.message);
-    res.status(500).json({ error: '服务器错误' });
+    switch (err.code) {
+      case 'ALREADY_REFUNDED':
+        return res.status(400).json({ error: '该订单已退款，不可重复退款', code: err.code });
+      case 'NOT_FOUND':
+        return res.status(404).json({ error: err.message, code: err.code });
+      case 'VALIDATION_ERROR':
+        return res.status(400).json({ error: err.message, code: err.code });
+      case 'ATOMIC_FAILURE':
+        return res.status(500).json({ error: '退款处理失败，请重试', code: err.code });
+      default:
+        console.error('Refund error:', err.message);
+        res.status(500).json({ error: '服务器错误' });
+    }
   }
 });
 
@@ -637,7 +436,7 @@ router.get('/:id', async (req, res) => {
 
 // ─── PATCH /api/inv/transactions/:id/edit-items ─────────────────────────────
 // Admin only: edit item fields (costPrice, unitPrice) for tax correction
-router.patch('/:id/edit-items', requireRole('admin'), async (req, res) => {
+router.patch('/:id/edit-items', requireRole('root'), async (req, res) => {
   try {
     const { updates } = req.body;
     if (!updates || !Array.isArray(updates) || updates.length === 0) {
@@ -666,7 +465,8 @@ router.patch('/:id/edit-items', requireRole('admin'), async (req, res) => {
       if (item.marginScheme || item.isSecondHand) {
         const margin = effectivePrice - (item.costPrice || 0);
         if (margin > 0) {
-          item.marginVat = Math.round((margin / 1.23) * 0.23 * (item.quantity || 1) * 100) / 100;
+          const rate = item.vatRate || 0.23;
+          item.marginVat = Math.round((margin / (1 + rate)) * rate * (item.quantity || 1) * 100) / 100;
         } else {
           item.marginVat = 0;
         }
@@ -695,7 +495,7 @@ router.patch('/:id/edit-items', requireRole('admin'), async (req, res) => {
 
 // ─── DELETE /api/inv/transactions/:id/delete ────────────────────────────────
 // Silent delete (Admin only)
-router.delete('/:id/delete', requireRole('admin'), async (req, res) => {
+router.delete('/:id/delete', requireRole('root'), async (req, res) => {
   try {
     const { confirm } = req.body;
 
@@ -749,7 +549,7 @@ router.delete('/:id/delete', requireRole('admin'), async (req, res) => {
 
 // ─── DELETE /api/inv/transactions/batch-delete ──────────────────────────────
 // Batch delete exported records (Admin only)
-router.delete('/batch-delete', requireRole('admin'), async (req, res) => {
+router.delete('/batch-delete', requireRole('root'), async (req, res) => {
   try {
     const { ids, confirm } = req.body;
 

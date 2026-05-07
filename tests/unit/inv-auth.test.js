@@ -78,7 +78,7 @@ describe('jwtAuth middleware', () => {
 
   it('should return 401 with expiry message when token is expired', () => {
     const token = jwt.sign(
-      { userId: '123', username: 'admin', role: 'admin' },
+      { userId: '123', username: 'admin', role: 'root' },
       TEST_SECRET,
       { expiresIn: -1 } // already expired
     );
@@ -110,7 +110,7 @@ describe('jwtAuth middleware', () => {
   });
 
   it('should include iat and exp in req.user', () => {
-    const payload = { userId: '1', username: 'u', role: 'admin' };
+    const payload = { userId: '1', username: 'u', role: 'root' };
     const token = jwt.sign(payload, TEST_SECRET, { expiresIn: '2h' });
     const req = mockReq(`Bearer ${token}`);
     const res = mockRes();
@@ -131,7 +131,7 @@ describe('requireRole middleware', () => {
     const res = mockRes();
     const next = vi.fn();
 
-    requireRole('admin')(req, res, next);
+    requireRole('root')(req, res, next);
 
     expect(res.statusCode).toBe(403);
     expect(res.body.error).toBe('权限不足');
@@ -143,7 +143,7 @@ describe('requireRole middleware', () => {
     const res = mockRes();
     const next = vi.fn();
 
-    requireRole('admin')(req, res, next);
+    requireRole('root')(req, res, next);
 
     expect(res.statusCode).toBe(403);
     expect(res.body.error).toBe('权限不足');
@@ -151,11 +151,11 @@ describe('requireRole middleware', () => {
   });
 
   it('should call next when user role matches a single allowed role', () => {
-    const req = { user: { role: 'admin' } };
+    const req = { user: { role: 'root' } };
     const res = mockRes();
     const next = vi.fn();
 
-    requireRole('admin')(req, res, next);
+    requireRole('root')(req, res, next);
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.statusCode).toBeNull();
@@ -166,7 +166,7 @@ describe('requireRole middleware', () => {
     const res = mockRes();
     const next = vi.fn();
 
-    requireRole('admin', 'staff')(req, res, next);
+    requireRole('root', 'staff')(req, res, next);
 
     expect(next).toHaveBeenCalledTimes(1);
   });
@@ -176,7 +176,7 @@ describe('requireRole middleware', () => {
     const res = mockRes();
     const next = vi.fn();
 
-    requireRole('admin', 'staff')(req, res, next);
+    requireRole('root', 'staff')(req, res, next);
 
     expect(res.statusCode).toBe(403);
     expect(next).not.toHaveBeenCalled();

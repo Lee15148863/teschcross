@@ -360,7 +360,7 @@
             if (params.get('from') === 'portal' && invToken && invUser) {
                 try {
                     const user = JSON.parse(invUser);
-                    if (user.role === 'admin') {
+                    if (user.role === 'root') {
                         console.log('Auto-login: admin from staff portal');
                         sessionStorage.setItem('announcement_admin_logged_in', 'true');
                     }

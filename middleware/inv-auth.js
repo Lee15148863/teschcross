@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const InvUser = require('../models/inv/User');
 
 /**
  * JWT 认证中间件
@@ -42,4 +43,39 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { jwtAuth, requireRole };
+/**
+ * 细粒度权限中间件
+ * 检查用户是否拥有指定模块的访问权限。
+ * 从数据库加载用户以获取最新权限配置（而非仅依赖 JWT 中的角色）。
+ * 适用于需要比角色更细粒度控制的场景。
+ *
+ * @param {string} permissionKey - 权限键名（如 'settings', 'users', 'website'）
+ */
+function requirePermission(permissionKey) {
+  return async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: '未认证' });
+      }
+
+      const user = await InvUser.findById(req.user.userId).select('role permissions');
+      if (!user) {
+        return res.status(401).json({ error: '用户不存在' });
+      }
+
+      const perms = user.getPermissions();
+      if (!perms[permissionKey]) {
+        return res.status(403).json({ error: '权限不足' });
+      }
+
+      // Attach resolved permissions for downstream use
+      req.userPermissions = perms;
+      next();
+    } catch (err) {
+      console.error('Permission check error:', err.message);
+      res.status(500).json({ error: '服务器错误' });
+    }
+  };
+}
+
+module.exports = { jwtAuth, requireRole, requirePermission };

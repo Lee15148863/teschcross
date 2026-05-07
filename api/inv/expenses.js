@@ -4,7 +4,7 @@ const Expense = require('../../models/inv/Expense');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require admin
-router.use(jwtAuth, requireRole('admin'));
+router.use(jwtAuth, requireRole('root'));
 
 // ─── POST /api/inv/expenses ─────────────────────────────────────────────────
 router.post('/', async (req, res) => {

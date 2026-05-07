@@ -1,4 +1,8 @@
 const mongoose = require('mongoose');
+const {
+  isAuthorized, SOURCES, getSource,
+  validateTransactionVAT, validateTransactionPayment,
+} = require('../../utils/inv-integrity-layer');
 
 const TransactionSchema = new mongoose.Schema({
   receiptNumber: { type: String, required: true, unique: true }, // YYYYMMDDHHmmss
@@ -47,6 +51,26 @@ const TransactionSchema = new mongoose.Schema({
 TransactionSchema.index({ createdAt: -1 });
 TransactionSchema.index({ receiptNumber: 1 }, { unique: true });
 TransactionSchema.index({ 'items.serialNumber': 1 });
-TransactionSchema.index({ originalReceipt: 1 }, { sparse: true });
+TransactionSchema.index(
+  { originalReceipt: 1 },
+  { unique: true, partialFilterExpression: { originalReceipt: { $type: 'string' } } }
+);
+
+// ─── Integrity Layer ──────────────────────────────────────────────────
+// Block direct Transaction creation outside approved services.
+// Re-validate VAT calculations and payment consistency before persist.
+TransactionSchema.pre('save', function () {
+  if (this.isNew) {
+    if (!isAuthorized(this, SOURCES.CHECKOUT, SOURCES.REFUND)) {
+      throw new Error(
+        'INTEGRITY: Direct Transaction creation is not permitted. ' +
+        'Use checkout or refund service.'
+      );
+    }
+    validateTransactionVAT(this, getSource(this));
+    validateTransactionPayment(this);
+  }
+  // Existing documents (root edits) are allowed to proceed
+});
 
 module.exports = mongoose.model('Transaction', TransactionSchema);

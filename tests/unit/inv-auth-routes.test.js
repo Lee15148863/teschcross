@@ -264,13 +264,13 @@ describe('Account lockout logic', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('JWT token structure', () => {
   it('should create JWT with correct payload structure', () => {
-    const payload = { userId: 'user-1', username: 'admin', role: 'admin' };
+    const payload = { userId: 'user-1', username: 'admin', role: 'root' };
     const token = jwt.sign(payload, TEST_SECRET, { expiresIn: '8h' });
     const decoded = jwt.verify(token, TEST_SECRET);
 
     expect(decoded.userId).toBe('user-1');
     expect(decoded.username).toBe('admin');
-    expect(decoded.role).toBe('admin');
+    expect(decoded.role).toBe('root');
     expect(decoded.iat).toBeDefined();
     expect(decoded.exp).toBeDefined();
     // Token should expire in ~8 hours
@@ -280,7 +280,7 @@ describe('JWT token structure', () => {
 
   it('should reject expired tokens', () => {
     const token = jwt.sign(
-      { userId: '1', username: 'u', role: 'admin' },
+      { userId: '1', username: 'u', role: 'root' },
       TEST_SECRET,
       { expiresIn: -1 }
     );
@@ -319,7 +319,7 @@ describe('Password hashing', () => {
 describe('Protected routes — auth middleware', () => {
   function adminToken() {
     return jwt.sign(
-      { userId: 'admin-id-1', username: 'admin', role: 'admin' },
+      { userId: 'admin-id-1', username: 'admin', role: 'root' },
       TEST_SECRET,
       { expiresIn: '1h' }
     );

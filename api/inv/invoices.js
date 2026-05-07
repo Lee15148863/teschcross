@@ -9,7 +9,7 @@ const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 const { calculateStandardVat, calculateMarginVat, DEFAULT_VAT_RATE } = require('../../utils/inv-vat-calculator');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('admin', 'staff'));
+router.use(jwtAuth, requireRole('root', 'staff'));
 
 // ─── Helper: Generate invoice number ────────────────────────────────────────
 function generateInvoiceNumber() {

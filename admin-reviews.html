@@ -60,7 +60,7 @@ function checkAdminAuth() {
     try {
         var invUser = JSON.parse(localStorage.getItem('inv_user'));
         var invToken = localStorage.getItem('inv_token');
-        if (invUser && invUser.role === 'admin' && invToken) return true;
+        if (invUser && invUser.role === 'root' && invToken) return true;
     } catch(e) {}
     sessionStorage.removeItem('admin_logged_in');
     window.location.href = '/staff-portal.html';

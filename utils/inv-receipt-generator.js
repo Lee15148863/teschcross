@@ -6,24 +6,17 @@
 
 /**
  * Generate a receipt number from a Date object.
- * Format: YYYYMMDDHHmmss (14-digit numeric string)
+ * Delegates to the dedicated receipt number generator.
+ * Uses default type 'sale' when no transaction type context is available.
  *
  * @param {Date} date - The transaction date
- * @returns {string} Receipt number in YYYYMMDDHHmmss format
+ * @returns {string} Receipt number in S-YYYYMMDDHHmmss-XXXXXXXX format
  */
 function generateReceiptNumber(date) {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     throw new Error('Invalid date provided');
   }
-
-  const yyyy = date.getFullYear().toString();
-  const MM = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const HH = String(date.getHours()).padStart(2, '0');
-  const mm = String(date.getMinutes()).padStart(2, '0');
-  const ss = String(date.getSeconds()).padStart(2, '0');
-
-  return `${yyyy}${MM}${dd}${HH}${mm}${ss}`;
+  return require('./inv-receipt-number').generateReceiptNumber('sale', date);
 }
 
 /**

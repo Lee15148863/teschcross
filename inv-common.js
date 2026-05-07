@@ -46,7 +46,7 @@ function requireAuth() {
 function requireAdmin() {
   if (!requireAuth()) return false;
   const user = getUser();
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== 'root') {
     window.location.href = 'inv-login.html';
     return false;
   }
@@ -83,16 +83,16 @@ async function invFetch(url, opts) {
 
 function isAdmin() {
   const user = getUser();
-  return user && user.role === 'admin';
+  return user && user.role === 'root';
 }
 
 function isStaff() {
   const user = getUser();
-  return user && (user.role === 'staff' || user.role === 'admin');
+  return user && (user.role === 'staff' || user.role === 'root');
 }
 
 /**
- * 初始化页面公共元素：显示用户名、角色、隐藏/显示管理员菜单
+ * 初始化页面公共元素：显示用户名、角色、隐藏/显示管理菜单
  */
 function initPageAuth() {
   if (!requireAuth()) return false;
@@ -104,7 +104,7 @@ function initPageAuth() {
 
   // Role badge
   const roleBadgeEl = document.getElementById('roleBadge');
-  if (roleBadgeEl) roleBadgeEl.textContent = user.role === 'admin' ? '管理员' : '员工';
+  if (roleBadgeEl) roleBadgeEl.textContent = user.role === 'root' ? '店主' : '员工';
 
   // Show admin sections
   if (isAdmin()) {

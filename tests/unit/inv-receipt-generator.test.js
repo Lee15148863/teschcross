@@ -11,31 +11,39 @@ const {
 // ─── generateReceiptNumber ───────────────────────────────────────────
 
 describe('generateReceiptNumber', () => {
-  it('should format a date as YYYYMMDDHHmmss (14-digit string)', () => {
+  it('should generate a receipt number in S-YYYYMMDDHHmmss-XXXXXXXX format', () => {
     const date = new Date(2026, 3, 28, 15, 54, 15); // April 28, 2026 15:54:15
-    expect(generateReceiptNumber(date)).toBe('20260428155415');
+    const result = generateReceiptNumber(date);
+    expect(result).toMatch(/^S-\d{14}-[0-9A-F]{8}$/);
+    expect(result).toContain('20260428155415');
   });
 
   it('should zero-pad single-digit months, days, hours, minutes, seconds', () => {
     const date = new Date(2026, 0, 5, 3, 7, 9); // Jan 5, 2026 03:07:09
-    expect(generateReceiptNumber(date)).toBe('20260105030709');
+    const result = generateReceiptNumber(date);
+    expect(result).toMatch(/^S-\d{14}-[0-9A-F]{8}$/);
+    expect(result).toContain('20260105030709');
   });
 
   it('should handle midnight correctly', () => {
     const date = new Date(2026, 11, 31, 0, 0, 0); // Dec 31, 2026 00:00:00
-    expect(generateReceiptNumber(date)).toBe('20261231000000');
+    const result = generateReceiptNumber(date);
+    expect(result).toMatch(/^S-\d{14}-[0-9A-F]{8}$/);
+    expect(result).toContain('20261231000000');
   });
 
   it('should handle end of day correctly', () => {
     const date = new Date(2026, 5, 15, 23, 59, 59); // Jun 15, 2026 23:59:59
-    expect(generateReceiptNumber(date)).toBe('20260615235959');
+    const result = generateReceiptNumber(date);
+    expect(result).toMatch(/^S-\d{14}-[0-9A-F]{8}$/);
+    expect(result).toContain('20260615235959');
   });
 
-  it('should produce a 14-character numeric string', () => {
+  it('should produce a 25-character string with type prefix and hex suffix', () => {
     const date = new Date(2026, 3, 28, 15, 54, 15);
     const result = generateReceiptNumber(date);
-    expect(result).toHaveLength(14);
-    expect(result).toMatch(/^\d{14}$/);
+    expect(result).toHaveLength(25);
+    expect(result).toMatch(/^S-\d{14}-[0-9A-F]{8}$/);
   });
 
   it('should throw for invalid date', () => {

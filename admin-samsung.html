@@ -137,7 +137,7 @@
         try {
             var invUser = JSON.parse(localStorage.getItem('inv_user'));
             var invToken = localStorage.getItem('inv_token');
-            if (invUser && invUser.role === 'admin' && invToken) {
+            if (invUser && invUser.role === 'root' && invToken) {
                 sessionStorage.setItem('admin_logged_in', 'true');
             } else {
                 sessionStorage.removeItem('admin_logged_in');

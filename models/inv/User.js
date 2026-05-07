@@ -37,7 +37,7 @@ const UserSchema = new mongoose.Schema({
   username:       { type: String, required: true, unique: true, trim: true },
   password:       { type: String, required: true },
   displayName:    { type: String, required: true, trim: true },
-  role:           { type: String, enum: ['admin', 'staff'], required: true },
+  role:           { type: String, enum: ['root', 'manager', 'staff'], required: true },
   permissions:    { type: PermissionsSchema, default: () => ({}) },
   active:         { type: Boolean, default: true },
   failedAttempts: { type: Number, default: 0 },
@@ -46,13 +46,24 @@ const UserSchema = new mongoose.Schema({
   updatedAt:      { type: Date, default: Date.now }
 });
 
-// Admin always has all permissions
+// Root always has all permissions. Manager gets preset permissions.
 UserSchema.methods.getPermissions = function() {
-  if (this.role === 'admin') {
+  if (this.role === 'root') {
     const all = {};
     PERMISSION_KEYS.forEach(k => all[k] = true);
     return all;
   }
+  if (this.role === 'manager') {
+    const mgr = {};
+    PERMISSION_KEYS.forEach(k => mgr[k] = true);
+    // Manager cannot access system settings, user management, invoices, or website
+    mgr.settings = false;
+    mgr.users = false;
+    mgr.invoices = false;
+    mgr.website = false;
+    return mgr;
+  }
+  // Staff: stored permissions (defaults: pos=true, refund=true)
   return this.permissions ? this.permissions.toObject() : {};
 };
 

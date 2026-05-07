@@ -13,7 +13,7 @@ function checkAuth() {
     try {
         const invUser = JSON.parse(localStorage.getItem('inv_user'));
         const invToken = localStorage.getItem('inv_token');
-        if (invUser && invUser.role === 'admin' && invToken) {
+        if (invUser && invUser.role === 'root' && invToken) {
             sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');
             showAdminPanel();
             return;
@@ -34,7 +34,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             body: JSON.stringify({ username, password, humanCheck: true })
         });
         const data = await res.json();
-        if (res.ok && data.token && data.user && data.user.role === 'admin') {
+        if (res.ok && data.token && data.user && data.user.role === 'root') {
             localStorage.setItem('inv_token', data.token);
             localStorage.setItem('inv_user', JSON.stringify(data.user));
             sessionStorage.setItem(ADMIN_SESSION_KEY, 'authenticated');

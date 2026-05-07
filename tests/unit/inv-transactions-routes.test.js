@@ -26,7 +26,7 @@ function createApp() {
 
 function adminToken() {
   return jwt.sign(
-    { userId: 'admin-id-1', username: 'admin', role: 'admin' },
+    { userId: 'admin-id-1', username: 'admin', role: 'root' },
     TEST_SECRET,
     { expiresIn: '1h' }
   );
@@ -194,7 +194,7 @@ describe('POST /api/inv/transactions/checkout — input validation', () => {
       .send({ items: [{ product: '507f1f77bcf86cd799439011', quantity: 1 }] });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('VALIDATION_ERROR');
-    expect(res.body.error).toMatch(/支付方式/);
+    expect(res.body.error).toMatch(/Payment method/);
   });
 
   it('should return 400 when paymentMethod is invalid', async () => {
@@ -209,7 +209,7 @@ describe('POST /api/inv/transactions/checkout — input validation', () => {
       });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('VALIDATION_ERROR');
-    expect(res.body.error).toMatch(/支付方式/);
+    expect(res.body.error).toMatch(/Payment method/);
   });
 
   it('should return 400 when item is missing product ID', async () => {
@@ -224,7 +224,7 @@ describe('POST /api/inv/transactions/checkout — input validation', () => {
       });
     expect(res.status).toBe(400);
     expect(res.body.code).toBe('VALIDATION_ERROR');
-    expect(res.body.error).toMatch(/商品ID/);
+    expect(res.body.error).toMatch(/missing product ID/);
   });
 });
 
@@ -354,7 +354,7 @@ describe('Transaction routes — token edge cases', () => {
     if (!transactionsRouter) return;
     const app = createApp();
     const expiredToken = jwt.sign(
-      { userId: 'admin-id-1', username: 'admin', role: 'admin' },
+      { userId: 'admin-id-1', username: 'admin', role: 'root' },
       TEST_SECRET,
       { expiresIn: '-1s' }
     );

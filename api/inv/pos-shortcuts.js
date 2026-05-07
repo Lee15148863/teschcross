@@ -4,7 +4,7 @@ const PosShortcut = require('../../models/inv/PosShortcut');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require JWT authentication (Admin or Staff)
-router.use(jwtAuth, requireRole('admin', 'staff'));
+router.use(jwtAuth, requireRole('root', 'staff'));
 
 // ─── GET /api/inv/pos-shortcuts ─────────────────────────────────────────────
 // 返回 1~20 号快捷按钮配置，始终返回 20 条记录
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
 
 // ─── PUT /api/inv/pos-shortcuts ─────────────────────────────────────────────
 // 批量保存 20 个快捷按钮配置（仅 Admin）
-router.put('/', requireRole('admin'), async (req, res) => {
+router.put('/', requireRole('root'), async (req, res) => {
   try {
     const { shortcuts } = req.body;
 

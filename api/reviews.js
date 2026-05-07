@@ -13,7 +13,7 @@ function adminAuth(req, res, next) {
     if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
             const decoded = jwt.verify(authHeader.slice(7), process.env.INV_JWT_SECRET);
-            if (decoded.role === 'admin') { req.user = decoded; return next(); }
+            if (decoded.role === 'root') { req.user = decoded; return next(); }
         } catch (e) { /* fall through */ }
     }
     return res.status(401).json({ error: 'Unauthorized' });

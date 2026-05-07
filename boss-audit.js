@@ -1,0 +1,289 @@
+/**
+ * Boss Audit Log — UI Logic
+ *
+ * RUNBOOK §1 (L1): UI layer only — no business logic.
+ * All data comes from the backend Root API audit-log endpoint.
+ * RUNBOOK §3 Rule E: Every ROOT action generates AuditLog.
+ */
+
+// ─── State ─────────────────────────────────────────────────────
+let _cursor = null;
+let _hasMore = false;
+let _moduleFilter = '';
+
+// ─── Auth ──────────────────────────────────────────────────────
+function getToken() { return localStorage.getItem('inv_token'); }
+function getUser() {
+  try { return JSON.parse(localStorage.getItem('inv_user')); } catch(e) { return null; }
+}
+
+function checkAuth() {
+  const token = getToken();
+  const user = getUser();
+  if (token && user && user.role === 'root') {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appHeader').style.display = 'flex';
+    document.getElementById('appContent').style.display = 'block';
+    document.getElementById('userBadge').textContent = user.displayName || user.username;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('filterEnd').value = today;
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+    document.getElementById('filterStart').value = weekAgo;
+    loadAuditLog();
+    return true;
+  }
+  return false;
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  const errorEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if (!username || !password) {
+    errorEl.textContent = 'Please enter username and password';
+    errorEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+
+  try {
+    const res = await fetch('/api/inv/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, humanCheck: true }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.token && data.user) {
+      if (data.user.role !== 'root') {
+        errorEl.textContent = 'Root access required.';
+        errorEl.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'Login';
+        return;
+      }
+      localStorage.setItem('inv_token', data.token);
+      localStorage.setItem('inv_user', JSON.stringify(data.user));
+      checkAuth();
+    } else {
+      errorEl.textContent = data.error || 'Login failed';
+      errorEl.classList.add('show');
+    }
+  } catch(err) {
+    errorEl.textContent = 'Connection error. Check server.';
+    errorEl.classList.add('show');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Login';
+}
+
+function doLogout() {
+  localStorage.removeItem('inv_token');
+  localStorage.removeItem('inv_user');
+  location.reload();
+}
+
+function goBack() {
+  location.href = 'boss.html';
+}
+
+// ─── API Helper ────────────────────────────────────────────────
+async function api(path, options = {}) {
+  const token = getToken();
+  if (!token) { doLogout(); throw new Error('No token'); }
+
+  const headers = { 'Authorization': 'Bearer ' + token };
+  if (options.body && typeof options.body === 'object') {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const res = await fetch(path, { ...options, headers });
+  if (res.status === 401 || res.status === 403) {
+    showToast('Session expired. Please login again.');
+    doLogout();
+    throw new Error('Auth failed');
+  }
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ─── Toast ─────────────────────────────────────────────────────
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._hide);
+  el._hide = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── Module Filter ─────────────────────────────────────────────
+function filterModule(module) {
+  _moduleFilter = module;
+  document.querySelectorAll('#moduleFilters .filter-chip').forEach(c =>
+    c.classList.toggle('active', c.dataset.filter === module)
+  );
+  loadAuditLog();
+}
+
+// ─── Load Audit Log ───────────────────────────────────────────
+async function loadAuditLog() {
+  _cursor = null;
+  _hasMore = false;
+  document.getElementById('loadMoreBtn').style.display = 'none';
+  const container = document.getElementById('logList');
+  container.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+
+  try {
+    await fetchAuditLogs(true);
+  } catch(err) {
+    container.innerHTML = '<div class="card"><p style="color:#ff3b30;text-align:center">' + esc(err.message) + '</p></div>';
+  }
+}
+
+async function loadMore() {
+  if (!_hasMore || !_cursor) return;
+  document.getElementById('loadMoreBtn').disabled = true;
+  document.getElementById('loadMoreBtn').textContent = 'Loading...';
+  try {
+    await fetchAuditLogs(false);
+  } catch(err) {
+    showToast(err.message);
+  }
+  document.getElementById('loadMoreBtn').disabled = false;
+  document.getElementById('loadMoreBtn').textContent = 'Load More';
+}
+
+async function fetchAuditLogs(reset) {
+  const startDate = document.getElementById('filterStart').value;
+  const endDate = document.getElementById('filterEnd').value;
+  const actionType = document.getElementById('filterAction').value;
+
+  const params = new URLSearchParams();
+  if (startDate) params.set('startDate', startDate);
+  if (endDate) params.set('endDate', endDate);
+  if (actionType) params.set('actionType', actionType);
+  if (_moduleFilter) params.set('module', _moduleFilter);
+  if (_cursor) params.set('cursor', _cursor);
+  params.set('limit', '30');
+
+  const data = await api('/api/inv/root/audit-log?' + params.toString());
+
+  const container = document.getElementById('logList');
+  const countEl = document.getElementById('entryCount');
+  const rangeEl = document.getElementById('entryRange');
+
+  if (reset) {
+    container.innerHTML = '';
+  }
+
+  if (data.logs.length === 0) {
+    if (reset) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No audit entries found</p></div>';
+    }
+    countEl.textContent = '0 entries';
+    rangeEl.textContent = '';
+    document.getElementById('loadMoreBtn').style.display = 'none';
+    return;
+  }
+
+  const existingCount = reset ? 0 : parseInt(container.dataset.entryCount || '0');
+  const totalCount = existingCount + data.logs.length;
+  container.dataset.entryCount = totalCount;
+  countEl.textContent = totalCount + ' entries';
+
+  _hasMore = data.pagination?.hasMore || false;
+  _cursor = data.pagination?.nextCursor || null;
+
+  if (_hasMore) {
+    document.getElementById('loadMoreBtn').style.display = 'block';
+  } else {
+    document.getElementById('loadMoreBtn').style.display = 'none';
+  }
+
+  for (const log of data.logs) {
+    container.appendChild(renderLogEntry(log));
+  }
+}
+
+// ─── Render Single Log Entry ──────────────────────────────────
+function renderLogEntry(log) {
+  const div = document.createElement('div');
+  div.className = 'log-item';
+
+  const actionName = log.action.replace(/^root\./, '');
+  const time = new Date(log.createdAt).toLocaleString('en-GB', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+
+  const roleBadge = { root: 'badge-red', manager: 'badge-blue', staff: 'badge-gray' };
+  const role = log.role || 'root';
+  const moduleBadge = log.module ? '<span class="badge badge-gray">' + esc(log.module) + '</span>' : '';
+  const roleSpan = '<span class="badge ' + (roleBadge[role] || 'badge-gray') + '">' + esc(role) + '</span>';
+
+  // Decrypt the encryptedData
+  let detailsHtml = '';
+  let hasSnapshot = false;
+  if (log.beforeSnapshot || log.afterSnapshot) {
+    hasSnapshot = true;
+    const beforeJson = log.beforeSnapshot ? syntaxHighlight(JSON.stringify(log.beforeSnapshot, null, 2)) : '<em>none</em>';
+    const afterJson = log.afterSnapshot ? syntaxHighlight(JSON.stringify(log.afterSnapshot, null, 2)) : '<em>none</em>';
+    detailsHtml = '<div class="snapshot-grid">' +
+      '<div class="snapshot-col"><div class="snapshot-label">Before</div><pre>' + beforeJson + '</pre></div>' +
+      '<div class="snapshot-col"><div class="snapshot-label">After</div><pre>' + afterJson + '</pre></div>' +
+      '</div>';
+  }
+
+  const targetInfo = log.targetId ? '<span style="color:#636366">' + esc(log.targetId) + '</span>' : '';
+  const operatorName = log.operator?.displayName || log.operator?.username || 'root';
+
+  div.innerHTML =
+    '<div class="log-header">' +
+      '<div><div class="log-action">' + esc(actionName) + '</div>' +
+      '<div class="log-meta">' + roleSpan + ' ' + moduleBadge + ' <span>' + esc(operatorName) + '</span></div></div>' +
+      '<div class="log-time">' + time + '</div>' +
+    '</div>' +
+    '<div class="log-meta">' + (log.targetType ? esc(log.targetType) : '') + (targetInfo ? ' › ' + targetInfo : '') + '</div>' +
+    (hasSnapshot ? '<div class="log-details" id="snapshot-' + log._id + '">' + detailsHtml + '</div>' : '');
+
+  if (hasSnapshot) {
+    div.addEventListener('click', function(e) {
+      const snap = document.getElementById('snapshot-' + log._id);
+      if (snap) snap.classList.toggle('open');
+    });
+  }
+
+  return div;
+}
+
+// ─── JSON Syntax Highlight ────────────────────────────────────
+function syntaxHighlight(json) {
+  return json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
+    .replace(/"([^"]+)"(?=\s*[,}\]])/g, '<span class="string">"$1"</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>')
+    .replace(/\bnull\b/g, '<span class="null">null</span>');
+}
+
+// ─── Utility ──────────────────────────────────────────────────
+function esc(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ─── Init ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  if (!checkAuth()) {
+    document.getElementById('loginUser').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('loginPass').focus();
+    });
+    document.getElementById('loginPass').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
+  }
+});

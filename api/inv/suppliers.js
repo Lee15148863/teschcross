@@ -5,12 +5,12 @@ const PurchaseOrder = require('../../models/inv/PurchaseOrder');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('admin', 'staff'));
+router.use(jwtAuth, requireRole('root', 'staff'));
 
 // ─── PUT /api/inv/suppliers/batch-disable ───────────────────────────────────
 // Batch disable suppliers (Admin only)
 // Must be defined BEFORE /:id routes to avoid route conflict
-router.put('/batch-disable', requireRole('admin'), async (req, res) => {
+router.put('/batch-disable', requireRole('root'), async (req, res) => {
   try {
     const { ids, reason } = req.body;
 
@@ -41,7 +41,7 @@ router.put('/batch-disable', requireRole('admin'), async (req, res) => {
 // ─── PUT /api/inv/suppliers/batch-enable ────────────────────────────────────
 // Batch enable suppliers (Admin only)
 // Must be defined BEFORE /:id routes to avoid route conflict
-router.put('/batch-enable', requireRole('admin'), async (req, res) => {
+router.put('/batch-enable', requireRole('root'), async (req, res) => {
   try {
     const { ids } = req.body;
 
@@ -266,7 +266,7 @@ router.get('/:id/account', async (req, res) => {
 
 // ─── PUT /api/inv/suppliers/:id/disable ─────────────────────────────────────
 // Disable supplier (Admin only): set active=false, record disableReason and disabledAt
-router.put('/:id/disable', requireRole('admin'), async (req, res) => {
+router.put('/:id/disable', requireRole('root'), async (req, res) => {
   try {
     const { reason } = req.body;
 
@@ -297,7 +297,7 @@ router.put('/:id/disable', requireRole('admin'), async (req, res) => {
 
 // ─── PUT /api/inv/suppliers/:id/enable ──────────────────────────────────────
 // Re-enable supplier (Admin only): set active=true, clear disableReason/disabledAt
-router.put('/:id/enable', requireRole('admin'), async (req, res) => {
+router.put('/:id/enable', requireRole('root'), async (req, res) => {
   try {
     const supplier = await Supplier.findById(req.params.id);
     if (!supplier) {
@@ -326,7 +326,7 @@ router.put('/:id/enable', requireRole('admin'), async (req, res) => {
 
 // ─── DELETE /api/inv/suppliers/:id ──────────────────────────────────────────
 // Permanently delete supplier (Admin only)
-router.delete('/:id', requireRole('admin'), async (req, res) => {
+router.delete('/:id', requireRole('root'), async (req, res) => {
   try {
     const Supplier = require('../../models/inv/Supplier');
     const supplier = await Supplier.findById(req.params.id);

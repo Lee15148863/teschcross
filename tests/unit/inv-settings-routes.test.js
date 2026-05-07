@@ -26,7 +26,7 @@ function createApp() {
 
 function adminToken() {
   return jwt.sign(
-    { userId: 'admin-id-1', username: 'admin', role: 'admin' },
+    { userId: 'admin-id-1', username: 'admin', role: 'root' },
     TEST_SECRET,
     { expiresIn: '1h' }
   );
@@ -84,7 +84,7 @@ describe('Settings routes — auth middleware', () => {
     if (!settingsRouter) return;
     const app = createApp();
     const expiredToken = jwt.sign(
-      { userId: 'admin-id-1', username: 'admin', role: 'admin' },
+      { userId: 'admin-id-1', username: 'admin', role: 'root' },
       TEST_SECRET,
       { expiresIn: '-1s' }
     );
@@ -250,7 +250,7 @@ describe('Settings routes — token edge cases', () => {
     if (!settingsRouter) return;
     const app = createApp();
     const expiredToken = jwt.sign(
-      { userId: 'admin-id-1', username: 'admin', role: 'admin' },
+      { userId: 'admin-id-1', username: 'admin', role: 'root' },
       TEST_SECRET,
       { expiresIn: '-1s' }
     );
@@ -275,7 +275,7 @@ describe('Settings routes — token edge cases', () => {
     if (!settingsRouter) return;
     const app = createApp();
     const expiredToken = jwt.sign(
-      { userId: 'admin-id-1', username: 'admin', role: 'admin' },
+      { userId: 'admin-id-1', username: 'admin', role: 'root' },
       TEST_SECRET,
       { expiresIn: '-1s' }
     );

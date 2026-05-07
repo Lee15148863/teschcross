@@ -165,8 +165,8 @@ if(!token){window.location.href='inv-login.html';return;}
 let user;try{user=JSON.parse(localStorage.getItem('inv_user'));}catch(e){window.location.href='inv-login.html';return;}
 if(!user){window.location.href='inv-login.html';return;}
 document.getElementById('displayName').textContent=user.displayName||user.username;
-document.getElementById('roleBadge').textContent=user.role==='admin'?'管理员':'员工';
-const isAdmin=user.role==='admin';
+document.getElementById('roleBadge').textContent=user.role === 'root' ? '店主':'员工';
+const isAdmin=user.role === 'root';
 if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');document.querySelectorAll('.admin-batch').forEach(el=>el.style.display='');}
 
 // Hide sidebar items based on permissions

@@ -879,7 +879,6 @@
     var isAdmin = false;
     try { var _u = JSON.parse(localStorage.getItem('inv_user')); if (_u && _u.role === 'admin') isAdmin = true; } catch(e) {}
     const API_BASE = '/api/inv';
-    const VAT_RATE = 0.23;
     const headers = () => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token });
 
     // State
@@ -1157,7 +1156,7 @@
         cartEmpty.style.display = '';
         cartTable.style.display = 'none';
         document.getElementById('emptyCartText').textContent = t('emptyCartText');
-        updateTotals();
+        _resetTotalsDisplay();
         return;
       }
       cartEmpty.style.display = 'none';
@@ -1167,16 +1166,13 @@
       cart.forEach(function(item, idx) {
         var stockWarn = (item.stock > 0 && item.quantity > item.stock) ? '<div class="stock-warn">⚠ ' + (lang === 'zh' ? '库存不足' : 'Low stock') + '</div>' : '';
         var taxBadge = item.marginScheme ? '<span class="cart-item-tax tax-margin">Margin</span>' : '<span class="cart-item-tax tax-standard">' + parseFloat(((item.vatRate||0.23)*100).toFixed(1)).toString() + '%</span>';
-        var discountInfo = '';
-        var displayPrice = item.unitPrice;
-        if (item.discount && item.discount.type && item.discount.value > 0) {
-          var discAmt = 0;
-          if (item.discount.type === 'percentage') discAmt = item.unitPrice * Math.min(item.discount.value, 100) / 100;
-          else discAmt = Math.min(item.discount.value, item.unitPrice);
-          displayPrice = Math.round((item.unitPrice - discAmt) * 100) / 100;
-          discountInfo = '<div class="cart-original-price">€' + item.unitPrice.toFixed(2) + '</div>';
-        }
-        var subtotal = Math.round(displayPrice * item.quantity * 100) / 100;
+        // Use cached API calculation for display (no frontend VAT/discount math)
+        var calcItem = window._lastCalc && window._lastCalc.items ? window._lastCalc.items[idx] : null;
+        var displayPrice = calcItem ? calcItem.discountedPrice : 0;
+        var subtotal = calcItem ? calcItem.subtotal : 0;
+        var discountInfo = (item.discount && item.discount.type && item.discount.value > 0)
+          ? '<div class="cart-original-price">€' + item.unitPrice.toFixed(2) + '</div>'
+          : '';
         var selected = idx === selectedCartIndex ? ' selected' : '';
         var serial = item.serialNumber ? '<div class="cart-item-serial">SN: ' + escHtml(item.serialNumber) + '</div>' : '';
 
@@ -1254,7 +1250,8 @@
       cartBody.onkeydown = function(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') e.stopPropagation();
       };
-      updateTotals();
+      // Trigger async totals refresh via backend API (no frontend VAT/discount calc)
+      refreshTotals();
     }
 
     window._selectCartItem = function(idx) { selectedCartIndex = idx; renderCart(); };
@@ -1292,65 +1289,65 @@
       renderCart();
     };
 
-    // Calculate totals
-    function updateTotals() {
-      var subtotal = 0, stdVat = 0, marginVat = 0, totalDiscount = 0;
-      cart.forEach(function(item) {
-        var price = item.unitPrice;
-        if (item.discount && item.discount.type && item.discount.value > 0) {
-          var d = 0;
-          if (item.discount.type === 'percentage') d = price * Math.min(item.discount.value, 100) / 100;
-          else d = Math.min(item.discount.value, price);
-          totalDiscount += Math.round(d * item.quantity * 100) / 100;
-          price = Math.round((price - d) * 100) / 100;
-        }
-        var itemSub = Math.round(price * item.quantity * 100) / 100;
-        subtotal += itemSub;
-        if (item.marginScheme) {
-          var margin = price - item.costPrice;
-          var iVat = item.vatRate || 0.23;
-          if (margin > 0) marginVat += Math.round(margin * iVat / (1 + iVat) * item.quantity * 100) / 100;
-        } else {
-          var iVat2 = item.vatRate || 0.23;
-          stdVat += Math.round(price * iVat2 / (1 + iVat2) * item.quantity * 100) / 100;
-        }
-      });
+    // ─── API-driven totals (no frontend VAT/discount calculation) ──────
+    var _calcPending = false;
 
-      // Apply order discount
-      var orderDiscAmt = 0;
-      if (orderDiscount && orderDiscount.type && orderDiscount.value > 0) {
-        if (orderDiscount.type === 'percentage') orderDiscAmt = subtotal * Math.min(orderDiscount.value, 100) / 100;
-        else orderDiscAmt = Math.min(orderDiscount.value, subtotal);
-        orderDiscAmt = Math.round(orderDiscAmt * 100) / 100;
-        totalDiscount += orderDiscAmt;
-      }
-      var total = Math.round((subtotal - orderDiscAmt) * 100) / 100;
-      total = Math.max(0, total);
+    function _resetTotalsDisplay() {
+      document.getElementById('valSubtotal').textContent = '€0.00';
+      document.getElementById('valStdVat').textContent = '€0.00';
+      document.getElementById('valMarginVat').textContent = '€0.00';
+      document.getElementById('valTotal').textContent = '€0.00';
+      document.getElementById('discountSummary').style.display = 'none';
+      document.getElementById('btnCheckout').disabled = true;
+      updateChange();
+    }
 
-      // Recalculate VAT after order discount if needed
-      if (orderDiscAmt > 0 && subtotal > 0) {
-        var ratio = (subtotal - orderDiscAmt) / subtotal;
-        stdVat = Math.round(stdVat * ratio * 100) / 100;
-        marginVat = Math.round(marginVat * ratio * 100) / 100;
-      }
-
-      document.getElementById('valSubtotal').textContent = '€' + subtotal.toFixed(2);
-      document.getElementById('valStdVat').textContent = '€' + stdVat.toFixed(2);
-      document.getElementById('valMarginVat').textContent = '€' + marginVat.toFixed(2);
-      document.getElementById('valTotal').textContent = '€' + total.toFixed(2);
+    function _applyCalcToDisplay(data) {
+      document.getElementById('valSubtotal').textContent = '€' + data.subtotalBeforeOrderDiscount.toFixed(2);
+      document.getElementById('valStdVat').textContent = '€' + data.standardVatTotal.toFixed(2);
+      document.getElementById('valMarginVat').textContent = '€' + data.marginVatTotal.toFixed(2);
+      document.getElementById('valTotal').textContent = '€' + data.totalAmount.toFixed(2);
 
       var discSummary = document.getElementById('discountSummary');
-      if (totalDiscount > 0) {
+      if (data.orderDiscountAmount > 0) {
         discSummary.style.display = '';
-        document.getElementById('valDiscount').textContent = '-€' + totalDiscount.toFixed(2);
+        document.getElementById('valDiscount').textContent = '-€' + data.orderDiscountAmount.toFixed(2);
       } else {
         discSummary.style.display = 'none';
       }
 
-      // Update change
+      document.getElementById('btnCheckout').disabled = false;
       updateChange();
-      // Update checkout button
-      document.getElementById('btnCheckout').disabled = cart.length === 0;
+    }
+
+    async function refreshTotals() {
+      if (_calcPending) return; // avoid duplicate concurrent requests
+      if (!cart || cart.length === 0) {
+        window._lastCalc = null;
+        _resetTotalsDisplay();
+        return;
+      }
+      _calcPending = true;
+      try {
+        var body = {
+          items: cart.map(function(c) { return { product: c.product, quantity: c.quantity, discount: c.discount }; }),
+        };
+        if (orderDiscount && orderDiscount.type && orderDiscount.value > 0) {
+          body.orderDiscount = orderDiscount;
+        }
+        var res = await apiFetch('/transactions/calculate', { method: 'POST', body: JSON.stringify(body) });
+        if (!res) return;
+        var data = await res.json();
+        if (!res.ok) return;
+        window._lastCalc = data;
+        _applyCalcToDisplay(data);
+        // Re-render cart to refresh per-item prices from API response
+        renderCart();
+      } catch (err) {
+        showToast('Error calculating totals', 'error');
+      } finally {
+        _calcPending = false;
+      }
     }
 
     // Split payment: card + cash inputs
@@ -1518,8 +1515,7 @@
         // Build receipt preview
         var rxItems = '';
         (txn.items || []).forEach(function(it) {
-          var price = (it.discountedPrice != null ? it.discountedPrice : it.unitPrice) || 0;
-          var total = price * (it.quantity || 1);
+          var total = it.subtotal != null ? it.subtotal : 0;
           rxItems += '<div style="display:flex;justify-content:space-between;font-size:13px;margin:2px 0;"><span>' + (it.quantity > 1 ? it.quantity + 'x ' : '') + escHtml(it.name) + '</span><span>€' + total.toFixed(2) + '</span></div>';
           if (it.serialNumber) rxItems += '<div style="font-size:11px;color:#0071e3;">SN: ' + escHtml(it.serialNumber) + '</div>';
         });

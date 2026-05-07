@@ -72,7 +72,7 @@
     <div class="main">
         <div class="topbar">
             <h2>系统设置 / Settings</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">管理员</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
+            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">店主</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
         </div>
         <div class="content">
             <div class="tabs">
@@ -146,7 +146,7 @@
 const token=localStorage.getItem('inv_token');
 if(!token){window.location.href='inv-login.html';return;}
 let user;try{user=JSON.parse(localStorage.getItem('inv_user'));}catch(e){window.location.href='inv-login.html';return;}
-if(!user||user.role!=='admin'){window.location.href='inv-login.html';return;}
+if(!user||user.role !== 'root'){window.location.href='inv-login.html';return;}
 document.getElementById('displayName').textContent=user.displayName||user.username;
 
 // Hide sidebar items based on permissions (admin pages - admin sees all)

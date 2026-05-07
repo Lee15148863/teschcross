@@ -34,7 +34,7 @@
         tbody tr:hover{background:#fafafa;}
         .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;}
         .badge-active{background:#e8f5e9;color:#2e7d32;}.badge-inactive{background:#fef2f2;color:#991b1b;}
-        .badge-admin{background:#e3f2fd;color:#1565c0;}.badge-staff{background:#f5f5f7;color:#6e6e73;}
+        .badge-root{background:#e3f2fd;color:#1565c0;}.badge-staff{background:#f5f5f7;color:#6e6e73;}
         .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
         .modal-overlay.show{display:flex;}
         .modal{background:#fff;border-radius:18px;padding:32px;max-width:500px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);}
@@ -74,7 +74,7 @@
     <div class="main">
         <div class="topbar">
             <h2>用户管理 / Users</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">管理员</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
+            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">店主</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
         </div>
         <div class="content">
             <div class="card">
@@ -99,7 +99,7 @@
         <div class="form-group"><label>用户名 <span style="color:#ff3b30;">*</span></label><input type="text" id="fUsername" autocomplete="off"></div>
         <div class="form-group"><label>显示名 <span style="color:#ff3b30;">*</span></label><input type="text" id="fDisplayName"></div>
         <div class="form-group" id="passwordGroup"><label>密码 <span style="color:#ff3b30;">*</span></label><input type="password" id="fPassword" autocomplete="new-password"><div class="hint">至少 8 位，必须包含字母和数字</div></div>
-        <div class="form-group"><label>角色 Role</label><select id="fRole" onchange="togglePermissions()"><option value="staff">员工 Staff</option><option value="admin">管理员 Admin</option></select></div>
+        <div class="form-group"><label>角色 Role</label><select id="fRole" onchange="togglePermissions()"><option value="staff">员工 Staff</option><option value="root">店主 Root</option></select></div>
         <div class="form-group" id="permissionsGroup">
             <label>权限 Permissions</label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;" id="permCheckboxes">
@@ -146,7 +146,7 @@
 const token=localStorage.getItem('inv_token');
 if(!token){window.location.href='inv-login.html';return;}
 let user;try{user=JSON.parse(localStorage.getItem('inv_user'));}catch(e){window.location.href='inv-login.html';return;}
-if(!user||user.role!=='admin'){window.location.href='inv-login.html';return;}
+if(!user||user.role !== 'root'){window.location.href='inv-login.html';return;}
 document.getElementById('displayName').textContent=user.displayName||user.username;
 
 // Hide sidebar items based on permissions (admin pages - admin sees all)
@@ -159,8 +159,8 @@ function logout(){localStorage.removeItem('inv_token');localStorage.removeItem('
 window.logout=logout;
 async function apiFetch(url,opts){opts=opts||{};opts.headers=headers();const r=await fetch(API+url,opts);if(r.status===401){logout();return null;}return r;}
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-const roleMap={admin:'管理员',staff:'员工'};
-const roleBadge={admin:'badge-admin',staff:'badge-staff'};
+const roleMap={root:'店主',staff:'员工'};
+const roleBadge={root:'badge-root',staff:'badge-staff'};
 
 async function loadUsers(){
     try{
@@ -264,7 +264,7 @@ async function loadUsers(){
 function togglePermissions(){
     var role=document.getElementById('fRole').value;
     var pg=document.getElementById('permissionsGroup');
-    if(role==='admin'){pg.style.opacity='0.4';pg.style.pointerEvents='none';}
+    if(role === 'root'){pg.style.opacity='0.4';pg.style.pointerEvents='none';}
     else{pg.style.opacity='1';pg.style.pointerEvents='auto';}
 }
 window.togglePermissions=togglePermissions;
@@ -322,7 +322,7 @@ async function saveUser(){
     }
     body.displayName=document.getElementById('fDisplayName').value.trim();
     body.role=document.getElementById('fRole').value;
-    if(body.role!=='admin')body.permissions=getPermissions();
+    if(body.role !== 'root')body.permissions=getPermissions();
     if(!body.displayName){showToast('请输入显示名','error');return;}
     try{
         const url=id?'/auth/users/'+id:'/auth/users';

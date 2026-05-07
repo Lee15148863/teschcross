@@ -7,6 +7,7 @@ const InvUser = require('../../models/inv/User');
 const LoginLog = require('../../models/inv/LoginLog');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 const { validatePassword } = require('../../utils/inv-validators');
+const { AUDIT_ACTIONS, logAdminAction } = require('../../services/inv-admin-service');
 
 const JWT_SECRET = process.env.INV_JWT_SECRET;
 const TOKEN_EXPIRES_IN = '8h';
@@ -152,7 +153,7 @@ router.post('/login', async (req, res) => {
     }).catch(() => {});
 
     // Token expiry: staff 10h, admin 20min
-    const tokenExpiry = user.role === 'admin' ? '20m' : '10h';
+    const tokenExpiry = user.role === 'root' ? '20m' : '10h';
 
     const token = jwt.sign(
       { userId: user._id, username: user.username, role: user.role },
@@ -178,7 +179,7 @@ router.post('/login', async (req, res) => {
 
 // ─── GET /api/inv/auth/users ────────────────────────────────────────────────
 // Get user list (Admin only)
-router.get('/users', jwtAuth, requireRole('admin'), async (req, res) => {
+router.get('/users', jwtAuth, requireRole('root'), async (req, res) => {
   try {
     const users = await InvUser.find({}, '-password').sort({ createdAt: -1 });
     res.json(users.map(u => ({ ...u.toObject(), permissions: u.getPermissions() })));
@@ -189,7 +190,7 @@ router.get('/users', jwtAuth, requireRole('admin'), async (req, res) => {
 
 // ─── POST /api/inv/auth/users ───────────────────────────────────────────────
 // Create user (Admin only)
-router.post('/users', jwtAuth, requireRole('admin'), async (req, res) => {
+router.post('/users', jwtAuth, requireRole('root'), async (req, res) => {
   try {
     const { username, password, displayName, role, permissions } = req.body;
 
@@ -199,8 +200,8 @@ router.post('/users', jwtAuth, requireRole('admin'), async (req, res) => {
     }
 
     // Role validation
-    if (!['admin', 'staff'].includes(role)) {
-      return res.status(400).json({ error: '角色必须为 admin 或 staff' });
+    if (!['root', 'manager', 'staff'].includes(role)) {
+      return res.status(400).json({ error: '角色必须为 root、manager 或 staff' });
     }
 
     // Password complexity validation
@@ -226,6 +227,15 @@ router.post('/users', jwtAuth, requireRole('admin'), async (req, res) => {
       permissions: permissions || {}
     });
 
+    logAdminAction({
+      action: AUDIT_ACTIONS.USER_CREATE,
+      operator: req.user.userId,
+      targetType: 'user',
+      targetId: user._id.toString(),
+      details: { username, displayName, role },
+      ip: req.ip || req.connection?.remoteAddress,
+    });
+
     res.status(201).json({
       id: user._id,
       username: user.username,
@@ -244,15 +254,15 @@ router.post('/users', jwtAuth, requireRole('admin'), async (req, res) => {
 
 // ─── PUT /api/inv/auth/users/:id ────────────────────────────────────────────
 // Edit user (Admin only) — can update displayName, role, active
-router.put('/users/:id', jwtAuth, requireRole('admin'), async (req, res) => {
+router.put('/users/:id', jwtAuth, requireRole('root'), async (req, res) => {
   try {
     const { displayName, role, active, permissions } = req.body;
     const updateFields = {};
 
     if (displayName !== undefined) updateFields.displayName = displayName;
     if (role !== undefined) {
-      if (!['admin', 'staff'].includes(role)) {
-        return res.status(400).json({ error: '角色必须为 admin 或 staff' });
+      if (!['root', 'manager', 'staff'].includes(role)) {
+        return res.status(400).json({ error: '角色必须为 root、manager 或 staff' });
       }
       updateFields.role = role;
     }
@@ -275,6 +285,18 @@ router.put('/users/:id', jwtAuth, requireRole('admin'), async (req, res) => {
       return res.status(404).json({ error: '用户不存在' });
     }
 
+    // Audit log for role/active changes
+    if (role !== undefined || active !== undefined) {
+      logAdminAction({
+        action: role !== undefined ? AUDIT_ACTIONS.USER_ROLE_CHANGE : AUDIT_ACTIONS.USER_DISABLE,
+        operator: req.user.userId,
+        targetType: 'user',
+        targetId: user._id.toString(),
+        details: { changes: updateFields },
+        ip: req.ip || req.connection?.remoteAddress,
+      });
+    }
+
     res.json({ ...user.toObject(), permissions: user.getPermissions() });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
@@ -283,7 +305,7 @@ router.put('/users/:id', jwtAuth, requireRole('admin'), async (req, res) => {
 
 // ─── PUT /api/inv/auth/users/:id/disable ────────────────────────────────────
 // Disable user (Admin only)
-router.put('/users/:id/disable', jwtAuth, requireRole('admin'), async (req, res) => {
+router.put('/users/:id/disable', jwtAuth, requireRole('root'), async (req, res) => {
   try {
     const user = await InvUser.findByIdAndUpdate(
       req.params.id,
@@ -295,6 +317,15 @@ router.put('/users/:id/disable', jwtAuth, requireRole('admin'), async (req, res)
       return res.status(404).json({ error: '用户不存在' });
     }
 
+    logAdminAction({
+      action: AUDIT_ACTIONS.USER_DISABLE,
+      operator: req.user.userId,
+      targetType: 'user',
+      targetId: user._id.toString(),
+      details: { username: user.username, displayName: user.displayName, active: false },
+      ip: req.ip || req.connection?.remoteAddress,
+    });
+
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
@@ -303,7 +334,7 @@ router.put('/users/:id/disable', jwtAuth, requireRole('admin'), async (req, res)
 
 // ─── PUT /api/inv/auth/users/:id/reset-password ─────────────────────────────
 // Reset password (Admin only)
-router.put('/users/:id/reset-password', jwtAuth, requireRole('admin'), async (req, res) => {
+router.put('/users/:id/reset-password', jwtAuth, requireRole('root'), async (req, res) => {
   try {
     const { password } = req.body;
 
@@ -329,6 +360,15 @@ router.put('/users/:id/reset-password', jwtAuth, requireRole('admin'), async (re
       return res.status(404).json({ error: '用户不存在' });
     }
 
+    logAdminAction({
+      action: AUDIT_ACTIONS.USER_PASSWORD_RESET,
+      operator: req.user.userId,
+      targetType: 'user',
+      targetId: user._id.toString(),
+      details: { username: user.username },
+      ip: req.ip || req.connection?.remoteAddress,
+    });
+
     res.json({ message: '密码重置成功' });
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
@@ -337,7 +377,7 @@ router.put('/users/:id/reset-password', jwtAuth, requireRole('admin'), async (re
 
 // ─── DELETE /api/inv/auth/users/:id ─────────────────────────────────────────
 // Permanently delete user (Admin only)
-router.delete('/users/:id', jwtAuth, requireRole('admin'), async (req, res) => {
+router.delete('/users/:id', jwtAuth, requireRole('root'), async (req, res) => {
   try {
     const targetUser = await InvUser.findById(req.params.id);
     if (!targetUser) {

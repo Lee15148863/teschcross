@@ -7,7 +7,7 @@ const StockMovementSchema = new mongoose.Schema({
   operator:      { type: mongoose.Schema.Types.ObjectId, ref: 'InvUser', required: true },
   reason:        { type: String, trim: true },
   referenceId:   { type: String, trim: true },
-  referenceType: { type: String, enum: ['purchase', 'transaction', 'manual', 'reconcile'] },
+  referenceType: { type: String, enum: ['purchase', 'transaction', 'manual', 'reconcile', 'refund'] },
   serialNumber:  { type: String, trim: true },
   note:          { type: String, trim: true },
   createdAt:     { type: Date, default: Date.now }

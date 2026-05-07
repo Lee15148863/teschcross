@@ -25,7 +25,7 @@ const PricingAPI = {
         try {
             var invUser = JSON.parse(localStorage.getItem('inv_user'));
             var invToken = localStorage.getItem('inv_token');
-            if (invUser && invUser.role === 'admin' && invToken) {
+            if (invUser && invUser.role === 'root' && invToken) {
                 headers['Authorization'] = 'Bearer ' + invToken;
             } else {
                 throw new Error('Admin authentication required');

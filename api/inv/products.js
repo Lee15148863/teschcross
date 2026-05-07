@@ -6,7 +6,7 @@ const { validateRequiredFields } = require('../../utils/inv-validators');
 const { calculateMarginVat } = require('../../utils/inv-vat-calculator');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('admin', 'staff'));
+router.use(jwtAuth, requireRole('root', 'staff'));
 
 // ─── Category attribute templates ───────────────────────────────────────────
 const CATEGORY_TEMPLATES = {
@@ -265,8 +265,8 @@ router.put('/:id', async (req, res) => {
     }
     if (stock !== undefined) {
       // Only admin can modify stock
-      if (req.user.role !== 'admin') {
-        return res.status(403).json({ error: '只有管理员可以修改库存数量', code: 'FORBIDDEN' });
+      if (req.user.role !== 'root') {
+        return res.status(403).json({ error: '只有店主可以修改库存数量', code: 'FORBIDDEN' });
       }
       updateFields.stock = stock;
     }
@@ -376,7 +376,7 @@ router.put('/:id/disable', async (req, res) => {
 
 // ─── PUT /api/inv/products/:id/dead-stock ───────────────────────────────────
 // Toggle dead stock flag (Admin only)
-router.put('/:id/dead-stock', requireRole('admin'), async (req, res) => {
+router.put('/:id/dead-stock', requireRole('root'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -398,7 +398,7 @@ router.put('/:id/dead-stock', requireRole('admin'), async (req, res) => {
 
 // ─── DELETE /api/inv/products/:id ───────────────────────────────────────────
 // Permanently delete a product (Admin only)
-router.delete('/:id', requireRole('admin'), async (req, res) => {
+router.delete('/:id', requireRole('root'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
