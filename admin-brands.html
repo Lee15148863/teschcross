@@ -187,35 +187,17 @@
     </div>
 </div>
 
+<script src="auth-guard.js"></script>
 <script src="/api-client.js"></script>
 <script>
 // Auth: inventory admin only.
-function checkAdminAuth() {
-    try {
-        var invUser = JSON.parse(localStorage.getItem('inv_user'));
-        var invToken = localStorage.getItem('inv_token');
-        if (invUser && invUser.role === 'root' && invToken) return true;
-    } catch(e) {}
-    sessionStorage.removeItem('admin_logged_in');
-    window.location.href = '/staff-portal.html';
+if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; return; }
 
 // HTML escape function
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-    return false;
-}
-if (!checkAdminAuth()) throw new Error('Not authorized');
-sessionStorage.setItem('admin_logged_in', 'true');
-
 function getBrandsAuthHeaders() {
-    try {
-        var invUser = JSON.parse(localStorage.getItem('inv_user'));
-        var invToken = localStorage.getItem('inv_token');
-        if (invUser && invUser.role === 'root' && invToken) {
-            return { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + invToken };
-        }
-    } catch(e) {}
-    return { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('inv_token') };
+    return Auth.getHeaders();
 }
 const USERNAME = '';
 const PASSWORD = '';
@@ -230,14 +212,13 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
     e.preventDefault();
     if (document.getElementById('usernameInput').value === USERNAME &&
         document.getElementById('passwordInput').value === PASSWORD) {
-        sessionStorage.setItem('admin_logged_in', 'true');
         showAdmin();
     } else {
         document.getElementById('loginError').classList.add('show');
     }
 });
-if (sessionStorage.getItem('admin_logged_in') === 'true') showAdmin();
-function logout() { sessionStorage.removeItem('admin_logged_in'); location.reload(); }
+showAdmin();
+function logout() { Auth.logout(); }
 
 // ── Init ──────────────────────────────────────────────────
 async function showAdmin() {

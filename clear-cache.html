@@ -80,7 +80,11 @@
         <div id="message"></div>
     </div>
 
+    <script src="auth-guard.js"></script>
     <script>
+        // Auth check - must be root
+        Auth.requireRole('root');
+
         function clearCache() {
             // Clear all pricing related data
             localStorage.removeItem('techcross_pricing_data');

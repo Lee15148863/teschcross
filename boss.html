@@ -133,18 +133,6 @@
 </head>
 <body>
 
-<!-- ─── Login Screen ─────────────────────────────────────────── -->
-<div class="login-screen" id="loginScreen">
-  <div class="login-box">
-    <h1>Boss Control</h1>
-    <p>Root access required</p>
-    <div class="login-error" id="loginError"></div>
-    <input type="text" id="loginUser" placeholder="Username" autocomplete="username" autofocus>
-    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
-    <button class="btn btn-primary btn-block" id="loginBtn" onclick="doLogin()">Login</button>
-  </div>
-</div>
-
 <!-- ─── Header ───────────────────────────────────────────────── -->
 <div class="header" id="appHeader" style="display:none">
   <div>
@@ -356,6 +344,7 @@
   </div>
 </div>
 
+<script src="auth-guard.js"></script>
 <script src="boss.js"></script>
 </body>
 </html>

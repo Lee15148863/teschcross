@@ -111,26 +111,13 @@
         </div>
     </div>
 
+    <script src="auth-guard.js"></script>
     <script src="pricing-data-other.js"></script>
     <script src="/api-client.js"></script>
     <script src="admin-enhanced-core.js"></script>
     <script>
         // Check auth: only inventory admins can access website pricing admin.
-        try {
-            var invUser = JSON.parse(localStorage.getItem('inv_user'));
-            var invToken = localStorage.getItem('inv_token');
-            if (invUser && invUser.role === 'root' && invToken) {
-                sessionStorage.setItem('admin_logged_in', 'true');
-            } else {
-                sessionStorage.removeItem('admin_logged_in');
-                window.location.href = '/staff-portal.html';
-                throw new Error('Not authorized');
-            }
-        } catch(e) {
-            sessionStorage.removeItem('admin_logged_in');
-            window.location.href = '/staff-portal.html';
-            throw e;
-        }
+        if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; return; }
 
         const admin = new EnhancedAdmin({
             brandName: 'Other Brands',

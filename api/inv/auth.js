@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const InvUser = require('../../models/inv/User');
+const { SYSTEM_ROOTS } = require('../../models/inv/User');
+const TrustedDevice = require('../../models/inv/TrustedDevice');
 const LoginLog = require('../../models/inv/LoginLog');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 const { validatePassword } = require('../../utils/inv-validators');
@@ -15,10 +17,21 @@ const BCRYPT_SALT_ROUNDS = 10;
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 const CAPTCHA_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+const DEVICE_CAPTCHA_THRESHOLD = 3; // Failed attempts before CAPTCHA required per device
+const DEVICE_COOLDOWN_MS = 10 * 60 * 1000; // 10 min device cooldown after failures
 
 // ─── Server-side CAPTCHA store ──────────────────────────────────────────────
 // Map<captchaId, { answer: number, expiresAt: number }>
 const captchaStore = new Map();
+
+// ─── Device failure tracking (in-memory, for unknown devices) ───────────────
+// Map<deviceId, { count: number, lastFailedAt: number, cooldownUntil: number }>
+const deviceFailureStore = new Map();
+
+function hashIP(ip) {
+  if (!ip) return 'unknown';
+  return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
+}
 
 // Periodic cleanup of expired CAPTCHAs (every 5 minutes)
 const captchaCleanupInterval = setInterval(() => {
@@ -53,30 +66,74 @@ router.post('/captcha', (req, res) => {
 
 // ─── POST /api/inv/auth/login ───────────────────────────────────────────────
 // Validate username, password, and CAPTCHA; handle account lockout
+// Supports device trust to skip CAPTCHA for known devices
 router.post('/login', async (req, res) => {
   try {
-    const { username, password, captchaId, captchaAnswer, humanCheck } = req.body;
+    const { username, password, captchaId, captchaAnswer, humanCheck, deviceId, trustDevice } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: '用户名和密码不能为空' });
     }
 
-    // Validate human check (simple checkbox or CAPTCHA)
+    // ─── Device trust check ────────────────────────────────────────────────
+    let deviceTrusted = false;
+    let deviceRecord = null;
+    if (deviceId) {
+      deviceRecord = await TrustedDevice.findOne({
+        deviceId,
+        trusted: true,
+        revoked: { $ne: true }
+      });
+      deviceTrusted = !!deviceRecord;
+    }
+
+    // ─── CAPTCHA decision ───────────────────────────────────────────────────
+    // Trusted devices skip CAPTCHA entirely.
+    // Untrusted/unknown devices: check failure count, require CAPTCHA if >= threshold.
+    let captchaRequired = false;
+    if (!deviceTrusted) {
+      if (deviceId) {
+        // Check in-memory failure store for unknown devices
+        const devFail = deviceFailureStore.get(deviceId);
+        if (devFail && devFail.count >= DEVICE_CAPTCHA_THRESHOLD) {
+          // Check cooldown
+          if (devFail.cooldownUntil && Date.now() < devFail.cooldownUntil) {
+            return res.status(429).json({
+              error: '该设备登录失败次数过多，请稍后再试',
+              captchaRequired: true,
+              cooldownRemaining: Math.ceil((devFail.cooldownUntil - Date.now()) / 1000)
+            });
+          }
+          if (Date.now() - devFail.lastFailedAt < 600000) {
+            captchaRequired = true;
+          }
+        }
+        // Also check DB device record failures
+        if (!captchaRequired && deviceRecord && deviceRecord.failedAttempts >= DEVICE_CAPTCHA_THRESHOLD) {
+          captchaRequired = true;
+        }
+      }
+    }
+
+    // Validate CAPTCHA if provided or required
     if (captchaId) {
-      // Math CAPTCHA mode
+      // User provided a CAPTCHA answer — validate it
       const captchaData = captchaStore.get(captchaId);
       if (!captchaData) {
-        return res.status(400).json({ error: '验证码无效或已过期' });
+        return res.status(400).json({ error: '验证码无效或已过期', captchaRequired: true });
       }
       captchaStore.delete(captchaId);
       if (Date.now() > captchaData.expiresAt) {
-        return res.status(400).json({ error: '验证码已过期' });
+        return res.status(400).json({ error: '验证码已过期', captchaRequired: true });
       }
       if (Number(captchaAnswer) !== captchaData.answer) {
-        return res.status(400).json({ error: '验证码错误' });
+        return res.status(400).json({ error: '验证码错误', captchaRequired: true });
       }
-    } else if (!humanCheck) {
-      // Simple checkbox mode
+    } else if (captchaRequired) {
+      // CAPTCHA is required but not provided — tell frontend
+      return res.status(400).json({ error: '需要验证码', captchaRequired: true });
+    } else if (!humanCheck && !deviceTrusted) {
+      // Simple checkbox mode (only for non-trusted devices without captcha)
       return res.status(400).json({ error: '请确认您不是机器人' });
     }
 
@@ -106,16 +163,38 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      // Increment failure count
+      // ─── Track device failure ────────────────────────────────────────────
+      if (deviceId) {
+        // Track in-memory for unknown devices
+        const devFail = deviceFailureStore.get(deviceId) || { count: 0, lastFailedAt: 0 };
+        devFail.count += 1;
+        devFail.lastFailedAt = Date.now();
+        if (devFail.count >= MAX_FAILED_ATTEMPTS) {
+          devFail.cooldownUntil = Date.now() + DEVICE_COOLDOWN_MS;
+        }
+        deviceFailureStore.set(deviceId, devFail);
+
+        // Also update DB record if exists
+        if (deviceRecord) {
+          await TrustedDevice.updateOne(
+            { _id: deviceRecord._id },
+            { $inc: { failedAttempts: 1 }, $set: { failedAt: new Date() } }
+          );
+        }
+      }
+
+      // Increment user failure count
       const newFailedAttempts = (user.failedAttempts || 0) + 1;
-      const updateFields = { failedAttempts: newFailedAttempts };
 
       // Lock account after MAX_FAILED_ATTEMPTS consecutive failures
       if (newFailedAttempts >= MAX_FAILED_ATTEMPTS) {
-        updateFields.lockedUntil = new Date(Date.now() + LOCKOUT_DURATION_MS);
+        await InvUser.findByIdAndUpdate(user._id, {
+          failedAttempts: newFailedAttempts,
+          lockedUntil: new Date(Date.now() + LOCKOUT_DURATION_MS)
+        });
+      } else {
+        await InvUser.findByIdAndUpdate(user._id, { failedAttempts: newFailedAttempts });
       }
-
-      await InvUser.findByIdAndUpdate(user._id, updateFields);
 
       // Record failed login log
       await LoginLog.create({
@@ -129,7 +208,6 @@ router.post('/login', async (req, res) => {
       if (newFailedAttempts >= MAX_FAILED_ATTEMPTS) {
         return res.status(423).json({
           error: `连续登录失败 ${MAX_FAILED_ATTEMPTS} 次，账号已锁定 15 分钟`,
-          lockedUntil: updateFields.lockedUntil,
           remainingMinutes: 15
         });
       }
@@ -142,6 +220,47 @@ router.post('/login', async (req, res) => {
       failedAttempts: 0,
       lockedUntil: null
     });
+
+    // ─── Update/create device trust record ─────────────────────────────────
+    if (deviceId) {
+      // Clear in-memory failures
+      deviceFailureStore.delete(deviceId);
+
+      const ipHash = hashIP(req.ip);
+      const existingDevice = await TrustedDevice.findOne({ deviceId });
+      if (existingDevice) {
+        // Update existing
+        await TrustedDevice.updateOne(
+          { _id: existingDevice._id },
+          {
+            $set: { lastUsedAt: new Date(), ipHash, failedAttempts: 0 },
+            $setOnInsert: { firstSeenAt: new Date() }
+          }
+        );
+        deviceTrusted = existingDevice.trusted && !existingDevice.revoked;
+      } else {
+        // Create new device record (untrusted by default)
+        await TrustedDevice.create({
+          userId: user._id,
+          deviceId,
+          trusted: false,
+          trustLevel: 'untrusted',
+          firstSeenAt: new Date(),
+          lastUsedAt: new Date(),
+          ipHash
+        });
+        deviceTrusted = false;
+      }
+
+      // If trustDevice flag is set, mark as trusted
+      if (trustDevice) {
+        await TrustedDevice.updateOne(
+          { deviceId },
+          { $set: { trusted: true, trustLevel: 'trusted', revoked: false } }
+        );
+        deviceTrusted = true;
+      }
+    }
 
     // Record successful login log
     await LoginLog.create({
@@ -169,7 +288,8 @@ router.post('/login', async (req, res) => {
         displayName: user.displayName,
         role: user.role,
         permissions: user.getPermissions()
-      }
+      },
+      deviceTrusted
     });
   } catch (err) {
     console.error('Login error:', err.message, err.stack);
@@ -216,6 +336,11 @@ router.post('/users', jwtAuth, requireRole('root'), async (req, res) => {
       return res.status(409).json({ error: '用户名已存在' });
     }
 
+    // SYSTEM ROOT LOCK: system root usernames must always be root role
+    if (SYSTEM_ROOTS.includes(username) && role !== 'root') {
+      return res.status(403).json({ error: '系统根用户角色必须为 root' });
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
@@ -258,6 +383,17 @@ router.put('/users/:id', jwtAuth, requireRole('root'), async (req, res) => {
   try {
     const { displayName, role, active, permissions } = req.body;
     const updateFields = {};
+
+    // ─── Look up the target user first for safety checks ──────────────────────
+    const targetUser = await InvUser.findById(req.params.id).select('username role');
+    if (!targetUser) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    // SYSTEM ROOT IDENTITY LOCK: cannot change role of SYSTEM_ROOTS
+    if (SYSTEM_ROOTS.includes(targetUser.username) && role !== undefined && role !== 'root') {
+      return res.status(403).json({ error: '系统根用户角色不可修改' });
+    }
 
     if (displayName !== undefined) updateFields.displayName = displayName;
     if (role !== undefined) {
@@ -307,15 +443,20 @@ router.put('/users/:id', jwtAuth, requireRole('root'), async (req, res) => {
 // Disable user (Admin only)
 router.put('/users/:id/disable', jwtAuth, requireRole('root'), async (req, res) => {
   try {
+    // ─── SYSTEM ROOT LOCK: cannot disable SYSTEM_ROOTS ────────────────────────
+    const targetUser = await InvUser.findById(req.params.id).select('username role');
+    if (!targetUser) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+    if (SYSTEM_ROOTS.includes(targetUser.username)) {
+      return res.status(403).json({ error: '系统根用户不可停用' });
+    }
+
     const user = await InvUser.findByIdAndUpdate(
       req.params.id,
       { active: false, updatedAt: new Date() },
       { new: true, select: '-password' }
     );
-
-    if (!user) {
-      return res.status(404).json({ error: '用户不存在' });
-    }
 
     logAdminAction({
       action: AUDIT_ACTIONS.USER_DISABLE,
@@ -384,6 +525,11 @@ router.delete('/users/:id', jwtAuth, requireRole('root'), async (req, res) => {
       return res.status(404).json({ error: '用户不存在' });
     }
 
+    // SYSTEM ROOT LOCK: cannot delete SYSTEM_ROOTS
+    if (SYSTEM_ROOTS.includes(targetUser.username)) {
+      return res.status(403).json({ error: '系统根用户不可删除' });
+    }
+
     // Cannot delete yourself
     if (targetUser._id.toString() === req.user.userId) {
       return res.status(400).json({ error: '不能删除自己的账号' });
@@ -410,6 +556,61 @@ router.delete('/users/:id', jwtAuth, requireRole('root'), async (req, res) => {
     if (err.name === 'CastError') {
       return res.status(404).json({ error: '用户不存在' });
     }
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// ─── POST /api/inv/auth/devices/trust ───────────────────────────────────────
+// Opt-in to trust the current device (called from "Trust this device?" modal)
+router.post('/devices/trust', jwtAuth, async (req, res) => {
+  try {
+    const { deviceId, deviceName } = req.body;
+    if (!deviceId) {
+      return res.status(400).json({ error: '缺少设备ID' });
+    }
+
+    const existing = await TrustedDevice.findOne({ deviceId });
+    if (existing) {
+      await TrustedDevice.updateOne(
+        { _id: existing._id },
+        { $set: { trusted: true, trustLevel: 'trusted', deviceName: deviceName || '', revoked: false } }
+      );
+    } else {
+      await TrustedDevice.create({
+        userId: req.user.userId,
+        deviceId,
+        deviceName: deviceName || '',
+        trusted: true,
+        trustLevel: 'trusted',
+        firstSeenAt: new Date(),
+        lastUsedAt: new Date(),
+      });
+    }
+
+    console.log('[DEVICE_TRUST] User %s trusted device %s', req.user.username, deviceId);
+    res.json({ trusted: true });
+  } catch (err) {
+    console.error('Device trust error:', err.message);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// ─── GET /api/inv/auth/devices/status ───────────────────────────────────────
+// Check if current device is trusted (for frontend to show trust prompt)
+router.get('/devices/status', jwtAuth, async (req, res) => {
+  try {
+    const deviceId = req.query.deviceId;
+    if (!deviceId) return res.json({ trusted: false });
+
+    const device = await TrustedDevice.findOne({
+      deviceId,
+      userId: req.user.userId,
+      trusted: true,
+      revoked: { $ne: true }
+    });
+
+    res.json({ trusted: !!device, deviceName: device ? device.deviceName : '' });
+  } catch (err) {
     res.status(500).json({ error: '服务器错误' });
   }
 });

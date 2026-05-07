@@ -24,8 +24,7 @@
         .btn-login:disabled{opacity:.4;cursor:not-allowed;}
         .error-msg{display:none;background:#fef2f2;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;text-align:center;}
         .error-msg.show{display:block;}
-        .portal-menu{display:none;}
-        .portal-menu.show{display:block;}
+        .portal-menu{display:block;}
         .portal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
         .portal-header .user-info{font-size:14px;color:#6e6e73;}
         .portal-header .user-info strong{color:#1d1d1f;}
@@ -59,21 +58,8 @@
         <p>Staff Portal</p>
     </div>
 
-    <!-- Login -->
-    <div class="card" id="loginCard">
-        <h2>Staff Login</h2>
-        <p class="subtitle">Login with your account</p>
-        <div class="error-msg" id="errorMsg"></div>
-        <form onsubmit="return false;">
-            <div class="form-group"><label>Username</label><input type="text" id="username" placeholder="Enter username" autocomplete="username" autofocus></div>
-            <div class="form-group"><label>Password</label><input type="password" id="password" placeholder="Enter password" autocomplete="current-password"></div>
-            <div class="form-group" style="margin-bottom:0;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;color:#6e6e73;"><input type="checkbox" id="humanCheck" checked> I'm not a robot</label></div>
-            <button type="submit" class="btn-login" id="btnLogin" onclick="doLogin()">Login</button>
-        </form>
-    </div>
-
     <!-- Portal Menu -->
-    <div class="card portal-menu" id="portalMenu">
+    <div class="card" id="portalMenu">
         <div class="portal-header">
             <div class="user-info"><span id="welcomeText">Welcome, </span><strong id="displayName">-</strong><span class="badge" id="roleBadge">-</span></div>
             <button class="btn-logout" id="btnLogout" onclick="doLogout()">Logout</button>
@@ -111,6 +97,7 @@
     <a href="/" class="back-link" id="backLink">← Back to Home</a>
 </div>
 
+<script src="auth-guard.js"></script>
 <script>
 (function(){
     // Menu items with permission keys
@@ -125,14 +112,10 @@
         { perm: 'invoices', icon: '🧾', label: 'VAT Invoice / 发票', desc: 'Generate & send / 生成发送', href: '/inv-invoices.html' }
     ];
 
-    var token = localStorage.getItem('inv_token');
-    var user = null;
-    try { user = JSON.parse(localStorage.getItem('inv_user')); } catch(e) {}
-    if (token && user) showPortal(user);
+    var user = Auth.requireAuth();
+    if (user) showPortal(user);
 
     function showPortal(u) {
-        document.getElementById('loginCard').style.display = 'none';
-        document.getElementById('portalMenu').classList.add('show');
         document.getElementById('displayName').textContent = u.displayName || u.username;
 
         var perms = u.permissions || {};
@@ -171,37 +154,9 @@
         document.getElementById('tab-' + name).classList.add('active');
     };
 
-    window.doLogin = async function() {
-        var username = document.getElementById('username').value.trim();
-        var password = document.getElementById('password').value;
-        var humanCheck = document.getElementById('humanCheck').checked;
-        var errEl = document.getElementById('errorMsg');
-        errEl.classList.remove('show');
-        if (!username || !password) { errEl.textContent = 'Please enter username and password'; errEl.classList.add('show'); return; }
-        if (!humanCheck) { errEl.textContent = 'Please confirm you are not a robot'; errEl.classList.add('show'); return; }
-        var btn = document.getElementById('btnLogin');
-        btn.disabled = true; btn.textContent = 'Logging in...';
-        try {
-            var res = await fetch('/api/inv/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: username, password: password, humanCheck: true }) });
-            var data = await res.json();
-            if (res.ok && data.token && data.user) {
-                localStorage.setItem('inv_token', data.token);
-                localStorage.setItem('inv_user', JSON.stringify(data.user));
-                showPortal(data.user);
-            } else { errEl.textContent = data.error || data.detail || 'Login failed'; errEl.classList.add('show'); }
-        } catch(e) { errEl.textContent = 'Server connection failed'; errEl.classList.add('show'); }
-        finally { btn.disabled = false; btn.textContent = 'Login'; }
-    };
-
     window.doLogout = function() {
-        localStorage.removeItem('inv_token');
-        localStorage.removeItem('inv_user');
-        sessionStorage.clear();
-        location.reload();
+        Auth.logout();
     };
-
-    document.getElementById('password').addEventListener('keydown', function(e) { if (e.key === 'Enter') window.doLogin(); });
-    document.getElementById('username').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('password').focus(); });
 })();
 </script>
 </body>

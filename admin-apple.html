@@ -146,25 +146,15 @@
         </div>
     </div>
 
+    <script src="auth-guard.js"></script>
     <script src="/api-client.js"></script>
     <script src="pricing-data-apple.js"></script>
     <script>
         const DEFAULT_USERNAME = '';
         const DEFAULT_PASSWORD = '';
         // Auth: inventory admin only.
-        function checkAdminAuthApple() {
-            try {
-                var invUser = JSON.parse(localStorage.getItem('inv_user'));
-                var invToken = localStorage.getItem('inv_token');
-                if (invUser && invUser.role === 'root' && invToken) return true;
-            } catch(e) {}
-            sessionStorage.removeItem('admin_logged_in');
-            window.location.href = '/staff-portal.html';
-            return false;
-        }
-        if (!checkAdminAuthApple()) throw new Error('Not authorized');
-        sessionStorage.setItem('admin_logged_in', 'true');
-        
+        if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; return; }
+
         let currentDevice = 'iphone';
         let pricingData = null;
 
@@ -183,9 +173,7 @@
             renderPricingEditor();
         }
 
-        if (sessionStorage.getItem('admin_logged_in') === 'true') {
-            showAppleAdmin();
-        }
+        showAppleAdmin();
 
         // Login
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -202,7 +190,7 @@
 
         // Logout
         function logout() {
-            location.reload();
+            Auth.logout();
         }
 
         // Tab switching

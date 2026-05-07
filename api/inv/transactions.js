@@ -5,6 +5,8 @@ const Transaction = require('../../models/inv/Transaction');
 const Product = require('../../models/inv/Product');
 const StockMovement = require('../../models/inv/StockMovement');
 const AuditLog = require('../../models/inv/AuditLog');
+const DailyClose = require('../../models/inv/DailyClose');
+const MonthlyReport = require('../../models/inv/MonthlyReport');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 const { authorize, SOURCES } = require('../../utils/inv-integrity-layer');
 
@@ -517,6 +519,23 @@ router.delete('/:id/delete', requireRole('root'), async (req, res) => {
       });
     }
 
+    // Check daily close lock: if the day has been closed AND no monthly report exists, block deletion
+    const txnDate = transaction.createdAt instanceof Date
+      ? transaction.createdAt.toISOString().split('T')[0]
+      : new Date(transaction.createdAt).toISOString().split('T')[0];
+    const txnMonth = txnDate.substring(0, 7);
+    const dayClosed = await DailyClose.findOne({ date: txnDate, status: { $in: ['pending', 'closed'] } }).select('status').lean();
+    if (dayClosed) {
+      const monthReported = await MonthlyReport.findOne({ month: txnMonth }).select('_id').lean();
+      if (!monthReported) {
+        const statusLabel = dayClosed.status === 'closed' ? '已确认' : '待确认';
+        return res.status(409).json({
+          error: `${txnDate} 已日结（${statusLabel}），不可删除。请先生成 ${txnMonth} 月报表`,
+          code: 'DAY_CLOSED'
+        });
+      }
+    }
+
     // Restore product stock for each item
     for (const item of transaction.items) {
       await Product.findByIdAndUpdate(item.product, {
@@ -569,12 +588,43 @@ router.delete('/batch-delete', requireRole('root'), async (req, res) => {
       return res.status(404).json({ error: '未找到指定的交易记录' });
     }
 
-    // Only allow deleting exported transactions
+    // Only allow deleting exported and non-invoiced transactions
     const nonExported = transactions.filter(t => !t.exported);
     if (nonExported.length > 0) {
       return res.status(400).json({
         error: `以下交易未导出，不可批量删除: ${nonExported.map(t => t.receiptNumber).join(', ')}`,
         code: 'VALIDATION_ERROR'
+      });
+    }
+
+    // Block deletion of transactions that already have invoices
+    const invoiced = transactions.filter(t => t.invoiceGenerated);
+    if (invoiced.length > 0) {
+      return res.status(409).json({
+        error: `以下交易已开发票，不可删除: ${invoiced.map(t => t.receiptNumber).join(', ')}`,
+        code: 'DELETE_NOT_ALLOWED'
+      });
+    }
+
+    // Check daily close lock for each transaction's date
+    const closedLocked = [];
+    for (const txn of transactions) {
+      const txnDate = txn.createdAt instanceof Date
+        ? txn.createdAt.toISOString().split('T')[0]
+        : new Date(txn.createdAt).toISOString().split('T')[0];
+      const txnMonth = txnDate.substring(0, 7);
+      const dayClosed = await DailyClose.findOne({ date: txnDate, status: { $in: ['pending', 'closed'] } }).select('status').lean();
+      if (dayClosed) {
+        const monthReported = await MonthlyReport.findOne({ month: txnMonth }).select('_id').lean();
+        if (!monthReported) {
+          closedLocked.push(txn.receiptNumber);
+        }
+      }
+    }
+    if (closedLocked.length > 0) {
+      return res.status(409).json({
+        error: `以下交易所在日期已日结且未生成月报表，不可删除: ${closedLocked.join(', ')}。请先生成月报表`,
+        code: 'DAY_CLOSED'
       });
     }
 

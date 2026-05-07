@@ -240,29 +240,16 @@
 <body>
     <div class="announcement-admin-container">
         <a href="index.html" class="back-link">← Back to Home</a>
-        
+
         <div class="announcement-admin-header">
-            <h1>🔔 Announcement Management</h1>
+            <h1>Announcement Management</h1>
             <p>Manage scrolling announcement banner</p>
         </div>
 
         <div id="message"></div>
 
-        <!-- Login Form -->
-        <div id="loginSection" class="login-form">
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="username" placeholder="Enter username">
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" placeholder="Enter password">
-            </div>
-            <button class="btn-submit" onclick="login()">Login</button>
-        </div>
-
         <!-- Management Form -->
-        <div id="managementSection" style="display: none;">
+        <div id="managementSection">
             <div class="toggle-switch">
                 <label>Enable Announcement</label>
                 <label class="switch">
@@ -340,89 +327,29 @@
         </div>
     </div>
 
+    <script src="auth-guard.js"></script>
     <script>
         // Announcement Admin Management
-        const ADMIN_CREDENTIALS = {
-            username: '0876676466',
-            password: '0870019999'
-        };
-
         const STORAGE_KEY = 'techcross_announcement';
 
-        // Check if already logged in
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('Page loaded, checking login status...');
-            
-            // Auto-login if coming from staff portal (admin already authenticated)
-            const params = new URLSearchParams(window.location.search);
-            const invToken = localStorage.getItem('inv_token');
-            const invUser = localStorage.getItem('inv_user');
-            if (params.get('from') === 'portal' && invToken && invUser) {
-                try {
-                    const user = JSON.parse(invUser);
-                    if (user.role === 'root') {
-                        console.log('Auto-login: admin from staff portal');
-                        sessionStorage.setItem('announcement_admin_logged_in', 'true');
-                    }
-                } catch(e) {}
-            }
-            
-            const isLoggedIn = sessionStorage.getItem('announcement_admin_logged_in');
-            if (isLoggedIn === 'true') {
-                console.log('Already logged in');
-                showManagementSection();
-                loadAnnouncementData();
-            }
-            
-            // Setup real-time preview listeners
+        // Check auth - must be root
+        (function() {
+            'use strict';
+            var user = Auth.requireRole('root');
+            if (!user) return;
+
+            loadAnnouncementData();
             setupPreviewListeners();
-        });
+        })();
 
-        // Login function
-        function login() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            console.log('Login attempt:');
-            console.log('  Username:', username);
-            console.log('  Password:', password);
-            console.log('  Expected username:', ADMIN_CREDENTIALS.username);
-            console.log('  Expected password:', ADMIN_CREDENTIALS.password);
-            
-            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-                console.log('✅ Login successful!');
-                sessionStorage.setItem('announcement_admin_logged_in', 'true');
-                showManagementSection();
-                loadAnnouncementData();
-                showMessage('Login successful!', 'success');
-            } else {
-                console.log('❌ Login failed!');
-                showMessage('Invalid username or password', 'error');
-            }
-        }
-
-        // Logout function
         function logout() {
-            sessionStorage.removeItem('announcement_admin_logged_in');
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('managementSection').style.display = 'none';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            showMessage('Logged out successfully', 'success');
-        }
-
-        // Show management section
-        function showManagementSection() {
-            console.log('Showing management section...');
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('managementSection').style.display = 'block';
+            Auth.logout();
         }
 
         // Load announcement data
         function loadAnnouncementData() {
-            console.log('Loading announcement data...');
             const data = getAnnouncementData();
-            
+
             document.getElementById('announcementEnabled').checked = data.enabled;
             document.getElementById('announcementTextEn').value = data.textEn;
             document.getElementById('announcementTextGa').value = data.textGa;
@@ -434,7 +361,7 @@
             document.getElementById('bgColorHex').value = data.bgColor;
             document.getElementById('scrollSpeed').value = data.scrollSpeed;
             document.getElementById('speedValue').textContent = data.scrollSpeed;
-            
+
             updatePreview();
         }
 
@@ -448,7 +375,7 @@
                     console.error('Error loading announcement data:', e);
                 }
             }
-            
+
             // Default values
             return {
                 enabled: false,
@@ -474,11 +401,10 @@
                 bgColor: document.getElementById('bgColor').value,
                 scrollSpeed: parseInt(document.getElementById('scrollSpeed').value)
             };
-            
-            console.log('Saving announcement:', data);
+
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             showMessage('Announcement settings saved successfully!', 'success');
-            
+
             // Trigger update on main page if it's open
             window.dispatchEvent(new Event('announcementUpdated'));
         }
@@ -490,15 +416,15 @@
             const textGaInput = document.getElementById('announcementTextGa');
             if (textEnInput) textEnInput.addEventListener('input', updatePreview);
             if (textGaInput) textGaInput.addEventListener('input', updatePreview);
-            
+
             // Font size
             const fontSizeInput = document.getElementById('fontSize');
             if (fontSizeInput) fontSizeInput.addEventListener('input', updatePreview);
-            
+
             // Font weight
             const fontWeightSelect = document.getElementById('fontWeight');
             if (fontWeightSelect) fontWeightSelect.addEventListener('change', updatePreview);
-            
+
             // Text color
             const textColorInput = document.getElementById('textColor');
             const textColorHexInput = document.getElementById('textColorHex');
@@ -517,7 +443,7 @@
                     }
                 });
             }
-            
+
             // Background color
             const bgColorInput = document.getElementById('bgColor');
             const bgColorHexInput = document.getElementById('bgColorHex');
@@ -536,7 +462,7 @@
                     }
                 });
             }
-            
+
             // Scroll speed
             const scrollSpeedInput = document.getElementById('scrollSpeed');
             const speedValueSpan = document.getElementById('speedValue');
@@ -556,10 +482,10 @@
             const textColor = document.getElementById('textColor')?.value || '#D4E157';
             const bgColor = document.getElementById('bgColor')?.value || '#000000';
             const scrollSpeed = document.getElementById('scrollSpeed')?.value || 20;
-            
+
             const previewBanner = document.getElementById('previewBanner');
             const previewText = document.getElementById('previewText');
-            
+
             if (previewBanner && previewText) {
                 previewBanner.style.backgroundColor = bgColor;
                 previewText.style.color = textColor;
@@ -579,23 +505,12 @@
                 msg.className = 'message ' + type;
                 msg.textContent = text;
                 messageDiv.appendChild(msg);
-                
+
                 setTimeout(() => {
                     messageDiv.innerHTML = '';
                 }, 3000);
             }
         }
-
-        // Enter key to login
-        document.addEventListener('keypress', (e) => {
-            const loginSection = document.getElementById('loginSection');
-            if (e.key === 'Enter' && loginSection && loginSection.style.display !== 'none') {
-                login();
-            }
-        });
-
-        console.log('Script loaded successfully');
-        console.log('Admin credentials:', ADMIN_CREDENTIALS);
     </script>
 </body>
 </html>

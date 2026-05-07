@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Transaction = require('../../models/inv/Transaction');
 const Expense = require('../../models/inv/Expense');
+const DailyClose = require('../../models/inv/DailyClose');
+const MonthlyReport = require('../../models/inv/MonthlyReport');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require Staff+ access
@@ -208,7 +210,7 @@ router.get('/daily', async (req, res) => {
 });
 
 // ─── GET /api/inv/reports/monthly ───────────────────────────────────────────
-// Monthly tax summary (English output) — daily totals with VAT breakdown
+// Monthly tax summary — returns stored report if exists, else live aggregation
 router.get('/monthly', async (req, res) => {
   try {
     const { month } = req.query;
@@ -226,8 +228,15 @@ router.get('/monthly', async (req, res) => {
       year = now.getUTCFullYear();
       mon = now.getUTCMonth() + 1;
     }
+    const monthStr = `${year}-${String(mon).padStart(2, '0')}`;
 
-    // Use UTC dates for consistency with stored transaction dates
+    // Check for stored monthly report first
+    const stored = await MonthlyReport.findOne({ month: monthStr }).lean();
+    if (stored) {
+      return res.json({ data: stored, source: 'stored' });
+    }
+
+    // Fall back to live aggregation from Transactions
     const startDate = new Date(Date.UTC(year, mon - 1, 1, 0, 0, 0, 0));
     const endDate = new Date(Date.UTC(year, mon, 0, 23, 59, 59, 999));
 
@@ -846,6 +855,146 @@ router.get('/query', async (req, res) => {
   } catch (err) {
     console.error('Query error:', err.message);
     res.status(500).json({ error: 'Query failed', code: 'QUERY_ERROR' });
+  }
+});
+
+// ─── POST /api/inv/reports/monthly/generate ─────────────────────────────────
+// Generate and store a monthly report from DailyClose snapshots.
+// ROOT only — once generated, the report is IMMUTABLE and becomes the
+// tax record for the month. Transactions for that month can then be cleaned up.
+router.post('/monthly/generate', requireRole('root'), async (req, res) => {
+  try {
+    const { month } = req.body;
+
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      return res.status(400).json({ error: '请提供有效的月份格式 YYYY-MM', code: 'VALIDATION_ERROR' });
+    }
+
+    // Check if already generated
+    const existing = await MonthlyReport.findOne({ month });
+    if (existing) {
+      return res.status(409).json({ error: `${month} 月报表已生成`, code: 'ALREADY_GENERATED' });
+    }
+
+    const year = parseInt(month.split('-')[0]);
+    const mon = parseInt(month.split('-')[1]);
+    const startDate = `${month}-01`;
+    const endDate = `${month}-${new Date(year, mon, 0).getDate()}`;
+
+    // Fetch all DailyClose snapshots for the month
+    const dailyCloses = await DailyClose.find({
+      date: { $gte: startDate, $lte: endDate },
+      status: 'closed',
+    }).sort({ date: 1 }).lean();
+
+    if (dailyCloses.length === 0) {
+      return res.status(400).json({
+        error: `${month} 无已日结数据，请先完成日结`,
+        code: 'NO_CLOSED_DAYS'
+      });
+    }
+
+    // Build daily data and aggregate totals
+    const dailyData = [];
+    const summary = {
+      totalDays: 0, grossSales: 0, refundTotal: 0, netSales: 0,
+      cashTotal: 0, cardTotal: 0, totalSales: 0,
+      standard23VatTotal: 0, reduced135VatTotal: 0, marginVatTotal: 0,
+      totalVatPayable: 0,
+      expenseTotal: 0, expenseCash: 0, expenseCard: 0, netCash: 0,
+    };
+    let transactionCount = 0;
+    const allMarginItems = [];
+    let firstReceipt = null;
+    let lastReceipt = null;
+
+    for (const dc of dailyCloses) {
+      dailyData.push({
+        date: dc.date,
+        grossSales: dc.grossSales || 0,
+        refundTotal: dc.refundTotal || 0,
+        netSales: dc.netSales || 0,
+        cashTotal: dc.cashTotal || 0,
+        cardTotal: dc.cardTotal || 0,
+        standard23Sales: dc.standard23Sales || 0,
+        standard23Vat: dc.standard23Vat || 0,
+        reduced135Sales: dc.reduced135Sales || 0,
+        reduced135Vat: dc.reduced135Vat || 0,
+        marginSales: dc.marginSales || 0,
+        marginVat: dc.marginVat || 0,
+        expenseTotal: dc.expenseTotal || 0,
+        expenseCash: dc.expenseCash || 0,
+        expenseCard: dc.expenseCard || 0,
+        netCash: dc.netCash || 0,
+      });
+
+      summary.totalDays++;
+      summary.grossSales += dc.grossSales || 0;
+      summary.refundTotal += dc.refundTotal || 0;
+      summary.netSales += dc.netSales || 0;
+      summary.cashTotal += dc.cashTotal || 0;
+      summary.cardTotal += dc.cardTotal || 0;
+      summary.standard23VatTotal += dc.standard23Vat || 0;
+      summary.reduced135VatTotal += dc.reduced135Vat || 0;
+      summary.marginVatTotal += dc.marginVat || 0;
+      summary.expenseTotal += dc.expenseTotal || 0;
+      summary.expenseCash += dc.expenseCash || 0;
+      summary.expenseCard += dc.expenseCard || 0;
+      summary.netCash += dc.netCash || 0;
+      transactionCount += dc.transactionCount || 0;
+
+      // Collect margin items for audit trail
+      if (dc.marginItems && dc.marginItems.length > 0) {
+        for (const mi of dc.marginItems) {
+          allMarginItems.push({
+            receiptNumber: mi.receiptNumber,
+            name: mi.name,
+            sku: mi.sku,
+            margin: mi.margin || 0,
+            vatPayable: mi.vatPayable || 0,
+          });
+        }
+      }
+
+      // Track receipt range
+      if (!firstReceipt && dc.transactionCount > 0) firstReceipt = dc.date;
+      lastReceipt = dc.date;
+    }
+
+    // Round all summary values
+    const R = v => Math.round(v * 100) / 100;
+    for (const key of Object.keys(summary)) {
+      summary[key] = R(summary[key]);
+    }
+    summary.totalSales = R(summary.cashTotal + summary.cardTotal);
+    summary.totalVatPayable = R(summary.standard23VatTotal + summary.reduced135VatTotal + summary.marginVatTotal);
+    summary.netCash = R(summary.cashTotal - summary.expenseCash);
+
+    // Build receipt range
+    const receiptRange = {};
+    if (firstReceipt) receiptRange.from = firstReceipt;
+    if (lastReceipt) receiptRange.to = lastReceipt;
+
+    // Create the immutable report
+    const report = await MonthlyReport.create({
+      month,
+      generatedBy: req.user.userId,
+      dailyData,
+      summary,
+      transactionCount,
+      receiptRange: Object.keys(receiptRange).length > 0 ? receiptRange : undefined,
+      marginItems: allMarginItems,
+    });
+
+    res.status(201).json({
+      message: `${month} 月报表已生成`,
+      report,
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ error: `${req.body.month} 月报表已存在`, code: 'ALREADY_GENERATED' });
+    }
+    res.status(500).json({ error: '月报表生成失败: ' + (err.message || '未知') });
   }
 });
 

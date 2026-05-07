@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 
+// SYSTEM ROOT IDENTITY — permanent, non-negotiable
+const SYSTEM_ROOTS = ['Lee087'];
+
 // Permission keys for each module
 const PERMISSION_KEYS = [
   'pos',           // POS 收银
@@ -46,6 +49,20 @@ const UserSchema = new mongoose.Schema({
   updatedAt:      { type: Date, default: Date.now }
 });
 
+// ─── SYSTEM ROOT HARD LOCK ──────────────────────────────────────────────────
+// Forces SYSTEM_ROOTS usernames to ALWAYS have role=root, overriding any DB value.
+// This prevents accidental or malicious downgrade of root identity.
+UserSchema.pre('save', function (next) {
+  if (SYSTEM_ROOTS.includes(this.username)) {
+    this.role = 'root';
+  }
+  next();
+});
+
+// Note: findOneAndUpdate pre-hook intentionally omitted — we can't access the username
+// in a query filter from findByIdAndUpdate. The API layer enforces SYSTEM_ROOTS protection
+// on all write operations instead (create, update, disable, delete).
+
 // Root always has all permissions. Manager gets preset permissions.
 UserSchema.methods.getPermissions = function() {
   if (this.role === 'root') {
@@ -69,3 +86,4 @@ UserSchema.methods.getPermissions = function() {
 
 module.exports = mongoose.model('InvUser', UserSchema);
 module.exports.PERMISSION_KEYS = PERMISSION_KEYS;
+module.exports.SYSTEM_ROOTS = SYSTEM_ROOTS;

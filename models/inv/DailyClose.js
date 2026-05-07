@@ -12,7 +12,7 @@ const mongoose = require('mongoose');
 
 const DailyCloseSchema = new mongoose.Schema({
   date: { type: String, required: true, unique: true, trim: true }, // YYYY-MM-DD
-  status: { type: String, enum: ['open', 'closed'], default: 'open' },
+  status: { type: String, enum: ['open', 'pending', 'closed'], default: 'open' },
   closedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'InvUser' },
   closedAt: { type: Date },
 

@@ -11,95 +11,14 @@ let _modalCallback = null;
 let _ledgerFilter = 'all';
 
 // ─── Auth ──────────────────────────────────────────────────────
-function getToken() { return localStorage.getItem('inv_token'); }
-function getUser() {
-  try { return JSON.parse(localStorage.getItem('inv_user')); } catch(e) { return null; }
-}
-
-function checkAuth() {
-  const token = getToken();
-  const user = getUser();
-  if (token && user && user.role === 'root') {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appHeader').style.display = 'flex';
-    document.getElementById('tabBar').style.display = 'flex';
-    document.getElementById('userBadge').textContent = user.displayName || user.username;
-    document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-    const today = new Date().toISOString().split('T')[0];
-    const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-    document.getElementById('closeDate').value = today;
-    document.getElementById('ledgerDate').value = today;
-    const es = document.getElementById('exportStart');
-    const ee = document.getElementById('exportEnd');
-    if (es) es.value = monthAgo;
-    if (ee) ee.value = today;
-    loadOverview();
-    loadUsers();
-    loadLedger();
-    loadRefundHistory();
-    loadDevices();
-    loadSystemStatus();
-    return true;
-  }
-  return false;
-}
-
-async function doLogin() {
-  const username = document.getElementById('loginUser').value.trim();
-  const password = document.getElementById('loginPass').value;
-  const errorEl = document.getElementById('loginError');
-  const btn = document.getElementById('loginBtn');
-
-  if (!username || !password) {
-    errorEl.textContent = 'Please enter username and password';
-    errorEl.classList.add('show');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Logging in...';
-
-  try {
-    const res = await fetch('/api/inv/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, humanCheck: true }),
-    });
-    const data = await res.json();
-
-    if (res.ok && data.token && data.user) {
-      if (data.user.role !== 'root') {
-        errorEl.textContent = 'Root access required. You do not have permission.';
-        errorEl.classList.add('show');
-        btn.disabled = false;
-        btn.textContent = 'Login';
-        return;
-      }
-      localStorage.setItem('inv_token', data.token);
-      localStorage.setItem('inv_user', JSON.stringify(data.user));
-      checkAuth();
-    } else {
-      errorEl.textContent = data.error || 'Login failed';
-      errorEl.classList.add('show');
-    }
-  } catch(err) {
-    errorEl.textContent = 'Connection error. Check server.';
-    errorEl.classList.add('show');
-  }
-  btn.disabled = false;
-  btn.textContent = 'Login';
-}
-
 function doLogout() {
-  localStorage.removeItem('inv_token');
-  localStorage.removeItem('inv_user');
-  location.reload();
+  Auth.logout();
 }
 
 // ─── API Helper ────────────────────────────────────────────────
 async function api(path, options = {}) {
-  const token = getToken();
-  if (!token) { doLogout(); throw new Error('No token'); }
+  const token = Auth.getToken();
+  if (!token) { Auth.logout(); throw new Error('No token'); }
 
   const headers = { 'Authorization': 'Bearer ' + token };
   if (options.body && typeof options.body === 'object') {
@@ -109,7 +28,7 @@ async function api(path, options = {}) {
   const res = await fetch(path, { ...options, headers });
   if (res.status === 401 || res.status === 403) {
     showToast('Session expired. Please login again.');
-    doLogout();
+    Auth.logout();
     throw new Error('Auth failed');
   }
 
@@ -617,7 +536,7 @@ async function exportCsv(dataset) {
 
   showConfirm('Export ' + label, body, async () => {
     try {
-      const token = getToken();
+      const token = Auth.getToken();
       if (!token) { showToast('Not authenticated'); return; }
 
       const params = new URLSearchParams();
@@ -662,12 +581,25 @@ function esc(str) {
 
 // ─── Keyboard shortcut: Enter to login ────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  if (!checkAuth()) {
-    document.getElementById('loginUser').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') document.getElementById('loginPass').focus();
-    });
-    document.getElementById('loginPass').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') doLogin();
-    });
-  }
+  var user = Auth.requireRole('root');
+  if (!user) return;
+
+  document.getElementById('appHeader').style.display = 'flex';
+  document.getElementById('tabBar').style.display = 'flex';
+  document.getElementById('userBadge').textContent = user.displayName || user.username;
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  const today = new Date().toISOString().split('T')[0];
+  const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+  document.getElementById('closeDate').value = today;
+  document.getElementById('ledgerDate').value = today;
+  const es = document.getElementById('exportStart');
+  const ee = document.getElementById('exportEnd');
+  if (es) es.value = monthAgo;
+  if (ee) ee.value = today;
+  loadOverview();
+  loadUsers();
+  loadLedger();
+  loadRefundHistory();
+  loadDevices();
+  loadSystemStatus();
 });

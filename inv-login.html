@@ -292,10 +292,18 @@
                 </div>
 
                 <div class="form-field">
-                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:14px 16px;border:1px solid #d2d2d7;border-radius:12px;background:#f5f5f7;transition:all 0.2s;">
-                        <input type="checkbox" id="humanCheck" style="width:20px;height:20px;cursor:pointer;">
-                        <span style="font-size:15px;">我不是机器人</span>
-                    </label>
+                    <div class="captcha-row">
+                        <div class="form-field" style="flex:1;">
+                            <label>验证码 / CAPTCHA</label>
+                            <input type="text" id="captchaInput" placeholder="输入计算结果 / Enter answer" autocomplete="off" style="width:100%;padding:14px 16px;border:1px solid #d2d2d7;border-radius:12px;font-size:16px;">
+                        </div>
+                        <div class="captcha-question">
+                            <div class="captcha-text" id="captchaQuestion">加载中...</div>
+                            <button type="button" class="captcha-refresh" id="captchaRefresh" onclick="window.fetchCaptcha()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="login-error" id="loginError" role="alert"></div>
@@ -312,98 +320,139 @@
         </div>
     </div>
 
+    <script src="auth-guard.js"></script>
     <script>
     (function() {
         'use strict';
 
-        // ─── State ──────────────────────────────────────────────────────
-        let captchaId = null;
+        // ─── Device fingerprint ─────────────────────────────────────────
+        function generateDeviceId() {
+            try {
+                var components = [
+                    navigator.userAgent,
+                    screen.width + 'x' + screen.height,
+                    screen.colorDepth,
+                    navigator.language,
+                    Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    navigator.platform
+                ];
+                var str = components.join('|||');
+                var hash = 0;
+                for (var i = 0; i < str.length; i++) {
+                    var char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash |= 0;
+                }
+                var stored = localStorage.getItem('inv_device_id');
+                if (stored) return stored;
+                var deviceId = 'dev_' + Math.abs(hash).toString(36);
+                localStorage.setItem('inv_device_id', deviceId);
+                return deviceId;
+            } catch(e) { return 'dev_' + Date.now(); }
+        }
+
+        var DEVICE_ID = generateDeviceId();
 
         // ─── DOM refs ───────────────────────────────────────────────────
-        const form = document.getElementById('loginForm');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const humanCheckbox = document.getElementById('humanCheck');
-        const loginError = document.getElementById('loginError');
-        const loginBtn = document.getElementById('loginBtn');
+        var form = document.getElementById('loginForm');
+        var usernameInput = document.getElementById('username');
+        var passwordInput = document.getElementById('password');
+        var captchaInput = document.getElementById('captchaInput');
+        var loginError = document.getElementById('loginError');
+        var loginBtn = document.getElementById('loginBtn');
+        var captchaQuestion = document.getElementById('captchaQuestion');
 
         // ─── Check if already logged in ─────────────────────────────────
-        (function checkExistingSession() {
-            const token = localStorage.getItem('inv_token');
-            const user = localStorage.getItem('inv_user');
-            if (token && user) {
-                try {
-                    const userData = JSON.parse(user);
-                    redirectByRole(userData.role);
-                } catch (e) {
-                    // Invalid stored data, clear and stay on login
-                    localStorage.removeItem('inv_token');
-                    localStorage.removeItem('inv_user');
-                }
+        (function checkSession() {
+            if (Auth.getToken() && Auth.getUser()) {
+                redirectByRole(Auth.getUser().role);
             }
         })();
 
-        // ─── Show / hide error ──────────────────────────────────────────
-        function showError(message) {
-            loginError.textContent = message;
-            loginError.classList.add('show');
-        }
-
-        function hideError() {
-            loginError.classList.remove('show');
-        }
+        // ─── Error display ──────────────────────────────────────────────
+        function showError(msg) { loginError.textContent = msg; loginError.classList.add('show'); }
+        function hideError() { loginError.classList.remove('show'); }
 
         // ─── Redirect by role ───────────────────────────────────────────
         function redirectByRole(role) {
-            if (role === 'root') {
-                window.location.href = 'inv-products.html';
-            } else {
-                window.location.href = 'inv-pos.html';
-            }
+            if (role === 'root')      window.location.href = 'boss.html';
+            else if (role === 'manager') window.location.href = 'inv-reports.html';
+            else                      window.location.href = 'inv-pos.html';
         }
 
-        // ─── Set loading state ──────────────────────────────────────────
+        // ─── Loading state ──────────────────────────────────────────────
         function setLoading(loading) {
-            if (loading) {
-                loginBtn.classList.add('loading');
-                loginBtn.disabled = true;
-            } else {
-                loginBtn.classList.remove('loading');
-                loginBtn.disabled = false;
-            }
+            loginBtn.classList.toggle('loading', loading);
+            loginBtn.disabled = loading;
         }
+
+        // ─── CAPTCHA state ──────────────────────────────────────────────
+        var captchaId = null;
+
+        window.fetchCaptcha = async function() {
+            try {
+                var r = await fetch('/api/inv/auth/captcha', { method: 'POST' });
+                var data = await r.json();
+                captchaId = data.captchaId;
+                captchaQuestion.textContent = data.question;
+            } catch(e) { captchaQuestion.textContent = '? + ? ='; }
+        };
 
         // ─── Login handler ──────────────────────────────────────────────
         async function handleLogin(e) {
             e.preventDefault();
             hideError();
 
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value;
-
+            var username = usernameInput.value.trim();
+            var password = passwordInput.value;
             if (!username) { showError('请输入用户名'); usernameInput.focus(); return; }
             if (!password) { showError('请输入密码'); passwordInput.focus(); return; }
-            if (!humanCheckbox.checked) { showError('请勾选"我不是机器人"'); return; }
+
+            var captchaAnswer = captchaInput.value.trim();
+            if (!captchaId || !captchaAnswer) {
+                showError('请输入验证码');
+                window.fetchCaptcha();
+                return;
+            }
 
             setLoading(true);
 
             try {
-                const res = await fetch('/api/inv/auth/login', {
+                var res = await fetch('/api/inv/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, humanCheck: true })
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        captchaId: captchaId,
+                        captchaAnswer: captchaAnswer,
+                        deviceId: DEVICE_ID
+                    })
                 });
 
-                const data = await res.json();
+                var data = await res.json();
 
                 if (!res.ok) {
+                    setLoading(false);
                     if (res.status === 423) {
-                        const minutes = data.remainingMinutes || 15;
-                        showError('账号已锁定，请 ' + minutes + ' 分钟后再试');
+                        showError('账号已锁定，请 ' + (data.remainingMinutes || 15) + ' 分钟后再试');
+                    } else if (res.status === 429) {
+                        showError('登录尝试过于频繁，请稍后再试');
                     } else {
-                        showError(data.error || '登录失败，请重试');
+                        showError(data.error || '登录失败');
                     }
+                    window.fetchCaptcha();
+                    captchaInput.value = '';
                     return;
+                }
+
+                // ─── Login success ──────────────────────────────────────
+                if (data.deviceTrusted === false) {
+                    fetch('/api/inv/auth/devices/trust', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + data.token },
+                        body: JSON.stringify({ deviceId: DEVICE_ID })
+                    }).catch(function(){});
                 }
 
                 localStorage.setItem('inv_token', data.token);
@@ -411,19 +460,19 @@
                 redirectByRole(data.user.role);
 
             } catch (err) {
-                showError('网络错误，请检查网络连接后重试');
-            } finally {
                 setLoading(false);
+                showError('网络错误，请检查网络连接后重试');
             }
         }
 
         // ─── Event listeners ────────────────────────────────────────────
         form.addEventListener('submit', handleLogin);
+        usernameInput.addEventListener('input', hideError);
+        passwordInput.addEventListener('input', hideError);
+        captchaInput.addEventListener('input', hideError);
 
-        [usernameInput, passwordInput].forEach(function(input) {
-            input.addEventListener('input', hideError);
-        });
-        humanCheckbox.addEventListener('change', hideError);
+        // ─── Load initial CAPTCHA ───────────────────────────────────────
+        window.fetchCaptcha();
     })();
     </script>
 </body>

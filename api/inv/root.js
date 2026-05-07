@@ -22,6 +22,7 @@ const { Device } = require('../../models/inv/Device');
 const DailyClose = require('../../models/inv/DailyClose');
 const InvUser = require('../../models/inv/User');
 const AuditLog = require('../../models/inv/AuditLog');
+const TrustedDevice = require('../../models/inv/TrustedDevice');
 const SystemSetting = require('../../models/inv/SystemSetting');
 const SystemState = require('../../models/inv/SystemState');
 const StockMovement = require('../../models/inv/StockMovement');
@@ -945,6 +946,106 @@ router.get('/audit-log', async (req, res) => {
   } catch (err) {
     console.error('Audit log error:', err.message);
     res.status(500).json({ error: 'Server error', code: 'AUDIT_LOG_ERROR' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// TRUSTED DEVICE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── GET /api/root/devices/trusted ───────────────────────────────
+// List all trusted devices across all users
+router.get('/devices/trusted', async (req, res) => {
+  try {
+    const devices = await TrustedDevice.find({})
+      .populate('userId', 'username displayName role')
+      .sort({ lastUsedAt: -1 })
+      .lean();
+
+    res.json({
+      devices: devices.map(d => ({
+        id: d._id,
+        userId: d.userId?._id,
+        username: d.userId?.username || 'unknown',
+        displayName: d.userId?.displayName || '',
+        deviceId: d.deviceId,
+        deviceName: d.deviceName || '',
+        trusted: d.trusted,
+        trustLevel: d.trustLevel,
+        revoked: d.revoked,
+        firstSeenAt: d.firstSeenAt,
+        lastUsedAt: d.lastUsedAt,
+        failedAttempts: d.failedAttempts || 0,
+      })),
+      count: devices.length,
+    });
+  } catch (err) {
+    console.error('Trusted devices list error:', err.message);
+    res.status(500).json({ error: '服务器错误', code: 'DEVICES_ERROR' });
+  }
+});
+
+// ─── POST /api/root/devices/trusted/revoke ───────────────────────
+// Revoke a trusted device by deviceId
+router.post('/devices/trusted/revoke', async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    if (!deviceId) {
+      return res.status(400).json({ error: '缺少设备ID', code: 'VALIDATION_ERROR' });
+    }
+
+    const device = await TrustedDevice.findOne({ deviceId });
+    if (!device) {
+      return res.status(404).json({ error: '设备未找到', code: 'NOT_FOUND' });
+    }
+
+    const before = { trusted: device.trusted, revoked: device.revoked, trustLevel: device.trustLevel };
+    device.trusted = false;
+    device.revoked = true;
+    device.trustLevel = 'untrusted';
+    await device.save();
+
+    await logRootAction({
+      action: 'root.device.revoke',
+      targetType: 'device',
+      targetId: device._id.toString(),
+      details: { deviceId, deviceName: device.deviceName },
+      before, after: { trusted: false, revoked: true, trustLevel: 'untrusted' },
+      ip: req.ip,
+    });
+
+    res.json({ message: '设备已撤销信任', deviceId });
+  } catch (err) {
+    console.error('Device revoke error:', err.message);
+    res.status(500).json({ error: '服务器错误', code: 'REVOKE_ERROR' });
+  }
+});
+
+// ─── DELETE /api/root/devices/trusted/:id ─────────────────────────
+// Remove a trusted device record entirely
+router.delete('/devices/trusted/:id', async (req, res) => {
+  try {
+    const device = await TrustedDevice.findById(req.params.id);
+    if (!device) {
+      return res.status(404).json({ error: '设备未找到', code: 'NOT_FOUND' });
+    }
+
+    const details = { deviceId: device.deviceId, deviceName: device.deviceName };
+    await TrustedDevice.findByIdAndDelete(req.params.id);
+
+    await logRootAction({
+      action: 'root.device.delete',
+      targetType: 'device',
+      targetId: req.params.id,
+      details,
+      ip: req.ip,
+    });
+
+    res.json({ message: '设备记录已删除' });
+  } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: '设备未找到', code: 'NOT_FOUND' });
+    console.error('Device delete error:', err.message);
+    res.status(500).json({ error: '服务器错误', code: 'DELETE_ERROR' });
   }
 });
 

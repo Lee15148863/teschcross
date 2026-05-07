@@ -359,16 +359,34 @@ OPEN → PENDING → CLOSED
 
 ---
 
+## FLOW
+
+1. **OPEN** — Day is active, transactions are being recorded
+2. **Run daily close** → generates snapshot with status **PENDING**
+   - All transactions for the day are captured
+   - Validation runs (transaction/ledger match, cash reconciliation)
+   - Transactions become LOCKED (cannot be deleted while PENDING or CLOSED)
+3. **Root reviews** the PENDING snapshot via status endpoint
+   - Can re-generate the snapshot if needed (re-runs close, overwrites PENDING)
+4. **Root confirms** → status changes to **CLOSED** (immutable)
+   - Final validation re-runs before confirmation
+   - Once CLOSED, the snapshot can never be modified
+
+---
+
 ## RULES
 
 CLOSED:
 
 * immutable
-* required for reporting
+* required for monthly reporting
 
 PENDING:
 
-* blocks monthly report
+* blocks transaction deletion (same as CLOSED)
+* blocks monthly report generation
+* can be re-generated (overwritten)
+* can be confirmed → CLOSED (via POST /close/confirm, ROOT only)
 
 ---
 
@@ -398,9 +416,12 @@ MUST NOT:
 
 # 12. MONTHLY REPORT
 
-MUST:
+## DATA SOURCE
 
-* aggregate daily snapshots
+Reads remaining Transactions at report generation time (NOT daily snapshots).
+
+Rationale: Root may delete unwanted Transactions before monthly tax reporting.
+Daily snapshots serve cash management; monthly reports serve tax filing.
 
 ---
 
@@ -409,12 +430,53 @@ MUST:
 MUST:
 
 * lock after generation
+* reflect only Transactions that exist at report generation time
+
+MUST NOT:
+
+* be retroactively affected by Transaction deletion after generation
 
 ---
 
 # 13. TRANSACTION DELETION
 
-ONLY ROOT
+## ACCESS
+
+ONLY ROOT (owner/boss)
+
+---
+
+## TIMING CONSTRAINT (CRITICAL)
+
+### Layer 1 — Invoice Lock
+
+Deletion is ONLY allowed BEFORE invoice snapshot generation.
+
+Once an Invoice has been generated from a Transaction (`invoiceGenerated === true`):
+→ Deletion is BLOCKED (409 conflict)
+
+Rationale: The Invoice is a legal tax document. Its snapshot data is the financial
+truth for tax reporting. Destroying the source Transaction after invoicing would
+break the audit trail.
+
+### Layer 2 — Daily Close Lock (PENDING or CLOSED)
+
+Deletion is BLOCKED once the day has a DailyClose snapshot (status PENDING or CLOSED).
+
+PENDING = generated but awaiting root confirmation (still locks transactions).
+CLOSED = confirmed by root, fully immutable.
+
+Exception: If a MonthlyReport has been generated for that month, deletion is
+allowed — the MonthlyReport becomes the immutable tax record and the underlying
+Transactions are no longer needed for reporting.
+
+Rule:
+* DailyClose exists (PENDING or CLOSED) AND MonthlyReport does NOT exist
+  → BLOCK deletion
+* DailyClose exists AND MonthlyReport exists for the month
+  → ALLOW deletion (monthly report preserves tax data)
+* DailyClose does NOT exist for the date
+  → ALLOW deletion (day is still open, data not finalized)
 
 ---
 
@@ -422,15 +484,60 @@ ONLY ROOT
 
 MUST:
 
-* remove transaction
+* check `invoiceGenerated` flag before allowing deletion
+* block deletion if `invoiceGenerated === true`
+* check DailyClose existence for the transaction date (PENDING or CLOSED)
+* check MonthlyReport existence for the transaction month
+* block deletion if DailyClose exists but month is not yet reported
+* restore product stock for each item
+* remove associated StockMovement records
 
 MUST NOT:
 
 * affect:
 
   * cash ledger
-  * snapshots
-  * reports
+  * daily snapshots
+  * monthly reports
+  * Invoice records
+
+---
+
+## 13.1 INVOICE SNAPSHOT & TAX REPORTING
+
+### Principle
+
+All tax reporting logic is based on the Transactions that REMAIN
+at the time of invoice / tax snapshot generation.
+
+Flow:
+
+1. Transactions accumulate during business operations
+2. Daily close runs → creates PENDING DailyClose snapshot → day's Transactions LOCKED
+3. Root reviews PENDING snapshot (via GET /close/status)
+4. Root confirms → CLOSED (immutable) OR re-generates snapshot if corrections needed
+5. Root generates Invoices from remaining Transactions (must be from non-deleted transactions)
+6. Root generates MonthlyReport → aggregates CLOSED DailyClose snapshots → becomes tax record
+7. After MonthlyReport generation: Transactions for that month are UNLOCKED for cleanup
+8. MonthlyReport is the SOLE tax record — immutable, stored in DB
+
+### Lock/Unlock Summary
+
+| State | Can Delete? |
+|---|---|
+| Day open | YES |
+| Day PENDING (closed but unconfirmed) | NO |
+| Day CLOSED (confirmed), month NOT reported | NO |
+| Day CLOSED (confirmed), month reported | YES (monthly report is tax record) |
+| Invoice generated | NO (invoice is legal document) |
+
+### Guarantees
+
+* Deleted Transactions never appear in tax reports
+* Invoice records are immutable once created
+* Daily close snapshots are immutable — for cash reconciliation
+* MonthlyReport is immutable — SOLE tax record after generation
+* Without MonthlyReport, transactions are protected by daily close lock
 
 ---
 

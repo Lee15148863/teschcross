@@ -110,20 +110,18 @@
     </div>
 </div>
 
+<script src="auth-guard.js"></script>
 <script>
 (function() {
 'use strict';
-const token = localStorage.getItem('inv_token');
-if (!token) { window.location.href = 'inv-login.html'; return; }
-var user = null;
-try { user = JSON.parse(localStorage.getItem('inv_user')); } catch(e) {}
-if (!user || user.role !== 'root') { window.location.href = 'inv-pos.html'; return; }
+var user = Auth.requireRole('root');
+if (!user) return;
 
-document.getElementById('displayName').textContent = user.name || user.username || '-';
+document.getElementById('displayName').textContent = user.displayName || user.name || user.username || '-';
 document.getElementById('roleBadge').textContent = user.role === 'root' ? '店主' : '店员';
 
 const API_BASE = '/api/inv';
-const headers = () => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token });
+const headers = () => Auth.getHeaders();
 
 // State: 20 shortcut configs
 let shortcuts = [];
@@ -136,9 +134,7 @@ function showToast(msg, type) {
 }
 
 function logout() {
-  localStorage.removeItem('inv_token');
-  localStorage.removeItem('inv_user');
-  window.location.href = 'inv-login.html';
+  Auth.logout();
 }
 window.logout = logout;
 

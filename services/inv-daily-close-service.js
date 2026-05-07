@@ -111,6 +111,7 @@ async function closeDay(dateStr, closedBy, options = {}) {
       { code: 'ALREADY_CLOSED' },
     );
   }
+  // Allow re-generating a pending snapshot (it will be overwritten below)
 
   const start = new Date(dateStr + 'T00:00:00.000Z');
   const end = new Date(dateStr + 'T23:59:59.999Z');
@@ -158,7 +159,7 @@ async function closeDay(dateStr, closedBy, options = {}) {
   // ── 7. Persist snapshot ──────────────────────────────────────
   const snapshotData = {
     date: dateStr,
-    status: 'closed',
+    status: 'pending',
     closedBy,
     closedAt: new Date(),
 
@@ -204,6 +205,37 @@ async function closeDay(dateStr, closedBy, options = {}) {
 }
 
 /**
+ * Confirm a pending daily close — transitions from 'pending' to 'closed'.
+ * Once confirmed, the snapshot is IMMUTABLE and becomes the financial truth.
+ *
+ * @param {string} dateStr — YYYY-MM-DD
+ * @param {string} confirmedBy — User ID of the root confirming
+ * @returns {Promise<Object>} { snapshot, validation }
+ */
+async function confirmDay(dateStr, confirmedBy) {
+  const doc = await DailyClose.findOne({ date: dateStr });
+  if (!doc) {
+    throw Object.assign(new Error(`Day ${dateStr} has no daily close record`), { code: 'NOT_FOUND' });
+  }
+  if (doc.status !== 'pending') {
+    throw Object.assign(
+      new Error(`Day ${dateStr} status is "${doc.status}", only 'pending' can be confirmed`),
+      { code: 'INVALID_STATUS' },
+    );
+  }
+
+  // Re-validate before confirming
+  const validation = await validateTransactionLedgerMatch(dateStr);
+  doc.status = 'closed';
+  doc.closedBy = confirmedBy;
+  doc.closedAt = new Date();
+  doc.validation = validation;
+  await doc.save();
+
+  return { snapshot: doc.toObject(), validation };
+}
+
+/**
  * Get the close status for a given date.
  *
  * @param {string} dateStr — YYYY-MM-DD
@@ -217,7 +249,7 @@ async function getDayStatus(dateStr) {
     date: doc.date,
     closedBy: doc.closedBy,
     closedAt: doc.closedAt,
-    snapshot: doc.status === 'closed' ? doc : undefined,
+    snapshot: doc.status === 'closed' || doc.status === 'pending' ? doc : undefined,
   };
 }
 
@@ -239,6 +271,7 @@ async function listClosedDays(startDate, endDate) {
 
 module.exports = {
   closeDay,
+  confirmDay,
   getDayStatus,
   listClosedDays,
   validateTransactionLedgerMatch,

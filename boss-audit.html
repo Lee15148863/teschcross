@@ -93,17 +93,6 @@
 </head>
 <body>
 
-<div class="login-screen" id="loginScreen">
-  <div class="login-box">
-    <h1>Audit Log</h1>
-    <p>Root access required</p>
-    <div class="login-error" id="loginError"></div>
-    <input type="text" id="loginUser" placeholder="Username" autocomplete="username" autofocus>
-    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password">
-    <button class="btn btn-primary btn-block" id="loginBtn" onclick="doLogin()">Login</button>
-  </div>
-</div>
-
 <div class="header" id="appHeader" style="display:none">
   <button class="btn-back" onclick="goBack()">← Back</button>
   <h1>Audit Log</h1>
@@ -170,6 +159,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="auth-guard.js"></script>
 <script src="boss-audit.js"></script>
 </body>
 </html>

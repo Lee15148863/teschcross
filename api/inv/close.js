@@ -42,9 +42,9 @@ router.post('/', async (req, res) => {
       ? 200 : 409;
 
     res.status(statusCode).json({
-      message: statusCode === 200 ? '日结成功' : '日结完成但存在数据不匹配',
+      message: statusCode === 200 ? '日结成功（待确认）' : '日结完成但存在数据不匹配（待确认）',
       date,
-      status: 'closed',
+      status: 'pending',
       snapshot: result.snapshot,
       validation: result.validation,
     });
@@ -55,6 +55,41 @@ router.post('/', async (req, res) => {
       default:
         console.error('Daily close error:', err.message);
         res.status(500).json({ error: '日结处理失败', code: 'CLOSE_ERROR' });
+    }
+  }
+});
+
+// ─── POST /api/inv/close/confirm ───────────────────────────────────
+// Confirm a pending daily close (ROOT only).
+// Transitions from 'pending' → 'closed'. Once confirmed, the snapshot
+// is IMMUTABLE and Transactions for that day are locked.
+router.post('/confirm', requireRole('root'), async (req, res) => {
+  try {
+    const { date } = req.body;
+
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({ error: '日期格式无效，请使用 YYYY-MM-DD', code: 'VALIDATION_ERROR' });
+    }
+
+    const { confirmDay } = require('../../services/inv-daily-close-service');
+    const result = await confirmDay(date, req.user.userId);
+
+    res.json({
+      message: `✅ ${date} 日结已确认`,
+      date,
+      status: 'closed',
+      snapshot: result.snapshot,
+      validation: result.validation,
+    });
+  } catch (err) {
+    switch (err.code) {
+      case 'NOT_FOUND':
+        return res.status(404).json({ error: err.message, code: err.code });
+      case 'INVALID_STATUS':
+        return res.status(409).json({ error: err.message, code: err.code });
+      default:
+        console.error('Confirm close error:', err.message);
+        res.status(500).json({ error: '确认日结失败', code: 'CONFIRM_ERROR' });
     }
   }
 });

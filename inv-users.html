@@ -140,22 +140,20 @@
     </div>
 </div>
 
+<script src="auth-guard.js"></script>
 <script>
 (function(){
 'use strict';
-const token=localStorage.getItem('inv_token');
-if(!token){window.location.href='inv-login.html';return;}
-let user;try{user=JSON.parse(localStorage.getItem('inv_user'));}catch(e){window.location.href='inv-login.html';return;}
-if(!user||user.role !== 'root'){window.location.href='inv-login.html';return;}
-document.getElementById('displayName').textContent=user.displayName||user.username;
+const user = Auth.requireRole('root'); if (!user) return;
+document.getElementById('displayName').textContent = Auth.getDisplayName();
 
 // Hide sidebar items based on permissions (admin pages - admin sees all)
 document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});
 
 const API='/api/inv';
-const headers=()=>({'Content-Type':'application/json','Authorization':'Bearer '+token});
+const headers=()=>Auth.getHeaders();
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success');setTimeout(()=>t.classList.add('show'),10);setTimeout(()=>t.classList.remove('show'),3000);}
-function logout(){localStorage.removeItem('inv_token');localStorage.removeItem('inv_user');window.location.href='inv-login.html';}
+function logout(){Auth.logout();}
 window.logout=logout;
 async function apiFetch(url,opts){opts=opts||{};opts.headers=headers();const r=await fetch(API+url,opts);if(r.status===401){logout();return null;}return r;}
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}

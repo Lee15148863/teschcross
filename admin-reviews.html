@@ -54,29 +54,14 @@
     <div id="reviewList"></div>
 </div>
 
+<script src="auth-guard.js"></script>
 <script>
 // Auth: inventory admin only.
-function checkAdminAuth() {
-    try {
-        var invUser = JSON.parse(localStorage.getItem('inv_user'));
-        var invToken = localStorage.getItem('inv_token');
-        if (invUser && invUser.role === 'root' && invToken) return true;
-    } catch(e) {}
-    sessionStorage.removeItem('admin_logged_in');
-    window.location.href = '/staff-portal.html';
-    return false;
-}
-if (!checkAdminAuth()) throw new Error('Not authorized');
+if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; return; }
 
 // Build auth headers for API calls
 function getReviewAuthHeaders() {
-    var invToken = localStorage.getItem('inv_token');
-    if (!invToken) {
-        alert('请先登录');
-        window.location.href = 'inv-login.html';
-        return {};
-    }
-    return { 'Authorization': 'Bearer ' + invToken };
+    return Auth.getHeaders();
 }
 
 let currentFilter = 'all';

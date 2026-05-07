@@ -123,25 +123,23 @@
         </div>
     </div>
 </div>
+<script src="auth-guard.js"></script>
 <script>
 (function(){
 'use strict';
-var token=localStorage.getItem('inv_token');
-if(!token){window.location.href='inv-login.html';return;}
-var user;try{user=JSON.parse(localStorage.getItem('inv_user'));}catch(e){window.location.href='inv-login.html';return;}
-if(!user){window.location.href='inv-login.html';return;}
-document.getElementById('displayName').textContent=user.displayName||user.username;
-document.getElementById('roleBadge').textContent=user.role === 'root' ? '店主':'员工';
-var isAdmin=user.role === 'root';
+const user = Auth.requireAuth(); if (!user) return;
+document.getElementById('displayName').textContent = Auth.getDisplayName();
+document.getElementById('roleBadge').textContent = Auth.isRoot() ? '店主':'员工';
+var isAdmin = Auth.isRoot();
 if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(function(el){el.style.display='';});}
 var perms=user.permissions||{};
 if(isAdmin){document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});}
 else{document.querySelectorAll('nav a[data-perm]').forEach(function(a){if(!perms[a.dataset.perm])a.style.display='none';});}
 
 var API='/api/inv';
-function hdrs(){return{'Content-Type':'application/json','Authorization':'Bearer '+token};}
+function hdrs(){return Auth.getHeaders();}
 function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success');setTimeout(function(){t.classList.add('show');},10);setTimeout(function(){t.classList.remove('show');},3000);}
-function logout(){localStorage.removeItem('inv_token');localStorage.removeItem('inv_user');window.location.href='inv-login.html';}
+function logout(){Auth.logout();}
 document.getElementById('btnLogout').addEventListener('click',logout);
 async function apiFetch(url,opts){opts=opts||{};opts.headers=hdrs();var r=await fetch(API+url,opts);if(r.status===401){logout();return null;}return r;}
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
