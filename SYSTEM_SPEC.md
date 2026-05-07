@@ -383,8 +383,8 @@ CLOSED:
 
 PENDING:
 
-* blocks transaction deletion (same as CLOSED)
-* blocks monthly report generation
+* does NOT block transaction deletion (boss may edit during review)
+* blocks monthly report generation (only CLOSED days are aggregated)
 * can be re-generated (overwritten)
 * can be confirmed → CLOSED (via POST /close/confirm, ROOT only)
 
@@ -459,24 +459,22 @@ Rationale: The Invoice is a legal tax document. Its snapshot data is the financi
 truth for tax reporting. Destroying the source Transaction after invoicing would
 break the audit trail.
 
-### Layer 2 — Daily Close Lock (PENDING or CLOSED)
+### Layer 2 — Daily Close Lock
 
-Deletion is BLOCKED once the day has a DailyClose snapshot (status PENDING or CLOSED).
+Deletion is BLOCKED once the day's DailyClose snapshot has status **CLOSED** (confirmed by root).
 
-PENDING = generated but awaiting root confirmation (still locks transactions).
-CLOSED = confirmed by root, fully immutable.
+**PENDING** status does NOT block deletion — the boss may delete unwanted
+transactions during the review period before confirming the close.
 
 Exception: If a MonthlyReport has been generated for that month, deletion is
-allowed — the MonthlyReport becomes the immutable tax record and the underlying
-Transactions are no longer needed for reporting.
+allowed even for CLOSED days — the MonthlyReport becomes the immutable tax
+record and underlying Transactions are no longer needed.
 
 Rule:
-* DailyClose exists (PENDING or CLOSED) AND MonthlyReport does NOT exist
-  → BLOCK deletion
-* DailyClose exists AND MonthlyReport exists for the month
-  → ALLOW deletion (monthly report preserves tax data)
-* DailyClose does NOT exist for the date
-  → ALLOW deletion (day is still open, data not finalized)
+* DailyClose is CLOSED AND MonthlyReport does NOT exist → BLOCK deletion
+* DailyClose is CLOSED AND MonthlyReport exists → ALLOW deletion
+* DailyClose is PENDING → ALLOW deletion (review period, boss may edit)
+* DailyClose does NOT exist → ALLOW deletion (day still open)
 
 ---
 
@@ -526,7 +524,7 @@ Flow:
 | State | Can Delete? |
 |---|---|
 | Day open | YES |
-| Day PENDING (closed but unconfirmed) | NO |
+| Day PENDING (closed but unconfirmed) | YES (review period, boss may delete) |
 | Day CLOSED (confirmed), month NOT reported | NO |
 | Day CLOSED (confirmed), month reported | YES (monthly report is tax record) |
 | Invoice generated | NO (invoice is legal document) |

@@ -524,13 +524,13 @@ router.delete('/:id/delete', requireRole('root'), async (req, res) => {
       ? transaction.createdAt.toISOString().split('T')[0]
       : new Date(transaction.createdAt).toISOString().split('T')[0];
     const txnMonth = txnDate.substring(0, 7);
-    const dayClosed = await DailyClose.findOne({ date: txnDate, status: { $in: ['pending', 'closed'] } }).select('status').lean();
+    // Only block deletion if day is CLOSED (confirmed) — PENDING allows deletion for review
+    const dayClosed = await DailyClose.findOne({ date: txnDate, status: 'closed' }).select('_id').lean();
     if (dayClosed) {
       const monthReported = await MonthlyReport.findOne({ month: txnMonth }).select('_id').lean();
       if (!monthReported) {
-        const statusLabel = dayClosed.status === 'closed' ? '已确认' : '待确认';
         return res.status(409).json({
-          error: `${txnDate} 已日结（${statusLabel}），不可删除。请先生成 ${txnMonth} 月报表`,
+          error: `${txnDate} 日结已确认，不可删除。请先生成 ${txnMonth} 月报表`,
           code: 'DAY_CLOSED'
         });
       }
@@ -613,7 +613,8 @@ router.delete('/batch-delete', requireRole('root'), async (req, res) => {
         ? txn.createdAt.toISOString().split('T')[0]
         : new Date(txn.createdAt).toISOString().split('T')[0];
       const txnMonth = txnDate.substring(0, 7);
-      const dayClosed = await DailyClose.findOne({ date: txnDate, status: { $in: ['pending', 'closed'] } }).select('status').lean();
+      // Only block if CLOSED (confirmed) — PENDING allows deletion for review
+      const dayClosed = await DailyClose.findOne({ date: txnDate, status: 'closed' }).select('_id').lean();
       if (dayClosed) {
         const monthReported = await MonthlyReport.findOne({ month: txnMonth }).select('_id').lean();
         if (!monthReported) {
