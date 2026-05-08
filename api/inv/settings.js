@@ -11,10 +11,10 @@ const DEFAULT_SETTINGS = {
   vatRate: 0.23,
   lowStockDefaults: { phone: 10, accessory: 30, tablet: 5 },
   companyInfo: {
-    name: 'Tech Cross',
-    address: 'Unit 4, Navan Shopping Centre, Navan, Co. Meath, Ireland',
+    name: 'TechCross Repair Centre',
+    address: 'UNIT M.4, Navan Town Centre, Kennedy Road, Navan, Co. Meath, C15 F658',
     phone: '046 905 9854',
-    vatNumber: '',
+    vatNumber: 'IE3330982OH',
     logo: ''
   },
   // Device rules

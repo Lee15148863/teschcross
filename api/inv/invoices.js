@@ -60,8 +60,8 @@ async function getCompanySnapshot() {
   const defaults = {
     businessName: 'TechCross Repair Centre',
     vatNumber: 'IE3330982OH',
-    address: 'Dublin, Ireland',
-    phone: '',
+    address: 'UNIT M.4, Navan Town Centre, Kennedy Road, Navan, Co. Meath, C15 F658',
+    phone: '046 905 9854',
     email: ''
   };
   try {
