@@ -143,7 +143,6 @@ async function loadUsers() {
         '<div><div class="item-title">' + esc(u.displayName) + ' <span class="badge ' + (roleBadge[u.role] || 'badge-gray') + '">' + u.role + '</span></div>' +
         '<div class="item-sub">@' + esc(u.username) + (u.active ? '' : ' • <span style="color:#ff3b30">' + disabledLabel + '</span>') + '</div></div>' +
         '<div class="btn-group" style="gap:4px;flex-wrap:wrap">' +
-        '<button class="btn btn-sm btn-secondary" onclick="changeUserRole(\'' + u._id + '\',\'' + u.role + '\')">' + __('users.role') + '</button>' +
         '<button class="btn btn-sm btn-secondary" onclick="showResetPassword(\'' + u._id + '\',\'' + esc(u.username) + '\')">' + __('users.resetPw') + '</button>' +
         '<button class="btn btn-sm ' + (u.active ? 'btn-warning' : 'btn-success') + '" onclick="toggleUserActive(\'' + u._id + '\',' + u.active + ')">' + (u.active ? __('users.disable') : __('users.enable')) + '</button>' +
         '</div></div>';
