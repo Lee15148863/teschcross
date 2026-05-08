@@ -24,6 +24,8 @@
   .header h1 { font-size: 20px; font-weight: 700; flex: 1; }
   .btn-back { font-size: 14px; color: #0071e3; background: none; padding: 8px 12px; border-radius: 8px; font-weight: 500; }
   .header-right { display: flex; gap: 8px; align-items: center; }
+  .btn-lang { font-size: 13px; font-weight: 600; background: #f2f2f7; padding: 6px 12px; border-radius: 8px; color: #1d1d1f; min-width: 36px; text-align: center; }
+  .btn-lang:active { opacity: 0.7; }
   .btn-logout { font-size: 14px; color: #0071e3; background: none; padding: 8px 12px; border-radius: 8px; font-weight: 500; }
 
   .content { padding: 12px 16px; max-width: 640px; margin: 0 auto; }
@@ -94,72 +96,74 @@
 <body>
 
 <div class="header" id="appHeader" style="display:none">
-  <button class="btn-back" onclick="goBack()">← Back</button>
-  <h1>Audit Log</h1>
+  <button class="btn-back" onclick="goBack()" data-i18n="audit.back">← Back</button>
+  <h1 data-i18n="audit.title">Audit Log</h1>
   <div class="header-right">
+    <button class="btn-lang" id="langToggle" onclick="toggleLang()" title="Switch language / 切换语言">中</button>
     <span id="userBadge" style="font-size:13px;color:#8e8e93;font-weight:500;"></span>
-    <button class="btn-logout" onclick="doLogout()">Logout</button>
+    <button class="btn-logout" onclick="doLogout()" data-i18n="app.logout">Logout</button>
   </div>
 </div>
 
 <div class="content" id="appContent" style="display:none">
   <div class="card">
-    <div class="card-title">Filters</div>
+    <div class="card-title" data-i18n="audit.filters">Filters</div>
     <div class="filter-row">
       <div class="input-group">
-        <label>Start Date</label>
+        <label data-i18n="audit.startDate">Start Date</label>
         <input type="date" id="filterStart">
       </div>
       <div class="input-group">
-        <label>End Date</label>
+        <label data-i18n="audit.endDate">End Date</label>
         <input type="date" id="filterEnd">
       </div>
     </div>
     <div class="input-group">
-      <label>Action Type</label>
+      <label data-i18n="audit.actionType">Action Type</label>
       <select id="filterAction">
-        <option value="">All Actions</option>
-        <option value="root.system.lock">System Lock</option>
-        <option value="root.system.unlock">System Unlock</option>
-        <option value="root.system.pause">System Pause</option>
-        <option value="root.system.resume">System Resume</option>
-        <option value="root.system.lock_transactions">Lock Transactions</option>
-        <option value="root.refund.force">Force Refund</option>
-        <option value="root.refund.reverse">Reverse Refund</option>
-        <option value="root.dailyclose.force">Force Close</option>
-        <option value="root.dailyclose.reopen">Reopen Close</option>
-        <option value="root.user.create">User Create</option>
-        <option value="root.user.update">User Update</option>
-        <option value="root.user.delete">User Delete</option>
-        <option value="root.user.disable">User Disable</option>
-        <option value="root.device.update">Device Update</option>
+        <option value="" data-i18n="audit.allActions">All Actions</option>
+        <option value="root.system.lock" data-i18n="audit.systemLock">System Lock</option>
+        <option value="root.system.unlock" data-i18n="audit.systemUnlock">System Unlock</option>
+        <option value="root.system.pause" data-i18n="audit.systemPause">System Pause</option>
+        <option value="root.system.resume" data-i18n="audit.systemResume">System Resume</option>
+        <option value="root.system.lock_transactions" data-i18n="audit.lockTxns">Lock Transactions</option>
+        <option value="root.refund.force" data-i18n="audit.forceRefund">Force Refund</option>
+        <option value="root.refund.reverse" data-i18n="audit.reverseRefund">Reverse Refund</option>
+        <option value="root.dailyclose.force" data-i18n="audit.forceClose">Force Close</option>
+        <option value="root.dailyclose.reopen" data-i18n="audit.reopenClose">Reopen Close</option>
+        <option value="root.user.create" data-i18n="audit.userCreate">User Create</option>
+        <option value="root.user.update" data-i18n="audit.userUpdate">User Update</option>
+        <option value="root.user.delete" data-i18n="audit.userDelete">User Delete</option>
+        <option value="root.user.disable" data-i18n="audit.userDisable">User Disable</option>
+        <option value="root.device.update" data-i18n="audit.deviceUpdate">Device Update</option>
       </select>
     </div>
     <div class="filter-bar" id="moduleFilters">
-      <button class="filter-chip active" data-filter="" onclick="filterModule('')">All</button>
-      <button class="filter-chip" data-filter="system" onclick="filterModule('system')">System</button>
-      <button class="filter-chip" data-filter="refund" onclick="filterModule('refund')">Refund</button>
-      <button class="filter-chip" data-filter="dailyclose" onclick="filterModule('dailyclose')">Daily Close</button>
-      <button class="filter-chip" data-filter="user" onclick="filterModule('user')">User</button>
-      <button class="filter-chip" data-filter="device" onclick="filterModule('device')">Device</button>
+      <button class="filter-chip active" data-filter="" onclick="filterModule('')" data-i18n="audit.moduleAll">All</button>
+      <button class="filter-chip" data-filter="system" onclick="filterModule('system')" data-i18n="audit.moduleSystem">System</button>
+      <button class="filter-chip" data-filter="refund" onclick="filterModule('refund')" data-i18n="audit.moduleRefund">Refund</button>
+      <button class="filter-chip" data-filter="dailyclose" onclick="filterModule('dailyclose')" data-i18n="audit.moduleDailyClose">Daily Close</button>
+      <button class="filter-chip" data-filter="user" onclick="filterModule('user')" data-i18n="audit.moduleUser">User</button>
+      <button class="filter-chip" data-filter="device" onclick="filterModule('device')" data-i18n="audit.moduleDevice">Device</button>
     </div>
-    <button class="btn btn-primary btn-block btn-sm" onclick="loadAuditLog()">Search</button>
+    <button class="btn btn-primary btn-block btn-sm" onclick="loadAuditLog()" data-i18n="audit.search">Search</button>
   </div>
 
   <div class="card">
-    <div class="card-title">Audit Entries</div>
+    <div class="card-title" data-i18n="audit.entries">Audit Entries</div>
     <div class="summary-bar" id="summaryBar">
-      <span class="count" id="entryCount">0 entries</span>
+      <span class="count" id="entryCount" data-i18n="audit.entryCount" data-i18n-vars='{"count":0}'>0 entries</span>
       <span id="entryRange"></span>
     </div>
     <div id="logList"><div class="loading"><span class="spinner"></span>Loading...</div></div>
-    <button class="btn btn-secondary btn-block btn-sm" id="loadMoreBtn" style="display:none;margin-top:8px" onclick="loadMore()">Load More</button>
+    <button class="btn btn-secondary btn-block btn-sm" id="loadMoreBtn" style="display:none;margin-top:8px" onclick="loadMore()" data-i18n="audit.loadMore">Load More</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script src="auth-guard.js"></script>
+<script src="lang.js"></script>
 <script src="boss-audit.js"></script>
 </body>
 </html>

@@ -27,6 +27,8 @@
   .header h1 { font-size: 20px; font-weight: 700; }
   .header-sub { font-size: 12px; color: #8e8e93; }
   .header-right { display: flex; gap: 8px; align-items: center; }
+  .btn-lang { font-size: 13px; font-weight: 600; background: #f2f2f7; padding: 6px 12px; border-radius: 8px; color: #1d1d1f; min-width: 36px; text-align: center; }
+  .btn-lang:active { opacity: 0.7; }
   .btn-logout { font-size: 14px; color: #0071e3; background: none; padding: 8px 12px; border-radius: 8px; font-weight: 500; }
 
   /* ─── Tab Bar ───────────────────────────────────────────────── */
@@ -136,23 +138,24 @@
 <!-- ─── Header ───────────────────────────────────────────────── -->
 <div class="header" id="appHeader" style="display:none">
   <div>
-    <h1>Boss Control</h1>
+    <h1 data-i18n="app.title">Boss Control</h1>
     <div class="header-sub" id="headerDate"></div>
   </div>
   <div class="header-right">
+    <button class="btn-lang" id="langToggle" onclick="toggleLang()" title="Switch language / 切换语言">中</button>
     <span id="userBadge" style="font-size:13px;color:#8e8e93;font-weight:500;"></span>
-    <button class="btn-logout" onclick="doLogout()">Logout</button>
+    <button class="btn-logout" onclick="doLogout()" data-i18n="app.logout">Logout</button>
   </div>
 </div>
 
 <!-- ─── Tab Bar ──────────────────────────────────────────────── -->
 <div class="tab-bar" id="tabBar" style="display:none">
-  <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
-  <button class="tab-btn" data-tab="users" onclick="switchTab('users')">Users</button>
-  <button class="tab-btn" data-tab="ledger" onclick="switchTab('ledger')">Ledger</button>
-  <button class="tab-btn" data-tab="refund" onclick="switchTab('refund')">Refund</button>
-  <button class="tab-btn" data-tab="devices" onclick="switchTab('devices')">Devices</button>
-  <button class="tab-btn" data-tab="system" onclick="switchTab('system')">System</button>
+  <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')" data-i18n="tab.overview">Overview</button>
+  <button class="tab-btn" data-tab="users" onclick="switchTab('users')" data-i18n="tab.users">Users</button>
+  <button class="tab-btn" data-tab="ledger" onclick="switchTab('ledger')" data-i18n="tab.ledger">Ledger</button>
+  <button class="tab-btn" data-tab="refund" onclick="switchTab('refund')" data-i18n="tab.refund">Refund</button>
+  <button class="tab-btn" data-tab="devices" onclick="switchTab('devices')" data-i18n="tab.devices">Devices</button>
+  <button class="tab-btn" data-tab="system" onclick="switchTab('system')" data-i18n="tab.system">System</button>
 </div>
 
 <!-- ═════════════════════════════════════════════════════════════ -->
@@ -160,26 +163,26 @@
 <!-- ═════════════════════════════════════════════════════════════ -->
 <div class="content active" id="tab-overview">
   <div class="overview-grid" id="overviewGrid">
-    <div class="stat-card"><div class="stat-value blue" id="ovCash">—</div><div class="stat-label">Cash Today</div><div class="stat-sub" id="ovCashTxns"></div></div>
-    <div class="stat-card"><div class="stat-value blue" id="ovCard">—</div><div class="stat-label">Card Today</div><div class="stat-sub" id="ovCardTxns"></div></div>
-    <div class="stat-card"><div class="stat-value" id="ovVat">—</div><div class="stat-label">VAT Collected</div><div class="stat-sub" id="ovVatDetail"></div></div>
-    <div class="stat-card"><div class="stat-value green" id="ovProfit">—</div><div class="stat-label">Net Sales</div><div class="stat-sub" id="ovGross"></div></div>
-    <div class="stat-card"><div class="stat-value" id="ovSalesCount">—</div><div class="stat-label">Sales Count</div><div class="stat-sub" id="ovRefundCount"></div></div>
-    <div class="stat-card"><div class="stat-value red" id="ovRefunds">—</div><div class="stat-label">Refunds</div><div class="stat-sub" id="ovCloseStatus"></div></div>
+    <div class="stat-card"><div class="stat-value blue" id="ovCash">—</div><div class="stat-label" data-i18n="ov.cashToday">Cash Today</div><div class="stat-sub" id="ovCashTxns"></div></div>
+    <div class="stat-card"><div class="stat-value blue" id="ovCard">—</div><div class="stat-label" data-i18n="ov.cardToday">Card Today</div><div class="stat-sub" id="ovCardTxns"></div></div>
+    <div class="stat-card"><div class="stat-value" id="ovVat">—</div><div class="stat-label" data-i18n="ov.vatCollected">VAT Collected</div><div class="stat-sub" id="ovVatDetail"></div></div>
+    <div class="stat-card"><div class="stat-value green" id="ovProfit">—</div><div class="stat-label" data-i18n="ov.netSales">Net Sales</div><div class="stat-sub" id="ovGross"></div></div>
+    <div class="stat-card"><div class="stat-value" id="ovSalesCount">—</div><div class="stat-label" data-i18n="ov.salesCount">Sales Count</div><div class="stat-sub" id="ovRefundCount"></div></div>
+    <div class="stat-card"><div class="stat-value red" id="ovRefunds">—</div><div class="stat-label" data-i18n="ov.refunds">Refunds</div><div class="stat-sub" id="ovCloseStatus"></div></div>
   </div>
 
   <div class="card">
-    <div class="card-title">Device Profit / Loss</div>
-    <div class="card-row"><span class="card-label">Sold Devices</span><span class="card-value" id="ovDevSold">—</span></div>
-    <div class="card-row"><span class="card-label">Gross Profit</span><span class="card-value green" id="ovDevProfit">—</span></div>
+    <div class="card-title" data-i18n="ov.devicePL">Device Profit / Loss</div>
+    <div class="card-row"><span class="card-label" data-i18n="ov.soldDevices">Sold Devices</span><span class="card-value" id="ovDevSold">—</span></div>
+    <div class="card-row"><span class="card-label" data-i18n="ov.grossProfit">Gross Profit</span><span class="card-value green" id="ovDevProfit">—</span></div>
   </div>
 
   <div class="card">
-    <div class="card-title">Quick Actions</div>
+    <div class="card-title" data-i18n="ov.quickActions">Quick Actions</div>
     <div class="btn-group" style="flex-wrap:wrap">
-      <button class="btn btn-primary btn-sm" onclick="refreshOverview()">🔄 Refresh</button>
-      <button class="btn btn-secondary btn-sm" onclick="switchTab('system')">⚙ System</button>
-      <button class="btn btn-secondary btn-sm" onclick="switchTab('ledger')">📋 Ledger</button>
+      <button class="btn btn-primary btn-sm" onclick="refreshOverview()" data-i18n="ov.refresh">Refresh</button>
+      <button class="btn btn-secondary btn-sm" onclick="switchTab('system')" data-i18n="tab.system">System</button>
+      <button class="btn btn-secondary btn-sm" onclick="switchTab('ledger')" data-i18n="tab.ledger">Ledger</button>
     </div>
   </div>
 </div>
@@ -189,8 +192,8 @@
 <!-- ═════════════════════════════════════════════════════════════ -->
 <div class="content" id="tab-users">
   <div class="card">
-    <div class="card-title">User Management</div>
-    <button class="btn btn-primary btn-block btn-sm" onclick="showCreateUser()">+ Create User</button>
+    <div class="card-title" data-i18n="users.title">User Management</div>
+    <button class="btn btn-primary btn-block btn-sm" onclick="showCreateUser()" data-i18n="users.create">+ Create User</button>
   </div>
   <div id="userList"></div>
 </div>
@@ -200,17 +203,17 @@
 <!-- ═════════════════════════════════════════════════════════════ -->
 <div class="content" id="tab-ledger">
   <div class="card">
-    <div class="card-title">Cash Ledger</div>
+    <div class="card-title" data-i18n="ledger.title">Cash Ledger</div>
     <div class="filter-bar" id="ledgerFilters">
-      <button class="filter-chip active" data-filter="all" onclick="filterLedger('all')">All</button>
-      <button class="filter-chip" data-filter="sale" onclick="filterLedger('sale')">Sales</button>
-      <button class="filter-chip" data-filter="refund" onclick="filterLedger('refund')">Refunds</button>
-      <button class="filter-chip" data-filter="expense" onclick="filterLedger('expense')">Expenses</button>
+      <button class="filter-chip active" data-filter="all" onclick="filterLedger('all')" data-i18n="ledger.all">All</button>
+      <button class="filter-chip" data-filter="sale" onclick="filterLedger('sale')" data-i18n="ledger.sales">Sales</button>
+      <button class="filter-chip" data-filter="refund" onclick="filterLedger('refund')" data-i18n="ledger.refunds">Refunds</button>
+      <button class="filter-chip" data-filter="expense" onclick="filterLedger('expense')" data-i18n="ledger.expenses">Expenses</button>
     </div>
     <div class="input-group">
       <input type="date" id="ledgerDate" onchange="loadLedger()">
     </div>
-    <div class="card-row" style="font-weight:600"><span>Net Flow</span><span id="ledgerNet">—</span></div>
+    <div class="card-row" style="font-weight:600"><span data-i18n="ledger.netFlow">Net Flow</span><span id="ledgerNet">—</span></div>
   </div>
   <div id="ledgerEntries"><div class="loading"><span class="spinner"></span>Loading...</div></div>
 </div>
@@ -220,33 +223,36 @@
 <!-- ═════════════════════════════════════════════════════════════ -->
 <div class="content" id="tab-refund">
   <div class="card">
-    <div class="card-title">Force Refund</div>
+    <div class="card-title" data-i18n="refund.forceTitle">Force Refund</div>
     <div class="input-group">
-      <label>Receipt Number</label>
-      <input type="text" id="refundReceipt" placeholder="e.g. S-20260507-001">
+      <label data-i18n="refund.receipt">Receipt Number</label>
+      <input type="text" id="refundReceipt" data-i18n-placeholder="refund.receiptPlaceholder" placeholder="e.g. S-20260507-001">
     </div>
     <div class="input-group">
-      <label>Refund Method</label>
-      <select id="refundMethod"><option value="cash">Cash</option><option value="card">Card</option></select>
+      <label data-i18n="refund.method">Refund Method</label>
+      <select id="refundMethod">
+        <option value="cash" data-i18n="refund.cash">Cash</option>
+        <option value="card" data-i18n="refund.card">Card</option>
+      </select>
     </div>
     <div class="input-group">
-      <label>Reason</label>
-      <input type="text" id="refundReason" placeholder="Root forced refund">
+      <label data-i18n="refund.reason">Reason</label>
+      <input type="text" id="refundReason" data-i18n-placeholder="refund.reasonPlaceholder" placeholder="Root forced refund">
     </div>
-    <button class="btn btn-danger btn-block" onclick="doForceRefund()">Execute Refund</button>
+    <button class="btn btn-danger btn-block" onclick="doForceRefund()" data-i18n="refund.execute">Execute Refund</button>
   </div>
 
   <div class="card">
-    <div class="card-title">Reverse Refund</div>
+    <div class="card-title" data-i18n="refund.reverseTitle">Reverse Refund</div>
     <div class="input-group">
-      <label>Refund Receipt Number</label>
-      <input type="text" id="reverseReceipt" placeholder="e.g. R-20260507-001">
+      <label data-i18n="refund.reverseReceipt">Refund Receipt Number</label>
+      <input type="text" id="reverseReceipt" data-i18n-placeholder="refund.reverseReceiptPlaceholder" placeholder="e.g. R-20260507-001">
     </div>
-    <button class="btn btn-warning btn-block" onclick="doReverseRefund()">Reverse Refund</button>
+    <button class="btn btn-warning btn-block" onclick="doReverseRefund()" data-i18n="refund.reverseBtn">Reverse Refund</button>
   </div>
 
   <div class="card">
-    <div class="card-title">Recent Refunds</div>
+    <div class="card-title" data-i18n="refund.recent">Recent Refunds</div>
     <div id="refundHistory"><div class="loading"><span class="spinner"></span>Loading...</div></div>
   </div>
 </div>
@@ -256,13 +262,13 @@
 <!-- ═════════════════════════════════════════════════════════════ -->
 <div class="content" id="tab-devices">
   <div class="card">
-    <div class="card-title">Device Inventory</div>
+    <div class="card-title" data-i18n="devices.title">Device Inventory</div>
     <div class="filter-bar" id="deviceFilters">
-      <button class="filter-chip active" data-filter="" onclick="filterDevices('')">All</button>
-      <button class="filter-chip" data-filter="SOLD" onclick="filterDevices('SOLD')">Sold</button>
-      <button class="filter-chip" data-filter="TESTED" onclick="filterDevices('TESTED')">Tested</button>
-      <button class="filter-chip" data-filter="PENDING" onclick="filterDevices('PENDING')">Pending</button>
-      <button class="filter-chip" data-filter="BUY_IN" onclick="filterDevices('BUY_IN')">Buy In</button>
+      <button class="filter-chip active" data-filter="" onclick="filterDevices('')" data-i18n="devices.all">All</button>
+      <button class="filter-chip" data-filter="SOLD" onclick="filterDevices('SOLD')" data-i18n="devices.sold">Sold</button>
+      <button class="filter-chip" data-filter="TESTED" onclick="filterDevices('TESTED')" data-i18n="devices.tested">Tested</button>
+      <button class="filter-chip" data-filter="PENDING" onclick="filterDevices('PENDING')" data-i18n="devices.pending">Pending</button>
+      <button class="filter-chip" data-filter="BUY_IN" onclick="filterDevices('BUY_IN')" data-i18n="devices.buyIn">Buy In</button>
     </div>
   </div>
   <div id="deviceSummary"></div>
@@ -274,57 +280,57 @@
 <!-- ═════════════════════════════════════════════════════════════ -->
 <div class="content" id="tab-system">
   <div class="card" id="sysStatusCard">
-    <div class="card-title">System Status</div>
-    <div class="card-row"><span class="card-label">Server Time</span><span class="card-value" id="sysTime">—</span></div>
-    <div class="card-row"><span class="card-label">Active Users</span><span class="card-value" id="sysUsers">—</span></div>
-    <div class="card-row"><span class="card-label">POS Status</span><span class="card-value" id="sysPaused">—</span></div>
-    <div class="card-row"><span class="card-label">Transactions Locked</span><span class="card-value" id="sysLocked">—</span></div>
-    <div class="card-row"><span class="card-label">Last Daily Close</span><span class="card-value" id="sysLastClose">—</span></div>
+    <div class="card-title" data-i18n="sys.status">System Status</div>
+    <div class="card-row"><span class="card-label" data-i18n="sys.serverTime">Server Time</span><span class="card-value" id="sysTime">—</span></div>
+    <div class="card-row"><span class="card-label" data-i18n="sys.activeUsers">Active Users</span><span class="card-value" id="sysUsers">—</span></div>
+    <div class="card-row"><span class="card-label" data-i18n="sys.posStatus">POS Status</span><span class="card-value" id="sysPaused">—</span></div>
+    <div class="card-row"><span class="card-label" data-i18n="sys.txnLocked">Transactions Locked</span><span class="card-value" id="sysLocked">—</span></div>
+    <div class="card-row"><span class="card-label" data-i18n="sys.lastClose">Last Daily Close</span><span class="card-value" id="sysLastClose">—</span></div>
   </div>
 
   <div class="card">
-    <div class="card-title">Daily Close</div>
+    <div class="card-title" data-i18n="sys.dailyClose">Daily Close</div>
     <div class="input-group">
-      <label>Date</label>
+      <label data-i18n="sys.date">Date</label>
       <input type="date" id="closeDate">
     </div>
     <div class="btn-group">
-      <button class="btn btn-primary btn-block" onclick="doForceClose()">Force Close</button>
-      <button class="btn btn-warning btn-block" onclick="doReopenClose()">Reopen</button>
+      <button class="btn btn-primary btn-block" onclick="doForceClose()" data-i18n="sys.forceClose">Force Close</button>
+      <button class="btn btn-warning btn-block" onclick="doReopenClose()" data-i18n="sys.reopen">Reopen</button>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title" style="color:#ff3b30;">⚠ Emergency Controls</div>
+    <div class="card-title" style="color:#ff3b30;" data-i18n="sys.emergency">⚠ Emergency Controls</div>
     <div class="btn-group" style="flex-direction:column;gap:8px">
-      <button class="btn btn-danger btn-block" onclick="doSystemPause()">⏸ Pause POS</button>
-      <button class="btn btn-success btn-block" onclick="doSystemResume()">▶ Resume POS</button>
-      <button class="btn btn-danger btn-block" onclick="doLockTransactions()">🔒 Lock All Transactions</button>
+      <button class="btn btn-danger btn-block" onclick="doSystemPause()" data-i18n="sys.pausePos">⏸ Pause POS</button>
+      <button class="btn btn-success btn-block" onclick="doSystemResume()" data-i18n="sys.resumePos">▶ Resume POS</button>
+      <button class="btn btn-danger btn-block" onclick="doLockTransactions()" data-i18n="sys.lockTxns">🔒 Lock All Transactions</button>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title">Audit Log</div>
-    <div id="auditLog"><button class="btn btn-secondary btn-block btn-sm" onclick="loadAuditLog()">Load Recent Actions</button></div>
-    <div style="margin-top:8px"><button class="btn btn-primary btn-block btn-sm" onclick="location.href='boss-audit.html'">Open Audit Dashboard</button></div>
+    <div class="card-title" data-i18n="sys.auditLog">Audit Log</div>
+    <div id="auditLog"><button class="btn btn-secondary btn-block btn-sm" onclick="loadAuditLog()" data-i18n="sys.loadAudit">Load Recent Actions</button></div>
+    <div style="margin-top:8px"><button class="btn btn-primary btn-block btn-sm" onclick="location.href='boss-audit.html'" data-i18n="sys.openAudit">Open Audit Dashboard</button></div>
   </div>
 
   <div class="card">
-    <div class="card-title">📊 Export & Tax Preparation</div>
+    <div class="card-title" data-i18n="sys.export">📊 Export & Tax Preparation</div>
     <div class="input-group">
-      <label>Start Date</label>
+      <label data-i18n="sys.startDate">Start Date</label>
       <input type="date" id="exportStart">
     </div>
     <div class="input-group">
-      <label>End Date</label>
+      <label data-i18n="sys.endDate">End Date</label>
       <input type="date" id="exportEnd">
     </div>
     <div class="btn-group" style="flex-wrap:wrap;gap:6px">
-      <button class="btn btn-secondary btn-sm" style="flex:1;min-width:calc(50% - 6px)" onclick="exportCsv('transactions')">📦 Transactions</button>
-      <button class="btn btn-secondary btn-sm" style="flex:1;min-width:calc(50% - 6px)" onclick="exportCsv('ledger')">💰 Ledger</button>
-      <button class="btn btn-secondary btn-sm" style="flex:1;min-width:calc(50% - 6px)" onclick="exportCsv('audit')">🧾 Audit</button>
-      <button class="btn btn-secondary btn-sm" style="flex:1;min-width:calc(50% - 6px)" onclick="exportCsv('daily-close')">📅 Daily Close</button>
-      <button class="btn btn-primary btn-sm" style="flex:1;min-width:100%;margin-top:4px" onclick="exportCsv('vat-summary')">📊 VAT Summary</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;min-width:calc(50% - 6px)" onclick="exportCsv('transactions')" data-i18n="export.transactions">📦 Transactions</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;min-width:calc(50% - 6px)" onclick="exportCsv('ledger')" data-i18n="export.ledger">💰 Ledger</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;min-width:calc(50% - 6px)" onclick="exportCsv('audit')" data-i18n="export.audit">🧾 Audit</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;min-width:calc(50% - 6px)" onclick="exportCsv('daily-close')" data-i18n="export.dailyClose">📅 Daily Close</button>
+      <button class="btn btn-primary btn-sm" style="flex:1;min-width:100%;margin-top:4px" onclick="exportCsv('vat-summary')" data-i18n="export.vatSummary">📊 VAT Summary</button>
     </div>
   </div>
 </div>
@@ -335,16 +341,17 @@
 <!-- ─── Modal ────────────────────────────────────────────────── -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-sheet" id="modalSheet">
-    <h2 id="modalTitle">Confirm</h2>
+    <h2 id="modalTitle" data-i18n="modal.confirm">Confirm</h2>
     <div id="modalBody"></div>
     <div class="btn-group" id="modalActions">
-      <button class="btn btn-secondary btn-block" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-secondary btn-block" onclick="closeModal()" data-i18n="modal.cancel">Cancel</button>
       <button class="btn btn-danger btn-block" id="modalConfirmBtn" onclick="confirmModal()">Confirm</button>
     </div>
   </div>
 </div>
 
 <script src="auth-guard.js"></script>
+<script src="lang.js"></script>
 <script src="boss.js"></script>
 </body>
 </html>

@@ -4,6 +4,8 @@
  * RUNBOOK §1 (L1): UI layer only — no business logic.
  * All data comes from the backend Root API audit-log endpoint.
  * RUNBOOK §3 Rule E: Every ROOT action generates AuditLog.
+ *
+ * Bilingual support: all user-visible text uses __('key') from lang.js.
  */
 
 // ─── State ─────────────────────────────────────────────────────
@@ -23,7 +25,7 @@ function goBack() {
 // ─── API Helper ────────────────────────────────────────────────
 async function api(path, options = {}) {
   const token = Auth.getToken();
-  if (!token) { Auth.logout(); throw new Error('No token'); }
+  if (!token) { Auth.logout(); throw new Error(__('err.noToken')); }
 
   const headers = { 'Authorization': 'Bearer ' + token };
   if (options.body && typeof options.body === 'object') {
@@ -32,13 +34,13 @@ async function api(path, options = {}) {
 
   const res = await fetch(path, { ...options, headers });
   if (res.status === 401 || res.status === 403) {
-    showToast('Session expired. Please login again.');
+    showToast(__('err.sessionExpired'));
     Auth.logout();
-    throw new Error('Auth failed');
+    throw new Error(__('err.authFailed'));
   }
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok) throw new Error(data.error || __('err.requestFailed'));
   return data;
 }
 
@@ -66,7 +68,7 @@ async function loadAuditLog() {
   _hasMore = false;
   document.getElementById('loadMoreBtn').style.display = 'none';
   const container = document.getElementById('logList');
-  container.innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  container.innerHTML = '<div class="loading"><span class="spinner"></span>' + __('audit.loading') + '</div>';
 
   try {
     await fetchAuditLogs(true);
@@ -78,14 +80,14 @@ async function loadAuditLog() {
 async function loadMore() {
   if (!_hasMore || !_cursor) return;
   document.getElementById('loadMoreBtn').disabled = true;
-  document.getElementById('loadMoreBtn').textContent = 'Loading...';
+  document.getElementById('loadMoreBtn').textContent = __('audit.loading');
   try {
     await fetchAuditLogs(false);
   } catch(err) {
     showToast(err.message);
   }
   document.getElementById('loadMoreBtn').disabled = false;
-  document.getElementById('loadMoreBtn').textContent = 'Load More';
+  document.getElementById('loadMoreBtn').textContent = __('audit.loadMore');
 }
 
 async function fetchAuditLogs(reset) {
@@ -113,9 +115,9 @@ async function fetchAuditLogs(reset) {
 
   if (data.logs.length === 0) {
     if (reset) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No audit entries found</p></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>' + __('audit.noEntries') + '</p></div>';
     }
-    countEl.textContent = '0 entries';
+    countEl.textContent = __('audit.entryCount', { count: 0 });
     rangeEl.textContent = '';
     document.getElementById('loadMoreBtn').style.display = 'none';
     return;
@@ -124,16 +126,12 @@ async function fetchAuditLogs(reset) {
   const existingCount = reset ? 0 : parseInt(container.dataset.entryCount || '0');
   const totalCount = existingCount + data.logs.length;
   container.dataset.entryCount = totalCount;
-  countEl.textContent = totalCount + ' entries';
+  countEl.textContent = __('audit.entryCount', { count: totalCount });
 
   _hasMore = data.pagination?.hasMore || false;
   _cursor = data.pagination?.nextCursor || null;
 
-  if (_hasMore) {
-    document.getElementById('loadMoreBtn').style.display = 'block';
-  } else {
-    document.getElementById('loadMoreBtn').style.display = 'none';
-  }
+  document.getElementById('loadMoreBtn').style.display = _hasMore ? 'block' : 'none';
 
   for (const log of data.logs) {
     container.appendChild(renderLogEntry(log));
@@ -155,16 +153,16 @@ function renderLogEntry(log) {
   const moduleBadge = log.module ? '<span class="badge badge-gray">' + esc(log.module) + '</span>' : '';
   const roleSpan = '<span class="badge ' + (roleBadge[role] || 'badge-gray') + '">' + esc(role) + '</span>';
 
-  // Decrypt the encryptedData
+  // Snapshot data
   let detailsHtml = '';
   let hasSnapshot = false;
   if (log.beforeSnapshot || log.afterSnapshot) {
     hasSnapshot = true;
-    const beforeJson = log.beforeSnapshot ? syntaxHighlight(JSON.stringify(log.beforeSnapshot, null, 2)) : '<em>none</em>';
-    const afterJson = log.afterSnapshot ? syntaxHighlight(JSON.stringify(log.afterSnapshot, null, 2)) : '<em>none</em>';
+    const beforeJson = log.beforeSnapshot ? syntaxHighlight(JSON.stringify(log.beforeSnapshot, null, 2)) : '<em>' + __('audit.none') + '</em>';
+    const afterJson = log.afterSnapshot ? syntaxHighlight(JSON.stringify(log.afterSnapshot, null, 2)) : '<em>' + __('audit.none') + '</em>';
     detailsHtml = '<div class="snapshot-grid">' +
-      '<div class="snapshot-col"><div class="snapshot-label">Before</div><pre>' + beforeJson + '</pre></div>' +
-      '<div class="snapshot-col"><div class="snapshot-label">After</div><pre>' + afterJson + '</pre></div>' +
+      '<div class="snapshot-col"><div class="snapshot-label">' + __('audit.before') + '</div><pre>' + beforeJson + '</pre></div>' +
+      '<div class="snapshot-col"><div class="snapshot-label">' + __('audit.after') + '</div><pre>' + afterJson + '</pre></div>' +
       '</div>';
   }
 
@@ -218,4 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
   document.getElementById('filterStart').value = weekAgo;
   loadAuditLog();
+
+  // Apply saved language preference
+  applyLang();
 });

@@ -4,6 +4,8 @@
  * RUNBOOK §1 (L1): UI layer only — no business logic, no calculations.
  * All financial truth comes from the backend Root API.
  * RUNBOOK §6: NEVER calculate VAT, totals, or profits in frontend.
+ *
+ * Bilingual support: all user-visible text uses __('key') from lang.js.
  */
 
 // ─── State ─────────────────────────────────────────────────────
@@ -18,7 +20,7 @@ function doLogout() {
 // ─── API Helper ────────────────────────────────────────────────
 async function api(path, options = {}) {
   const token = Auth.getToken();
-  if (!token) { Auth.logout(); throw new Error('No token'); }
+  if (!token) { Auth.logout(); throw new Error(__('err.noToken')); }
 
   const headers = { 'Authorization': 'Bearer ' + token };
   if (options.body && typeof options.body === 'object') {
@@ -27,13 +29,13 @@ async function api(path, options = {}) {
 
   const res = await fetch(path, { ...options, headers });
   if (res.status === 401 || res.status === 403) {
-    showToast('Session expired. Please login again.');
+    showToast(__('err.sessionExpired'));
     Auth.logout();
-    throw new Error('Auth failed');
+    throw new Error(__('err.authFailed'));
   }
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok) throw new Error(data.error || __('err.requestFailed'));
   return data;
 }
 
@@ -51,8 +53,8 @@ function showConfirm(title, body, cb, dangerLabel) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML = body;
   const confirmBtn = document.getElementById('modalConfirmBtn');
-  confirmBtn.textContent = dangerLabel || 'Confirm';
-  confirmBtn.className = 'btn btn-' + (dangerLabel === 'Cancel' ? 'secondary' : 'danger') + ' btn-block';
+  confirmBtn.textContent = dangerLabel || __('modal.confirm');
+  confirmBtn.className = 'btn btn-' + (dangerLabel === __('modal.cancel') ? 'secondary' : 'danger') + ' btn-block';
   _modalCallback = cb;
   document.getElementById('modalOverlay').classList.add('show');
 }
@@ -97,34 +99,34 @@ async function loadOverview() {
 
     document.getElementById('ovCash').textContent = '€' + (t.payment?.cash || 0).toFixed(2);
     document.getElementById('ovCard').textContent = '€' + (t.payment?.card || 0).toFixed(2);
-    document.getElementById('ovCashTxns').textContent = 'Ledger in: €' + (t.ledger?.cashIn || 0).toFixed(2);
-    document.getElementById('ovCardTxns').textContent = 'Ledger in: €' + (t.ledger?.cardIn || 0).toFixed(2);
+    document.getElementById('ovCashTxns').textContent = __('ov.ledgerIn') + ': €' + (t.ledger?.cashIn || 0).toFixed(2);
+    document.getElementById('ovCardTxns').textContent = __('ov.ledgerIn') + ': €' + (t.ledger?.cardIn || 0).toFixed(2);
     document.getElementById('ovVat').textContent = '€' + (t.vat?.totalVat || 0).toFixed(2);
     document.getElementById('ovVatDetail').textContent = '23%: €' + (t.vat?.standard23?.vat || 0).toFixed(2) + ' | 13.5%: €' + (t.vat?.reduced135?.vat || 0).toFixed(2);
     document.getElementById('ovProfit').textContent = '€' + (t.sales?.net || 0).toFixed(2);
-    document.getElementById('ovGross').textContent = 'Gross: €' + (t.sales?.gross || 0).toFixed(2);
+    document.getElementById('ovGross').textContent = __('ov.gross') + ': €' + (t.sales?.gross || 0).toFixed(2);
     document.getElementById('ovSalesCount').textContent = t.sales?.count || 0;
-    document.getElementById('ovRefundCount').textContent = t.refunds?.count + ' refunds (-€' + (t.refunds?.total || 0).toFixed(2) + ')';
+    document.getElementById('ovRefundCount').textContent = __('ov.refundLabel', { count: t.refunds?.count || 0, amount: (t.refunds?.total || 0).toFixed(2) });
     document.getElementById('ovRefunds').textContent = '€' + (t.refunds?.total || 0).toFixed(2);
 
     // Device PL
-    document.getElementById('ovDevSold').textContent = data.devices?.soldCount + ' / ' + data.devices?.totalDevices + ' devices';
+    document.getElementById('ovDevSold').textContent = (data.devices?.soldCount || 0) + ' / ' + (data.devices?.totalDevices || 0) + ' devices';
     document.getElementById('ovDevProfit').textContent = '€' + (data.devices?.grossProfit || 0).toFixed(2);
 
     // Daily close status
     const closeEl = document.getElementById('ovCloseStatus');
     if (data.lastDailyClose) {
-      closeEl.innerHTML = '<span class="badge badge-green">Closed: ' + data.lastDailyClose.date + '</span>';
+      closeEl.innerHTML = '<span class="badge badge-green">' + __('ov.closed') + ': ' + data.lastDailyClose.date + '</span>';
     } else {
-      closeEl.innerHTML = '<span class="badge badge-orange">No close yet</span>';
+      closeEl.innerHTML = '<span class="badge badge-orange">' + __('ov.noClose') + '</span>';
     }
   } catch(err) {
     document.getElementById('ovCash').textContent = '—';
-    showToast('Failed to load overview: ' + err.message);
+    showToast(__('ov.failedLoad') + ': ' + err.message);
   }
 }
 
-function refreshOverview() { loadOverview(); showToast('Refreshed'); }
+function refreshOverview() { loadOverview(); showToast(__('ov.refreshed')); }
 
 // ═══════════════════════════════════════════════════════════════
 // USERS
@@ -136,12 +138,13 @@ async function loadUsers() {
     const users = await api('/api/inv/root/users');
     container.innerHTML = '<div class="card">' + users.map(u => {
       const roleBadge = { root: 'badge-red', manager: 'badge-blue', staff: 'badge-gray' };
+      const disabledLabel = __('users.disabled');
       return '<div class="list-item">' +
         '<div><div class="item-title">' + esc(u.displayName) + ' <span class="badge ' + (roleBadge[u.role] || 'badge-gray') + '">' + u.role + '</span></div>' +
-        '<div class="item-sub">@' + esc(u.username) + (u.active ? '' : ' • <span style="color:#ff3b30">disabled</span>') + '</div></div>' +
+        '<div class="item-sub">@' + esc(u.username) + (u.active ? '' : ' • <span style="color:#ff3b30">' + disabledLabel + '</span>') + '</div></div>' +
         '<div class="btn-group" style="gap:4px">' +
-        '<button class="btn btn-sm btn-secondary" onclick="changeUserRole(\'' + u._id + '\',\'' + u.role + '\')">Role</button>' +
-        '<button class="btn btn-sm ' + (u.active ? 'btn-warning' : 'btn-success') + '" onclick="toggleUserActive(\'' + u._id + '\',' + u.active + ')">' + (u.active ? 'Disable' : 'Enable') + '</button>' +
+        '<button class="btn btn-sm btn-secondary" onclick="changeUserRole(\'' + u._id + '\',\'' + u.role + '\')">' + __('users.role') + '</button>' +
+        '<button class="btn btn-sm ' + (u.active ? 'btn-warning' : 'btn-success') + '" onclick="toggleUserActive(\'' + u._id + '\',' + u.active + ')">' + (u.active ? __('users.disable') : __('users.enable')) + '</button>' +
         '</div></div>';
     }).join('') + '</div>';
   } catch(err) {
@@ -150,11 +153,11 @@ async function loadUsers() {
 }
 
 function showCreateUser() {
-  const body = '<div class="input-group"><label>Username</label><input type="text" id="cuUser" placeholder="Username"></div>' +
-    '<div class="input-group"><label>Password</label><input type="password" id="cuPass" placeholder="Min 6 characters"></div>' +
-    '<div class="input-group"><label>Display Name</label><input type="text" id="cuName" placeholder="Display name"></div>' +
-    '<div class="input-group"><label>Role</label><select id="cuRole"><option value="staff">Staff</option><option value="manager">Manager</option><option value="root">Root</option></select></div>';
-  showConfirm('Create User', body, doCreateUser, 'Create');
+  const body = '<div class="input-group"><label>' + __('cu.username') + '</label><input type="text" id="cuUser" placeholder="' + __('cu.username') + '"></div>' +
+    '<div class="input-group"><label>' + __('cu.password') + '</label><input type="password" id="cuPass" placeholder="' + __('cu.passwordPlaceholder') + '"></div>' +
+    '<div class="input-group"><label>' + __('cu.displayName') + '</label><input type="text" id="cuName" placeholder="' + __('cu.displayPlaceholder') + '"></div>' +
+    '<div class="input-group"><label>' + __('cu.role') + '</label><select id="cuRole"><option value="staff">' + __('cu.staff') + '</option><option value="manager">' + __('cu.manager') + '</option><option value="root">' + __('cu.root') + '</option></select></div>';
+  showConfirm(__('cu.title'), body, doCreateUser, __('cu.create'));
 }
 
 async function doCreateUser() {
@@ -162,14 +165,14 @@ async function doCreateUser() {
   const password = document.getElementById('cuPass')?.value;
   const displayName = document.getElementById('cuName')?.value;
   const role = document.getElementById('cuRole')?.value;
-  if (!username || !password || !displayName || !role) { showToast('All fields required'); return; }
+  if (!username || !password || !displayName || !role) { showToast(__('users.allFieldsReq')); return; }
 
   try {
     await api('/api/inv/root/users/create', {
       method: 'POST',
       body: { username, password, displayName, role },
     });
-    showToast('User created');
+    showToast(__('users.created'));
     loadUsers();
   } catch(err) { showToast(err.message); }
 }
@@ -179,30 +182,30 @@ async function toggleUserActive(id, current) {
     // Enabling — just do it
     try {
       await api('/api/inv/root/users/' + id, { method: 'PATCH', body: { active: true } });
-      showToast('User enabled');
+      showToast(__('users.enabledMsg'));
       loadUsers();
     } catch(err) { showToast(err.message); }
     return;
   }
   // Disabling — confirm
-  showConfirm('Disable User', '<p style="color:#ff3b30;font-weight:500">This user will lose access to the system.</p>', async () => {
+  showConfirm(__('users.disableTitle'), '<p style="color:#ff3b30;font-weight:500">' + __('users.disableBody') + '</p>', async () => {
     try {
       await api('/api/inv/root/users/' + id, { method: 'PATCH', body: { active: false } });
-      showToast('User disabled');
+      showToast(__('users.disabledMsg'));
       loadUsers();
     } catch(err) { showToast(err.message); }
-  }, 'Disable');
+  }, __('users.disable'));
 }
 
 async function changeUserRole(id, currentRole) {
   const nextRole = currentRole === 'staff' ? 'manager' : currentRole === 'manager' ? 'root' : 'staff';
-  showConfirm('Change Role', '<p>Change to <strong>' + nextRole + '</strong>?</p>', async () => {
+  showConfirm(__('users.changeRoleTitle'), '<p>' + __('users.changeRoleBody', { role: nextRole }) + '</p>', async () => {
     try {
       await api('/api/inv/root/users/' + id, { method: 'PATCH', body: { role: nextRole } });
-      showToast('Role changed to ' + nextRole);
+      showToast(__('users.roleChanged', { role: nextRole }));
       loadUsers();
     } catch(err) { showToast(err.message); }
-  }, 'Change');
+  }, __('users.role'));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -230,23 +233,30 @@ async function loadLedger() {
     document.getElementById('ledgerNet').className = 'card-value ' + ((data.summary?.net || 0) >= 0 ? 'green' : 'red');
 
     if (data.entries.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>No entries</p></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>' + __('ledger.noEntries') + '</p></div>';
       return;
     }
+
+    const entryTypeLabels = {
+      sale: __('entry.sale'), refund: __('entry.refund'), expense: __('entry.expense'),
+      supplier: __('entry.supplier'), device_buy: __('entry.device_buy'),
+      bank_in: __('entry.bank_in'), bank_out: __('entry.bank_out')
+    };
 
     container.innerHTML = '<div class="card">' + data.entries.slice(0, 30).map(e => {
       const dirColor = e.direction === 'in' ? 'green' : 'red';
       const dirSign = e.direction === 'in' ? '+' : '-';
-      const typeLabel = { sale: 'Sale', refund: 'Refund', expense: 'Expense', supplier: 'Supplier', device_buy: 'Device Buy', bank_in: 'Bank In', bank_out: 'Bank Out' };
+      const typeLabel = entryTypeLabels[e.entryType] || e.entryType;
       return '<div class="list-item">' +
-        '<div><div class="item-title">' + (typeLabel[e.entryType] || e.entryType) + '</div>' +
+        '<div><div class="item-title">' + typeLabel + '</div>' +
         '<div class="item-sub">' + (e.receiptNumber || '') + ' • ' + new Date(e.createdAt).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit' }) + '</div></div>' +
         '<div class="item-right"><span class="card-value ' + dirColor + '">' + dirSign + '€' + (e.amount || 0).toFixed(2) + '</span>' +
         '<div class="item-sub">' + (e.paymentMethod || '') + '</div></div></div>';
     }).join('') + '</div>';
 
     if (data.entries.length > 30) {
-      container.innerHTML += '<p style="text-align:center;color:#8e8e93;font-size:13px;padding:8px">Showing 30 of ' + data.entries.length + ' entries</p>';
+      container.innerHTML += '<p style="text-align:center;color:#8e8e93;font-size:13px;padding:8px">' +
+        __('ledger.showing', { count: 30, total: data.entries.length }) + '</p>';
     }
   } catch(err) {
     container.innerHTML = '<div class="card"><p style="color:#ff3b30;text-align:center">' + esc(err.message) + '</p></div>';
@@ -260,38 +270,38 @@ async function loadLedger() {
 async function doForceRefund() {
   const receipt = document.getElementById('refundReceipt').value.trim();
   const method = document.getElementById('refundMethod').value;
-  const reason = document.getElementById('refundReason').value.trim() || 'Root forced refund';
+  const reason = document.getElementById('refundReason').value.trim() || __('refund.reasonPlaceholder');
 
-  if (!receipt) { showToast('Receipt number required'); return; }
+  if (!receipt) { showToast(__('refund.receiptReq')); return; }
 
-  showConfirm('Execute Refund', '<p>Refund <strong>' + esc(receipt) + '</strong> via <strong>' + method + '</strong>?</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">This will reverse the full transaction amount.</p>', async () => {
+  showConfirm(__('refund.execute'), '<p>' + __('refund.confirmExecute', { receipt: esc(receipt), method: method }) + '</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">' + __('refund.confirmExecuteWarn') + '</p>', async () => {
     try {
       const result = await api('/api/inv/root/refund/force', {
         method: 'POST',
         body: { receiptNumber: receipt, refundMethod: method, reason },
       });
-      showToast('Refund executed: €' + (result.totalRefund || 0).toFixed(2));
+      showToast(__('refund.executed', { amount: (result.totalRefund || 0).toFixed(2) }));
       document.getElementById('refundReceipt').value = '';
       loadRefundHistory();
     } catch(err) { showToast(err.message); }
-  }, 'Execute Refund');
+  }, __('refund.execute'));
 }
 
 async function doReverseRefund() {
   const receipt = document.getElementById('reverseReceipt').value.trim();
-  if (!receipt) { showToast('Refund receipt number required'); return; }
+  if (!receipt) { showToast(__('refund.reverseReceiptReq')); return; }
 
-  showConfirm('Reverse Refund', '<p>Reverse refund <strong>' + esc(receipt) + '</strong>?</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">This will create a compensating refund to reverse the original refund.</p>', async () => {
+  showConfirm(__('refund.reverseBtn'), '<p>' + __('refund.confirmReverse', { receipt: esc(receipt) }) + '</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">' + __('refund.confirmReverseWarn') + '</p>', async () => {
     try {
       const result = await api('/api/inv/root/refund/reverse', {
         method: 'POST',
         body: { receiptNumber: receipt, reason: 'Root reversal' },
       });
-      showToast('Refund reversed');
+      showToast(__('refund.reversed'));
       document.getElementById('reverseReceipt').value = '';
       loadRefundHistory();
     } catch(err) { showToast(err.message); }
-  }, 'Reverse');
+  }, __('refund.reverseBtn'));
 }
 
 async function loadRefundHistory() {
@@ -299,14 +309,14 @@ async function loadRefundHistory() {
   try {
     const data = await api('/api/inv/root/refund/history?limit=10');
     if (data.refunds.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>No refunds</p></div>';
+      container.innerHTML = '<div class="empty-state"><p>' + __('refund.noRefunds') + '</p></div>';
       return;
     }
 
     container.innerHTML = data.refunds.map(r => {
       return '<div class="list-item">' +
         '<div><div class="item-title">' + esc(r.receiptNumber) + '</div>' +
-        '<div class="item-sub">' + (r.originalReceipt ? 'Original: ' + r.originalReceipt : '') + ' • ' + new Date(r.createdAt).toLocaleDateString('en-GB') + '</div></div>' +
+        '<div class="item-sub">' + (r.originalReceipt ? __('refund.original') + ': ' + r.originalReceipt : '') + ' • ' + new Date(r.createdAt).toLocaleDateString('en-GB') + '</div></div>' +
         '<div class="item-right"><span class="card-value red">-€' + Math.abs(r.totalAmount || 0).toFixed(2) + '</span>' +
         '<div class="item-sub">' + (r.paymentMethod || '') + '</div></div></div>';
     }).join('');
@@ -340,30 +350,32 @@ async function loadDevices() {
     // Summary
     if (data.count > 0) {
       summaryContainer.innerHTML = '<div class="card" style="margin-bottom:12px">' +
-        '<div class="card-row"><span class="card-label">Total Devices</span><span class="card-value">' + data.count + '</span></div>' +
-        '<div class="card-row"><span class="card-label">Total Buy</span><span class="card-value red">€' + (data.totalBuyPrice || 0).toFixed(2) + '</span></div>' +
-        '<div class="card-row"><span class="card-label">Total Sell</span><span class="card-value green">€' + (data.totalSellPrice || 0).toFixed(2) + '</span></div>' +
-        '<div class="card-row"><span class="card-label">Gross Profit</span><span class="card-value ' + ((data.grossProfit || 0) >= 0 ? 'green' : 'red') + '">€' + (data.grossProfit || 0).toFixed(2) + '</span></div></div>';
+        '<div class="card-row"><span class="card-label">' + __('devices.total') + '</span><span class="card-value">' + data.count + '</span></div>' +
+        '<div class="card-row"><span class="card-label">' + __('devices.totalBuy') + '</span><span class="card-value red">€' + (data.totalBuyPrice || 0).toFixed(2) + '</span></div>' +
+        '<div class="card-row"><span class="card-label">' + __('devices.totalSell') + '</span><span class="card-value green">€' + (data.totalSellPrice || 0).toFixed(2) + '</span></div>' +
+        '<div class="card-row"><span class="card-label">' + __('devices.grossProfit') + '</span><span class="card-value ' + ((data.grossProfit || 0) >= 0 ? 'green' : 'red') + '">€' + (data.grossProfit || 0).toFixed(2) + '</span></div></div>';
     } else {
       summaryContainer.innerHTML = '';
     }
 
     if (!data.devices || data.devices.length === 0) {
-      listContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">📱</div><p>No devices</p></div>';
+      listContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">📱</div><p>' + __('devices.noDevices') + '</p></div>';
       return;
     }
 
+    const statusBadge = { SOLD: 'badge-green', TESTED: 'badge-blue', PENDING: 'badge-orange', BUY_IN: 'badge-gray' };
+
     listContainer.innerHTML = '<div class="card">' + data.devices.map(d => {
-      const statusBadge = { SOLD: 'badge-green', TESTED: 'badge-blue', PENDING: 'badge-orange', BUY_IN: 'badge-gray' };
       const profit = (d.sellPrice || 0) - (d.buyPrice || 0);
       return '<div class="list-item">' +
         '<div><div class="item-title">' + esc(d.serialNumber) + ' <span class="badge ' + (statusBadge[d.status] || 'badge-gray') + '">' + d.status + '</span></div>' +
-        '<div class="item-sub">Buy: €' + (d.buyPrice || 0).toFixed(2) + (d.sellPrice ? ' | Sell: €' + d.sellPrice.toFixed(2) : '') + ' | PL: <span class="' + (profit >= 0 ? 'green' : 'red') + '">€' + profit.toFixed(2) + '</span></div></div>' +
-        '<div><button class="btn btn-sm btn-secondary" onclick="editDevice(\'' + d.serialNumber + '\')">Edit</button></div></div>';
+        '<div class="item-sub">' + __('devices.buy') + ': €' + (d.buyPrice || 0).toFixed(2) + (d.sellPrice ? ' | ' + __('devices.sell') + ': €' + d.sellPrice.toFixed(2) : '') + ' | ' + __('devices.pl') + ': <span class="' + (profit >= 0 ? 'green' : 'red') + '">€' + profit.toFixed(2) + '</span></div></div>' +
+        '<div><button class="btn btn-sm btn-secondary" onclick="editDevice(\'' + d.serialNumber + '\')">' + __('devices.edit') + '</button></div></div>';
     }).join('') + '</div>';
 
     if (data.devices.length > 50) {
-      listContainer.innerHTML += '<p style="text-align:center;color:#8e8e93;font-size:13px;padding:8px">Showing 50 of ' + data.devices.length + '</p>';
+      listContainer.innerHTML += '<p style="text-align:center;color:#8e8e93;font-size:13px;padding:8px">' +
+        __('devices.showing', { count: 50, total: data.devices.length }) + '</p>';
     }
   } catch(err) {
     listContainer.innerHTML = '<div class="card"><p style="color:#ff3b30;text-align:center">' + esc(err.message) + '</p></div>';
@@ -372,17 +384,16 @@ async function loadDevices() {
 
 // ─── Device Edit (inline in modal) ─────────────────────────────
 async function editDevice(serialNumber) {
-  // Fetch current device data
   const data = await api('/api/inv/root/devices?limit=100&status=');
   const device = data.devices?.find(d => d.serialNumber === serialNumber);
-  if (!device) { showToast('Device not found'); return; }
+  if (!device) { showToast(__('devices.notFound')); return; }
 
-  const body = '<div class="input-group"><label>Buy Price (€)</label><input type="number" step="0.01" id="devBuyPrice" value="' + (device.buyPrice || 0) + '"></div>' +
-    '<div class="input-group"><label>Sell Price (€)</label><input type="number" step="0.01" id="devSellPrice" value="' + (device.sellPrice || 0) + '"></div>' +
-    '<div class="input-group"><label>Status</label><select id="devStatus"><option value="BUY_IN" ' + (device.status === 'BUY_IN' ? 'selected' : '') + '>BUY_IN</option><option value="PENDING" ' + (device.status === 'PENDING' ? 'selected' : '') + '>PENDING</option><option value="TESTED" ' + (device.status === 'TESTED' ? 'selected' : '') + '>TESTED</option><option value="SOLD" ' + (device.status === 'SOLD' ? 'selected' : '') + '>SOLD</option></select></div>' +
-    '<div class="input-group"><label>Notes</label><input type="text" id="devNotes" value="' + esc(device.notes || '') + '"></div>';
+  const body = '<div class="input-group"><label>' + __('devEdit.buyPrice') + '</label><input type="number" step="0.01" id="devBuyPrice" value="' + (device.buyPrice || 0) + '"></div>' +
+    '<div class="input-group"><label>' + __('devEdit.sellPrice') + '</label><input type="number" step="0.01" id="devSellPrice" value="' + (device.sellPrice || 0) + '"></div>' +
+    '<div class="input-group"><label>' + __('devEdit.status') + '</label><select id="devStatus"><option value="BUY_IN" ' + (device.status === 'BUY_IN' ? 'selected' : '') + '>BUY_IN</option><option value="PENDING" ' + (device.status === 'PENDING' ? 'selected' : '') + '>PENDING</option><option value="TESTED" ' + (device.status === 'TESTED' ? 'selected' : '') + '>TESTED</option><option value="SOLD" ' + (device.status === 'SOLD' ? 'selected' : '') + '>SOLD</option></select></div>' +
+    '<div class="input-group"><label>' + __('devEdit.notes') + '</label><input type="text" id="devNotes" value="' + esc(device.notes || '') + '"></div>';
 
-  showConfirm('Edit Device: ' + serialNumber, body, async () => {
+  showConfirm(__('devEdit.title') + ': ' + serialNumber, body, async () => {
     const buyPrice = parseFloat(document.getElementById('devBuyPrice')?.value);
     const sellPrice = document.getElementById('devSellPrice')?.value !== '' ? parseFloat(document.getElementById('devSellPrice').value) : undefined;
     const status = document.getElementById('devStatus')?.value;
@@ -396,10 +407,10 @@ async function editDevice(serialNumber) {
 
     try {
       await api('/api/inv/root/devices/' + device._id, { method: 'PATCH', body: payload });
-      showToast('Device updated');
+      showToast(__('devices.updated'));
       loadDevices();
     } catch(err) { showToast(err.message); }
-  }, 'Save');
+  }, __('devEdit.save'));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -410,87 +421,87 @@ async function loadSystemStatus() {
   try {
     const data = await api('/api/inv/root/system/status');
     document.getElementById('sysTime').textContent = new Date(data.serverTime).toLocaleString('en-GB');
-    document.getElementById('sysUsers').textContent = data.activeUsers + ' active';
+    document.getElementById('sysUsers').textContent = __('sys.activeUsersVal', { count: data.activeUsers || 0 });
 
     const pausedEl = document.getElementById('sysPaused');
     if (data.systemPaused) {
-      pausedEl.innerHTML = '<span class="status-dot red"></span> PAUSED';
+      pausedEl.innerHTML = '<span class="status-dot red"></span> ' + __('sys.paused');
     } else {
-      pausedEl.innerHTML = '<span class="status-dot green"></span> Running';
+      pausedEl.innerHTML = '<span class="status-dot green"></span> ' + __('sys.running');
     }
 
     const lockedEl = document.getElementById('sysLocked');
     if (data.transactionsLocked) {
-      lockedEl.innerHTML = '<span class="status-dot red"></span> Locked';
+      lockedEl.innerHTML = '<span class="status-dot red"></span> ' + __('sys.locked');
     } else {
-      lockedEl.innerHTML = '<span class="status-dot green"></span> Unlocked';
+      lockedEl.innerHTML = '<span class="status-dot green"></span> ' + __('sys.unlocked');
     }
 
     const closeEl = document.getElementById('sysLastClose');
     if (data.lastDailyClose) {
       closeEl.textContent = data.lastDailyClose.date + ' (' + data.lastDailyClose.status + ')';
     } else {
-      closeEl.textContent = 'No close yet';
+      closeEl.textContent = __('sys.noClose');
     }
   } catch(err) {
-    showToast('Failed to load system status');
+    showToast(__('sys.failedLoad'));
   }
 }
 
 async function doForceClose() {
   const date = document.getElementById('closeDate').value;
-  if (!date) { showToast('Select a date'); return; }
+  if (!date) { showToast(__('sys.selectDate')); return; }
 
-  showConfirm('Force Daily Close', '<p>Close <strong>' + date + '</strong>?</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">This will lock all transactions for this day.</p>', async () => {
+  showConfirm(__('close.forceTitle'), '<p>' + __('close.forceBody', { date: date }) + '</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">' + __('close.forceWarn') + '</p>', async () => {
     try {
       await api('/api/inv/root/daily-close/force', { method: 'POST', body: { date, skipDevicePL: true } });
-      showToast('Daily close completed for ' + date);
+      showToast(__('close.forceDone', { date }));
       loadSystemStatus();
     } catch(err) { showToast(err.message); }
-  }, 'Force Close');
+  }, __('sys.forceClose'));
 }
 
 async function doReopenClose() {
   const date = document.getElementById('closeDate').value;
-  if (!date) { showToast('Select a date'); return; }
+  if (!date) { showToast(__('sys.selectDate')); return; }
 
-  showConfirm('Reopen Daily Close', '<p>Reopen <strong>' + date + '</strong>?</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">This will allow modifications to closed day transactions. Use with caution.</p>', async () => {
+  showConfirm(__('close.reopenTitle'), '<p>' + __('close.reopenBody', { date: date }) + '</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">' + __('close.reopenWarn') + '</p>', async () => {
     try {
       await api('/api/inv/root/daily-close/reopen', { method: 'POST', body: { date, reason: 'Root reopen' } });
-      showToast('Daily close reopened for ' + date);
+      showToast(__('close.reopenDone', { date }));
       loadSystemStatus();
     } catch(err) { showToast(err.message); }
-  }, 'Reopen');
+  }, __('sys.reopen'));
 }
 
 async function doSystemPause() {
-  showConfirm('Pause POS System', '<p style="color:#ff3b30;font-weight:500">This will STOP all POS operations immediately.</p><p style="font-size:14px;margin-top:8px">Staff will not be able to process sales.</p>', async () => {
+  showConfirm(__('ctrl.pauseTitle'), '<p style="color:#ff3b30;font-weight:500">' + __('ctrl.pauseBody') + '</p><p style="font-size:14px;margin-top:8px">' + __('ctrl.pauseWarn') + '</p>', async () => {
     try {
       await api('/api/inv/root/system/pause', { method: 'POST', body: { reason: 'Root emergency stop' } });
-      showToast('System paused');
+      showToast(__('ctrl.pauseDone'));
       loadSystemStatus();
     } catch(err) { showToast(err.message); }
-  }, 'Pause System');
+  }, __('ctrl.pauseBtn'));
 }
 
 async function doSystemResume() {
-  showConfirm('Resume POS System', '<p>Restore normal POS operations?</p>', async () => {
+  showConfirm(__('ctrl.resumeTitle'), '<p>' + __('ctrl.resumeBody') + '</p>', async () => {
     try {
       await api('/api/inv/root/system/resume', { method: 'POST' });
-      showToast('System resumed');
+      showToast(__('ctrl.resumeDone'));
       loadSystemStatus();
     } catch(err) { showToast(err.message); }
-  }, 'Resume');
+  }, __('ctrl.resumeBtn'));
 }
 
 async function doLockTransactions() {
-  showConfirm('Lock All Transactions', '<p style="color:#ff3b30;font-weight:500">This will prevent ANY modification to historical transactions.</p><p style="font-size:14px;margin-top:8px">This action is reversible via system controls.</p>', async () => {
+  showConfirm(__('ctrl.lockTitle'), '<p style="color:#ff3b30;font-weight:500">' + __('ctrl.lockWarn') + '</p><p style="font-size:14px;margin-top:8px">' + __('ctrl.lockSub') + '</p>', async () => {
     try {
       await api('/api/inv/root/system/lock-all-transactions', { method: 'POST' });
-      showToast('Transactions locked');
+      showToast(__('ctrl.lockDone'));
       loadSystemStatus();
     } catch(err) { showToast(err.message); }
-  }, 'Lock All');
+  }, __('ctrl.lockBtn'));
 }
 
 async function loadAuditLog() {
@@ -498,7 +509,7 @@ async function loadAuditLog() {
   try {
     const data = await api('/api/inv/root/audit-log?limit=20');
     if (data.logs.length === 0) {
-      container.innerHTML = '<p style="color:#8e8e93;text-align:center">No audit entries</p>';
+      container.innerHTML = '<p style="color:#8e8e93;text-align:center">' + __('ledger.noEntries') + '</p>';
       return;
     }
 
@@ -517,27 +528,27 @@ async function loadAuditLog() {
 // ─── Export CSV ────────────────────────────────────────────────
 async function exportCsv(dataset) {
   const names = {
-    'transactions': 'Transactions',
-    'ledger': 'Ledger',
-    'audit': 'Audit Log',
-    'daily-close': 'Daily Close',
-    'vat-summary': 'VAT Summary',
+    'transactions': __('export.transactions'),
+    'ledger': __('export.ledger'),
+    'audit': __('export.audit'),
+    'daily-close': __('export.dailyClose'),
+    'vat-summary': __('export.vatSummary'),
   };
   const label = names[dataset] || dataset;
 
   const startDate = document.getElementById('exportStart')?.value || '';
   const endDate = document.getElementById('exportEnd')?.value || '';
 
-  let body = '<p>Download <strong>' + label + '</strong> as CSV?</p>';
+  let body = '<p>' + __('export.download', { label }) + '</p>';
   if (startDate || endDate) {
-    body += '<p style="font-size:13px;color:#8e8e93;margin-top:4px">Period: ' +
-      (startDate || '…') + ' → ' + (endDate || '…') + '</p>';
+    body += '<p style="font-size:13px;color:#8e8e93;margin-top:4px">' +
+      __('export.period', { start: startDate || '…', end: endDate || '…' }) + '</p>';
   }
 
-  showConfirm('Export ' + label, body, async () => {
+  showConfirm(__('export.download', { label }), body, async () => {
     try {
       const token = Auth.getToken();
-      if (!token) { showToast('Not authenticated'); return; }
+      if (!token) { showToast(__('export.notAuth')); return; }
 
       const params = new URLSearchParams();
       if (startDate) params.set('startDate', startDate);
@@ -546,7 +557,7 @@ async function exportCsv(dataset) {
 
       const url = '/api/inv/root/export/csv/' + dataset + (qs ? '?' + qs : '');
 
-      showToast('Downloading ' + label + '…');
+      showToast(__('export.downloading', { label }));
 
       const res = await fetch(url, {
         headers: { 'Authorization': 'Bearer ' + token },
@@ -554,7 +565,7 @@ async function exportCsv(dataset) {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Export failed');
+        throw new Error(err.error || __('export.failed'));
       }
 
       const blob = await res.blob();
@@ -566,11 +577,11 @@ async function exportCsv(dataset) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(dlUrl);
-      showToast('✅ ' + label + ' downloaded');
+      showToast('✅ ' + __('export.downloaded', { label }));
     } catch(err) {
       showToast('❌ ' + err.message);
     }
-  }, 'Download');
+  }, __('export.download', { label }));
 }
 
 // ─── Utility ──────────────────────────────────────────────────
@@ -602,4 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
   loadRefundHistory();
   loadDevices();
   loadSystemStatus();
+
+  // Apply saved language preference
+  applyLang();
 });
