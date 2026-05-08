@@ -143,6 +143,7 @@ async function loadUsers() {
         '<div><div class="item-title">' + esc(u.displayName) + ' <span class="badge ' + (roleBadge[u.role] || 'badge-gray') + '">' + u.role + '</span></div>' +
         '<div class="item-sub">@' + esc(u.username) + (u.active ? '' : ' • <span style="color:#ff3b30">' + disabledLabel + '</span>') + '</div></div>' +
         '<div class="btn-group" style="gap:4px;flex-wrap:wrap">' +
+        '<button class="btn btn-sm btn-secondary" onclick="showEditUser(\'' + u._id + '\')">' + __('users.edit') + '</button>' +
         '<button class="btn btn-sm btn-secondary" onclick="showResetPassword(\'' + u._id + '\',\'' + esc(u.username) + '\')">' + __('users.resetPw') + '</button>' +
         '<button class="btn btn-sm ' + (u.active ? 'btn-warning' : 'btn-success') + '" onclick="toggleUserActive(\'' + u._id + '\',' + u.active + ')">' + (u.active ? __('users.disable') : __('users.enable')) + '</button>' +
         '</div></div>';
@@ -230,6 +231,76 @@ async function doResetPassword(id) {
       body: { password },
     });
     showToast(__('users.pwResetDone'));
+  } catch(err) { showToast(err.message); }
+}
+
+// ─── Edit User ────────────────────────────────────────────────
+const PERMISSION_LABELS = {
+  pos: __('perm.pos'), products: __('perm.products'), stock: __('perm.stock'),
+  suppliers: __('perm.suppliers'), purchases: __('perm.purchases'),
+  transactions: __('perm.transactions'), reports: __('perm.reports'),
+  invoices: __('perm.invoices'), settings: __('perm.settings'),
+  users: __('perm.users'), expenses: __('perm.expenses'),
+  refund: __('perm.refund'), website: __('perm.website'),
+};
+
+async function showEditUser(id) {
+  // Fetch current user data
+  const users = await api('/api/inv/root/users');
+  const user = users.find(u => u._id === id);
+  if (!user) { showToast(__('users.notFound')); return; }
+
+  const isRootOrMgr = user.role === 'root' || user.role === 'manager';
+  const currentPerms = user._permissions || user.permissions || {};
+
+  let permHtml = '';
+  if (!isRootOrMgr) {
+    permHtml = '<div class="card-title" style="margin-top:12px">' + __('users.permissions') + '</div>';
+    for (const key of ['pos', 'products', 'stock', 'suppliers', 'purchases', 'transactions', 'reports', 'invoices', 'settings', 'users', 'expenses', 'refund', 'website']) {
+      const label = PERMISSION_LABELS[key] || key;
+      const checked = currentPerms[key] ? 'checked' : '';
+      permHtml += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px;cursor:pointer">' +
+        '<input type="checkbox" class="perm-checkbox" data-perm="' + key + '" ' + checked + ' style="width:18px;height:18px"> ' + label +
+        '</label>';
+    }
+  } else {
+    permHtml = '<p style="color:#8e8e93;font-size:13px;margin-top:8px">' + __('users.permLocked', { role: user.role }) + '</p>';
+  }
+
+  const body = '<div class="input-group"><label>' + __('cu.displayName') + '</label>' +
+    '<input type="text" id="editDisplayName" value="' + esc(user.displayName) + '"></div>' +
+    '<div class="input-group"><label>' + __('cu.role') + '</label>' +
+    '<select id="editRole"><option value="staff" ' + (user.role === 'staff' ? 'selected' : '') + '>' + __('cu.staff') + '</option>' +
+    '<option value="manager" ' + (user.role === 'manager' ? 'selected' : '') + '>' + __('cu.manager') + '</option>' +
+    '<option value="root" ' + (user.role === 'root' ? 'selected' : '') + '>' + __('cu.root') + '</option></select></div>' +
+    permHtml;
+
+  showConfirm(__('users.editTitle') + ': ' + esc(user.displayName), body, doEditUser.bind(null, id, user.role), __('users.save'));
+}
+
+async function doEditUser(id, originalRole) {
+  const displayName = document.getElementById('editDisplayName')?.value.trim();
+  const role = document.getElementById('editRole')?.value;
+  if (!displayName) { showToast(__('users.allFieldsReq')); return; }
+
+  const payload = { displayName, role };
+
+  // Collect permissions if role is staff
+  if (role === 'staff') {
+    const perms = {};
+    document.querySelectorAll('.perm-checkbox').forEach(cb => {
+      perms[cb.dataset.perm] = cb.checked;
+    });
+    payload.permissions = perms;
+  }
+
+  try {
+    await api('/api/inv/root/users/' + id, {
+      method: 'PATCH',
+      body: payload,
+    });
+    showToast(__('users.updated'));
+    loadUsers();
   } catch(err) { showToast(err.message); }
 }
 

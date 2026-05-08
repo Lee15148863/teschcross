@@ -294,17 +294,62 @@ router.patch('/users/:id', async (req, res) => {
     const user = await InvUser.findById(req.params.id);
     if (!user) return res.status(404).json({ error: '用户不存在', code: 'NOT_FOUND' });
 
-    const { displayName, role, active } = req.body;
-    const before = { displayName: user.displayName, role: user.role, active: user.active };
+    const { displayName, role, active, permissions } = req.body;
+    const before = { displayName: user.displayName, role: user.role, active: user.active, permissions: user.permissions?.toObject() };
 
     if (displayName !== undefined) user.displayName = displayName;
+
     if (role !== undefined) {
       if (!['root', 'manager', 'staff'].includes(role)) {
         return res.status(400).json({ error: '角色无效', code: 'VALIDATION_ERROR' });
       }
+      // If changing away from root, ensure at least one other active root remains
+      if (user.role === 'root' && role !== 'root') {
+        const otherRootCount = await InvUser.countDocuments({
+          _id: { $ne: user._id },
+          role: 'root',
+          active: true,
+        });
+        if (otherRootCount < 1) {
+          return res.status(409).json({
+            error: '系统必须至少保留一个 Root 权限的用户',
+            code: 'LAST_ROOT'
+          });
+        }
+      }
       user.role = role;
     }
-    if (active !== undefined) user.active = active;
+
+    if (active !== undefined) {
+      // If deactivating a root user, ensure at least one other active root remains
+      if (active === false && user.role === 'root') {
+        const otherRootCount = await InvUser.countDocuments({
+          _id: { $ne: user._id },
+          role: 'root',
+          active: true,
+        });
+        if (otherRootCount < 1) {
+          return res.status(409).json({
+            error: '系统必须至少保留一个 Root 权限的用户',
+            code: 'LAST_ROOT'
+          });
+        }
+      }
+      user.active = active;
+    }
+
+    // Update permissions (only meaningful for staff role)
+    if (permissions !== undefined && typeof permissions === 'object') {
+      if (!user.permissions) {
+        user.permissions = {};
+      }
+      for (const key of InvUser.PERMISSION_KEYS) {
+        if (permissions[key] !== undefined) {
+          user.permissions[key] = !!permissions[key];
+        }
+      }
+    }
+
     user.updatedAt = new Date();
     await user.save();
 
@@ -317,8 +362,12 @@ router.patch('/users/:id', async (req, res) => {
       ip: req.ip,
     });
 
-    res.json({ id: user._id, username: user.username, displayName: user.displayName, role: user.role, active: user.active });
+    res.json({
+      id: user._id, username: user.username, displayName: user.displayName,
+      role: user.role, active: user.active, permissions: user.getPermissions(),
+    });
   } catch (err) {
+    if (err.code === 'LAST_ROOT') throw err;
     if (err.name === 'CastError') return res.status(404).json({ error: '用户不存在', code: 'NOT_FOUND' });
     console.error('User update error:', err.message);
     res.status(500).json({ error: '服务器错误', code: 'USER_UPDATE_ERROR' });
@@ -334,6 +383,21 @@ router.delete('/users/:id', async (req, res) => {
 
     const user = await InvUser.findById(req.params.id);
     if (!user) return res.status(404).json({ error: '用户不存在', code: 'NOT_FOUND' });
+
+    // Cannot delete the last active root
+    if (user.role === 'root') {
+      const otherRootCount = await InvUser.countDocuments({
+        _id: { $ne: user._id },
+        role: 'root',
+        active: true,
+      });
+      if (otherRootCount < 1) {
+        return res.status(409).json({
+          error: '系统必须至少保留一个 Root 权限的用户',
+          code: 'LAST_ROOT'
+        });
+      }
+    }
 
     // Soft-delete: disable instead of removing if user has transactions
     const hasTxns = await Transaction.findOne({ operator: req.params.id });
@@ -365,6 +429,7 @@ router.delete('/users/:id', async (req, res) => {
 
     res.json({ message: '用户已删除', deleted: true });
   } catch (err) {
+    if (err.code === 'LAST_ROOT') throw err;
     if (err.name === 'CastError') return res.status(404).json({ error: '用户不存在', code: 'NOT_FOUND' });
     console.error('User delete error:', err.message);
     res.status(500).json({ error: '服务器错误', code: 'USER_DELETE_ERROR' });
