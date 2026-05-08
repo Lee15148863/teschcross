@@ -55,12 +55,10 @@ async function bootstrap() {
   } else {
     // ─── Bootstrap initial users ──────────────────────────────────────────────
     const hashedRootPw = await bcrypt.hash('Lee087_admin_2026', BCRYPT_SALT_ROUNDS);
-    const hashedStaffPw = await bcrypt.hash('staff123', BCRYPT_SALT_ROUNDS);
-    const hashedMgrPw = await bcrypt.hash('manager123', BCRYPT_SALT_ROUNDS);
 
     const createdUsers = [];
 
-    // ROOT USER (locked identity)
+    // ROOT USER ONLY (locked identity) — no default staff/manager
     await db.collection('invusers').insertOne({
       username: 'Lee087',
       password: hashedRootPw,
@@ -74,41 +72,7 @@ async function bootstrap() {
       updatedAt: new Date()
     });
     createdUsers.push('Lee087 (root)');
-    console.log('  ✓ Created system root: Lee087');
-
-    // DEFAULT STAFF
-    await db.collection('invusers').insertOne({
-      username: 'staff',
-      password: hashedStaffPw,
-      displayName: 'Staff',
-      role: 'staff',
-      permissions: { pos: true, refund: true },
-      active: true,
-      failedAttempts: 0,
-      lockedUntil: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-    createdUsers.push('staff (staff)');
-    console.log('  ✓ Created default staff');
-
-    // DEFAULT MANAGER
-    await db.collection('invusers').insertOne({
-      username: 'manager',
-      password: hashedMgrPw,
-      displayName: 'Manager',
-      role: 'manager',
-      permissions: { pos: true, refund: true, reports: true },
-      active: true,
-      failedAttempts: 0,
-      lockedUntil: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-    createdUsers.push('manager (manager)');
-    console.log('  ✓ Created default manager');
-
-    // ─── Audit log for bootstrap ──────────────────────────────────────────────
+    console.log('  ✓ Created system root: Lee087');// ─── Audit log for bootstrap ──────────────────────────────────────────────
     const key = process.env.INV_AUDIT_KEY;
     let encryptedData = 'bootstrap_no_key';
     if (key) {
