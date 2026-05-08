@@ -1011,7 +1011,7 @@
     if (!token) { window.location.href = 'inv-login.html'; return; }
     // 读取用户角色
     var isAdmin = false;
-    try { var _u = JSON.parse(localStorage.getItem('inv_user')); if (_u && _u.role === 'admin') isAdmin = true; } catch(e) {}
+    try { var _u = JSON.parse(localStorage.getItem('inv_user')); if (_u && (_u.role === 'root' || _u.role === 'manager')) isAdmin = true; } catch(e) {}
     const API_BASE = '/api/inv';
     const headers = () => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token });
 

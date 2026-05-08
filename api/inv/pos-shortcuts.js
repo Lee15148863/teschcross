@@ -4,7 +4,7 @@ const PosShortcut = require('../../models/inv/PosShortcut');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require JWT authentication (Admin or Staff)
-router.use(jwtAuth, requireRole('root', 'staff'));
+router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 // ─── GET /api/inv/pos-shortcuts ─────────────────────────────────────────────
 // 返回 1~20 号快捷按钮配置，始终返回 20 条记录

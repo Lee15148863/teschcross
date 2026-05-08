@@ -4,7 +4,7 @@ const DailyClose = require('../../models/inv/DailyClose');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('root', 'staff'));
+router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 // ─── GET /api/inv/close/status?date=YYYY-MM-DD ──────────────────────
 // Check whether a specific day is open or closed

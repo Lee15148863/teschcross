@@ -6,7 +6,7 @@ const { validateRequiredFields } = require('../../utils/inv-validators');
 const { calculateMarginVat } = require('../../utils/inv-vat-calculator');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('root', 'staff'));
+router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 // ─── Category attribute templates ───────────────────────────────────────────
 const CATEGORY_TEMPLATES = {
@@ -264,8 +264,8 @@ router.put('/:id', async (req, res) => {
       updateFields.vatRate = vatRate;
     }
     if (stock !== undefined) {
-      // Only admin can modify stock
-      if (req.user.role !== 'root') {
+      // Only admin (root/manager) can modify stock
+      if (req.user.role === 'staff') {
         return res.status(403).json({ error: '只有店主可以修改库存数量', code: 'FORBIDDEN' });
       }
       updateFields.stock = stock;

@@ -51,9 +51,6 @@ const LANG = {
     'users.allFieldsReq': 'All fields required',
     'users.disableTitle': 'Disable User',
     'users.disableBody': 'This user will lose access to the system.',
-    'users.changeRoleTitle': 'Change Role',
-    'users.changeRoleBody': 'Change to <strong>{role}</strong>?',
-    'users.roleChanged': 'Role changed to {role}',
     'users.notFound': 'User not found',
     'users.resetPw': 'Reset PW',
     'users.resetPwTitle': 'Reset Password',
@@ -69,6 +66,11 @@ const LANG = {
     'users.updated': 'User updated',
     'users.permissions': 'Permissions',
     'users.permLocked': 'Permissions are set automatically for {role} role',
+    'users.delete': 'Delete User',
+    'users.deleteTitle': 'Delete User',
+    'users.deleteBody': 'Permanently delete <strong>{name}</strong>?',
+    'users.deleteWarn': 'This cannot be undone. The user will be permanently removed.',
+    'users.deleted': 'User deleted',
 
     /* ─── Permission Labels ─── */
     'perm.pos': 'POS / Checkout',
@@ -337,9 +339,6 @@ const LANG = {
     'users.allFieldsReq': '请填写所有字段',
     'users.disableTitle': '停用用户',
     'users.disableBody': '该用户将无法登录系统。',
-    'users.changeRoleTitle': '修改角色',
-    'users.changeRoleBody': '改为 <strong>{role}</strong>？',
-    'users.roleChanged': '角色已改为 {role}',
     'users.notFound': '用户未找到',
     'users.resetPw': '重置密码',
     'users.resetPwTitle': '重置密码',
@@ -355,6 +354,11 @@ const LANG = {
     'users.updated': '用户已更新',
     'users.permissions': '权限设置',
     'users.permLocked': '{role} 角色的权限为自动设置',
+    'users.delete': '删除用户',
+    'users.deleteTitle': '删除用户',
+    'users.deleteBody': '永久删除 <strong>{name}</strong>？',
+    'users.deleteWarn': '此操作不可撤销，用户将被永久移除。',
+    'users.deleted': '用户已删除',
 
     /* ─── Permission Labels ─── */
     'perm.pos': 'POS / 收银',

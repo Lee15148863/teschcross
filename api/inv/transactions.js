@@ -11,7 +11,7 @@ const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 const { authorize, SOURCES } = require('../../utils/inv-integrity-layer');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('root', 'staff'));
+router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 const { generateReceiptNumber } = require('../../utils/inv-receipt-number');
 

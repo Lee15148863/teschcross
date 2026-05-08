@@ -307,6 +307,10 @@ async function checkout(input) {
   const stockErrors = [];
   for (const item of transactionItems) {
     try {
+      // Skip stock movement for products with zero stock (quick sale / service items)
+      const product = await Product.findById(item.product).select('stock');
+      if (!product || product.stock <= 0) continue;
+
       await StockMovement.create({
         product: item.product,
         type: 'exit',

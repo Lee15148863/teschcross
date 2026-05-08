@@ -384,6 +384,11 @@ router.delete('/users/:id', async (req, res) => {
     const user = await InvUser.findById(req.params.id);
     if (!user) return res.status(404).json({ error: '用户不存在', code: 'NOT_FOUND' });
 
+    // SYSTEM ROOT LOCK: cannot delete SYSTEM_ROOTS
+    if (InvUser.SYSTEM_ROOTS && InvUser.SYSTEM_ROOTS.includes(user.username)) {
+      return res.status(403).json({ error: '系统根用户不可删除', code: 'SYSTEM_ROOT_PROTECTED' });
+    }
+
     // Cannot delete the last active root
     if (user.role === 'root') {
       const otherRootCount = await InvUser.countDocuments({

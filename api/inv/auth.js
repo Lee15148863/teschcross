@@ -271,8 +271,8 @@ router.post('/login', async (req, res) => {
       userAgent: req.headers['user-agent']
     }).catch(() => {});
 
-    // Token expiry: staff 10h, admin 20min
-    const tokenExpiry = user.role === 'root' ? '20m' : '10h';
+    // Token expiry: staff 10h, root 2h
+    const tokenExpiry = user.role === 'root' ? '2h' : '10h';
 
     const token = jwt.sign(
       { userId: user._id, username: user.username, role: user.role },

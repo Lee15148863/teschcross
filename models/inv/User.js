@@ -52,11 +52,10 @@ const UserSchema = new mongoose.Schema({
 // ─── SYSTEM ROOT HARD LOCK ──────────────────────────────────────────────────
 // Forces SYSTEM_ROOTS usernames to ALWAYS have role=root, overriding any DB value.
 // This prevents accidental or malicious downgrade of root identity.
-UserSchema.pre('save', function (next) {
+UserSchema.pre('save', function () {
   if (SYSTEM_ROOTS.includes(this.username)) {
     this.role = 'root';
   }
-  next();
 });
 
 // Note: findOneAndUpdate pre-hook intentionally omitted — we can't access the username

@@ -53,7 +53,7 @@ async function loadSettings() {
 
 // ─── GET /api/inv/settings ──────────────────────────────────────────────────
 // Get all system settings (Staff+ access)
-router.get('/', jwtAuth, requireRole('root', 'staff'), async (req, res) => {
+router.get('/', jwtAuth, requireRole('root', 'manager', 'staff'), async (req, res) => {
   try {
     const settings = await loadSettings();
     res.json(settings);

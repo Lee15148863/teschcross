@@ -7,7 +7,7 @@ const MonthlyReport = require('../../models/inv/MonthlyReport');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('root', 'staff'));
+router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 // ─── Helper: build date range filter (UTC-based) ─────────────────────────────
 function buildDateFilter(startDate, endDate) {

@@ -6,7 +6,7 @@ const StockRequest = require('../../models/inv/StockRequest');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 
 // All routes require Staff+ access
-router.use(jwtAuth, requireRole('root', 'staff'));
+router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 // ─── POST /api/inv/stock/entry ──────────────────────────────────────────────
 // Admin: direct entry. Staff: creates pending request for admin approval.
@@ -29,8 +29,8 @@ router.post('/entry', async (req, res) => {
       return res.status(404).json({ error: '商品不存在', code: 'NOT_FOUND' });
     }
 
-    // Staff: create pending request
-    if (req.user.role !== 'root') {
+    // Staff: create pending request (manager+ can do direct entry)
+    if (req.user.role === 'staff') {
       const request = await StockRequest.create({
         product: productId,
         type: 'entry',
@@ -76,7 +76,7 @@ router.post('/entry', async (req, res) => {
 // ─── POST /api/inv/stock/exit ───────────────────────────────────────────────
 // Manual stock exit: check stock sufficiency, create StockMovement(type='exit'), decrement product.stock
 // Admin only — staff cannot directly adjust stock
-router.post('/exit', requireRole('root'), async (req, res) => {
+router.post('/exit', requireRole('root', 'manager'), async (req, res) => {
   try {
     const { productId, quantity, note } = req.body;
 
@@ -219,7 +219,7 @@ router.get('/alerts', async (req, res) => {
 
 // ─── POST /api/inv/stock/reconcile ──────────────────────────────────────────
 // Stock reconciliation (Admin only): compare product.stock with net stock from StockMovement records
-router.post('/reconcile', requireRole('root'), async (req, res) => {
+router.post('/reconcile', requireRole('root', 'manager'), async (req, res) => {
   try {
     // Get all active products
     const products = await Product.find({ active: true }).select('name sku stock');

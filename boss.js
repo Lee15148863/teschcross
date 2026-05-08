@@ -198,17 +198,6 @@ async function toggleUserActive(id, current) {
   }, __('users.disable'));
 }
 
-async function changeUserRole(id, currentRole) {
-  const nextRole = currentRole === 'staff' ? 'manager' : currentRole === 'manager' ? 'root' : 'staff';
-  showConfirm(__('users.changeRoleTitle'), '<p>' + __('users.changeRoleBody', { role: nextRole }) + '</p>', async () => {
-    try {
-      await api('/api/inv/root/users/' + id, { method: 'PATCH', body: { role: nextRole } });
-      showToast(__('users.roleChanged', { role: nextRole }));
-      loadUsers();
-    } catch(err) { showToast(err.message); }
-  }, __('users.role'));
-}
-
 // ─── Reset Password ────────────────────────────────────────────
 function showResetPassword(id, username) {
   const body = '<div class="input-group"><label>' + __('users.newPassword') + '</label><input type="password" id="resetPwInput" placeholder="' + __('cu.passwordPlaceholder') + '"></div>' +
@@ -267,15 +256,31 @@ async function showEditUser(id) {
     permHtml = '<p style="color:#8e8e93;font-size:13px;margin-top:8px">' + __('users.permLocked', { role: user.role }) + '</p>';
   }
 
+  const isSelf = user._id === (Auth.getUser()?.id);
   const body = '<div class="input-group"><label>' + __('cu.displayName') + '</label>' +
     '<input type="text" id="editDisplayName" value="' + esc(user.displayName) + '"></div>' +
     '<div class="input-group"><label>' + __('cu.role') + '</label>' +
     '<select id="editRole"><option value="staff" ' + (user.role === 'staff' ? 'selected' : '') + '>' + __('cu.staff') + '</option>' +
     '<option value="manager" ' + (user.role === 'manager' ? 'selected' : '') + '>' + __('cu.manager') + '</option>' +
     '<option value="root" ' + (user.role === 'root' ? 'selected' : '') + '>' + __('cu.root') + '</option></select></div>' +
-    permHtml;
+    permHtml +
+    (!isSelf ? '<hr style="border:none;border-top:1px solid #f2f2f7;margin:16px 0"><button class="btn btn-danger btn-block btn-sm" onclick="confirmDeleteUser(\'' + id + '\',\'' + esc(user.displayName) + '\')">' + __('users.delete') + '</button>' : '');
 
   showConfirm(__('users.editTitle') + ': ' + esc(user.displayName), body, doEditUser.bind(null, id, user.role), __('users.save'));
+}
+
+async function confirmDeleteUser(id, displayName) {
+  // Close the edit modal first, then show delete confirmation
+  closeModal();
+  setTimeout(function() {
+    showConfirm(__('users.deleteTitle'), '<p>' + __('users.deleteBody', { name: esc(displayName) }) + '</p><p style="color:#ff3b30;font-size:14px;margin-top:8px">' + __('users.deleteWarn') + '</p>', async function() {
+      try {
+        await api('/api/inv/root/users/' + id, { method: 'DELETE' });
+        showToast(__('users.deleted'));
+        loadUsers();
+      } catch(err) { showToast(err.message); }
+    }, __('users.delete'));
+  }, 300);
 }
 
 async function doEditUser(id, originalRole) {

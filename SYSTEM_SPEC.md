@@ -102,10 +102,32 @@ Immutable: YES
 
 ## 2.3 INVENTORY LAYER
 
-Operational only.
+Operational only — NOT a financial truth (reference only).
 
-* Can be wrong
-* Can be negative
+### Inventory Scenarios
+
+| Scenario | Creates Product? | Stock Impact | Tracking |
+|----------|-----------------|-------------|----------|
+| **Quick Sale** (`+ Sale`) | Yes, stock=0 | None — sale is a record only | No stock tracking |
+| **Repair** (`+ 🔧 Repair`) | Yes, stock=0 | None — service only | No stock tracking |
+| **Second-hand / Used** (`+ 📱 Used`) | Yes, stock=0 | None — emergency sale, item may not be in system yet | Individual IMEI/SN per item |
+| **Buy In** (`+ 🛒 Buy`) | Yes | Enters second-hand inventory (positive stock) | IMEI/SN + stock qty |
+
+### Quick Sale / Repair / Used
+
+* Created on-the-fly via POS inline panel
+* Product stock is always 0
+* Checkout does NOT decrement stock (stock already 0 → skip)
+* Transaction is recorded for cash ledger / financial reporting
+* Used items tracked individually by IMEI/SN for warranty & audit
+
+### Buy In
+
+* Requires manager/root approval for stock entry
+* Staff → creates pending approval request
+* Manager/root → direct entry into second-hand inventory
+* After approval: product in stock with quantity > 0, ready for future Used sale
+* Also records expense (buy cost) and cash ledger entry
 
 ---
 
@@ -132,43 +154,71 @@ Immutable: YES
 
 ---
 
-# 3. USER ROLES
+# 3. USER ROLES (HIERARCHY)
+
+Hierarchy: **ROOT > MANAGER > STAFF**
+
+Each level inherits all permissions of levels below it.
 
 ## STAFF
 
-* sales
-* quick sale
-* basic refund
+### Allowed
+* POS checkout (sale, quick sale, refund)
+* Quick add products (`+ Sale` inline panel)
+* Repair service (`+ 🔧 Repair`)
+* Second-hand emergency sale (`+ 📱 Used`)
+* Buy In submission (`+ 🛒 Buy`) → creates pending stock request
+* Search products, view catalog
+* Basic refund
 
-MUST NOT:
-
-* delete transaction
-* modify VAT
-* override pricing
+### Forbidden
+* Manual stock entry/exit (creates pending request only)
+* Modify product stock quantity
+* Delete transactions
+* Override VAT
+* Override pricing (except manager-approved discounts)
+* User management
+* System settings
+* View cost prices (hidden in UI)
+* Delete products/users
 
 ---
 
 ## MANAGER
 
-* approve discount
-* approve refund
+### Allowed (inherits all Staff permissions)
+* Direct stock entry (no approval needed)
+* Buy In: direct stock entry (skip pending)
+* Modify product stock quantity
+* Approve staff discount/refund requests
+* View cost prices
+* Configure POS shortcut keys
 
-MUST NOT:
-
-* modify VAT
-* delete transaction
-* change historical data
+### Forbidden
+* Delete transactions
+* Modify VAT rates
+* Change historical data
+* User management (create/delete users)
+* System settings
+* Website management
+* Invoice/VAT management
 
 ---
 
 ## ROOT (OWNER)
 
-FULL CONTROL:
+FULL CONTROL — all operations allowed:
 
-* delete transactions
-* modify any value
-* override rules
-* export data
+* Delete / edit transactions (any time, subject to business rules)
+* Modify any value (cost, price, VAT, stock)
+* Override rules and constraints
+* User management (create, edit, delete)
+* System settings & audit log
+* Export data
+* Monthly report generation
+* Daily close confirm
+* Invoice management
+* Website management
 
 ---
 
@@ -178,9 +228,15 @@ FULL CONTROL:
 
 * sale
 * quick_sale
-* service
+* service (repair)
 * device_sale
 * refund
+
+## SOURCES
+
+* POS checkout (cart-based)
+* POS inline panel (`+ Sale`, `+ 🔧 Repair`, `+ 📱 Used`)
+* Buy In (`+ 🛒 Buy` — separate flow with stock entry + expense)
 
 ---
 
@@ -247,18 +303,37 @@ MUST NOT:
 
 # 6. INVENTORY RULES
 
+## Principles
+
+* Inventory is **reference only** — never blocks a sale
+* Quick sale / repair / used emergency sale: **no stock movement** (stock=0, skipped at checkout)
+* Buy In: adds to second-hand inventory (positive stock)
+
+## Rules
+
 MUST:
 
-* record stock movement
+* record stock movement (for inventory-tracked items)
 
 ALLOWED:
 
-* negative stock
+* negative stock (for reference-tracked items)
 * selling without stock
 
 MUST NOT:
 
-* block sale
+* block sale due to insufficient stock
+
+## Stock Movement Behavior
+
+| Context | Stock Change | Condition |
+|---------|-------------|-----------|
+| Normal checkout | `stock -= qty` | Only if product.stock > 0 |
+| Quick sale / Repair / Used | **Skipped** | Product stock is 0 |
+| Buy In (direct) | `stock += qty` | Manager/root |
+| Buy In (pending) | No change | Staff — waits for approval |
+| Manual stock entry | `stock += qty` | Manager/root direct; staff → pending |
+| Stock exit (manual) | `stock -= qty` | Root/manager only |
 
 ---
 
