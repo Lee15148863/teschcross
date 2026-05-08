@@ -221,7 +221,9 @@ async function doResetPassword(id) {
   const confirm = document.getElementById('resetPwConfirm')?.value;
   if (!password || !confirm) { showToast(__('users.allFieldsReq')); return; }
   if (password !== confirm) { showToast(__('users.pwMismatch')); return; }
-  if (password.length < 6) { showToast(__('users.pwTooShort')); return; }
+  if (password.length < 8) { showToast(__('users.pwTooShort')); return; }
+  // Backend also requires at least one letter and one digit
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) { showToast(__('users.pwWeak')); return; }
 
   try {
     await api('/api/inv/root/users/' + id + '/reset-password', {
