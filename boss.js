@@ -142,8 +142,9 @@ async function loadUsers() {
       return '<div class="list-item">' +
         '<div><div class="item-title">' + esc(u.displayName) + ' <span class="badge ' + (roleBadge[u.role] || 'badge-gray') + '">' + u.role + '</span></div>' +
         '<div class="item-sub">@' + esc(u.username) + (u.active ? '' : ' • <span style="color:#ff3b30">' + disabledLabel + '</span>') + '</div></div>' +
-        '<div class="btn-group" style="gap:4px">' +
+        '<div class="btn-group" style="gap:4px;flex-wrap:wrap">' +
         '<button class="btn btn-sm btn-secondary" onclick="changeUserRole(\'' + u._id + '\',\'' + u.role + '\')">' + __('users.role') + '</button>' +
+        '<button class="btn btn-sm btn-secondary" onclick="showResetPassword(\'' + u._id + '\',\'' + esc(u.username) + '\')">' + __('users.resetPw') + '</button>' +
         '<button class="btn btn-sm ' + (u.active ? 'btn-warning' : 'btn-success') + '" onclick="toggleUserActive(\'' + u._id + '\',' + u.active + ')">' + (u.active ? __('users.disable') : __('users.enable')) + '</button>' +
         '</div></div>';
     }).join('') + '</div>';
@@ -206,6 +207,29 @@ async function changeUserRole(id, currentRole) {
       loadUsers();
     } catch(err) { showToast(err.message); }
   }, __('users.role'));
+}
+
+// ─── Reset Password ────────────────────────────────────────────
+function showResetPassword(id, username) {
+  const body = '<div class="input-group"><label>' + __('users.newPassword') + '</label><input type="password" id="resetPwInput" placeholder="' + __('cu.passwordPlaceholder') + '"></div>' +
+    '<div class="input-group"><label>' + __('users.confirmPassword') + '</label><input type="password" id="resetPwConfirm" placeholder="' + __('users.confirmPassword') + '"></div>';
+  showConfirm(__('users.resetPwTitle') + ': ' + esc(username), body, doResetPassword.bind(null, id), __('users.resetPw'));
+}
+
+async function doResetPassword(id) {
+  const password = document.getElementById('resetPwInput')?.value;
+  const confirm = document.getElementById('resetPwConfirm')?.value;
+  if (!password || !confirm) { showToast(__('users.allFieldsReq')); return; }
+  if (password !== confirm) { showToast(__('users.pwMismatch')); return; }
+  if (password.length < 6) { showToast(__('users.pwTooShort')); return; }
+
+  try {
+    await api('/api/inv/root/users/' + id + '/reset-password', {
+      method: 'POST',
+      body: { password },
+    });
+    showToast(__('users.pwResetDone'));
+  } catch(err) { showToast(err.message); }
 }
 
 // ═══════════════════════════════════════════════════════════════

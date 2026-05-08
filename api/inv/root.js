@@ -371,6 +371,53 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
+// ─── POST /api/root/users/:id/reset-password ─────────────────────────
+// Root can reset any user's password (including creating another root)
+router.post('/users/:id/reset-password', async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ error: '新密码不能为空', code: 'VALIDATION_ERROR' });
+    }
+
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      return res.status(400).json({ error: pwCheck.error, code: 'VALIDATION_ERROR' });
+    }
+
+    const user = await InvUser.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: '用户不存在', code: 'NOT_FOUND' });
+    }
+
+    // Prevent locking system root out
+    if (InvUser.SYSTEM_ROOTS.includes(user.username) && req.params.id === req.user.userId) {
+      // Allow resetting own password — this is fine
+    }
+
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+    user.password = hashedPassword;
+    user.failedAttempts = 0;
+    user.lockedUntil = null;
+    user.updatedAt = new Date();
+    await user.save();
+
+    await logRootAction({
+      action: 'root.user.password_reset',
+      targetType: 'user',
+      targetId: user._id.toString(),
+      details: { username: user.username },
+      ip: req.ip,
+    });
+
+    res.json({ message: '密码重置成功' });
+  } catch (err) {
+    if (err.name === 'CastError') return res.status(404).json({ error: '用户不存在', code: 'NOT_FOUND' });
+    console.error('Password reset error:', err.message);
+    res.status(500).json({ error: '服务器错误', code: 'PASSWORD_RESET_ERROR' });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════
 // REFUND CONTROL
 // ═══════════════════════════════════════════════════════════════════

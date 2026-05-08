@@ -55,6 +55,13 @@ const LANG = {
     'users.changeRoleBody': 'Change to <strong>{role}</strong>?',
     'users.roleChanged': 'Role changed to {role}',
     'users.notFound': 'User not found',
+    'users.resetPw': 'Reset PW',
+    'users.resetPwTitle': 'Reset Password',
+    'users.newPassword': 'New Password',
+    'users.confirmPassword': 'Confirm Password',
+    'users.pwMismatch': 'Passwords do not match',
+    'users.pwTooShort': 'Password must be at least 6 characters',
+    'users.pwResetDone': 'Password reset successful',
 
     /* ─── Create User Modal ─── */
     'cu.title': 'Create User',
@@ -312,6 +319,13 @@ const LANG = {
     'users.changeRoleBody': '改为 <strong>{role}</strong>？',
     'users.roleChanged': '角色已改为 {role}',
     'users.notFound': '用户未找到',
+    'users.resetPw': '重置密码',
+    'users.resetPwTitle': '重置密码',
+    'users.newPassword': '新密码',
+    'users.confirmPassword': '确认密码',
+    'users.pwMismatch': '两次密码不一致',
+    'users.pwTooShort': '密码至少6个字符',
+    'users.pwResetDone': '密码重置成功',
 
     /* ─── Create User Modal ─── */
     'cu.title': '创建用户',
