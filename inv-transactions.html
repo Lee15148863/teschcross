@@ -36,6 +36,10 @@
         tbody tr:hover{background:#fafafa;}
         .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;}
         .badge-active{background:#e8f5e9;color:#2e7d32;}.badge-exported{background:#e3f2fd;color:#1565c0;}
+        .badge-invoice{background:#fff3e0;color:#e65100;}
+        .badge-refunded{background:#ffebee;color:#c62828;}
+        .tr-refunded{background:#fff5f5 !important;border-left:3px solid #ff4d4f;}
+        .tr-refunded:hover{background:#ffebee !important;}
         .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
         .modal-overlay.show{display:flex;}
         .modal{background:#fff;border-radius:18px;padding:32px;max-width:650px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);}
@@ -186,10 +190,16 @@ async function loadTransactions(){
         // Clear existing content
         tb.innerHTML = '';
 
+        // Build refund map: receipt numbers that have been refunded
+        const refundedReceipts = new Set();
+        list.forEach(function(tx) { if (tx.originalReceipt) refundedReceipts.add(tx.originalReceipt); });
+
         // Build DOM elements safely
-        list.forEach(tx => {
+        list.forEach(function(tx) {
             const isRefund = tx.totalAmount < 0;
+            const hasRefund = !isRefund && refundedReceipts.has(tx.receiptNumber);
             const tr = document.createElement('tr');
+            if (hasRefund) tr.className = 'tr-refunded';
 
             // Receipt number cell
             const td1 = document.createElement('td');
@@ -225,13 +235,27 @@ async function loadTransactions(){
             }
             tr.appendChild(td5);
 
-            // Exported status cell
+            // Exported + Invoice + Refund status cell
             const td6 = document.createElement('td');
             if (tx.exported) {
                 const exportedSpan = document.createElement('span');
                 exportedSpan.className = 'badge badge-exported';
                 exportedSpan.textContent = 'Exported';
                 td6.appendChild(exportedSpan);
+            }
+            if (tx.invoiceGenerated) {
+                if (td6.children.length) td6.appendChild(document.createTextNode(' '));
+                const invBadge = document.createElement('span');
+                invBadge.className = 'badge badge-invoice';
+                invBadge.textContent = '🧾 Invoice';
+                td6.appendChild(invBadge);
+            }
+            if (hasRefund) {
+                if (td6.children.length) td6.appendChild(document.createTextNode(' '));
+                const refBadge = document.createElement('span');
+                refBadge.className = 'badge badge-refunded';
+                refBadge.textContent = '↩️ Refunded';
+                td6.appendChild(refBadge);
             }
             tr.appendChild(td6);
 
@@ -244,6 +268,73 @@ async function loadTransactions(){
             viewBtn.textContent = '详情';
             viewBtn.onclick = () => viewDetail(tx._id);
             td7.appendChild(viewBtn);
+
+            td7.appendChild(document.createTextNode(' '));
+
+            // Invoice button
+            const invBtn = document.createElement('button');
+            invBtn.className = 'btn btn-secondary btn-sm';
+            invBtn.textContent = '🧾 Invoice';
+            invBtn.onclick = async () => {
+                try {
+                    var ir = await apiFetch('/invoices/' + tx._id + '/generate', { method: 'POST' });
+                    if (!ir) return;
+                    if (ir.ok) {
+                        var idata = await ir.json();
+                        showToast('✅ Invoice ' + (idata.invoice?.invoiceNumber || '') + ' generated', 'success');
+                        // Create share link and open PDF
+                        var sr = await apiFetch('/delivery/share/invoice/' + idata.invoice._id, { method: 'POST' });
+                        if (sr && sr.ok) {
+                            var sd = await sr.json();
+                            if (sd.pdfUrl) window.open(sd.pdfUrl, '_blank');
+                        }
+                        loadTransactions();
+                    } else if (ir.status === 409) {
+                        // Already exists → open existing invoice PDF directly
+                        var idata = await ir.json();
+                        if (idata.invoice?._id) {
+                            var sr = await apiFetch('/delivery/share/invoice/' + idata.invoice._id, { method: 'POST' });
+                            if (sr && sr.ok) {
+                                var sd = await sr.json();
+                                if (sd.pdfUrl) window.open(sd.pdfUrl, '_blank');
+                            }
+                        }
+                    }
+                } catch(e) { showToast('Invoice failed', 'error'); }
+            };
+            td7.appendChild(invBtn);
+
+            // Email invoice button (only when invoice already exists)
+            if (tx.invoiceGenerated) {
+                td7.appendChild(document.createTextNode(' '));
+                const emailBtn = document.createElement('button');
+                emailBtn.className = 'btn btn-secondary btn-sm';
+                emailBtn.textContent = '📧';
+                emailBtn.onclick = async () => {
+                    var email = prompt('Resend invoice to email:', tx.customerContact || '');
+                    if (!email || !email.trim() || !email.includes('@')) return;
+                    email = email.trim();
+                    emailBtn.disabled = true;
+                    emailBtn.textContent = '...';
+                    try {
+                        // Get invoice ID from existing invoice
+                        var cr = await apiFetch('/invoices/check-transaction/' + encodeURIComponent(tx.receiptNumber));
+                        if (!cr) return;
+                        var cd = await cr.json();
+                        if (!cd.exists || !cd.invoice?._id) { showToast('Invoice not found', 'error'); return; }
+                        var er = await apiFetch('/delivery/invoice/email', {
+                            method: 'POST',
+                            body: JSON.stringify({ invoiceId: cd.invoice._id, email: email })
+                        });
+                        if (!er) return;
+                        var ed = await er.json();
+                        if (ed.error) { showToast(ed.error, 'error'); return; }
+                        showToast('✅ Invoice resent to ' + email, 'success');
+                    } catch(e) { showToast('Email failed', 'error'); }
+                    finally { emailBtn.disabled = false; emailBtn.textContent = '📧'; }
+                };
+                td7.appendChild(emailBtn);
+            }
 
             td7.appendChild(document.createTextNode(' '));
 
