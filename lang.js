@@ -38,6 +38,13 @@ const LANG = {
     'ov.failedLoad': 'Failed to load overview',
     'ov.refreshed': 'Refreshed',
 
+    /* ─── Navigation ─── */
+    'nav.posTill': '🛒 POS / Till',
+    'nav.inventory': '📦 Inventory',
+    'nav.refunds': '💰 Refunds',
+    'nav.reports': '📊 Reports',
+    'nav.websiteAdmin': '🌐 Website Admin',
+
     /* ─── Users Tab ─── */
     'users.title': 'User Management',
     'users.create': '+ Create User',
@@ -325,6 +332,13 @@ const LANG = {
     'ov.refresh': '刷新',
     'ov.failedLoad': '加载总览失败',
     'ov.refreshed': '已刷新',
+
+    /* ─── Navigation ─── */
+    'nav.posTill': '🛒 POS / 收银',
+    'nav.inventory': '📦 库存管理',
+    'nav.refunds': '💰 退款',
+    'nav.reports': '📊 报表',
+    'nav.websiteAdmin': '🌐 网站管理',
 
     /* ─── Users Tab ─── */
     'users.title': '用户管理',

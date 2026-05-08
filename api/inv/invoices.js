@@ -97,6 +97,74 @@ function createTransporter() {
   });
 }
 
+// ─── Helper: Build professional invoice email ──────────────────────────
+function buildInvoiceEmail(invoice, pdfBuffer, recipientEmail) {
+  const customerName = invoice.customerName || 'Valued Customer';
+  const company = invoice.companyInfo || {};
+  const storeName = company.businessName || 'TechCross Repair Centre';
+  const storeAddress = company.address || 'Navan, Co. Meath, Ireland';
+  const storePhone = company.phone || '';
+  const totalFormatted = '€' + (invoice.grossTotal || 0).toFixed(2);
+
+  const html = '<!DOCTYPE html>'
+    + '<html><head><meta charset="UTF-8"><style>'
+    + 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f4f7;margin:0;padding:0}'
+    + '.container{max-width:560px;margin:0 auto;padding:32px 20px}'
+    + '.card{background:#ffffff;border-radius:16px;padding:32px 28px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}'
+    + '.logo{font-size:22px;font-weight:700;color:#1E7F5C;margin-bottom:4px}'
+    + '.tagline{font-size:13px;color:#8e8e93;margin-bottom:24px}'
+    + 'h1{font-size:20px;color:#1c1c1e;margin:0 0 8px 0}'
+    + 'p{font-size:15px;color:#3a3a3c;line-height:1.6;margin:0 0 16px 0}'
+    + '.invoice-box{background:#f8f8fa;border-radius:10px;padding:16px;margin:20px 0}'
+    + '.invoice-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}'
+    + '.invoice-label{color:#6e6e73}'
+    + '.invoice-value{font-weight:600;color:#1c1c1e}'
+    + '.total-row{display:flex;justify-content:space-between;padding:10px 0 0 0;margin-top:8px;border-top:2px solid #e5e5ea;font-size:16px;font-weight:700;color:#1c1c1e}'
+    + '.footer{text-align:center;padding:24px 0 0 0;font-size:13px;color:#8e8e93;line-height:1.6}'
+    + '.footer strong{color:#1E7F5C}'
+    + '</style></head><body>'
+    + '<div class="container"><div class="card">'
+    + '<div class="logo">' + storeName + '</div>'
+    + '<div class="tagline">' + storeAddress + (storePhone ? ' &middot; ' + storePhone : '') + '</div>'
+    + '<h1>Thank you for your purchase!</h1>'
+    + '<p>Dear ' + customerName + ',</p>'
+    + '<p>Please find attached your VAT Invoice <strong>' + invoice.invoiceNumber + '</strong> for your recent purchase at ' + storeName + '.</p>'
+    + '<div class="invoice-box">'
+    + '<div class="invoice-row"><span class="invoice-label">Invoice Number</span><span class="invoice-value">' + invoice.invoiceNumber + '</span></div>'
+    + '<div class="invoice-row"><span class="invoice-label">Total Paid</span><span class="invoice-value">' + totalFormatted + '</span></div>'
+    + '</div>'
+    + '<p>Your invoice PDF is attached to this email. You may also access it anytime through your shared link.</p>'
+    + '<p>We look forward to welcoming you again. If you have any questions, please don\'t hesitate to contact us.</p>'
+    + '<p style="margin-bottom:0">Best regards,<br><strong>' + storeName + ' Team</strong></p>'
+    + '</div><div class="footer">'
+    + '<strong>' + storeName + '</strong><br>' + storeAddress
+    + (storePhone ? '<br>Phone: ' + storePhone : '')
+    + (company.vatNumber ? '<br>VAT: ' + company.vatNumber : '')
+    + '</div></div></body></html>';
+
+  const text = 'Dear ' + customerName + ',\n\n'
+    + 'Thank you for your purchase at ' + storeName + '.\n\n'
+    + 'Please find attached your VAT Invoice ' + invoice.invoiceNumber + '.\n'
+    + 'Total Paid: ' + totalFormatted + '\n\n'
+    + (storePhone ? 'Phone: ' + storePhone + '\n' : '')
+    + (company.vatNumber ? 'VAT: ' + company.vatNumber + '\n' : '')
+    + '\nWe look forward to seeing you again!\n\n'
+    + 'Best regards,\n' + storeName + ' Team';
+
+  return {
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: recipientEmail,
+    subject: 'Your VAT Invoice ' + invoice.invoiceNumber + ' — ' + storeName,
+    text: text,
+    html: html,
+    attachments: [{
+      filename: invoice.invoiceNumber + '.pdf',
+      content: pdfBuffer,
+      contentType: 'application/pdf'
+    }]
+  };
+}
+
 // ─── GET /api/inv/invoices ──────────────────────────────────────────────
 // Invoice list with filters
 router.get('/', async (req, res) => {
@@ -446,21 +514,7 @@ router.post('/batch-send', async (req, res) => {
       try {
         const pdfBuffer = await pdfGenerator.generate(invoice);
 
-        await transporter.sendMail({
-          from: process.env.SMTP_FROM || process.env.SMTP_USER,
-          to: invoice.customerContact,
-          subject: 'VAT Invoice ' + invoice.invoiceNumber + ' — TechCross Repair Centre',
-          text: 'Dear ' + (invoice.customerName || 'Customer') + ',\n\n'
-            + 'Please find attached your VAT Invoice ' + invoice.invoiceNumber + '.\n\n'
-            + 'Total: €' + invoice.grossTotal.toFixed(2) + '\n\n'
-            + 'Thank you for your business.\n\n'
-            + 'TechCross Repair Centre',
-          attachments: [{
-            filename: invoice.invoiceNumber + '.pdf',
-            content: pdfBuffer,
-            contentType: 'application/pdf'
-          }]
-        });
+        await transporter.sendMail(buildInvoiceEmail(invoice, pdfBuffer, invoice.customerContact));
 
         invoice.emailStatus = 'sent';
         invoice.emailSentAt = new Date();
@@ -498,21 +552,7 @@ router.post('/:id/send', async (req, res) => {
     const transporter = createTransporter();
 
     try {
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to: email,
-        subject: 'VAT Invoice ' + invoice.invoiceNumber + ' — TechCross Repair Centre',
-        text: 'Dear ' + (invoice.customerName || 'Customer') + ',\n\n'
-          + 'Please find attached your VAT Invoice ' + invoice.invoiceNumber + '.\n\n'
-          + 'Total: €' + invoice.grossTotal.toFixed(2) + '\n\n'
-          + 'Thank you for your business.\n\n'
-          + 'TechCross Repair Centre',
-        attachments: [{
-          filename: invoice.invoiceNumber + '.pdf',
-          content: pdfBuffer,
-          contentType: 'application/pdf'
-        }]
-      });
+      await transporter.sendMail(buildInvoiceEmail(invoice, pdfBuffer, email));
 
       invoice.emailStatus = 'sent';
       invoice.emailSentAt = new Date();

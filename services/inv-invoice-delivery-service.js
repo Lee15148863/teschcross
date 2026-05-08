@@ -67,16 +67,74 @@ async function emailInvoice(invoiceId, recipientEmail, operatorId) {
   // Generate PDF
   const pdfBuffer = await pdfGenerator.generate(invoice);
 
+  // ─── Build professional email ─────────────────────────────────────
+  const customerName = invoice.customerName || 'Valued Customer';
+  const company = invoice.companyInfo || {};
+  const storeName = company.businessName || 'TechCross Repair Centre';
+  const storeAddress = company.address || 'Navan, Co. Meath, Ireland';
+  const storePhone = company.phone || '046 905 9854';
+
+  const totalFormatted = '€' + (invoice.grossTotal || 0).toFixed(2);
+
+  const htmlBody = '<!DOCTYPE html>'
+    + '<html><head><meta charset="UTF-8"><style>'
+    + 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f4f7;margin:0;padding:0}'
+    + '.container{max-width:560px;margin:0 auto;padding:32px 20px}'
+    + '.card{background:#ffffff;border-radius:16px;padding:32px 28px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}'
+    + '.logo{font-size:22px;font-weight:700;color:#1E7F5C;margin-bottom:4px}'
+    + '.tagline{font-size:13px;color:#8e8e93;margin-bottom:24px}'
+    + 'h1{font-size:20px;color:#1c1c1e;margin:0 0 8px 0}'
+    + 'p{font-size:15px;color:#3a3a3c;line-height:1.6;margin:0 0 16px 0}'
+    + '.invoice-box{background:#f8f8fa;border-radius:10px;padding:16px;margin:20px 0}'
+    + '.invoice-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}'
+    + '.invoice-label{color:#6e6e73}'
+    + '.invoice-value{font-weight:600;color:#1c1c1e}'
+    + '.total-row{display:flex;justify-content:space-between;padding:10px 0 0 0;margin-top:8px;border-top:2px solid #e5e5ea;font-size:16px;font-weight:700;color:#1c1c1e}'
+    + '.footer{text-align:center;padding:24px 0 0 0;font-size:13px;color:#8e8e93;line-height:1.6}'
+    + '.footer strong{color:#1E7F5C}'
+    + '</style></head><body>'
+    + '<div class="container">'
+    + '<div class="card">'
+    + '<div class="logo">' + storeName + '</div>'
+    + '<div class="tagline">' + storeAddress + (storePhone ? ' &middot; ' + storePhone : '') + '</div>'
+    + '<h1>Thank you for your purchase!</h1>'
+    + '<p>Dear ' + customerName + ',</p>'
+    + '<p>Please find attached your VAT Invoice <strong>' + invoice.invoiceNumber + '</strong> for your recent purchase at ' + storeName + '.</p>'
+    + '<div class="invoice-box">'
+    + '<div class="invoice-row"><span class="invoice-label">Invoice Number</span><span class="invoice-value">' + invoice.invoiceNumber + '</span></div>'
+    + '<div class="invoice-row"><span class="invoice-label">Total Paid</span><span class="invoice-value">' + totalFormatted + '</span></div>'
+    + '</div>'
+    + '<p>Your invoice PDF is attached to this email. You may also access it anytime through your shared link.</p>'
+    + '<p>We look forward to welcoming you again. If you have any questions, please don\'t hesitate to contact us.</p>'
+    + '<p style="margin-bottom:0">Best regards,<br><strong>' + storeName + ' Team</strong></p>'
+    + '</div>'
+    + '<div class="footer">'
+    + '<strong>' + storeName + '</strong><br>'
+    + storeAddress + '<br>'
+    + (storePhone ? 'Phone: ' + storePhone + '<br>' : '')
+    + (company.vatNumber ? 'VAT: ' + company.vatNumber : '')
+    + '</div>'
+    + '</div></body></html>';
+
+  const textBody = 'Dear ' + customerName + ',\n\n'
+    + 'Thank you for your purchase at ' + storeName + '.\n\n'
+    + 'Please find attached your VAT Invoice ' + invoice.invoiceNumber + '.\n'
+    + 'Total Paid: ' + totalFormatted + '\n\n'
+    + 'If you have any questions, please feel free to contact us:\n'
+    + storeAddress + '\n'
+    + (storePhone ? 'Phone: ' + storePhone + '\n' : '')
+    + (company.vatNumber ? 'VAT: ' + company.vatNumber + '\n' : '')
+    + '\nWe look forward to seeing you again!\n\n'
+    + 'Best regards,\n'
+    + storeName + ' Team';
+
   const transporter = createTransporter();
   const info = await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: recipientEmail,
-    subject: 'VAT Invoice ' + invoice.invoiceNumber + ' — TechCross Repair Centre',
-    text: 'Dear ' + (invoice.customerName || 'Customer') + ',\n\n'
-      + 'Please find attached your VAT Invoice ' + invoice.invoiceNumber + '.\n\n'
-      + 'Total: €' + (invoice.grossTotal || 0).toFixed(2) + '\n\n'
-      + 'Thank you for your business.\n\n'
-      + 'TechCross Repair Centre',
+    subject: 'Your VAT Invoice ' + invoice.invoiceNumber + ' — ' + storeName,
+    text: textBody,
+    html: htmlBody,
     attachments: [{
       filename: invoice.invoiceNumber + '.pdf',
       content: pdfBuffer,
