@@ -270,6 +270,8 @@ router.post('/:transactionId/generate', async (req, res) => {
         quantity: item.quantity,
         unitPrice: price,
         vatType: isMargin ? 'margin' : (item.vatRate === 0.135 ? 'reduced' : 'standard'),
+        vatRate: isMargin ? 0 : (item.vatRate || 0.23),
+        vatAmount: isMargin ? 0 : (item.vatAmount || 0),
         lineTotal: item.subtotal
       };
     });

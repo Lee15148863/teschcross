@@ -50,10 +50,16 @@ function formatDate(d) {
   return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function vatLabel(vatType, vatRate) {
+  if (vatType === 'margin') return 'Margin Scheme';
+  if (vatType === 'reduced') return '13.5%';
+  return '23%';
+}
+
 // ─── Draw helpers ───────────────────────────────────────────────────────
-function hr(doc, y, color) {
+function hr(doc, y) {
   doc.lineWidth(1);
-  doc.strokeColor(color || BORDER);
+  doc.strokeColor(BORDER);
   doc.moveTo(MARGIN, y).lineTo(PAGE_WIDTH - MARGIN, y).stroke();
 }
 
@@ -101,8 +107,8 @@ function drawProInvoiceInfoWithBillTo(doc, invoice, startY) {
   let y = startY;
   const rightColX = MARGIN + USABLE_WIDTH / 2;
 
-  // TAX INVOICE title (right side)
-  doc.font('Helvetica-Bold').fontSize(20).fillColor(DARK);
+  // TAX INVOICE title (right side, compact)
+  doc.font('Helvetica-Bold').fontSize(14).fillColor(DARK);
   doc.text('TAX INVOICE', rightColX, y, { align: 'right', width: USABLE_WIDTH / 2 });
 
   // Bill To section (left side)
@@ -152,9 +158,10 @@ function drawProItemsTable(doc, invoice, startY) {
   let y = startY;
 
   const colItem = MARGIN;
-  const colQty = 365;
-  const colPrice = 415;
-  const colTotal = 485;
+  const colQty = 310;
+  const colPrice = 355;
+  const colVat = 410;
+  const colTotal = 475;
   const colEnd = PAGE_WIDTH - MARGIN;
   const rowH = 22;
   const headerH = 26;
@@ -165,7 +172,8 @@ function drawProItemsTable(doc, invoice, startY) {
   doc.font('Helvetica-Bold').fontSize(9).fillColor(DARK);
   doc.text('Item Description', colItem + padding, y + padding + 3, { width: colQty - colItem - padding });
   doc.text('Qty', colQty, y + padding + 3, { width: colPrice - colQty, align: 'center' });
-  doc.text('Unit Price', colPrice, y + padding + 3, { width: colTotal - colPrice, align: 'right' });
+  doc.text('Unit Price', colPrice, y + padding + 3, { width: colVat - colPrice, align: 'right' });
+  doc.text('VAT Rate', colVat, y + padding + 3, { width: colTotal - colVat, align: 'center' });
   doc.text('Line Total', colTotal, y + padding + 3, { width: colEnd - colTotal, align: 'right' });
   y += headerH;
 
@@ -185,7 +193,9 @@ function drawProItemsTable(doc, invoice, startY) {
     });
 
     doc.text(String(item.quantity || 1), colQty, y + padding + 2, { width: colPrice - colQty, align: 'center' });
-    doc.text(euro(item.unitPrice), colPrice, y + padding + 2, { width: colTotal - colPrice, align: 'right' });
+    doc.text(euro(item.unitPrice), colPrice, y + padding + 2, { width: colVat - colPrice, align: 'right' });
+
+    doc.text(vatLabel(item.vatType, item.vatRate), colVat, y + padding + 2, { width: colTotal - colVat, align: 'center' });
 
     doc.font('Helvetica-Bold');
     doc.text(euro(item.lineTotal), colTotal, y + padding + 2, { width: colEnd - colTotal, align: 'right' });
@@ -202,19 +212,43 @@ function drawProItemsTable(doc, invoice, startY) {
 
 function drawProTotal(doc, invoice, startY) {
   let y = startY;
+  const rightEdge = PAGE_WIDTH - MARGIN;
 
-  // Subtle total box
-  doc.rect(PAGE_WIDTH - MARGIN - 180, y, 180, 45).fill(TABLE_HEADER);
+  // ─── VAT Summary (right-aligned) ────────────────────────────────
+  const sw = 230;
+  const sx = rightEdge - sw;
+
+  doc.font('Helvetica').fontSize(10).fillColor(GRAY);
+
+  doc.text('Subtotal (excl. VAT):', sx, y, { width: 135, align: 'left' });
+  doc.text(euro(invoice.subtotalExVat), sx + 135, y, { width: sw - 135, align: 'right' });
+
+  if (invoice.standardVatTotal > 0) {
+    y += 18;
+    doc.text('Standard VAT @ 23%:', sx, y, { width: 135, align: 'left' });
+    doc.text(euro(invoice.standardVatTotal), sx + 135, y, { width: sw - 135, align: 'right' });
+  }
+
+  if (invoice.reducedVatTotal > 0) {
+    y += 18;
+    doc.text('Reduced VAT @ 13.5%:', sx, y, { width: 135, align: 'left' });
+    doc.text(euro(invoice.reducedVatTotal), sx + 135, y, { width: sw - 135, align: 'right' });
+  }
+
+  y += 24;
+
+  // ─── Total box ──────────────────────────────────────────────────
+  doc.rect(rightEdge - 180, y, 180, 45).fill(TABLE_HEADER);
 
   doc.font('Helvetica').fontSize(11).fillColor(GRAY);
-  doc.text('Total Amount Due:', PAGE_WIDTH - MARGIN - 170, y + 12, { align: 'left', width: 100 });
+  doc.text('Total Amount Due:', rightEdge - 170, y + 12, { align: 'left', width: 100 });
 
   doc.font('Helvetica-Bold').fontSize(18).fillColor(DARK);
-  doc.text(euro(invoice.grossTotal), PAGE_WIDTH - MARGIN - 170, y + 22, { align: 'right', width: 160 });
+  doc.text(euro(invoice.grossTotal), rightEdge - 170, y + 22, { align: 'right', width: 160 });
 
   y += 55;
 
-  // Margin Scheme note
+  // ─── Margin Scheme note ─────────────────────────────────────────
   if (invoice.hasMarginItems) {
     doc.font('Helvetica-Oblique').fontSize(9).fillColor(GRAY);
     doc.text(

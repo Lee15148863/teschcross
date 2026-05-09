@@ -48,6 +48,10 @@ const InvoiceSchema = new mongoose.Schema({
     //   'standard' → "23%"
     //   'reduced'  → "13.5%"
     //   'margin'   → "Margin Scheme" (no rate, no amount shown)
+    vatRate:      { type: Number, default: 0 },
+    // Actual rate: 0.23, 0.135, or 0 for margin
+    vatAmount:    { type: Number, default: 0 },
+    // VAT portion of lineTotal (0 for margin items)
     lineTotal:    { type: Number, required: true }
     // Full line total as printed on receipt.
     // For standard/reduced: VAT-inclusive selling price.
