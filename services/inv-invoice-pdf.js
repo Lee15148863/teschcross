@@ -18,7 +18,7 @@ const COMPANY = {
   phone: '046 905 9854',
   mobile: '089 482 5300',
   logoPath: path.join(__dirname, '..', 'logo.png'),
-  logoWidth: 70,
+  logoWidth: 175,
 };
 
 // ─── Layout constants (A4: 595 x 842 pt) ───────────────────────────────
