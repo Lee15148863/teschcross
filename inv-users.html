@@ -34,7 +34,7 @@
         tbody tr:hover{background:#fafafa;}
         .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;}
         .badge-active{background:#e8f5e9;color:#2e7d32;}.badge-inactive{background:#fef2f2;color:#991b1b;}
-        .badge-root{background:#e3f2fd;color:#1565c0;}.badge-staff{background:#f5f5f7;color:#6e6e73;}
+        .badge-root{background:#e3f2fd;color:#1565c0;}.badge-manager{background:#fff3e0;color:#e65100;}.badge-staff{background:#f5f5f7;color:#6e6e73;}
         .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
         .modal-overlay.show{display:flex;}
         .modal{background:#fff;border-radius:18px;padding:32px;max-width:500px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.2);}
@@ -99,7 +99,7 @@
         <div class="form-group"><label>用户名 <span style="color:#ff3b30;">*</span></label><input type="text" id="fUsername" autocomplete="off"></div>
         <div class="form-group"><label>显示名 <span style="color:#ff3b30;">*</span></label><input type="text" id="fDisplayName"></div>
         <div class="form-group" id="passwordGroup"><label>密码 <span style="color:#ff3b30;">*</span></label><input type="password" id="fPassword" autocomplete="new-password"><div class="hint">至少 8 位，必须包含字母和数字</div></div>
-        <div class="form-group"><label>角色 Role</label><select id="fRole" onchange="togglePermissions()"><option value="staff">员工 Staff</option><option value="root">店主 Root</option></select></div>
+        <div class="form-group"><label>角色 Role</label><select id="fRole" onchange="togglePermissions()"><option value="staff">员工 Staff</option><option value="manager">经理 Manager</option><option value="root">店主 Root</option></select></div>
         <div class="form-group" id="permissionsGroup">
             <label>权限 Permissions</label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;" id="permCheckboxes">
@@ -157,8 +157,8 @@ function logout(){Auth.logout();}
 window.logout=logout;
 async function apiFetch(url,opts){opts=opts||{};opts.headers=headers();const r=await fetch(API+url,opts);if(r.status===401){logout();return null;}return r;}
 function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-const roleMap={root:'店主',staff:'员工'};
-const roleBadge={root:'badge-root',staff:'badge-staff'};
+const roleMap={root:'店主',manager:'经理',staff:'员工'};
+const roleBadge={root:'badge-root',manager:'badge-manager',staff:'badge-staff'};
 
 async function loadUsers(){
     try{
