@@ -670,6 +670,7 @@
         .cs-action-btn.cs-whatsapp:active { background: #1da851; }
     </style>
 </head>
+<script src="auth-guard.js"></script>
 <body>
     <!-- Toast -->
     <div class="toast" id="toast"></div>
@@ -1007,14 +1008,12 @@
 <script>
     (function() {
     'use strict';
-    // Auth check
-    const token = localStorage.getItem('inv_token');
-    if (!token) { window.location.href = 'inv-login.html'; return; }
-    // 读取用户角色
-    var isAdmin = false;
-    try { var _u = JSON.parse(localStorage.getItem('inv_user')); if (_u && (_u.role === 'root' || _u.role === 'manager')) isAdmin = true; } catch(e) {}
+    // Auth check (uses auth-guard.js)
+    var token = Auth.getToken();
+    if (!token) { Auth.redirectToLogin(); return; }
+    var isAdmin = Auth.isRoot() || Auth.isManager();
     const API_BASE = '/api/inv';
-    const headers = () => ({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token });
+    const headers = function() { return Auth.getHeaders(); };
 
     // State
     let cart = [];
