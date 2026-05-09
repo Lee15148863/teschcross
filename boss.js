@@ -23,11 +23,13 @@ async function api(path, options = {}) {
   if (!token) { Auth.logout(); throw new Error(__('err.noToken')); }
 
   const headers = { 'Authorization': 'Bearer ' + token };
-  if (options.body && typeof options.body === 'object') {
+  let body = options.body;
+  if (body && typeof body === 'object') {
     headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(body);
   }
 
-  const res = await fetch(path, { ...options, headers });
+  const res = await fetch(path, { ...options, body, headers });
   if (res.status === 401 || res.status === 403) {
     showToast(__('err.sessionExpired'));
     Auth.logout();
