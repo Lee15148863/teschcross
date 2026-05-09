@@ -1250,9 +1250,10 @@
 
     // Add to cart
     window._addToCart = async function(productId) {
-      // If previous transaction is complete, auto-start new transaction first
-      if (_transactionComplete) {
-        startNewTransaction();
+      // Block adding items while checkout success overlay is visible
+      if (document.getElementById('checkoutSuccessOverlay')) {
+        showToast(lang === 'zh' ? '请先点击 Done 完成当前交易' : 'Please click Done to finish current transaction first', 'warning');
+        return;
       }
       try {
         var res = await apiFetch('/products/' + productId);
