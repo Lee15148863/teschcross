@@ -6,6 +6,8 @@
  */
 
 const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const path = require('path');
 
 // ─── Company Info ──────────────────────────────────────────────────────
 const COMPANY = {
@@ -15,6 +17,8 @@ const COMPANY = {
   address2: 'Kennedy Road, Navan, Co. Meath, C15 F658',
   phone: '046 905 9854',
   mobile: '089 482 5300',
+  logoPath: path.join(__dirname, '..', 'logo.png'),
+  logoWidth: 70,
 };
 
 // ─── Layout constants (A4: 595 x 842 pt) ───────────────────────────────
@@ -73,6 +77,14 @@ function drawHeader(doc) {
   // TAX INVOICE title (ONLY ONE)
   doc.font('Helvetica-Bold').fontSize(16).fillColor(DARK);
   doc.text('TAX INVOICE', MARGIN, y);
+
+  // Logo (right side, aligned with title)
+  try {
+    if (fs.existsSync(COMPANY.logoPath)) {
+      doc.image(COMPANY.logoPath, RIGHT_EDGE - COMPANY.logoWidth, y - 4, { width: COMPANY.logoWidth });
+    }
+  } catch (e) { /* skip logo */ }
+
   y += 28;
 
   // Company address block
