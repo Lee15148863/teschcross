@@ -7,12 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         body { background: #f5f5f7; }
-        .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-        .login-box { background: #fff; border-radius: 24px; padding: 48px; max-width: 400px; width: 100%; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1); }
-        .login-box h1 { font-size: 32px; margin-bottom: 8px; }
-        .login-form input { width: 100%; padding: 14px 16px; border: 1px solid #d2d2d7; border-radius: 12px; font-size: 17px; margin-bottom: 16px; }
-        .login-error { background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none; }
-        .login-error.show { display: block; }
+        
         .admin-container { max-width: 1400px; margin: 0 auto; padding: 120px 22px 80px; display: none; }
         .admin-container.show { display: block; }
         .admin-header { margin-bottom: 40px; }
@@ -48,20 +43,6 @@
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div class="login-container" id="loginContainer">
-        <div class="login-box">
-            <h1>Apple Admin</h1>
-            <p style="color: #6e6e73;">Manage iPhone & iPad pricing</p>
-            <form class="login-form" id="loginForm">
-                <input type="text" id="usernameInput" placeholder="Username" required autofocus>
-                <input type="password" id="passwordInput" placeholder="Password" required>
-                <div class="login-error" id="loginError">Incorrect credentials</div>
-                <button type="submit" class="btn-save" style="width: 100%;">Login</button>
-            </form>
-        </div>
-    </div>
-
     <!-- Admin Panel -->
     <nav class="nav" id="adminNav" style="display: none;">
         <div class="nav-content">
@@ -150,8 +131,6 @@
     <script src="/api-client.js"></script>
     <script src="pricing-data-apple.js"></script>
     <script>
-        const DEFAULT_USERNAME = '';
-        const DEFAULT_PASSWORD = '';
         // Auth: inventory admin only.
         if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; return; }
 
@@ -166,7 +145,6 @@
         });
 
         async function showAppleAdmin() {
-            document.getElementById('loginContainer').style.display = 'none';
             document.getElementById('adminNav').style.display = 'block';
             document.getElementById('adminContainer').classList.add('show');
             await pricingDataReady;
@@ -175,18 +153,7 @@
 
         showAppleAdmin();
 
-        // Login
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('usernameInput').value;
-            const password = document.getElementById('passwordInput').value;
-            
-            if (username === DEFAULT_USERNAME && password === DEFAULT_PASSWORD) {
-                await showAppleAdmin();
-            } else {
-                document.getElementById('loginError').classList.add('show');
-            }
-        });
+
 
         // Logout
         function logout() {
