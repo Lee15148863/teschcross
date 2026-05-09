@@ -50,10 +50,14 @@ function formatDate(d) {
   return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function vatLabel(vatType, vatRate) {
-  if (vatType === 'margin') return 'Margin Scheme';
-  if (vatType === 'reduced') return '13.5%';
+function vatLabel(vatType) {
+  if (vatType === 'margin') return 'Margin Scheme (Second-hand Goods)';
+  if (vatType === 'service' || vatType === 'reduced') return '13.5%';
   return '23%';
+}
+
+function isMarginItem(item) {
+  return item.vatType === 'margin';
 }
 
 // ─── Draw helpers ───────────────────────────────────────────────────────
@@ -107,9 +111,9 @@ function drawProInvoiceInfoWithBillTo(doc, invoice, startY) {
   let y = startY;
   const rightColX = MARGIN + USABLE_WIDTH / 2;
 
-  // TAX INVOICE title (right side, compact)
+  // TAX INVOICE title (right side)
   doc.font('Helvetica-Bold').fontSize(14).fillColor(DARK);
-  doc.text('TAX INVOICE', rightColX, y, { align: 'right', width: USABLE_WIDTH / 2 });
+  doc.text('TAX INVOICE', PAGE_WIDTH - MARGIN - 200, y, { align: 'right', width: 200 });
 
   // Bill To section (left side)
   doc.font('Helvetica-Bold').fontSize(11).fillColor(DARK);
@@ -173,7 +177,7 @@ function drawProItemsTable(doc, invoice, startY) {
   doc.text('Item Description', colItem + padding, y + padding + 3, { width: colQty - colItem - padding });
   doc.text('Qty', colQty, y + padding + 3, { width: colPrice - colQty, align: 'center' });
   doc.text('Unit Price', colPrice, y + padding + 3, { width: colVat - colPrice, align: 'right' });
-  doc.text('VAT Rate', colVat, y + padding + 3, { width: colTotal - colVat, align: 'center' });
+  doc.text('VAT', colVat, y + padding + 3, { width: colTotal - colVat, align: 'center' });
   doc.text('Line Total', colTotal, y + padding + 3, { width: colEnd - colTotal, align: 'right' });
   y += headerH;
 
@@ -195,7 +199,12 @@ function drawProItemsTable(doc, invoice, startY) {
     doc.text(String(item.quantity || 1), colQty, y + padding + 2, { width: colPrice - colQty, align: 'center' });
     doc.text(euro(item.unitPrice), colPrice, y + padding + 2, { width: colVat - colPrice, align: 'right' });
 
-    doc.text(vatLabel(item.vatType, item.vatRate), colVat, y + padding + 2, { width: colTotal - colVat, align: 'center' });
+    if (isMarginItem(item)) {
+      doc.font('Helvetica-Oblique').fontSize(8).fillColor(LIGHT);
+    } else {
+      doc.font('Helvetica').fontSize(9).fillColor(DARK);
+    }
+    doc.text(vatLabel(item.vatType), colVat, y + padding + 2, { width: colTotal - colVat, align: 'center' });
 
     doc.font('Helvetica-Bold');
     doc.text(euro(item.lineTotal), colTotal, y + padding + 2, { width: colEnd - colTotal, align: 'right' });
@@ -220,7 +229,7 @@ function drawProTotal(doc, invoice, startY) {
 
   doc.font('Helvetica').fontSize(10).fillColor(GRAY);
 
-  doc.text('Subtotal (excl. VAT):', sx, y, { width: 135, align: 'left' });
+  doc.text('Subtotal:', sx, y, { width: 135, align: 'left' });
   doc.text(euro(invoice.subtotalExVat), sx + 135, y, { width: sw - 135, align: 'right' });
 
   if (invoice.standardVatTotal > 0) {
@@ -252,10 +261,15 @@ function drawProTotal(doc, invoice, startY) {
   if (invoice.hasMarginItems) {
     doc.font('Helvetica-Oblique').fontSize(9).fillColor(GRAY);
     doc.text(
-      'Margin Scheme applied – VAT is accounted for under Irish second-hand goods margin scheme.',
+      'Margin Scheme – Second-hand Goods',
       MARGIN, y, { align: 'left', width: USABLE_WIDTH }
     );
-    y += 30;
+    y += 13;
+    doc.text(
+      'VAT is not separately disclosed under Irish VAT Margin Scheme legislation.',
+      MARGIN, y, { align: 'left', width: USABLE_WIDTH }
+    );
+    y += 22;
   }
 
   return y;
