@@ -223,28 +223,31 @@ function drawProTotal(doc, invoice, startY) {
   let y = startY;
   const rightEdge = PAGE_WIDTH - MARGIN;
 
-  // ─── VAT Summary (right-aligned) ────────────────────────────────
-  const sw = 230;
-  const sx = rightEdge - sw;
+  // ─── VAT Summary (right-aligned, only for standard/service items) ─
+  const hasVatItems = (invoice.standardVatTotal || 0) > 0 || (invoice.reducedVatTotal || 0) > 0;
+  if (hasVatItems) {
+    const sw = 230;
+    const sx = rightEdge - sw;
 
-  doc.font('Helvetica').fontSize(10).fillColor(GRAY);
+    doc.font('Helvetica').fontSize(10).fillColor(GRAY);
 
-  doc.text('Subtotal:', sx, y, { width: 135, align: 'left' });
-  doc.text(euro(invoice.subtotalExVat), sx + 135, y, { width: sw - 135, align: 'right' });
+    doc.text('Subtotal:', sx, y, { width: 135, align: 'left' });
+    doc.text(euro(invoice.subtotalExVat), sx + 135, y, { width: sw - 135, align: 'right' });
 
-  if (invoice.standardVatTotal > 0) {
-    y += 18;
-    doc.text('Standard VAT @ 23%:', sx, y, { width: 135, align: 'left' });
-    doc.text(euro(invoice.standardVatTotal), sx + 135, y, { width: sw - 135, align: 'right' });
+    if (invoice.standardVatTotal > 0) {
+      y += 18;
+      doc.text('Standard VAT @ 23%:', sx, y, { width: 135, align: 'left' });
+      doc.text(euro(invoice.standardVatTotal), sx + 135, y, { width: sw - 135, align: 'right' });
+    }
+
+    if (invoice.reducedVatTotal > 0) {
+      y += 18;
+      doc.text('Reduced VAT @ 13.5%:', sx, y, { width: 135, align: 'left' });
+      doc.text(euro(invoice.reducedVatTotal), sx + 135, y, { width: sw - 135, align: 'right' });
+    }
+
+    y += 24;
   }
-
-  if (invoice.reducedVatTotal > 0) {
-    y += 18;
-    doc.text('Reduced VAT @ 13.5%:', sx, y, { width: 135, align: 'left' });
-    doc.text(euro(invoice.reducedVatTotal), sx + 135, y, { width: sw - 135, align: 'right' });
-  }
-
-  y += 24;
 
   // ─── Total box ──────────────────────────────────────────────────
   doc.rect(rightEdge - 180, y, 180, 45).fill(TABLE_HEADER);
