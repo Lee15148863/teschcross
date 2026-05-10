@@ -179,6 +179,7 @@
     recents: getRecentNumbers(),
     isLoading: false,
     activeTab: 'search',     // 'search' | 'templates' | 'settings'
+    noCustomerMatch: false,   // true when search found no matching customer
   };
 
   // ─── Main Render ───────────────────────────────────────────────────────
@@ -220,7 +221,7 @@
     el.innerHTML =
       '<div class="wc-search-section"' + (hasCustomer ? ' style="display:none"' : '') + '>' +
         '<div class="wc-search-bar">' +
-          '<input type="tel" id="wcSearchInput" class="wc-input wc-input-search" placeholder="Search name or phone... / 搜索姓名或电话" autofocus>' +
+          '<input type="tel" id="wcSearchInput" class="wc-input wc-input-search" placeholder="Name or phone to send... / 输入姓名或电话发送" autofocus>' +
           '<button class="wc-btn wc-btn-search" onclick="window.WC.doSearch()">🔍</button>' +
         '</div>' +
         '<div id="wcRecentsSection" class="wc-recents"></div>' +
@@ -242,13 +243,14 @@
             '<button class="wc-btn wc-btn-sm" onclick="window.WC.addNote()">+ Add</button>' +
           '</div>' +
         '</div>' +
+        (state.noCustomerMatch ? '<div class="wc-no-customer-notice">ℹ️ No saved customer found. You can still send a WhatsApp message. / 未找到客户记录，仍可发送消息。</div>' : '') +
         '<div class="wc-compose-section">' +
           '<div class="wc-section-label">💬 Message / 消息</div>' +
           '<div class="wc-templates-bar" id="wcTemplatesBar"></div>' +
           '<textarea id="wcMessageText" class="wc-input wc-textarea-msg" placeholder="Type your message... / 输入消息..." rows="4"></textarea>' +
           '<div class="wc-phone-row">' +
             '<input type="tel" id="wcSendPhone" class="wc-input wc-input-phone" placeholder="Phone / 电话" value="' + esc(state.currentCustomer ? state.currentCustomer.contact : '') + '">' +
-            '<button class="wc-btn wc-btn-send" onclick="window.WC.sendMessage()">📤 Send</button>' +
+            '<button class="wc-btn wc-btn-send" onclick="window.WC.sendMessage()">📱 Send WhatsApp</button>' +
           '</div>' +
           '<div class="wc-phone-hint" id="wcPhoneHint"></div>' +
         '</div>' +
@@ -471,6 +473,7 @@
     state.activeTab = tab;
     // Clear customer when switching away from search
     if (tab !== 'search') state.currentCustomer = null;
+    state.noCustomerMatch = false;
     render();
   }
 
@@ -486,19 +489,75 @@
     var resultsEl = document.getElementById('wcResultsSection');
     if (resultsEl) resultsEl.innerHTML = '<div class="wc-empty">Searching... / 搜索中...</div>';
 
+    var digits = q.replace(/\D/g, '');
+    var hasPhone = digits.length >= 7;
+
     searchCustomers(q).then(function (results) {
       state.searchResults = results;
-      renderResults(results);
+
+      if (results && results.length > 0) {
+        renderResults(results);
+        // If input looks like a phone, also offer "send without selecting"
+        if (hasPhone) {
+          addContinueOption(q);
+        }
+      } else if (hasPhone) {
+        // Phone input, no customer found → go directly to compose
+        openComposeForPhone(q);
+      } else {
+        if (resultsEl) resultsEl.innerHTML = '<div class="wc-empty">No customers found / 未找到客户</div>';
+      }
     }).catch(function () {
-      if (resultsEl) resultsEl.innerHTML = '<div class="wc-empty wc-error">Search failed / 搜索失败</div>';
+      // On error, if phone-like, still allow sending
+      if (hasPhone) {
+        openComposeForPhone(q);
+      } else if (resultsEl) {
+        resultsEl.innerHTML = '<div class="wc-empty wc-error">Search failed / 搜索失败</div>';
+      }
     }).finally(function () {
       state.isLoading = false;
+    });
+  }
+
+  function addContinueOption(rawInput) {
+    var resultsEl = document.getElementById('wcResultsSection');
+    if (!resultsEl) return;
+    var cleanPhone = rawInput.replace(/[\s\(\)\-]/g, '');
+    resultsEl.innerHTML +=
+      '<button class="wc-result-item" onclick="window.WC.continueWithoutCustomer(\'' + esc(cleanPhone) + '\')" style="border:2px dashed #34c759;text-align:center;color:#34c759;font-weight:600;">📱 Send to ' + esc(cleanPhone) + ' (no customer record)</button>';
+  }
+
+  function openComposeForPhone(rawInput) {
+    var cleanPhone = rawInput.replace(/[\s\(\)\-]/g, '');
+    state.currentCustomer = { contact: cleanPhone, name: '', source: 'manual' };
+    state.selectedTemplateId = null;
+    state.noCustomerMatch = true;
+    getNotes(cleanPhone).then(function (notes) {
+      state.currentNotes = notes;
+      render();
+    }).catch(function () {
+      state.currentNotes = { phone: cleanPhone, name: '', notes: [] };
+      render();
+    });
+  }
+
+  function continueWithoutCustomer(phone) {
+    state.currentCustomer = { contact: phone, name: '', source: 'manual' };
+    state.selectedTemplateId = null;
+    state.noCustomerMatch = true;
+    getNotes(phone).then(function (notes) {
+      state.currentNotes = notes;
+      render();
+    }).catch(function () {
+      state.currentNotes = { phone: phone, name: '', notes: [] };
+      render();
     });
   }
 
   function selectCustomer(contact, name, source) {
     state.currentCustomer = { contact: contact, name: name || '', source: source || 'manual' };
     state.selectedTemplateId = null;
+    state.noCustomerMatch = false;
 
     // Load notes
     getNotes(contact).then(function (notes) {
@@ -523,6 +582,7 @@
     state.currentCustomer = null;
     state.currentNotes = null;
     state.selectedTemplateId = null;
+    state.noCustomerMatch = false;
     render();
     setTimeout(function () {
       var input = document.getElementById('wcSearchInput');
@@ -686,6 +746,7 @@
     onTemplateEdit: onTemplateEdit,
     resetSingleTemplate: resetSingleTemplate,
     resetAllTemplates: resetAllTemplates,
+    continueWithoutCustomer: continueWithoutCustomer,
     clearLocalData: clearLocalData,
     goBack: goBack,
     init: init,
