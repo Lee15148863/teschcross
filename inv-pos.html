@@ -764,6 +764,7 @@
                 <button class="pos-action-btn" id="btnOpenDiscount">🏷️ <span id="scDiscount">Discount</span></button>
                 <button class="pos-action-btn" id="btnOpenOrders">📋 <span id="scOrderSearch">Orders</span></button>
                 <button class="pos-action-btn" id="btnClearAction">🧹 <span id="scClear">Clear</span></button>
+                <button class="pos-action-btn" id="btnOpenWhatsAppCenter">💬 <span id="scWhatsApp">WhatsApp</span></button>
                 <div class="action-bar-spacer"></div>
                 <button class="pos-action-btn pos-action-sm" id="btnNavUp">⬆</button>
                 <button class="pos-action-btn pos-action-sm" id="btnNavDown">⬇</button>
@@ -1035,7 +1036,7 @@
         lblSubtotal: '小计:', lblDiscount: '折扣:', lblTotal: '总计',
         lblCardAmount: '💳 卡:', lblCashAmount: '💵 现金:',
         scSearch: '搜索', scDiscount: 'F1 折扣', scPayment: '卡/现金', scReprint: '重打小票',
-        scCheckout: 'F4 结账', scClear: '清空', scRemove: '移除', scNav: '导航',
+        scCheckout: 'F4 结账', scClear: '清空', scWhatsApp: 'WhatsApp', scRemove: '移除', scNav: '导航',
         scPrint: '打印小票', scNavUp: '上移', scNavDown: '下移', sidebarTitle: '操作', scOrderSearch: '查单', scRefund: '退款',
         confirmClearTitle: '确认清空', confirmClearMsg: '确定要清空购物车吗？', confirmCancel: '取消', confirmOk: '确定',
         dmTitle: '应用折扣', dmItemLabel: '单品折扣（选中商品）', dmOrderLabel: '整单折扣',
@@ -1053,7 +1054,7 @@
         lblSubtotal: 'Subtotal:', lblDiscount: 'Discount:', lblTotal: 'Total',
         lblCardAmount: '💳 Card:', lblCashAmount: '💵 Cash:',
         scSearch: 'Search', scDiscount: 'F1 Discount', scPayment: 'Card/Cash', scReprint: 'Reprint',
-        scCheckout: 'F4 Checkout', scClear: 'Clear', scRemove: 'Remove', scNav: 'Navigate',
+        scCheckout: 'F4 Checkout', scClear: 'Clear', scWhatsApp: 'WhatsApp', scRemove: 'Remove', scNav: 'Navigate',
         scPrint: 'Print Receipt', scNavUp: 'Up', scNavDown: 'Down', sidebarTitle: 'Actions', scOrderSearch: 'Orders', scRefund: 'Refund',
         confirmClearTitle: 'Confirm Clear', confirmClearMsg: 'Clear all items from cart?', confirmCancel: 'Cancel', confirmOk: 'Confirm',
         dmTitle: 'Apply Discount', dmItemLabel: 'Item Discount (selected)', dmOrderLabel: 'Order Discount',
@@ -1069,7 +1070,7 @@
 
     function updateLang() {
       document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thDisc','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','scOrderSearch','scRefund','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin','qaLblVat'].forEach(function(id) {
+      ['posTitle','cartTitle','clearCartText','emptyCartText','checkoutText','thProduct','thPrice','thDisc','thQty','thTax','thSubtotal','lblSubtotal','lblDiscount','lblTotal','lblCardAmount','lblCashAmount','scSearch','scDiscount','scPayment','scReprint','scCheckout','scClear','scWhatsApp','scRemove','scPrint','scNavUp','scNavDown','sidebarTitle','scOrderSearch','scRefund','dmTitle','dmItemLabel','dmOrderLabel','lblStdVat','lblMarginVat','quickAddText','qaTitle','qaBtnSave','qaBtnCancel','qaLblName','qaLblSku','qaLblCat','qaLblCost','qaLblPrice','qaLblQty','qaLblSH','qaLblSource','qaLblMargin','qaLblVat'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.innerHTML = t(id);
       });
@@ -1104,6 +1105,9 @@
       window.open('/inv-transactions.html?date=' + today, '_blank');
     });
     document.getElementById('btnClearAction').addEventListener('click', function() { clearCartAction(); });
+    document.getElementById('btnOpenWhatsAppCenter').addEventListener('click', function() {
+      window.open('/whatsapp-center.html', '_blank');
+    });
     document.getElementById('btnNavUp').addEventListener('click', function() { window._navCart(-1); });
     document.getElementById('btnNavDown').addEventListener('click', function() { window._navCart(1); });
     document.getElementById('btnRemoveSelected').addEventListener('click', function() { window._removeSelectedItem(); });
