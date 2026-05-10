@@ -141,6 +141,8 @@
                 menuHtml += '<a href="' + m.href + '" class="menu-item"><span class="icon">' + m.icon + '</span><div>' + m.label + '<div class="desc">' + m.desc + '</div></div></a>';
             }
         });
+        // Always show WhatsApp Center (communication tool for all staff)
+        menuHtml += '<a href="/whatsapp-center.html" class="menu-item"><span class="icon">💬</span><div>WhatsApp Center<div class="desc">Send messages, manage customers / 发送消息</div></div></a>';
         if (!menuHtml) menuHtml = '<p style="color:#86868b;text-align:center;padding:20px;">No permissions assigned. Contact admin.</p>';
         document.getElementById('menuInv').innerHTML = menuHtml;
     }

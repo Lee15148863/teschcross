@@ -126,6 +126,21 @@
     </div>
 </div>
 
+<!-- WhatsApp Modal -->
+<div class="modal-overlay" id="whatsAppModal">
+    <div class="modal" style="max-width:380px;">
+        <h3>📱 Send Invoice via WhatsApp</h3>
+        <p style="font-size:14px;color:#6e6e73;margin-bottom:16px;" id="waCustomerName"></p>
+        <input id="waPhoneInput" type="tel" placeholder="0870908555" style="width:100%;padding:14px 16px;border:1.5px solid #d2d2d7;border-radius:12px;font-size:18px;margin-bottom:8px;">
+        <p id="waPhoneHint" style="font-size:12px;color:#34c759;min-height:18px;"></p>
+        <p style="font-size:12px;color:#86868b;margin-bottom:16px;">Irish mobile: <strong>0870908555</strong> → <strong>+353870908555</strong></p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeInvoiceWhatsApp()">Cancel</button>
+            <button class="btn btn-primary" onclick="sendInvoiceWhatsApp()" id="waSendBtn" style="background:#25D366;">📤 Send</button>
+        </div>
+    </div>
+</div>
+
 <script src="auth-guard.js"></script>
 <script>
 (function(){
@@ -226,6 +241,16 @@ async function loadInvoices(){
             emailBtn.textContent = '📧 发送';
             emailBtn.onclick = () => sendEmail(inv._id);
             td7.appendChild(emailBtn);
+
+            td7.appendChild(document.createTextNode(' '));
+
+            // WhatsApp button
+            const waBtn = document.createElement('button');
+            waBtn.className = 'btn btn-secondary btn-sm';
+            waBtn.textContent = '📱';
+            waBtn.title = 'Send via WhatsApp';
+            waBtn.onclick = () => showInvoiceWhatsApp(inv._id, inv.customerName || '', inv.invoiceNumber || '', inv.grossTotal || 0);
+            td7.appendChild(waBtn);
 
             tr.appendChild(td7);
             tb.appendChild(tr);
@@ -343,6 +368,67 @@ async function generateInvoice(){
     }catch(e){showToast('生成失败','error');}
 }
 window.generateInvoice=generateInvoice;
+
+// ─── Invoice WhatsApp ──────────────────────────────────────────────────
+var _waInvoiceId = null;
+var _waInvoiceData = null;
+
+window.showInvoiceWhatsApp = function(invId, customerName, invoiceNumber, grossTotal) {
+    _waInvoiceId = invId;
+    _waInvoiceData = { invoiceNumber: invoiceNumber, grossTotal: grossTotal, customerName: customerName || '' };
+    document.getElementById('waCustomerName').textContent = customerName ? 'Customer: ' + customerName : '';
+    document.getElementById('waPhoneInput').value = '';
+    document.getElementById('waPhoneHint').textContent = '';
+    document.getElementById('whatsAppModal').classList.add('show');
+    setTimeout(function() { document.getElementById('waPhoneInput').focus(); }, 100);
+};
+
+window.closeInvoiceWhatsApp = function() {
+    document.getElementById('whatsAppModal').classList.remove('show');
+    _waInvoiceId = null;
+};
+
+window.sendInvoiceWhatsApp = async function() {
+    var phone = document.getElementById('waPhoneInput').value.trim();
+    if (!phone) { showToast('Enter a phone number', 'error'); return; }
+
+    // Normalize phone
+    if (/^08\d{8}$/.test(phone)) {
+        phone = '+353' + phone.slice(1);
+    } else if (/^\d+$/.test(phone) && !phone.startsWith('+')) {
+        phone = phone.startsWith('8') ? '+353' + phone : '+353' + phone;
+    } else if (!phone.startsWith('+') && !phone.startsWith('00') && !phone.startsWith('*')) {
+        phone = '+353' + phone;
+    }
+
+    document.getElementById('waPhoneHint').textContent = 'Sending to: ' + phone;
+    document.getElementById('waSendBtn').disabled = true;
+
+    try {
+        // Use invoice data from list (no server fetch, no share tokens)
+        var invData = _waInvoiceData || {};
+        var text = 'TechCross Repair Centre\n';
+        text += 'VAT Invoice #' + (invData.invoiceNumber || '') + '\n';
+        text += 'Total: €' + Number(invData.grossTotal || 0).toFixed(2) + '\n';
+        if (invData.customerName) text += 'Customer: ' + invData.customerName + '\n';
+        text += '\nThank you for your business!\n';
+        text += 'TechCross Repair Centre\n046 905 9854';
+
+        // Build wa.me URL directly — NO share tokens, NO hosted links
+        var waNumber = phone.replace('+', '').replace(/^00/, '');
+        var waUrl = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(text);
+        window.open(waUrl, '_blank');
+        showToast('✅ WhatsApp opened', 'success');
+        closeInvoiceWhatsApp();
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
+    document.getElementById('waSendBtn').disabled = false;
+};
+
+// Close WhatsApp modal on overlay click
+document.addEventListener('click', function(e) {
+    var modal = document.getElementById('whatsAppModal');
+    if (modal && e.target === modal) closeInvoiceWhatsApp();
+});
 
 loadInvoices();
 })();

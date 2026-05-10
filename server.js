@@ -88,6 +88,7 @@ app.use('/api/inv/root', require('./api/inv/root'));
 app.use('/api/inv/export', require('./api/inv/export'));
 app.use('/api/inv/root/export', require('./api/inv/root-export'));
 app.use('/api/inv/delivery', require('./api/inv/delivery'));
+app.use('/api/inv/whatsapp', require('./api/inv/whatsapp'));
 
 // ─── Public share routes (MUST be before the catch-all) ────────────────────
 app.use('/share', require('./api/inv/share-public'));
