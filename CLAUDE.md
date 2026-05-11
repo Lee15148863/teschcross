@@ -176,6 +176,16 @@ npx http-server -p 8000
 - **Inventory**: reference only — never blocks a sale, stock can go negative
 - **Devices**: immutable assets — buy → pending → tested → sold lifecycle, never deleted
 
+## Hidden Boss Account
+
+- **Lee087** is the hidden super-admin (boss) account — invisible in the user list, undeletable, undisableable
+- Defined in `models/inv/User.js` via `SYSTEM_ROOTS` and enforced by the `boss: true` field
+- `boss: true` is automatically set in the pre-save hook for SYSTEM_ROOTS usernames
+- The user listing API (`GET /api/inv/auth/users`) filters out `{ boss: { $ne: true } }`
+- DELETE and DISABLE endpoints reject operations on boss accounts
+- Bootstrap script (`scripts/bootstrap-users.js`) creates Lee087 with `boss: true`
+- Only one boss account exists — hard-coded as `['Lee087']` in the model
+
 ## Critical Constraints
 
 - NEVER modify VAT logic, invoice calculations, financial workflows, or accounting structure without **triple confirmation** (see DEPLOYMENT_SAFETY_RULES.md)
