@@ -383,7 +383,8 @@
     var html = '';
     templates.forEach(function (t) {
       var active = state.selectedTemplateId === t.id;
-      html += '<button class="wc-tpl-chip' + (active ? ' active' : '') + '" onclick="window.WC.selectTemplate(\'' + t.id + '\')">' + esc(t.label) + '</button>';
+      // Store full text as data attribute so selectTemplate reads it from DOM directly
+      html += '<button class="wc-tpl-chip' + (active ? ' active' : '') + '" data-id="' + esc(t.id) + '" data-text="' + esc(t.text) + '" onclick="window.WC.selectTemplate(\'' + t.id + '\')">' + esc(t.label) + '</button>';
     });
     el.innerHTML = html;
   }
@@ -592,15 +593,18 @@
 
   function selectTemplate(id) {
     state.selectedTemplateId = id;
-    var template = state.templates.find(function (t) { return t.id === id; });
-    if (template) {
+    // Read text from the button's data-text attribute (most reliable)
+    var chip = document.querySelector('.wc-tpl-chip[data-id="' + id + '"]');
+    if (chip && chip.dataset.text) {
       var name = state.currentCustomer ? state.currentCustomer.name : '';
-      fillTemplate(template, name);
+      var msg = chip.dataset.text.replace(/\[name\]/g, name || 'Customer');
+      var textarea = document.getElementById('wcMessageText');
+      if (textarea) textarea.value = msg;
     }
-    // Update template bar styling
+    // Update template bar styling using data-id
     var chips = document.querySelectorAll('.wc-tpl-chip');
     chips.forEach(function (c) {
-      c.classList.toggle('active', c.getAttribute('onclick') === "window.WC.selectTemplate('" + id + "')");
+      c.classList.toggle('active', c.dataset.id === id);
     });
   }
 
