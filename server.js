@@ -74,6 +74,7 @@ mongoose.connect(process.env.DBCon, { dbName: 'techcross' })
         app.use('/api/pricing', require('./api/pricing'));
         app.use('/api/brands', require('./api/brands'));
         app.use('/api/reviews', require('./api/reviews'));
+        app.use('/api/banner', require('./api/banner'));
 
         // Inventory & Till system routes
         app.use('/api/inv/auth', require('./api/inv/auth'));
