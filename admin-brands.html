@@ -47,9 +47,10 @@ body { background: #f5f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Seg
 .pricing-table { overflow-x: auto; background: #fff; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,.06); }
 .pricing-table table { width: 100%; border-collapse: collapse; min-width: 600px; }
 .pricing-table th { background: #f5f5f7; padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: .3px; border-bottom: 1px solid #e5e5ea; white-space: nowrap; }
+.pricing-table th:first-child { position: sticky; left: 0; z-index: 3; background: #f5f5f7; }
 .pricing-table td { padding: 8px 14px; border-bottom: 1px solid #f0f0f5; font-size: 13px; vertical-align: middle; }
 .pricing-table tr:last-child td { border-bottom: none; }
-.pricing-table .td-name { font-weight: 600; cursor: pointer; min-width: 180px; }
+.pricing-table .td-name { position: sticky; left: 0; z-index: 2; background: #fff; font-weight: 600; cursor: pointer; min-width: 180px; box-shadow: 2px 0 6px rgba(0,0,0,.06); }
 .pricing-table .td-name:hover { color: #0071e3; }
 .pricing-table input[type="number"] { width: 72px; padding: 6px 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px; text-align: right; }
 .pricing-table input[type="number"]:focus { outline: none; border-color: #0071e3; box-shadow: 0 0 0 2px rgba(0,113,227,.15); }
