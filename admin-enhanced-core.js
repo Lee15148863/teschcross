@@ -42,7 +42,16 @@ class EnhancedAdmin {
                 return true;
             }
         } catch(e) {
-            console.warn('API save failed', e);
+            console.warn('API save failed, trying fallback', e);
+        }
+        // Fallback to saveDataFunc (e.g. localStorage)
+        try {
+            if (typeof this.saveDataFunc === 'function') {
+                this.saveDataFunc(this.pricingData);
+                return true;
+            }
+        } catch(e) {
+            console.warn('Save fallback failed', e);
         }
         return false;
     }
@@ -472,11 +481,13 @@ class EnhancedAdmin {
 
     // Modal functions
     showModal(modalId) {
-        document.getElementById(modalId).classList.add('show');
+        const el = document.getElementById(modalId);
+        if (el) el.classList.add('show');
     }
 
     closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('show');
+        const el = document.getElementById(modalId);
+        if (el) el.classList.remove('show');
     }
 }
 

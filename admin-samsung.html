@@ -150,21 +150,21 @@
 
         admin.init();
 
-        function addModel() {
+        async function addModel() {
             const id = document.getElementById('newModelId').value.trim();
             const name = document.getElementById('newModelName').value.trim();
-            if (admin.addNewModel(id, name)) {
+            if (await admin.addNewModel(id, name)) {
                 admin.closeModal('addModelModal');
                 document.getElementById('newModelId').value = '';
                 document.getElementById('newModelName').value = '';
             }
         }
 
-        function addService() {
+        async function addService() {
             const id = document.getElementById('newServiceId').value.trim();
             const name = document.getElementById('newServiceName').value.trim();
             const desc = document.getElementById('newServiceDesc').value.trim();
-            if (admin.addNewService(id, name, desc)) {
+            if (await admin.addNewService(id, name, desc)) {
                 admin.closeModal('addServiceModal');
                 document.getElementById('newServiceId').value = '';
                 document.getElementById('newServiceName').value = '';
