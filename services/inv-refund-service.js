@@ -22,6 +22,7 @@ const AuditLog = require('../models/inv/AuditLog');
 const { generateReceiptNumber } = require('../utils/inv-receipt-number');
 const { authorize, SOURCES } = require('../utils/inv-integrity-layer');
 const { requireSystemActive } = require('../utils/inv-system-lock');
+const { encryptData } = require('../utils/inv-crypto');
 
 /**
  * @typedef {Object} RefundInput
@@ -305,7 +306,7 @@ async function processRefund(input) {
         operator,
         targetType: 'refund',
         targetId: transaction._id.toString(),
-        encryptedData: JSON.stringify({
+        encryptedData: encryptData({
           receiptNumber: refundReceiptNumber,
           originalReceipt: receiptNumber,
           stockErrors,

@@ -226,11 +226,6 @@ window.addEventListener('storage', (e) => {
 // Load announcement on page load
 loadAnnouncement();
 
-// Hidden admin entrance (double-click logo)
-function openAnnouncementAdmin() {
-    window.location.href = 'announcement-admin.html';
-}
-
 // Clear Cache Button Functionality
 const clearCacheBtn = document.getElementById('clearCacheBtn');
 

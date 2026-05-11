@@ -130,4 +130,27 @@ InvoiceSchema.pre('save', function () {
   }
 });
 
+// ─── Immutability guard for findOneAndUpdate ──────────────────────────
+InvoiceSchema.pre('findOneAndUpdate', function () {
+  const update = this.getUpdate() || {};
+  const mutable = ['pdfPath', 'emailStatus', 'emailSentAt', 'shareToken', 'shareTokenExpiresAt'];
+  const updates = update.$set || update;
+  const immutableChanged = Object.keys(updates).some(function (p) {
+    return !mutable.some(function (m) {
+      return p === m || p.startsWith(m + '.');
+    });
+  });
+  if (immutableChanged) {
+    throw new Error('INVOICE_IMMUTABLE: Invoice financial data cannot be modified after creation.');
+  }
+});
+
+// ─── Immutability guard for deletes ──────────────────────────────────
+InvoiceSchema.pre('deleteOne', function () {
+  throw new Error('INVOICE_IMMUTABLE: Invoice cannot be deleted.');
+});
+InvoiceSchema.pre('deleteMany', function () {
+  throw new Error('INVOICE_IMMUTABLE: Invoice cannot be deleted.');
+});
+
 module.exports = mongoose.model('Invoice', InvoiceSchema);

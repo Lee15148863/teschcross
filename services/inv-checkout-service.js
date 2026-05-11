@@ -28,6 +28,7 @@ const { calculateDiscountedCart, validateDiscountFloor } = require('../utils/inv
 const { DEFAULT_VAT_RATE } = require('../utils/inv-vat-calculator');
 const { authorize, SOURCES } = require('../utils/inv-integrity-layer');
 const { requireSystemActive } = require('../utils/inv-system-lock');
+const { encryptData } = require('../utils/inv-crypto');
 
 /**
  * @typedef {Object} CheckoutInput
@@ -220,87 +221,106 @@ async function checkout(input) {
     };
   });
 
-  // ── 8. Atomic: Transaction + CashLedger ──────────────────────────
-  const session = await mongoose.startSession();
+  // ── 8. Atomic: Transaction + CashLedger (with retry) ────────────────
+  // MongoDB transactions can hit write conflicts under concurrent load.
+  // Retry loop handles transient errors gracefully.
+  const MAX_RETRIES = 3;
   let transaction;
 
-  try {
-    session.startTransaction();
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
 
-    const txDoc = authorize(new Transaction({
-      receiptNumber,
-      items: transactionItems,
-      totalAmount: cartResult.totalAmount,
-      subtotalBeforeOrderDiscount: cartResult.subtotalBeforeOrderDiscount,
-      standardVatTotal: cartResult.standardVatTotal,
-      marginVatTotal: cartResult.marginVatTotal,
-      paymentMethod,
-      cashReceived: cashReceivedVal,
-      cardAmount: cardAmountVal,
-      changeGiven,
-      operator,
-      discountOperator: discountOperator || undefined,
-      orderDiscount:
-        orderDiscount && orderDiscount.type && orderDiscount.value > 0
-          ? orderDiscount
-          : undefined,
-    }), SOURCES.CHECKOUT);
-    await txDoc.save({ session });
-    transaction = txDoc;
-
-    const ledgerDoc = authorize(new CashLedger({
-      entryType: 'sale',
-      direction: 'in',
-      amount: cartResult.totalAmount,
-      paymentMethod,
-      cashReceived: cashReceivedVal,
-      changeGiven: paymentMethod !== 'card' ? changeGiven : null,
-      cardAmount: cardAmountVal,
-      referenceType: 'transaction',
-      referenceId: transaction._id,
-      receiptNumber,
-      description: `Sale - ${paymentMethod}`,
-      operator,
-    }), SOURCES.CHECKOUT);
-    await ledgerDoc.save({ session });
-
-    // ── Device asset lifecycle (marginScheme items) ────────────────
-    for (const item of transactionItems) {
-      if (!item.marginScheme) continue;
-      const deviceData = {
-        status: 'SOLD',
-        sellPrice: item.discountedPrice || item.unitPrice,
-        sellTransaction: transaction._id,
-        product: item.product,
-      };
-      if (item.serialNumber) {
-        const existing = await Device.findOne({ serialNumber: item.serialNumber }).session(session);
-        if (existing) {
-          existing.set(deviceData);
-          authorize(existing, SOURCES.CHECKOUT);
-          await existing.save({ session });
-          continue;
-        }
-      }
-      // No existing Device record — create from sale data (graceful migration)
-      const deviceDoc = authorize(new Device({
-        serialNumber: item.serialNumber || `LEGACY-${item.product}-${Date.now()}`,
-        buyPrice: item.costPrice || 0,
-        source: item.purchasedFromCustomer ? 'customer' : item.source || 'other',
-        ...deviceData,
+      const txDoc = authorize(new Transaction({
+        receiptNumber,
+        items: transactionItems,
+        totalAmount: cartResult.totalAmount,
+        subtotalBeforeOrderDiscount: cartResult.subtotalBeforeOrderDiscount,
+        standardVatTotal: cartResult.standardVatTotal,
+        marginVatTotal: cartResult.marginVatTotal,
+        paymentMethod,
+        cashReceived: cashReceivedVal,
+        cardAmount: cardAmountVal,
+        changeGiven,
+        operator,
+        discountOperator: discountOperator || undefined,
+        orderDiscount:
+          orderDiscount && orderDiscount.type && orderDiscount.value > 0
+            ? orderDiscount
+            : undefined,
       }), SOURCES.CHECKOUT);
-      await deviceDoc.save({ session });
-    }
+      await txDoc.save({ session });
+      transaction = txDoc;
 
-    await session.commitTransaction();
-  } catch (error) {
-    try { await session.abortTransaction(); } catch (_) { /* ignore */ }
-    throw Object.assign(new Error(`Checkout atomic transaction failed: ${error.message}`), {
-      code: 'ATOMIC_FAILURE',
-      original: error,
-    });
-  } finally {
-    try { await session.endSession(); } catch (_) { /* always release */ }
+      const ledgerDoc = authorize(new CashLedger({
+        entryType: 'sale',
+        direction: 'in',
+        amount: cartResult.totalAmount,
+        paymentMethod,
+        cashReceived: cashReceivedVal,
+        changeGiven: paymentMethod !== 'card' ? changeGiven : null,
+        cardAmount: cardAmountVal,
+        referenceType: 'transaction',
+        referenceId: transaction._id,
+        receiptNumber,
+        description: `Sale - ${paymentMethod}`,
+        operator,
+      }), SOURCES.CHECKOUT);
+      await ledgerDoc.save({ session });
+
+      // ── Device asset lifecycle (marginScheme items) ────────────────
+      for (const item of transactionItems) {
+        if (!item.marginScheme) continue;
+        const deviceData = {
+          status: 'SOLD',
+          sellPrice: item.discountedPrice || item.unitPrice,
+          sellTransaction: transaction._id,
+          product: item.product,
+        };
+        if (item.serialNumber) {
+          const existing = await Device.findOne({ serialNumber: item.serialNumber }).session(session);
+          if (existing) {
+            existing.set(deviceData);
+            authorize(existing, SOURCES.CHECKOUT);
+            await existing.save({ session });
+            continue;
+          }
+        }
+        // No existing Device record — create from sale data (graceful migration)
+        const deviceDoc = authorize(new Device({
+          serialNumber: item.serialNumber || `LEGACY-${item.product}-${Date.now()}`,
+          buyPrice: item.costPrice || 0,
+          source: item.purchasedFromCustomer ? 'customer' : item.source || 'other',
+          ...deviceData,
+        }), SOURCES.CHECKOUT);
+        await deviceDoc.save({ session });
+      }
+
+      await session.commitTransaction();
+      break; // success, exit retry loop
+    } catch (error) {
+      try { await session.abortTransaction(); } catch (_) { /* ignore */ }
+
+      // Write conflict from concurrent checkout → retry
+      const isTransient = error.errorLabels?.includes('TransientTransactionError')
+        || error.code === 112
+        || (error.message && (
+          error.message.includes('WriteConflict') || error.message.includes('write conflict')
+        ));
+
+      if (isTransient && attempt < MAX_RETRIES - 1) {
+        await new Promise(r => setTimeout(r, 100));
+        continue;
+      }
+
+      throw Object.assign(new Error(`Checkout atomic transaction failed: ${error.message}`), {
+        code: 'ATOMIC_FAILURE',
+        original: error,
+      });
+    } finally {
+      try { await session.endSession(); } catch (_) { /* always release */ }
+    }
   }
 
   // ── 9. Stock movements (best-effort, per SYSTEM_SPEC §2.3) ───────
@@ -339,7 +359,7 @@ async function checkout(input) {
         operator,
         targetType: 'transaction',
         targetId: transaction._id.toString(),
-        encryptedData: JSON.stringify({ receiptNumber, stockErrors, timestamp: new Date().toISOString() }),
+        encryptedData: encryptData({ receiptNumber, stockErrors, timestamp: new Date().toISOString() }),
       });
     } catch (auditErr) {
       console.error('Failed to write stock error audit log:', auditErr.message);
