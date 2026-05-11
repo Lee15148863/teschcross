@@ -1,4 +1,6 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']); // Bypass local DNS that blocks MongoDB Atlas
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -61,44 +63,46 @@ app.use(express.static(path.join(__dirname), {
   index: false
 }));
 
-// Connect to MongoDB
+// Connect to MongoDB, then start listening
 mongoose.connect(process.env.DBCon, { dbName: 'techcross' })
-    .then(() => console.log('✅ MongoDB connected'))
+    .then(() => {
+        console.log('✅ MongoDB connected');
+
+        // Routes
+        app.use('/api/pricing', require('./api/pricing'));
+        app.use('/api/brands', require('./api/brands'));
+        app.use('/api/reviews', require('./api/reviews'));
+
+        // Inventory & Till system routes
+        app.use('/api/inv/auth', require('./api/inv/auth'));
+        app.use('/api/inv/products', require('./api/inv/products'));
+        app.use('/api/inv/stock', require('./api/inv/stock'));
+        app.use('/api/inv/suppliers', require('./api/inv/suppliers'));
+        app.use('/api/inv/purchases', require('./api/inv/purchases'));
+        app.use('/api/inv/transactions', require('./api/inv/transactions'));
+        app.use('/api/inv/reports', require('./api/inv/reports'));
+        app.use('/api/inv/settings', require('./api/inv/settings'));
+        app.use('/api/inv/invoices', require('./api/inv/invoices'));
+        app.use('/api/inv/expenses', require('./api/inv/expenses'));
+        app.use('/api/inv/close', require('./api/inv/close'));
+        app.use('/api/inv/pos-shortcuts', require('./api/inv/pos-shortcuts'));
+        app.use('/api/inv/root', require('./api/inv/root'));
+        app.use('/api/inv/export', require('./api/inv/export'));
+        app.use('/api/inv/root/export', require('./api/inv/root-export'));
+        app.use('/api/inv/delivery', require('./api/inv/delivery'));
+        app.use('/api/inv/whatsapp', require('./api/inv/whatsapp'));
+
+        // ─── Public share routes (MUST be before the catch-all) ────────────────
+        app.use('/share', require('./api/inv/share-public'));
+        app.use('/api/share', require('./api/inv/share-public'));
+
+        // Fallback: serve index.html for all remaining non-API routes
+        app.use((req, res) => {
+            res.sendFile(path.join(__dirname, 'index.html'));
+        });
+
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
+        });
+    })
     .catch(err => console.error('❌ MongoDB error:', err.message));
-
-// Routes
-app.use('/api/pricing', require('./api/pricing'));
-app.use('/api/brands', require('./api/brands'));
-app.use('/api/reviews', require('./api/reviews'));
-
-// Inventory & Till system routes
-app.use('/api/inv/auth', require('./api/inv/auth'));
-app.use('/api/inv/products', require('./api/inv/products'));
-app.use('/api/inv/stock', require('./api/inv/stock'));
-app.use('/api/inv/suppliers', require('./api/inv/suppliers'));
-app.use('/api/inv/purchases', require('./api/inv/purchases'));
-app.use('/api/inv/transactions', require('./api/inv/transactions'));
-app.use('/api/inv/reports', require('./api/inv/reports'));
-app.use('/api/inv/settings', require('./api/inv/settings'));
-app.use('/api/inv/invoices', require('./api/inv/invoices'));
-app.use('/api/inv/expenses', require('./api/inv/expenses'));
-app.use('/api/inv/close', require('./api/inv/close'));
-app.use('/api/inv/pos-shortcuts', require('./api/inv/pos-shortcuts'));
-app.use('/api/inv/root', require('./api/inv/root'));
-app.use('/api/inv/export', require('./api/inv/export'));
-app.use('/api/inv/root/export', require('./api/inv/root-export'));
-app.use('/api/inv/delivery', require('./api/inv/delivery'));
-app.use('/api/inv/whatsapp', require('./api/inv/whatsapp'));
-
-// ─── Public share routes (MUST be before the catch-all) ────────────────────
-app.use('/share', require('./api/inv/share-public'));
-app.use('/api/share', require('./api/inv/share-public'));
-
-// Fallback: serve index.html for all remaining non-API routes
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});

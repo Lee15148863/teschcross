@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(node *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(ls *)",
+      "Bash(dir *)",
+      "Bash(cat *)",
+      "Bash(type *)",
+      "Bash(find *)",
+      "Bash(rg *)",
+      "Bash(where.exe *)",
+      "Bash(ipconfig *)",
+      "Bash(npx vitest *)",
+      "Bash(GIT_AUTHOR_NAME=\"TechCross\" GIT_AUTHOR_EMAIL=\"dev@techcross.ie\" git add server.js .claude/settings.local.json ARCHITECTURE_MAP.md BUG_REPORT.md RISK_ANALYSIS.md SAFE_REFACTOR_PLAN.md FULL_CODEBASE_AUDIT.md)",
+      "Bash(GIT_AUTHOR_NAME=TechCross GIT_AUTHOR_EMAIL=dev@techcross.ie GIT_COMMITTER_NAME=TechCross GIT_COMMITTER_EMAIL=dev@techcross.ie git commit -m ' *)"
+    ],
+    "deny": [
+      "Bash(git push *)",
+      "Bash(rm *)",
+      "Bash(del *)",
+      "Bash(format *)",
+      "Bash(shutdown *)",
+      "Bash(restart *)",
+      "Bash(pm2 *)",
+      "Bash(docker *)",
+      "Bash(gcloud *)",
+      "Bash(mongod --repair *)",
+      "Bash(mongo --eval *delete*)",
+      "Bash(curl * | *)",
+      "Bash(wget * | *)"
+    ]
+  }
+}
