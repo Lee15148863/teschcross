@@ -10,10 +10,11 @@
         .ar-header { text-align:center; margin-bottom:32px; }
         .ar-header h1 { font-size:28px; font-weight:700; }
 
-        /* 3x enlarged nav links */
+        /* 3x enlarged nav links — use transform so layout stays intact */
         .nav-list a { font-size:1em; }
-        .nav-list .nav-lg { font-size:3em; font-weight:700; line-height:1.2; padding:4px 0; display:inline-block; }
-        .nav-list .nav-lg small { font-size:0.3em; font-weight:400; color:#86868b; display:block; }
+        .nav-list .nav-lg { font-size:1em; font-weight:700; display:inline-block; transform:scale(3); transform-origin:left center; margin-right:2em; padding:0; }
+        .nav-list .nav-lg small { font-size:0.33em; font-weight:400; color:#86868b; display:block; margin-top:-2px; }
+        .nav-list li { overflow:visible; }
 
         /* Section tabs */
         .section-tabs { display:flex; gap:12px; margin-bottom:28px; justify-content:center; flex-wrap:wrap; }
@@ -169,43 +170,45 @@
 <script src="auth-guard.js"></script>
 <script>
 // Auth: inventory admin only.
-if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; return; }
+if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; }
+(function() {
+  'use strict';
 
-// ─── Section Tab Switching ─────────────────────────────────
-document.querySelectorAll('.section-tab').forEach(function(tab) {
+  // ─── Section Tab Switching ─────────────────────────────────
+  document.querySelectorAll('.section-tab').forEach(function(tab) {
     tab.addEventListener('click', function() {
-        document.querySelectorAll('.section-tab').forEach(function(t) { t.classList.remove('active'); });
-        this.classList.add('active');
-        document.querySelectorAll('.section-panel').forEach(function(p) { p.classList.remove('active'); });
-        document.getElementById('section-' + this.dataset.section).classList.add('active');
+      document.querySelectorAll('.section-tab').forEach(function(t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      document.querySelectorAll('.section-panel').forEach(function(p) { p.classList.remove('active'); });
+      document.getElementById('section-' + this.dataset.section).classList.add('active');
     });
-});
+  });
 
-// ─── Reviews ───────────────────────────────────────────────
-function getReviewAuthHeaders() { return Auth.getHeaders(); }
+  // ─── Reviews ───────────────────────────────────────────────
+  function getReviewAuthHeaders() { return Auth.getHeaders(); }
 
-var currentFilter = 'all';
-var allReviews = [];
+  var currentFilter = 'all';
+  var allReviews = [];
 
-document.querySelectorAll('.ar-tab').forEach(function(tab) {
+  document.querySelectorAll('.ar-tab').forEach(function(tab) {
     tab.addEventListener('click', function() {
-        document.querySelectorAll('.ar-tab').forEach(function(t) { t.classList.remove('active'); });
-        this.classList.add('active');
-        currentFilter = this.dataset.filter;
-        renderReviews();
+      document.querySelectorAll('.ar-tab').forEach(function(t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      currentFilter = this.dataset.filter;
+      renderReviews();
     });
-});
+  });
 
-async function loadReviews() {
+  async function loadReviews() {
     try {
-        var res = await fetch('/api/reviews/all', { headers: getReviewAuthHeaders() });
-        if (!res.ok) { alert('Unauthorized'); return; }
-        allReviews = await res.json();
-        renderReviews();
+      var res = await fetch('/api/reviews/all', { headers: getReviewAuthHeaders() });
+      if (!res.ok) { alert('Unauthorized'); return; }
+      allReviews = await res.json();
+      renderReviews();
     } catch(e) { alert('Failed to load reviews'); }
-}
+  }
 
-function renderReviews() {
+  function renderReviews() {
     var el = document.getElementById('reviewList');
     var filtered = allReviews;
     if (currentFilter === 'pending') filtered = allReviews.filter(function(r) { return !r.approved; });
@@ -215,165 +218,159 @@ function renderReviews() {
 
     el.innerHTML = '';
     filtered.forEach(function(r) {
-        var card = document.createElement('div');
-        card.className = 'ar-card ' + (r.approved ? 'approved' : 'pending');
+      var card = document.createElement('div');
+      card.className = 'ar-card ' + (r.approved ? 'approved' : 'pending');
 
-        var meta = document.createElement('div');
-        meta.className = 'ar-meta';
+      var meta = document.createElement('div');
+      meta.className = 'ar-meta';
 
-        var nameSpan = document.createElement('span');
-        nameSpan.className = 'ar-name';
-        nameSpan.textContent = r.name;
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'ar-name';
+      nameSpan.textContent = r.name;
 
-        var statusSpan = document.createElement('span');
+      var statusSpan = document.createElement('span');
+      var statusBadge = document.createElement('span');
+      statusBadge.className = 'ar-status ' + (r.approved ? 'approved' : 'pending');
+      statusBadge.textContent = r.approved ? 'Approved' : 'Pending';
 
-        var statusBadge = document.createElement('span');
-        statusBadge.className = 'ar-status ' + (r.approved ? 'approved' : 'pending');
-        statusBadge.textContent = r.approved ? 'Approved' : 'Pending';
+      var dateSpan = document.createElement('span');
+      dateSpan.className = 'ar-date';
+      dateSpan.textContent = new Date(r.createdAt).toLocaleDateString();
 
-        var dateSpan = document.createElement('span');
-        dateSpan.className = 'ar-date';
-        dateSpan.textContent = new Date(r.createdAt).toLocaleDateString();
+      statusSpan.appendChild(statusBadge);
+      statusSpan.appendChild(dateSpan);
+      meta.appendChild(nameSpan);
+      meta.appendChild(statusSpan);
 
-        statusSpan.appendChild(statusBadge);
-        statusSpan.appendChild(dateSpan);
+      var stars = document.createElement('div');
+      stars.className = 'ar-stars';
+      stars.textContent = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
 
-        meta.appendChild(nameSpan);
-        meta.appendChild(statusSpan);
+      var msg = document.createElement('div');
+      msg.className = 'ar-msg';
+      msg.textContent = r.message;
 
-        var stars = document.createElement('div');
-        stars.className = 'ar-stars';
-        stars.textContent = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+      var actions = document.createElement('div');
+      actions.className = 'ar-actions';
 
-        var msg = document.createElement('div');
-        msg.className = 'ar-msg';
-        msg.textContent = r.message;
+      if (!r.approved) {
+        var approveBtn = document.createElement('button');
+        approveBtn.className = 'ar-btn ar-btn-approve';
+        approveBtn.textContent = 'Approve';
+        approveBtn.onclick = function() { approveReview(r._id); };
+        actions.appendChild(approveBtn);
+      } else {
+        var rejectBtn = document.createElement('button');
+        rejectBtn.className = 'ar-btn ar-btn-reject';
+        rejectBtn.textContent = 'Hide';
+        rejectBtn.onclick = function() { rejectReview(r._id); };
+        actions.appendChild(rejectBtn);
+      }
 
-        var actions = document.createElement('div');
-        actions.className = 'ar-actions';
+      var deleteBtn = document.createElement('button');
+      deleteBtn.className = 'ar-btn ar-btn-delete';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.onclick = function() { deleteReview(r._id); };
+      actions.appendChild(deleteBtn);
 
-        if (!r.approved) {
-            var approveBtn = document.createElement('button');
-            approveBtn.className = 'ar-btn ar-btn-approve';
-            approveBtn.textContent = 'Approve';
-            approveBtn.onclick = function() { approveReview(r._id); };
-            actions.appendChild(approveBtn);
-        } else {
-            var rejectBtn = document.createElement('button');
-            rejectBtn.className = 'ar-btn ar-btn-reject';
-            rejectBtn.textContent = 'Hide';
-            rejectBtn.onclick = function() { rejectReview(r._id); };
-            actions.appendChild(rejectBtn);
-        }
-
-        var deleteBtn = document.createElement('button');
-        deleteBtn.className = 'ar-btn ar-btn-delete';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.onclick = function() { deleteReview(r._id); };
-        actions.appendChild(deleteBtn);
-
-        card.appendChild(meta);
-        card.appendChild(stars);
-        card.appendChild(msg);
-        card.appendChild(actions);
-
-        el.appendChild(card);
+      card.appendChild(meta);
+      card.appendChild(stars);
+      card.appendChild(msg);
+      card.appendChild(actions);
+      el.appendChild(card);
     });
-}
+  }
 
-async function approveReview(id) {
+  async function approveReview(id) {
     await fetch('/api/reviews/' + id + '/approve', { method: 'PUT', headers: getReviewAuthHeaders() });
     loadReviews();
-}
-async function rejectReview(id) {
+  }
+  async function rejectReview(id) {
     await fetch('/api/reviews/' + id + '/reject', { method: 'PUT', headers: getReviewAuthHeaders() });
     loadReviews();
-}
-async function deleteReview(id) {
+  }
+  async function deleteReview(id) {
     if (!confirm('Delete this review permanently?')) return;
     await fetch('/api/reviews/' + id, { method: 'DELETE', headers: getReviewAuthHeaders() });
     loadReviews();
-}
+  }
 
-loadReviews();
+  loadReviews();
 
-// ─── Banner / 公告横幅 ─────────────────────────────────────
-var STORAGE_KEY = 'techcross_announcement';
+  // ─── Banner / 公告横幅 ─────────────────────────────────────
+  var STORAGE_KEY = 'techcross_announcement';
 
-function loadBannerToForm() {
+  function loadBannerToForm() {
     var stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return;
     try {
-        var data = JSON.parse(stored);
-        document.getElementById('bannerEnabled').checked = data.enabled || false;
-        document.getElementById('bannerTextEn').value = data.textEn || '';
-        document.getElementById('bannerTextGa').value = data.textGa || '';
-        document.getElementById('bannerBgColor').value = data.bgColor || '#000000';
-        document.getElementById('bannerTextColor').value = data.textColor || '#D4E157';
-        document.getElementById('bannerFontSize').value = data.fontSize || 15;
-        document.getElementById('bannerFontWeight').value = data.fontWeight || '500';
-        document.getElementById('bannerSpeed').value = data.scrollSpeed || 20;
-        updateBannerPreview();
+      var data = JSON.parse(stored);
+      document.getElementById('bannerEnabled').checked = data.enabled || false;
+      document.getElementById('bannerTextEn').value = data.textEn || '';
+      document.getElementById('bannerTextGa').value = data.textGa || '';
+      document.getElementById('bannerBgColor').value = data.bgColor || '#000000';
+      document.getElementById('bannerTextColor').value = data.textColor || '#D4E157';
+      document.getElementById('bannerFontSize').value = data.fontSize || 15;
+      document.getElementById('bannerFontWeight').value = data.fontWeight || '500';
+      document.getElementById('bannerSpeed').value = data.scrollSpeed || 20;
+      updateBannerPreview();
     } catch(e) { /* use defaults */ }
-}
+  }
 
-function getBannerData() {
+  function getBannerData() {
     return {
-        enabled: document.getElementById('bannerEnabled').checked,
-        textEn: document.getElementById('bannerTextEn').value,
-        textGa: document.getElementById('bannerTextGa').value,
-        bgColor: document.getElementById('bannerBgColor').value,
-        textColor: document.getElementById('bannerTextColor').value,
-        fontSize: parseInt(document.getElementById('bannerFontSize').value) || 15,
-        fontWeight: document.getElementById('bannerFontWeight').value,
-        scrollSpeed: parseInt(document.getElementById('bannerSpeed').value) || 20
+      enabled: document.getElementById('bannerEnabled').checked,
+      textEn: document.getElementById('bannerTextEn').value,
+      textGa: document.getElementById('bannerTextGa').value,
+      bgColor: document.getElementById('bannerBgColor').value,
+      textColor: document.getElementById('bannerTextColor').value,
+      fontSize: parseInt(document.getElementById('bannerFontSize').value) || 15,
+      fontWeight: document.getElementById('bannerFontWeight').value,
+      scrollSpeed: parseInt(document.getElementById('bannerSpeed').value) || 20
     };
-}
+  }
 
-function updateBannerPreview() {
+  window.updateBannerPreview = function() {
     var data = getBannerData();
     var preview = document.getElementById('bannerPreview');
     if (data.enabled) {
-        preview.style.display = 'block';
-        preview.style.backgroundColor = data.bgColor;
-        preview.style.color = data.textColor;
-        preview.style.fontSize = data.fontSize + 'px';
-        preview.style.fontWeight = data.fontWeight;
-        preview.textContent = data.textEn || '(No text set / 未设置文字)';
+      preview.style.display = 'block';
+      preview.style.backgroundColor = data.bgColor;
+      preview.style.color = data.textColor;
+      preview.style.fontSize = data.fontSize + 'px';
+      preview.style.fontWeight = data.fontWeight;
+      preview.textContent = data.textEn || '(No text set / 未设置文字)';
     } else {
-        preview.style.display = 'block';
-        preview.style.backgroundColor = '#f5f5f7';
-        preview.style.color = '#86868b';
-        preview.style.fontSize = '15px';
-        preview.style.fontWeight = '400';
-        preview.textContent = '⚠ Banner disabled / 横幅已禁用';
+      preview.style.display = 'block';
+      preview.style.backgroundColor = '#f5f5f7';
+      preview.style.color = '#86868b';
+      preview.style.fontSize = '15px';
+      preview.style.fontWeight = '400';
+      preview.textContent = '⚠ Banner disabled / 横幅已禁用';
     }
-}
+  };
 
-function saveBanner() {
+  window.saveBanner = function() {
     var data = getBannerData();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    // Notify other tabs
     try { localStorage.setItem('banner_updated', Date.now()); } catch(e) {}
-    // Dispatch event for this page
     if (typeof window.dispatchEvent === 'function') {
-        try { window.dispatchEvent(new CustomEvent('announcementUpdated')); } catch(e) {}
+      try { window.dispatchEvent(new CustomEvent('announcementUpdated')); } catch(e) {}
     }
     var msg = document.getElementById('bannerSaveMsg');
     msg.style.display = 'block';
     setTimeout(function() { msg.style.display = 'none'; }, 2500);
-}
+  };
 
-function resetBanner() {
+  window.resetBanner = function() {
     if (!confirm('Reset banner to defaults?')) return;
     localStorage.removeItem(STORAGE_KEY);
     loadBannerToForm();
     updateBannerPreview();
     try { window.dispatchEvent(new CustomEvent('announcementUpdated')); } catch(e) {}
-}
+  };
 
-// Load banner data on init
-loadBannerToForm();
-</script>
+  loadBannerToForm();
+})();
 </body>
 </html>
