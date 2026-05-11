@@ -1,713 +1,742 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Tech Cross</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        body { background:#f5f5f7; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Tech Cross</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f5f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1d1d1f; }
 
+.admin-wrap { display: none; min-height: 100vh; flex-direction: column; }
+.admin-wrap.show { display: flex; }
 
-        .admin-wrap { display:none;min-height:100vh;flex-direction:column; }
-        .admin-wrap.show { display:flex; }
-        .topbar { background:#fff;border-bottom:1px solid #e5e5ea;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100; }
-        .topbar h2 { font-size:18px;font-weight:700; }
-        .topbar-right { display:flex;gap:10px;align-items:center; }
+.topbar { background: #fff; border-bottom: 1px solid #e5e5ea; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.topbar h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.topbar-right { display: flex; gap: 10px; align-items: center; }
+.save-status { font-size: 13px; color: #86868b; }
 
-        .admin-body { display:flex;flex:1;overflow:hidden; }
+.admin-body { display: flex; flex: 1; overflow: hidden; }
 
-        /* Sidebar */
-        .sidebar { width:240px;background:#fff;border-right:1px solid #e5e5ea;overflow-y:auto;flex-shrink:0;padding:12px; }
-        .sidebar h4 { font-size:11px;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.5px;margin:8px 4px 6px; }
-        .nav-item { padding:9px 12px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px; }
-        .nav-item:hover { background:#f5f5f7; }
-        .nav-item.active { background:#e8f0fe;color:#0071e3; }
-        .nav-badge { font-size:11px;background:#f0f0f5;color:#86868b;padding:2px 7px;border-radius:20px; }
-        .nav-item.active .nav-badge { background:#c8dcff;color:#0071e3; }
-        .btn-add-sm { width:100%;padding:9px;border:1.5px dashed #d2d2d7;border-radius:10px;background:none;cursor:pointer;color:#0071e3;font-size:13px;font-weight:500;margin-top:6px; }
-        .btn-add-sm:hover { background:#f0f7ff; }
+/* Sidebar */
+.sidebar { width: 220px; background: #fff; border-right: 1px solid #e5e5ea; overflow-y: auto; flex-shrink: 0; padding: 12px; }
+.sidebar h4 { font-size: 11px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: .5px; margin: 8px 4px 6px; }
+.nav-item { padding: 9px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; margin-bottom: 2px; display: flex; align-items: center; justify-content: space-between; }
+.nav-item:hover { background: #f5f5f7; }
+.nav-item.active { background: #e8f0fe; color: #0071e3; }
+.nav-badge { font-size: 11px; background: #f0f0f5; color: #86868b; padding: 2px 7px; border-radius: 20px; }
 
-        /* Main */
-        .main { flex:1;overflow-y:auto;padding:28px 32px; }
-        .main-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:20px; }
-        .main-header h3 { font-size:22px;font-weight:700; }
+/* Main */
+.main { flex: 1; overflow-y: auto; padding: 24px 28px; min-width: 0; }
+.empty-state { text-align: center; padding: 60px 20px; color: #86868b; font-size: 15px; }
 
-        /* Breadcrumb */
-        .breadcrumb { display:flex;align-items:center;gap:6px;font-size:13px;color:#86868b;margin-bottom:16px; }
-        .breadcrumb span { cursor:pointer;color:#0071e3; }
-        .breadcrumb span:hover { text-decoration:underline; }
-        .breadcrumb .sep { color:#d2d2d7; }
+/* Tabs */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid #d2d2d7; margin-bottom: 20px; }
+.tab-btn { padding: 10px 20px; background: none; border: none; font-size: 14px; font-weight: 500; cursor: pointer; color: #86868b; border-bottom: 2px solid transparent; transition: all .2s; }
+.tab-btn:hover { color: #1d1d1f; }
+.tab-btn.active { color: #0071e3; border-bottom-color: #0071e3; }
 
-        /* Cards grid */
-        .cards { display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px; }
-        .card { background:#fff;border:1.5px solid #e5e5ea;border-radius:14px;padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center; }
-        .card:hover { border-color:#0071e3;background:#f0f7ff;transform:translateY(-2px); }
-        .card h4 { font-size:16px;font-weight:700;margin-bottom:4px; }
-        .card small { color:#86868b;font-size:12px; }
-        .card-add { border-style:dashed;color:#0071e3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:500; }
-        .card-add:hover { background:#f0f7ff; }
+/* Device type tabs */
+.device-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.device-btn { padding: 8px 18px; border: 1.5px solid #d2d2d7; border-radius: 20px; background: #fff; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s; }
+.device-btn:hover { border-color: #0071e3; }
+.device-btn.active { border-color: #0071e3; background: #0071e3; color: #fff; }
 
-        /* Table */
-        .data-table { width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06); }
-        .data-table th { background:#f5f5f7;padding:11px 16px;text-align:left;font-size:12px;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e5ea; }
-        .data-table td { padding:11px 16px;border-bottom:1px solid #f0f0f5;font-size:14px;vertical-align:middle; }
-        .data-table tr:last-child td { border-bottom:none; }
-        .data-table tr:hover td { background:#fafafa; }
-        .price-input { width:80px;padding:6px 10px;border:1px solid #d2d2d7;border-radius:8px;font-size:14px;text-align:right; }
-        .price-input:focus { outline:none;border-color:#0071e3; }
+/* Table */
+.pricing-table { overflow-x: auto; background: #fff; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+.pricing-table table { width: 100%; border-collapse: collapse; min-width: 600px; }
+.pricing-table th { background: #f5f5f7; padding: 11px 14px; text-align: left; font-size: 12px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: .3px; border-bottom: 1px solid #e5e5ea; white-space: nowrap; }
+.pricing-table td { padding: 8px 14px; border-bottom: 1px solid #f0f0f5; font-size: 13px; vertical-align: middle; }
+.pricing-table tr:last-child td { border-bottom: none; }
+.pricing-table .td-name { font-weight: 600; cursor: pointer; min-width: 180px; }
+.pricing-table .td-name:hover { color: #0071e3; }
+.pricing-table input[type="number"] { width: 72px; padding: 6px 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px; text-align: right; }
+.pricing-table input[type="number"]:focus { outline: none; border-color: #0071e3; box-shadow: 0 0 0 2px rgba(0,113,227,.15); }
+.pricing-table .btn-del { background: none; border: none; cursor: pointer; color: #ff3b30; font-size: 16px; padding: 2px 6px; border-radius: 4px; }
+.pricing-table .btn-del:hover { background: #fff0f0; }
 
-        /* Buttons */
-        .btn-save { background:#0071e3;color:#fff;padding:9px 22px;border:none;border-radius:980px;font-size:14px;font-weight:600;cursor:pointer; }
-        .btn-save:hover { background:#0077ed; }
-        .btn-save:disabled { background:#86868b;cursor:not-allowed; }
-        .btn-danger { background:none;border:1px solid #ff3b30;color:#ff3b30;padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer; }
-        .btn-danger:hover { background:#ff3b30;color:#fff; }
-        .btn-ghost { background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:15px;color:#86868b; }
-        .btn-ghost:hover { background:#f0f0f5;color:#1d1d1f; }
-        .btn-secondary { background:#f5f5f7;color:#1d1d1f;padding:8px 18px;border:none;border-radius:980px;font-size:14px;font-weight:500;cursor:pointer; }
-        .btn-secondary:hover { background:#e5e5ea; }
+/* Model/Service editor tables */
+.editor-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+.editor-table th { background: #f5f5f7; padding: 11px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: .3px; border-bottom: 1px solid #e5e5ea; }
+.editor-table td { padding: 10px 16px; border-bottom: 1px solid #f0f0f5; font-size: 14px; }
+.editor-table tr:last-child td { border-bottom: none; }
+.editor-table code { background: #f0f0f5; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+.editor-table input[type="text"] { width: 100%; padding: 8px 10px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px; }
+.editor-table input[type="text"]:focus { outline: none; border-color: #0071e3; }
+.editor-table textarea { width: 100%; padding: 8px 10px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px; resize: vertical; min-height: 50px; }
 
-        /* Modal */
-        .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center; }
-        .modal-overlay.show { display:flex; }
-        .modal { background:#fff;border-radius:20px;padding:28px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2); }
-        .modal h3 { font-size:18px;font-weight:700;margin-bottom:18px; }
-        .modal input { width:100%;padding:11px 14px;border:1px solid #d2d2d7;border-radius:10px;font-size:15px;margin-bottom:12px;box-sizing:border-box; }
-        .modal-actions { display:flex;gap:10px;justify-content:flex-end;margin-top:6px; }
-        .field-hint { font-size:11px;color:#86868b;margin:-8px 0 12px 2px; }
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 18px; border: none; border-radius: 980px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-primary { background: #0071e3; color: #fff; }
+.btn-primary:hover { background: #0077ed; }
+.btn-primary:disabled { background: #86868b; cursor: not-allowed; }
+.btn-secondary { background: #f5f5f7; color: #1d1d1f; border: 1px solid #d2d2d7; }
+.btn-secondary:hover { background: #e5e5ea; }
+.btn-danger { background: none; border: 1px solid #ff3b30; color: #ff3b30; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.btn-danger:hover { background: #ff3b30; color: #fff; }
+.btn-ghost { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; color: #86868b; }
+.btn-ghost:hover { background: #f0f0f5; color: #1d1d1f; }
+.btn-add { margin-bottom: 14px; }
 
-        /* Toast */
-        .toast { position:fixed;bottom:28px;right:28px;background:#1d1d1f;color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:500;z-index:2000;transform:translateY(60px);opacity:0;transition:all .3s; }
-        .toast.show { transform:translateY(0);opacity:1; }
-        .toast.success { background:#34c759; }
-        .toast.error { background:#ff3b30; }
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 20px; padding: 28px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 18px; }
+.modal label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #555; }
+.modal input,.modal textarea { width: 100%; padding: 10px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box; }
+.modal textarea { resize: vertical; min-height: 50px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
 
-        .save-status { font-size:13px;color:#86868b; }
-        .empty { text-align:center;padding:40px;color:#86868b;font-size:15px; }
-    </style>
+/* Toast */
+.toast { position: fixed; bottom: 28px; right: 28px; background: #1d1d1f; color: #fff; padding: 12px 22px; border-radius: 12px; font-size: 14px; font-weight: 500; z-index: 2000; transform: translateY(60px); opacity: 0; transition: all .3s; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: #34c759; }
+.toast.error { background: #ff3b30; }
+
+/* Batch editor */
+.batch-panel { background: #fff; padding: 28px; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,.06); max-width: 500px; }
+.batch-panel label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #555; }
+.batch-panel select,.batch-panel input { width: 100%; padding: 10px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px; margin-bottom: 16px; background: #fff; }
+
+/* Loading spinner */
+.loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: #86868b; gap: 10px; }
+.spinner { width: 20px; height: 20px; border: 2.5px solid #e5e5ea; border-top-color: #0071e3; border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
 <body>
 
-<!-- Admin -->
 <div class="admin-wrap" id="adminWrap">
-    <div class="topbar">
-        <h2>⚙️ Tech Cross Admin</h2>
-        <div class="topbar-right">
-            <span class="save-status" id="saveStatus"></span>
-            <button class="btn-save" id="globalSaveBtn" onclick="saveCurrentBrand()" disabled>Save Changes</button>
-            <button class="btn-secondary" onclick="logout()">Logout</button>
-        </div>
+  <div class="topbar">
+    <h2>🔧 Tech Cross Admin</h2>
+    <div class="topbar-right">
+      <span class="save-status" id="saveStatus"></span>
+      <button class="btn btn-primary" id="globalSaveBtn" onclick="saveCurrent()" disabled>Save Changes</button>
+      <button class="btn btn-secondary" onclick="Auth.logout()">Logout</button>
     </div>
-
-    <div class="admin-body">
-        <div class="sidebar">
-            <h4>Brands</h4>
-            <div id="brandList"></div>
-            <button class="btn-add-sm" onclick="openModal('addBrandModal')">+ Add Brand</button>
-        </div>
-        <div class="main" id="mainArea">
-            <div class="empty">← Select a brand from the sidebar</div>
-        </div>
+  </div>
+  <div class="admin-body">
+    <div class="sidebar">
+      <h4>Brands</h4>
+      <div id="brandList"></div>
     </div>
+    <div class="main" id="mainArea">
+      <div class="empty-state">Select a brand from the sidebar</div>
+    </div>
+  </div>
 </div>
 
+<!-- Add Model Modal -->
+<div class="modal-overlay" id="addModelModal">
+  <div class="modal">
+    <h3>Add Model</h3>
+    <label>Model ID</label>
+    <input id="mModelId" placeholder="e.g. galaxy-s25">
+    <p style="font-size:11px;color:#86868b;margin:-8px 0 12px 2px;">Lowercase, hyphens ok</p>
+    <label>Display Name</label>
+    <input id="mModelName" placeholder="e.g. Galaxy S25">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('addModelModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addModel()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Service Modal -->
+<div class="modal-overlay" id="addServiceModal">
+  <div class="modal">
+    <h3>Add Service</h3>
+    <label>Service ID</label>
+    <input id="mServiceId" placeholder="e.g. screen_compatible">
+    <p style="font-size:11px;color:#86868b;margin:-8px 0 12px 2px;">Lowercase, underscores ok</p>
+    <label>Display Name</label>
+    <input id="mServiceName" placeholder="e.g. Screen (Compatible)">
+    <label>Description</label>
+    <textarea id="mServiceDesc" placeholder="Optional description"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('addServiceModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addService()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:380px;">
+    <h3 id="confirmTitle">Confirm</h3>
+    <p id="confirmMsg" style="margin-bottom:18px;color:#555;"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn" onclick="">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- Modals -->
-<div class="modal-overlay" id="addBrandModal">
-    <div class="modal">
-        <h3>Add Brand</h3>
-        <input id="mBrandId" placeholder="Brand ID (e.g. nokia)" />
-        <p class="field-hint">Lowercase, no spaces</p>
-        <input id="mBrandName" placeholder="Display Name (e.g. Nokia)" />
-        <div class="modal-actions">
-            <button class="btn-secondary" onclick="closeModal('addBrandModal')">Cancel</button>
-            <button class="btn-save" onclick="addBrand()">Add</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="addTypeModal">
-    <div class="modal">
-        <h3>Add Device Type</h3>
-        <input id="mTypeId" placeholder="Type ID (e.g. ipad)" />
-        <p class="field-hint">Lowercase, no spaces</p>
-        <input id="mTypeName" placeholder="Display Name (e.g. iPad)" />
-        <div class="modal-actions">
-            <button class="btn-secondary" onclick="closeModal('addTypeModal')">Cancel</button>
-            <button class="btn-save" onclick="addType()">Add</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="addModelModal">
-    <div class="modal">
-        <h3>Add Model</h3>
-        <input id="mModelId" placeholder="Model ID (e.g. iphone-15-pro)" />
-        <p class="field-hint">Lowercase, hyphens ok</p>
-        <input id="mModelName" placeholder="Display Name (e.g. iPhone 15 Pro)" />
-        <div class="modal-actions">
-            <button class="btn-secondary" onclick="closeModal('addModelModal')">Cancel</button>
-            <button class="btn-save" onclick="addModel()">Add</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="addIssueModal">
-    <div class="modal">
-        <h3>Add Issue / Service</h3>
-        <input id="mIssueId" placeholder="Issue ID (e.g. screen_repair)" />
-        <p class="field-hint">Lowercase, underscores ok</p>
-        <input id="mIssueName" placeholder="Display Name (e.g. Screen Repair)" />
-        <input id="mIssuePrice" type="number" placeholder="Price (0 = Contact Us, -1 = Hidden)" min="-1" />
-        <div class="modal-actions">
-            <button class="btn-secondary" onclick="closeModal('addIssueModal')">Cancel</button>
-            <button class="btn-save" onclick="addIssue()">Add</button>
-        </div>
-    </div>
-</div>
-
 <script src="auth-guard.js"></script>
-<script src="/api-client.js"></script>
 <script>
-// Auth: inventory admin only.
-if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; return; }
+(function() {
+  'use strict';
 
-// HTML escape function
-function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  if (!Auth.isRoot()) { window.location.href = 'inv-login.html'; return; }
 
-function getBrandsAuthHeaders() {
-    return Auth.getHeaders();
-}
+  // ─── State ─────────────────────────────────────────────────
+  const state = {
+    brands: [],           // [{ brand, updatedAt }]
+    currentBrand: null,   // brand ID string
+    data: null,           // full pricing data for current brand
+    deviceType: null,     // current device type key (or null for flat)
+    dirty: false,
+    _dataBackup: null,    // for detecting changes
+  };
 
-let allData = {};
-let currentBrand = null;
-let currentType = null;   // null = showing types, string = showing models of that type
-let dirty = false;
+  // ─── Helpers ───────────────────────────────────────────────
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-showAdmin();
-function logout() { Auth.logout(); }
+  function showToast(msg, type) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type ? ' ' + type : '');
+    setTimeout(function(){ t.className = 'toast'; }, 3000);
+  }
 
-// ── Init ──────────────────────────────────────────────────
-async function showAdmin() {
+  function markDirty() {
+    if (!state.dirty) {
+      state.dirty = true;
+      document.getElementById('globalSaveBtn').disabled = false;
+      document.getElementById('saveStatus').textContent = '● Unsaved';
+    }
+  }
+
+  function openModal(id) { var el = document.getElementById(id); if (el) el.classList.add('show'); }
+  function closeModal(id) { var el = document.getElementById(id); if (el) el.classList.remove('show'); }
+  document.querySelectorAll('.modal-overlay').forEach(function(m) {
+    m.addEventListener('click', function(e) { if (e.target === m) m.classList.remove('show'); });
+  });
+
+  // Detect if data has device types (e.g. { phone: {models, serviceTypes}, tablet: {...} })
+  function detectDeviceTypes(data) {
+    if (!data || typeof data !== 'object') return null;
+    var keys = Object.keys(data).filter(function(k) {
+      return data[k] && typeof data[k] === 'object' && 'models' in data[k] && 'serviceTypes' in data[k];
+    });
+    return keys.length > 0 ? keys : null;
+  }
+
+  // Check if the first model's screen service is an object {compatible, original}
+  function screenIsObject(svcTypes, models) {
+    if (!svcTypes || !models) return false;
+    var hasScreenKey = 'screen' in svcTypes;
+    if (!hasScreenKey) return false;
+    var firstModel = Object.values(models)[0];
+    return firstModel && firstModel.services && typeof firstModel.services.screen === 'object';
+  }
+
+  function getServiceList(svcTypes, screenObj) {
+    var list = [];
+    Object.keys(svcTypes).forEach(function(key) {
+      if (key === 'screen' && screenObj) {
+        list.push({ key: 'screen.compatible', name: svcTypes.screen.name + ' (Compatible)', baseKey: 'screen', subKey: 'compatible' });
+        list.push({ key: 'screen.original', name: svcTypes.screen.name + ' (Original)', baseKey: 'screen', subKey: 'original' });
+      } else {
+        list.push({ key: key, name: svcTypes[key].name, baseKey: key, subKey: null });
+      }
+    });
+    return list;
+  }
+
+  function getServiceValue(model, baseKey, subKey) {
+    var val = model.services ? model.services[baseKey] : undefined;
+    if (subKey) {
+      return (val && typeof val === 'object') ? (val[subKey] ?? 0) : 0;
+    }
+    return (typeof val === 'number') ? val : 0;
+  }
+
+  function setServiceValue(model, baseKey, subKey, price) {
+    if (!model.services) model.services = {};
+    if (subKey) {
+      if (typeof model.services[baseKey] !== 'object') model.services[baseKey] = {};
+      model.services[baseKey][subKey] = price;
+    } else {
+      model.services[baseKey] = price;
+    }
+    if (!model.serviceUpdates) model.serviceUpdates = {};
+    model.serviceUpdates[baseKey] = new Date().toISOString();
+  }
+
+  // Get current data object (device type or flat)
+  function getCurrentData() {
+    if (state.deviceType && state.data[state.deviceType]) {
+      return state.data[state.deviceType];
+    }
+    return state.data;
+  }
+
+  // ─── Brand List ────────────────────────────────────────────
+  function init() {
     document.getElementById('adminWrap').classList.add('show');
-    const res = await fetch('/api/brands');
-    allData = res.ok ? await res.json() : {};
-    renderSidebar();
-}
-
-// ── Sidebar ───────────────────────────────────────────────
-function renderSidebar() {
-    const list = document.getElementById('brandList');
-    list.innerHTML = '';
-
-    // Build DOM elements safely
-    const entries = Object.entries(allData);
-    if (entries.length === 0) {
-        const p = document.createElement('p');
-        p.style.fontSize = '13px';
-        p.style.color = '#86868b';
-        p.style.padding = '4px 8px';
-        p.textContent = 'No brands yet';
-        list.appendChild(p);
-        return;
-    }
-
-    entries.forEach(([id, b]) => {
-        const typeCount = Object.keys(b.types || {}).length;
-        const div = document.createElement('div');
-        div.className = `nav-item ${currentBrand === id ? 'active' : ''}`;
-        div.onclick = () => selectBrand(id);
-
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = b.name;
-
-        const badgeSpan = document.createElement('span');
-        badgeSpan.className = 'nav-badge';
-        badgeSpan.textContent = typeCount;
-
-        div.appendChild(nameSpan);
-        div.appendChild(badgeSpan);
-        list.appendChild(div);
-    });
-}
-
-// ── Brand select ──────────────────────────────────────────
-function selectBrand(brandId) {
-    if (dirty && !confirm('Unsaved changes. Discard?')) return;
-    syncPriceInputs();
-    dirty = false;
-    currentBrand = brandId;
-    currentType = null;
-    renderSidebar();
-    renderTypeView();
-}
-
-// ── Type view (Brand → Types) ─────────────────────────────
-function renderTypeView() {
-    const brand = allData[currentBrand];
-    const types = Object.entries(brand.types || {});
-    const main = document.getElementById('mainArea');
-    main.innerHTML = '';
-
-    const breadcrumb = document.createElement('div');
-    breadcrumb.className = 'breadcrumb';
-    const breadcrumbText = document.createElement('b');
-    breadcrumbText.textContent = brand.name;
-    breadcrumb.appendChild(breadcrumbText);
-    main.appendChild(breadcrumb);
-
-    const header = document.createElement('div');
-    header.className = 'main-header';
-    const h3 = document.createElement('h3');
-    h3.textContent = brand.name;
-    header.appendChild(h3);
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn-danger';
-    deleteBtn.textContent = 'Delete Brand';
-    deleteBtn.onclick = () => deleteBrand(currentBrand);
-    header.appendChild(deleteBtn);
-    main.appendChild(header);
-
-    const cards = document.createElement('div');
-    cards.className = 'cards';
-
-    types.forEach(([tid, t]) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.onclick = () => selectType(tid);
-
-        const title = document.createElement('h4');
-        title.textContent = t.name;
-        card.appendChild(title);
-
-        const subtitle = document.createElement('small');
-        const mc = Object.keys(t.models || {}).length;
-        subtitle.textContent = `${mc} model${mc !== 1 ? 's' : ''}`;
-        card.appendChild(subtitle);
-
-        cards.appendChild(card);
-    });
-
-    const addCard = document.createElement('div');
-    addCard.className = 'card card-add';
-    addCard.onclick = () => openModal('addTypeModal');
-    const plus = document.createElement('span');
-    plus.style.fontSize = '24px';
-    plus.textContent = '+';
-    addCard.appendChild(plus);
-    const addLabel = document.createElement('span');
-    addLabel.textContent = 'Add Type';
-    addCard.appendChild(addLabel);
-    cards.appendChild(addCard);
-
-    main.appendChild(cards);
-}
-
-// ── Type select → Model view ──────────────────────────────
-function selectType(typeId) {
-    currentType = typeId;
-    renderModelView();
-}
-
-function renderModelView() {
-    const brand = allData[currentBrand];
-    const type  = brand.types[currentType];
-    const models = Object.entries(type.models || {});
-    const main = document.getElementById('mainArea');
-    main.innerHTML = '';
-
-    const breadcrumb = document.createElement('div');
-    breadcrumb.className = 'breadcrumb';
-    const brandLink = document.createElement('span');
-    brandLink.textContent = brand.name;
-    brandLink.onclick = () => { renderTypeView(); currentType = null; };
-    breadcrumb.appendChild(brandLink);
-    const sep = document.createElement('span');
-    sep.className = 'sep';
-    sep.textContent = '›';
-    breadcrumb.appendChild(sep);
-    const current = document.createElement('b');
-    current.textContent = type.name;
-    breadcrumb.appendChild(current);
-    main.appendChild(breadcrumb);
-
-    const header = document.createElement('div');
-    header.className = 'main-header';
-    const h3 = document.createElement('h3');
-    h3.textContent = type.name;
-    header.appendChild(h3);
-
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.gap = '8px';
-
-    const addBtn = document.createElement('button');
-    addBtn.className = 'btn-secondary';
-    addBtn.textContent = '+ Add Model';
-    addBtn.onclick = () => openModal('addModelModal');
-    buttonContainer.appendChild(addBtn);
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn-danger';
-    deleteBtn.textContent = 'Delete Type';
-    deleteBtn.onclick = () => deleteType(currentType);
-    buttonContainer.appendChild(deleteBtn);
-
-    header.appendChild(buttonContainer);
-    main.appendChild(header);
-
-    const table = document.createElement('table');
-    table.className = 'data-table';
-    const thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>Model</th><th>Issues</th><th style="width:100px;"></th></tr>';
-    table.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    if (models.length === 0) {
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.colSpan = 3;
-        cell.style.textAlign = 'center';
-        cell.style.color = '#86868b';
-        cell.style.padding = '24px';
-        cell.textContent = 'No models yet';
-        row.appendChild(cell);
-        tbody.appendChild(row);
-    } else {
-        models.forEach(([mid, model]) => {
-            const row = document.createElement('tr');
-
-            const td1 = document.createElement('td');
-            td1.style.fontWeight = '600';
-            td1.style.cursor = 'pointer';
-            td1.textContent = model.name;
-            td1.onclick = () => selectModel(mid);
-            row.appendChild(td1);
-
-            const td2 = document.createElement('td');
-            td2.style.color = '#86868b';
-            td2.style.cursor = 'pointer';
-            td2.textContent = `${Object.keys(model.issues || {}).length} issue${Object.keys(model.issues || {}).length !== 1 ? 's' : ''}`;
-            td2.onclick = () => selectModel(mid);
-            row.appendChild(td2);
-
-            const td3 = document.createElement('td');
-            const editBtn = document.createElement('button');
-            editBtn.className = 'btn-ghost';
-            editBtn.title = 'Edit issues';
-            editBtn.textContent = '✏️';
-            editBtn.onclick = () => selectModel(mid);
-            td3.appendChild(editBtn);
-
-            td3.appendChild(document.createTextNode(' '));
-            const deleteBtnRow = document.createElement('button');
-            deleteBtnRow.className = 'btn-ghost';
-            deleteBtnRow.title = 'Delete';
-            deleteBtnRow.textContent = '🗑';
-            deleteBtnRow.onclick = () => deleteModel(mid);
-            td3.appendChild(deleteBtnRow);
-            row.appendChild(td3);
-
-            tbody.appendChild(row);
-        });
-    }
-
-    table.appendChild(tbody);
-    main.appendChild(table);
-}
-
-// ── Model select → Issue view ─────────────────────────────
-function selectModel(modelId) {
-    const brand = allData[currentBrand];
-    const type  = brand.types[currentType];
-    const model = type.models[modelId];
-    const issues = Object.entries(model.issues || {});
-    const main = document.getElementById('mainArea');
-    main.innerHTML = '';
-
-    const breadcrumb = document.createElement('div');
-    breadcrumb.className = 'breadcrumb';
-
-    const brandLink = document.createElement('span');
-    brandLink.textContent = brand.name;
-    brandLink.onclick = () => { renderTypeView(); currentType = null; };
-    breadcrumb.appendChild(brandLink);
-
-    const sep1 = document.createElement('span');
-    sep1.className = 'sep';
-    sep1.textContent = '›';
-    breadcrumb.appendChild(sep1);
-
-    const typeLink = document.createElement('span');
-    typeLink.textContent = type.name;
-    typeLink.onclick = () => renderModelView();
-    breadcrumb.appendChild(typeLink);
-
-    const sep2 = document.createElement('span');
-    sep2.className = 'sep';
-    sep2.textContent = '›';
-    breadcrumb.appendChild(sep2);
-
-    const modelLabel = document.createElement('b');
-    modelLabel.textContent = model.name;
-    breadcrumb.appendChild(modelLabel);
-    main.appendChild(breadcrumb);
-
-    const header = document.createElement('div');
-    header.className = 'main-header';
-    const h3 = document.createElement('h3');
-    h3.textContent = model.name;
-    header.appendChild(h3);
-
-    const addIssueBtn = document.createElement('button');
-    addIssueBtn.className = 'btn-secondary';
-    addIssueBtn.textContent = '+ Add Issue';
-    addIssueBtn.onclick = () => openAddIssue(modelId);
-    header.appendChild(addIssueBtn);
-    main.appendChild(header);
-
-    const table = document.createElement('table');
-    table.className = 'data-table';
-
-    const thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>Issue / Service</th><th style="width:140px;">Price (€)</th><th style="width:60px;"></th></tr>';
-    table.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    if (issues.length === 0) {
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.colSpan = 3;
-        cell.style.textAlign = 'center';
-        cell.style.color = '#86868b';
-        cell.style.padding = '24px';
-        cell.textContent = 'No issues yet — click "+ Add Issue"';
-        row.appendChild(cell);
-        tbody.appendChild(row);
-    } else {
-        issues.forEach(([iid, issue]) => {
-            const row = document.createElement('tr');
-
-            const td1 = document.createElement('td');
-            td1.textContent = issue.name;
-            const small = document.createElement('small');
-            small.style.color = '#aaa';
-            small.style.fontSize = '11px';
-            small.textContent = iid;
-            td1.appendChild(document.createElement('br')); // line break
-            td1.appendChild(small);
-            row.appendChild(td1);
-
-            const td2 = document.createElement('td');
-            const input = document.createElement('input');
-            input.className = 'price-input';
-            input.type = 'number';
-            input.min = '-1';
-            input.value = issue.price;
-            input.dataset.brand = currentBrand;
-            input.dataset.type = currentType;
-            input.dataset.model = modelId;
-            input.dataset.issue = iid;
-            input.onchange = function() { updatePrice(modelId, iid, this.value); };
-            td2.appendChild(input);
-
-            const infoDiv = document.createElement('div');
-            infoDiv.style.fontSize = '10px';
-            infoDiv.style.color = '#aaa';
-            infoDiv.style.marginTop = '2px';
-            infoDiv.textContent = '0=Contact Us -1=Hidden';
-            td2.appendChild(infoDiv);
-            row.appendChild(td2);
-
-            const td3 = document.createElement('td');
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn-ghost';
-            deleteBtn.textContent = '🗑';
-            deleteBtn.onclick = () => deleteIssue(modelId, iid);
-            td3.appendChild(deleteBtn);
-            row.appendChild(td3);
-
-            tbody.appendChild(row);
-        });
-    }
-
-    table.appendChild(tbody);
-    main.appendChild(table);
-
-    // Store current model context for add issue modal
-    document.getElementById('addIssueModal').dataset.modelId = modelId;
-}
-
-// ── CRUD ──────────────────────────────────────────────────
-function updatePrice(modelId, issueId, val) {
-    allData[currentBrand].types[currentType].models[modelId].issues[issueId].price = parseInt(val)||0;
-    markDirty();
-}
-
-function syncPriceInputs() {
-    document.querySelectorAll('.price-input[data-issue]').forEach(inp => {
-        const { brand, type, model, issue } = inp.dataset;
-        if (allData[brand]?.types[type]?.models[model]?.issues[issue] !== undefined) {
-            allData[brand].types[type].models[model].issues[issue].price = parseInt(inp.value)||0;
-        }
-    });
-}
-
-// Add Brand
-function addBrand() {
-    const id   = document.getElementById('mBrandId').value.trim().replace(/\s+/g,'-').toLowerCase();
-    const name = document.getElementById('mBrandName').value.trim();
-    if (!id||!name) return showToast('Fill in all fields','error');
-    if (allData[id]) return showToast('Brand ID already exists','error');
-    allData[id] = { name, types:{} };
-    closeModal('addBrandModal');
-    document.getElementById('mBrandId').value='';
-    document.getElementById('mBrandName').value='';
-    currentBrand = id; currentType = null;
-    renderSidebar();
-    renderTypeView();
-    saveBrand(id);
-}
-
-// Add Type
-function addType() {
-    const id   = document.getElementById('mTypeId').value.trim().replace(/\s+/g,'-').toLowerCase();
-    const name = document.getElementById('mTypeName').value.trim();
-    if (!id||!name) return showToast('Fill in all fields','error');
-    if (allData[currentBrand].types[id]) return showToast('Type ID already exists','error');
-    syncPriceInputs();
-    allData[currentBrand].types[id] = { name, models:{} };
-    closeModal('addTypeModal');
-    document.getElementById('mTypeId').value='';
-    document.getElementById('mTypeName').value='';
-    markDirty();
-    renderTypeView();
-}
-
-// Add Model
-function addModel() {
-    const id   = document.getElementById('mModelId').value.trim().replace(/\s+/g,'-').toLowerCase();
-    const name = document.getElementById('mModelName').value.trim();
-    if (!id||!name) return showToast('Fill in all fields','error');
-    if (allData[currentBrand].types[currentType].models[id]) return showToast('Model ID already exists','error');
-    syncPriceInputs();
-    allData[currentBrand].types[currentType].models[id] = { name, issues:{} };
-    closeModal('addModelModal');
-    document.getElementById('mModelId').value='';
-    document.getElementById('mModelName').value='';
-    markDirty();
-    renderModelView();
-}
-
-// Add Issue
-function openAddIssue(modelId) {
-    document.getElementById('addIssueModal').dataset.modelId = modelId;
-    document.getElementById('mIssueId').value='';
-    document.getElementById('mIssueName').value='';
-    document.getElementById('mIssuePrice').value='';
-    openModal('addIssueModal');
-}
-
-function addIssue() {
-    const modelId = document.getElementById('addIssueModal').dataset.modelId;
-    const id    = document.getElementById('mIssueId').value.trim().replace(/\s+/g,'_').toLowerCase();
-    const name  = document.getElementById('mIssueName').value.trim();
-    const price = parseInt(document.getElementById('mIssuePrice').value)||0;
-    if (!id||!name) return showToast('Fill in all fields','error');
-    if (allData[currentBrand].types[currentType].models[modelId].issues[id])
-        return showToast('Issue ID already exists','error');
-    syncPriceInputs();
-    allData[currentBrand].types[currentType].models[modelId].issues[id] = { name, price };
-    closeModal('addIssueModal');
-    document.getElementById('mIssueId').value='';
-    document.getElementById('mIssueName').value='';
-    document.getElementById('mIssuePrice').value='';
-    markDirty();
-    selectModel(modelId);
-}
-
-// Delete
-function deleteBrand(brandId) {
-    if (!confirm(`Delete brand "${allData[brandId].name}" and ALL data?`)) return;
-    fetch(`/api/brands/${brandId}`,{method:'DELETE',headers:getBrandsAuthHeaders()})
-        .then(()=>{ delete allData[brandId]; currentBrand=null; currentType=null; renderSidebar();
-            document.getElementById('mainArea').innerHTML='<div class="empty">← Select a brand</div>';
-            showToast('Brand deleted'); });
-}
-
-function deleteType(typeId) {
-    if (!confirm(`Delete type "${allData[currentBrand].types[typeId].name}"?`)) return;
-    syncPriceInputs();
-    delete allData[currentBrand].types[typeId];
-    currentType = null;
-    markDirty();
-    renderTypeView();
-}
-
-function deleteModel(modelId) {
-    const name = allData[currentBrand].types[currentType].models[modelId].name;
-    if (!confirm(`Delete model "${name}"?`)) return;
-    syncPriceInputs();
-    delete allData[currentBrand].types[currentType].models[modelId];
-    markDirty();
-    renderModelView();
-}
-
-function deleteIssue(modelId, issueId) {
-    if (!confirm(`Delete issue "${allData[currentBrand].types[currentType].models[modelId].issues[issueId].name}"?`)) return;
-    syncPriceInputs();
-    delete allData[currentBrand].types[currentType].models[modelId].issues[issueId];
-    markDirty();
-    selectModel(modelId);
-}
-
-// ── Save ──────────────────────────────────────────────────
-function markDirty() {
-    dirty = true;
-    document.getElementById('globalSaveBtn').disabled = false;
-    document.getElementById('saveStatus').textContent = '● Unsaved';
-}
-
-async function saveCurrentBrand() {
-    if (!currentBrand) return;
-    syncPriceInputs();
-    await saveBrand(currentBrand);
-}
-
-async function saveBrand(brandId) {
-    const btn = document.getElementById('globalSaveBtn');
-    btn.disabled = true; btn.textContent = 'Saving…';
+    fetchBrands();
+  }
+
+  async function fetchBrands() {
+    var list = document.getElementById('brandList');
+    list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
     try {
-        const res = await fetch(`/api/brands/${brandId}`, {
-            method:'PUT',
-            headers:getBrandsAuthHeaders(),
-            body: JSON.stringify(allData[brandId])
-        });
-        if (!res.ok) throw new Error(await res.text());
-        dirty = false;
-        document.getElementById('saveStatus').textContent = '✓ Saved';
-        showToast('Saved','success');
-        setTimeout(()=>document.getElementById('saveStatus').textContent='', 3000);
-    } catch(e) { showToast('Save failed: '+e.message,'error'); }
+      var res = await fetch('/api/pricing/');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      state.brands = await res.json();
+      // Filter out 'multi' (combined wrapper)
+      state.brands = state.brands.filter(function(b) { return b.brand !== 'multi'; });
+      renderSidebar();
+      if (state.currentBrand) {
+        selectBrand(state.currentBrand);
+      } else if (state.brands.length > 0) {
+        selectBrand(state.brands[0].brand);
+      }
+    } catch(e) {
+      list.innerHTML = '<div style="padding:20px;color:#ff3b30;text-align:center;">Failed to load brands: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  function renderSidebar() {
+    var list = document.getElementById('brandList');
+    list.innerHTML = '';
+    if (state.brands.length === 0) {
+      list.innerHTML = '<div style="padding:12px;color:#86868b;font-size:13px;">No brands found</div>';
+      return;
+    }
+    state.brands.forEach(function(b) {
+      var div = document.createElement('div');
+      div.className = 'nav-item' + (state.currentBrand === b.brand ? ' active' : '');
+      div.textContent = b.brand.charAt(0).toUpperCase() + b.brand.slice(1);
+      div.onclick = function() { selectBrand(b.brand); };
+      list.appendChild(div);
+    });
+  }
+
+  // ─── Brand Selection ───────────────────────────────────────
+  async function selectBrand(brandId) {
+    if (state.dirty && !confirm('Unsaved changes. Discard?')) return;
+    state.currentBrand = brandId;
+    state.dirty = false;
+    document.getElementById('globalSaveBtn').disabled = true;
+    document.getElementById('saveStatus').textContent = '';
+    renderSidebar();
+
+    var main = document.getElementById('mainArea');
+    main.innerHTML = '<div class="loading"><div class="spinner"></div>Loading ' + esc(brandId) + '...</div>';
+
+    try {
+      var res = await fetch('/api/pricing/' + encodeURIComponent(brandId));
+      if (!res.ok) throw new Error(res.status === 404 ? 'Brand not found' : 'HTTP ' + res.status);
+      state.data = await res.json();
+      // Detect structure
+      var dtKeys = detectDeviceTypes(state.data);
+      if (dtKeys && dtKeys.length > 0) {
+        state.deviceType = dtKeys[0]; // default to first device type
+      } else {
+        state.deviceType = null;
+      }
+      state._dataBackup = JSON.stringify(state.data);
+      renderMain();
+    } catch(e) {
+      main.innerHTML = '<div class="empty-state" style="color:#ff3b30;">Error: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  // ─── Main Render ───────────────────────────────────────────
+  var currentTab = 'pricing';
+
+  function renderMain() {
+    var main = document.getElementById('mainArea');
+    var brandName = state.currentBrand.charAt(0).toUpperCase() + state.currentBrand.slice(1);
+    var dtKeys = detectDeviceTypes(state.data);
+
+    var html = '';
+    // Header
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">';
+    html += '<h2 style="font-size:22px;font-weight:700;">' + esc(brandName) + '</h2>';
+    html += '</div>';
+
+    // Device type tabs
+    if (dtKeys) {
+      html += '<div class="device-tabs">';
+      dtKeys.forEach(function(dt) {
+        var label = dt.charAt(0).toUpperCase() + dt.slice(1);
+        html += '<button class="device-btn' + (state.deviceType === dt ? ' active' : '') + '" onclick="window.selectDeviceType(\'' + dt + '\')">' + esc(label) + '</button>';
+      });
+      html += '</div>';
+    }
+
+    // Tab bar
+    html += '<div class="tabs">';
+    ['pricing','models','services','batch'].forEach(function(tab) {
+      var labels = { pricing:'Pricing Editor', models:'Manage Models', services:'Manage Services', batch:'Batch Update' };
+      html += '<button class="tab-btn' + (currentTab === tab ? ' active' : '') + '" onclick="window.switchTab(\'' + tab + '\')">' + labels[tab] + '</button>';
+    });
+    html += '</div>';
+
+    // Tab content
+    html += '<div id="tabContent">';
+    main.innerHTML = html + '</div>';
+
+    renderTabContent();
+  }
+
+  function renderTabContent() {
+    var container = document.getElementById('tabContent');
+    if (!container) return;
+    try {
+      switch (currentTab) {
+        case 'pricing': renderPricingTab(container); break;
+        case 'models': renderModelsTab(container); break;
+        case 'services': renderServicesTab(container); break;
+        case 'batch': renderBatchTab(container); break;
+      }
+    } catch(e) {
+      container.innerHTML = '<div style="padding:20px;color:#ff3b30;">Render error: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  // ─── Pricing Tab ───────────────────────────────────────────
+  function renderPricingTab(container) {
+    var data = getCurrentData();
+    if (!data) {
+      container.innerHTML = '<div class="empty-state">No data for this brand</div>';
+      return;
+    }
+    var models = data.models || {};
+    var svcTypes = data.serviceTypes || {};
+    var sIsObj = screenIsObject(svcTypes, models);
+    var svcList = getServiceList(svcTypes, sIsObj);
+    var modelKeys = Object.keys(models);
+
+    if (modelKeys.length === 0) {
+      container.innerHTML = '<div class="empty-state">No models yet. Switch to "Manage Models" tab to add one.</div>';
+      return;
+    }
+
+    var html = '<div class="pricing-table"><table><thead><tr>';
+    html += '<th style="min-width:200px;">Model</th>';
+    svcList.forEach(function(svc) {
+      html += '<th>' + esc(svc.name) + '</th>';
+    });
+    html += '<th style="width:40px;"></th>';
+    html += '</tr></thead><tbody>';
+
+    modelKeys.forEach(function(mid) {
+      var model = models[mid];
+      if (!model) return;
+      html += '<tr>';
+      html += '<td class="td-name">' + esc(model.name) + '<br><code style="font-size:10px;color:#aaa;">' + esc(mid) + '</code></td>';
+      svcList.forEach(function(svc) {
+        var price = getServiceValue(model, svc.baseKey, svc.subKey);
+        html += '<td><input type="number" value="' + price + '" min="-1"';
+        html += ' data-model="' + esc(mid) + '" data-base="' + esc(svc.baseKey) + '"';
+        if (svc.subKey) html += ' data-sub="' + esc(svc.subKey) + '"';
+        html += ' oninput="window.onPriceChange(this)"></td>';
+      });
+      html += '<td><button class="btn-del" onclick="window.deleteModel(\'' + esc(mid) + '\')" title="Delete model">×</button></td>';
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    container.innerHTML = html;
+  }
+
+  // ─── Models Tab ────────────────────────────────────────────
+  function renderModelsTab(container) {
+    var data = getCurrentData();
+    if (!data) { container.innerHTML = '<div class="empty-state">No data</div>'; return; }
+    var models = data.models || {};
+    var modelKeys = Object.keys(models);
+
+    var html = '<button class="btn btn-secondary btn-add" onclick="openModal(\'addModelModal\')">+ Add Model</button>';
+    html += '<table class="editor-table"><thead><tr><th style="width:160px;">Model ID</th><th>Name</th><th style="width:80px;"></th></tr></thead><tbody>';
+
+    if (modelKeys.length === 0) {
+      html += '<tr><td colspan="3" style="text-align:center;color:#86868b;padding:24px;">No models yet</td></tr>';
+    } else {
+      modelKeys.forEach(function(mid) {
+        html += '<tr>';
+        html += '<td><code>' + esc(mid) + '</code></td>';
+        html += '<td><input type="text" value="' + esc(models[mid].name) + '" data-mid="' + esc(mid) + '" class="model-name-input" oninput="window.onModelNameChange(this)"></td>';
+        html += '<td><button class="btn-danger" onclick="window.deleteModel(\'' + esc(mid) + '\')">Delete</button></td>';
+        html += '</tr>';
+      });
+    }
+    html += '</tbody></table>';
+
+    container.innerHTML = html;
+  }
+
+  // ─── Services Tab ──────────────────────────────────────────
+  function renderServicesTab(container) {
+    var data = getCurrentData();
+    if (!data) { container.innerHTML = '<div class="empty-state">No data</div>'; return; }
+    var svcTypes = data.serviceTypes || {};
+    var svcKeys = Object.keys(svcTypes);
+
+    var html = '<button class="btn btn-secondary btn-add" onclick="openModal(\'addServiceModal\')">+ Add Service</button>';
+    html += '<table class="editor-table"><thead><tr><th style="width:160px;">Service ID</th><th>Name</th><th>Description</th><th style="width:80px;"></th></tr></thead><tbody>';
+
+    if (svcKeys.length === 0) {
+      html += '<tr><td colspan="4" style="text-align:center;color:#86868b;padding:24px;">No services yet</td></tr>';
+    } else {
+      svcKeys.forEach(function(skey) {
+        var svc = svcTypes[skey];
+        html += '<tr>';
+        html += '<td><code>' + esc(skey) + '</code></td>';
+        html += '<td><input type="text" value="' + esc(svc.name) + '" data-skey="' + esc(skey) + '" data-field="name" class="svc-input" oninput="window.onSvcChange(this)"></td>';
+        html += '<td><textarea data-skey="' + esc(skey) + '" data-field="description" class="svc-input" oninput="window.onSvcChange(this)">' + esc(svc.description || '') + '</textarea></td>';
+        html += '<td><button class="btn-danger" onclick="window.deleteService(\'' + esc(skey) + '\')">Delete</button></td>';
+        html += '</tr>';
+      });
+    }
+    html += '</tbody></table>';
+
+    container.innerHTML = html;
+  }
+
+  // ─── Batch Tab ─────────────────────────────────────────────
+  function renderBatchTab(container) {
+    var data = getCurrentData();
+    if (!data) { container.innerHTML = '<div class="empty-state">No data</div>'; return; }
+    var svcTypes = data.serviceTypes || {};
+    var svcKeys = Object.keys(svcTypes);
+    var sIsObj = screenIsObject(svcTypes, data.models);
+
+    if (svcKeys.length === 0) {
+      container.innerHTML = '<div class="empty-state">No services configured yet</div>';
+      return;
+    }
+
+    var html = '<div class="batch-panel">';
+    html += '<h3 style="margin-bottom:20px;font-size:18px;">Batch Price Update</h3>';
+    html += '<label>Service</label><select id="batchSvc">';
+    html += '<option value="">-- Select --</option>';
+    svcKeys.forEach(function(skey) {
+      if (skey === 'screen' && sIsObj) {
+        html += '<option value="screen.compatible">' + esc(svcTypes[skey].name) + ' (Compatible)</option>';
+        html += '<option value="screen.original">' + esc(svcTypes[skey].name) + ' (Original)</option>';
+      } else {
+        html += '<option value="' + esc(skey) + '">' + esc(svcTypes[skey].name) + '</option>';
+      }
+    });
+    html += '</select>';
+
+    html += '<label>Operation</label><select id="batchOp">';
+    html += '<option value="set">Set to value</option>';
+    html += '<option value="increase">Increase by</option>';
+    html += '<option value="decrease">Decrease by</option>';
+    html += '</select>';
+
+    html += '<label>Value</label><input type="number" id="batchVal" placeholder="0" min="0">';
+    html += '<button class="btn btn-primary" onclick="window.applyBatch()">Apply to All Models</button>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  // ─── Event Handlers (exposed to inline onclick) ────────────
+  window.onPriceChange = function(input) {
+    var mid = input.dataset.model;
+    var baseKey = input.dataset.base;
+    var subKey = input.dataset.sub || null;
+    var price = parseInt(input.value);
+    if (isNaN(price)) return;
+    var data = getCurrentData();
+    var model = data.models[mid];
+    if (!model) return;
+    setServiceValue(model, baseKey, subKey, price);
+    markDirty();
+  };
+
+  window.onModelNameChange = function(input) {
+    var data = getCurrentData();
+    var model = data.models[input.dataset.mid];
+    if (model) { model.name = input.value; markDirty(); }
+  };
+
+  window.onSvcChange = function(input) {
+    var data = getCurrentData();
+    var svc = data.serviceTypes[input.dataset.skey];
+    if (svc) { svc[input.dataset.field] = input.value; markDirty(); }
+  };
+
+  window.selectDeviceType = function(dt) {
+    state.deviceType = dt;
+    renderMain();
+  };
+
+  window.switchTab = function(tab) {
+    currentTab = tab;
+    renderMain();
+  };
+
+  // ─── CRUD Operations ───────────────────────────────────────
+  window.addModel = function() {
+    var idEl = document.getElementById('mModelId');
+    var nameEl = document.getElementById('mModelName');
+    var mid = idEl.value.trim().replace(/\s+/g, '-').toLowerCase();
+    var name = nameEl.value.trim();
+    if (!mid || !name) { showToast('Fill in all fields', 'error'); return; }
+
+    var data = getCurrentData();
+    if (data.models[mid]) { showToast('Model ID already exists', 'error'); return; }
+
+    var now = new Date().toISOString();
+    var services = {};
+    var updates = {};
+    Object.keys(data.serviceTypes).forEach(function(skey) {
+      services[skey] = 0;
+      updates[skey] = now;
+    });
+    data.models[mid] = { name: name, services: services, serviceUpdates: updates, lastUpdated: now };
+
+    idEl.value = ''; nameEl.value = '';
+    closeModal('addModelModal');
+    markDirty();
+    renderTabContent();
+    showToast('Model added', 'success');
+  };
+
+  window.deleteModel = function(mid) {
+    var data = getCurrentData();
+    if (!data.models[mid]) return;
+    document.getElementById('confirmTitle').textContent = 'Delete Model';
+    document.getElementById('confirmMsg').textContent = 'Delete "' + data.models[mid].name + '"? This cannot be undone.';
+    document.getElementById('confirmBtn').onclick = function() {
+      delete data.models[mid];
+      closeModal('confirmModal');
+      markDirty();
+      renderTabContent();
+      showToast('Model deleted', 'success');
+    };
+    openModal('confirmModal');
+  };
+
+  window.addService = function() {
+    var idEl = document.getElementById('mServiceId');
+    var nameEl = document.getElementById('mServiceName');
+    var descEl = document.getElementById('mServiceDesc');
+    var sid = idEl.value.trim().replace(/\s+/g, '_').toLowerCase();
+    var name = nameEl.value.trim();
+    if (!sid || !name) { showToast('Fill in ID and Name', 'error'); return; }
+
+    var data = getCurrentData();
+    if (data.serviceTypes[sid]) { showToast('Service ID already exists', 'error'); return; }
+
+    data.serviceTypes[sid] = { name: name, description: descEl.value.trim() || name };
+
+    var now = new Date().toISOString();
+    Object.keys(data.models).forEach(function(mid) {
+      data.models[mid].services[sid] = 0;
+      if (!data.models[mid].serviceUpdates) data.models[mid].serviceUpdates = {};
+      data.models[mid].serviceUpdates[sid] = now;
+    });
+
+    idEl.value = ''; nameEl.value = ''; descEl.value = '';
+    closeModal('addServiceModal');
+    markDirty();
+    renderTabContent();
+    showToast('Service added', 'success');
+  };
+
+  window.deleteService = function(skey) {
+    var data = getCurrentData();
+    if (!data.serviceTypes[skey]) return;
+    document.getElementById('confirmTitle').textContent = 'Delete Service';
+    document.getElementById('confirmMsg').textContent = 'Delete "' + data.serviceTypes[skey].name + '"? This removes it from ALL models.';
+    document.getElementById('confirmBtn').onclick = function() {
+      delete data.serviceTypes[skey];
+      Object.keys(data.models).forEach(function(mid) {
+        delete data.models[mid].services[skey];
+        if (data.models[mid].serviceUpdates) delete data.models[mid].serviceUpdates[skey];
+      });
+      closeModal('confirmModal');
+      markDirty();
+      renderTabContent();
+      showToast('Service deleted', 'success');
+    };
+    openModal('confirmModal');
+  };
+
+  // ─── Batch ─────────────────────────────────────────────────
+  window.applyBatch = function() {
+    var svcVal = document.getElementById('batchSvc').value;
+    var op = document.getElementById('batchOp').value;
+    var val = parseFloat(document.getElementById('batchVal').value);
+    if (!svcVal) { showToast('Select a service', 'error'); return; }
+    if (isNaN(val)) { showToast('Enter a value', 'error'); return; }
+
+    var baseKey = svcVal.split('.')[0];
+    var subKey = svcVal.indexOf('.') > 0 ? svcVal.split('.')[1] : null;
+
+    var data = getCurrentData();
+    var now = new Date().toISOString();
+    var count = 0;
+
+    Object.keys(data.models).forEach(function(mid) {
+      var current = getServiceValue(data.models[mid], baseKey, subKey);
+      var newPrice = current;
+      switch (op) {
+        case 'set': newPrice = val; break;
+        case 'increase': newPrice = current + val; break;
+        case 'decrease': newPrice = Math.max(-1, current - val); break;
+      }
+      if (newPrice !== current) {
+        setServiceValue(data.models[mid], baseKey, subKey, newPrice);
+        count++;
+      }
+    });
+
+    markDirty();
+    renderTabContent();
+    showToast('Updated ' + count + ' models', 'success');
+  };
+
+  // ─── Save ──────────────────────────────────────────────────
+  window.saveCurrent = async function() {
+    if (!state.currentBrand || !state.data) return;
+    var btn = document.getElementById('globalSaveBtn');
+    var status = document.getElementById('saveStatus');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    try {
+      var user = Auth.getUser();
+      var token = Auth.getToken();
+      if (!user || user.role !== 'root' || !token) {
+        throw new Error('Authentication required');
+      }
+      var res = await fetch('/api/pricing/' + encodeURIComponent(state.currentBrand), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(state.data)
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Save failed');
+      state.dirty = false;
+      state._dataBackup = JSON.stringify(state.data);
+      status.textContent = '✓ Saved';
+      showToast('Saved successfully', 'success');
+      setTimeout(function(){ status.textContent = ''; }, 3000);
+    } catch(e) {
+      showToast('Save failed: ' + e.message, 'error');
+      btn.disabled = false;
+    }
     btn.textContent = 'Save Changes';
-    btn.disabled = dirty;
-}
+    btn.disabled = state.dirty;
+  };
 
-// ── Modal helpers ─────────────────────────────────────────
-function openModal(id) { document.getElementById(id).classList.add('show'); }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-document.querySelectorAll('.modal-overlay').forEach(m =>
-    m.addEventListener('click', e => { if(e.target===m) m.classList.remove('show'); }));
+  // ─── Init ──────────────────────────────────────────────────
+  init();
 
-// ── Toast ─────────────────────────────────────────────────
-function showToast(msg, type='') {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.className = 'toast show '+type;
-    setTimeout(()=>t.className='toast', 3000);
-}
+})();
 </script>
 </body>
 </html>
