@@ -12,7 +12,7 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
-const crypto = require('crypto');
+const { encryptData } = require('../../utils/inv-crypto');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 
@@ -40,18 +40,6 @@ const BCRYPT_SALT_ROUNDS = 10;
 
 // ─── All routes require ROOT authentication ─────────────────────────
 router.use(jwtAuth, requireRole('root'));
-
-// ─── Helper: AES-256 encrypt (consistent with existing pattern) ─────
-function encryptData(data) {
-  const key = process.env.INV_AUDIT_KEY;
-  if (!key) throw new Error('INV_AUDIT_KEY not configured');
-  const derivedKey = crypto.createHash('sha256').update(key).digest();
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, iv);
-  let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
 
 // ─── Helper: YYYY-MM-DD date range ──────────────────────────────────
 function buildDateFilter(startDate, endDate) {

@@ -76,8 +76,6 @@ const MonthlyReportSchema = new mongoose.Schema({
   }],
 }, { timestamps: true });
 
-MonthlyReportSchema.index({ month: 1 }, { unique: true });
-
 // ─── Immutability guard ────────────────────────────────────────────
 // Monthly report is immutable once generated.
 MonthlyReportSchema.pre('save', function () {

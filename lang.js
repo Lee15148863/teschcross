@@ -644,8 +644,6 @@ function applyLang() {
   // Update language toggle button text
   const toggle = document.getElementById('langToggle');
   if (toggle) {
-    toggle.textContent = __(lang === 'en' ? 'app.langToggle' : 'app.langToggle');
-    // Actually just show the opposite language
     toggle.textContent = lang === 'en' ? '中' : 'EN';
   }
 }

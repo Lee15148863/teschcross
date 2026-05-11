@@ -354,7 +354,6 @@ function savePricing() {
             if (oldValue !== newValue) {
                 pricingData[brand].models[model].services[service] = newValue;
                 pricingData[brand].models[model].lastUpdated = new Date().toISOString();
-                console.log(`Price updated for ${model} - ${service}: ${oldValue} -> ${newValue}`);
             }
         }
     });
@@ -365,7 +364,6 @@ function savePricing() {
     message.classList.add('show');
     setTimeout(() => message.classList.remove('show'), 3000);
     
-    console.log('Pricing saved successfully');
 }
 
 // Add new model
@@ -409,7 +407,6 @@ function addNewModel() {
     message.classList.add('show');
     setTimeout(() => message.classList.remove('show'), 3000);
     
-    console.log('Model added:', modelId);
 }
 
 // Render service inputs for new model form
@@ -524,7 +521,6 @@ function addNewBrand() {
     message.classList.add('show');
     setTimeout(() => message.classList.remove('show'), 3000);
     
-    console.log('Brand added:', brandId);
 }
 
 // Delete brand
@@ -546,7 +542,6 @@ function deleteBrand(brandKey) {
     renderBrandSelect();
     renderCurrentBrands();
     
-    console.log('Brand deleted:', brandKey);
 }
 
 // Edit model name
@@ -562,8 +557,7 @@ function editModelName(brandKey, modelKey) {
         // Update display
         document.getElementById(`model-name-${brandKey}-${modelKey}`).textContent = newName.trim();
         
-        console.log('Model name updated:', modelKey, 'to', newName);
-    }
+        }
 }
 
 // Render current services list
@@ -655,7 +649,6 @@ function addNewService() {
     message.classList.add('show');
     setTimeout(() => message.classList.remove('show'), 3000);
     
-    console.log('Service type added:', serviceId);
 }
 
 // Delete service type
@@ -685,7 +678,6 @@ function deleteService(serviceKey) {
     renderNewModelServices();
     renderCurrentServices();
     
-    console.log('Service type deleted:', serviceKey);
 }
 
 // Delete model
@@ -694,7 +686,6 @@ function deleteModel(brand, modelKey) {
         delete pricingData[brand].models[modelKey];
         savePricingData(pricingData);
         renderPricingEditor();
-        console.log('Model deleted:', modelKey);
     }
 }
 
@@ -704,4 +695,3 @@ renderBrandSelect();
 renderNewModelServices();
 renderCurrentBrands();
 renderCurrentServices();
-console.log('Admin page loaded');

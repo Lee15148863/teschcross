@@ -11,7 +11,7 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
-const crypto = require('crypto');
+const { encryptData: _encryptData } = require('../../utils/inv-crypto');
 const router = express.Router();
 
 const Transaction = require('../../models/inv/Transaction');
@@ -24,16 +24,8 @@ const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 // ─── All routes require ROOT authentication ─────────────────────────
 router.use(jwtAuth, requireRole('root'));
 
-// ─── Helper: AES-256 encrypt (consistent with root.js) ──────────────
 function encryptData(data) {
-  const key = process.env.INV_AUDIT_KEY;
-  if (!key) return JSON.stringify(data);
-  const derivedKey = crypto.createHash('sha256').update(key).digest();
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, iv);
-  let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
+  return _encryptData(data, false);
 }
 
 // ─── Helper: build date filter ──────────────────────────────────────

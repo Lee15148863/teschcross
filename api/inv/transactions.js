@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const crypto = require('crypto');
+const { encryptData } = require('../../utils/inv-crypto');
 const Transaction = require('../../models/inv/Transaction');
 const Product = require('../../models/inv/Product');
 const StockMovement = require('../../models/inv/StockMovement');
@@ -14,19 +14,6 @@ const { authorize, SOURCES } = require('../../utils/inv-integrity-layer');
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 const { generateReceiptNumber } = require('../../utils/inv-receipt-number');
-
-// ─── Helper: AES-256 encrypt ────────────────────────────────────────────────
-function encryptData(data) {
-  const key = process.env.INV_AUDIT_KEY;
-  if (!key) throw new Error('INV_AUDIT_KEY not configured');
-  // Derive a 32-byte key from the env var
-  const derivedKey = crypto.createHash('sha256').update(key).digest();
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, iv);
-  let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
 
 // ─── Helper: Generate receipt number (delegates to inv-receipt-number) ──────
 

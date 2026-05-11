@@ -1,6 +1,8 @@
 require('dotenv').config();
 const dns = require('dns');
-dns.setServers(['8.8.8.8', '1.1.1.1']); // Bypass local DNS that blocks MongoDB Atlas
+if (process.env.NODE_ENV !== 'production') {
+  dns.setServers(['8.8.8.8', '1.1.1.1']); // Bypass local DNS that blocks MongoDB Atlas
+}
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -95,6 +97,13 @@ mongoose.connect(process.env.DBCon, { dbName: 'techcross' })
         // ─── Public share routes (MUST be before the catch-all) ────────────────
         app.use('/share', require('./api/inv/share-public'));
         app.use('/api/share', require('./api/inv/share-public'));
+
+        // ─── Global error handler ────────────────────────────────────────────
+        app.use((err, req, res, next) => {
+            console.error('Unhandled error:', err.message);
+            const status = err.status || err.statusCode || 500;
+            res.status(status).json({ error: err.message || 'Internal server error' });
+        });
 
         // Fallback: serve index.html for all remaining non-API routes
         app.use((req, res) => {

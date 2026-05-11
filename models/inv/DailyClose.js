@@ -77,7 +77,6 @@ const DailyCloseSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-DailyCloseSchema.index({ date: 1 }, { unique: true });
 DailyCloseSchema.index({ status: 1 });
 
 // ─── Immutability guard ────────────────────────────────────────────

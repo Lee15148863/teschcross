@@ -49,7 +49,6 @@ const TransactionSchema = new mongoose.Schema({
 });
 
 TransactionSchema.index({ createdAt: -1 });
-TransactionSchema.index({ receiptNumber: 1 }, { unique: true });
 TransactionSchema.index({ 'items.serialNumber': 1 });
 TransactionSchema.index(
   { originalReceipt: 1 },

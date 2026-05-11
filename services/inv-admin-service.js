@@ -6,7 +6,7 @@
  * the existing pattern in api/inv/settings.js and api/inv/transactions.js.
  */
 
-const crypto = require('crypto');
+const { encryptData } = require('../utils/inv-crypto');
 const AuditLog = require('../models/inv/AuditLog');
 
 const AUDIT_ACTIONS = Object.freeze({
@@ -18,22 +18,6 @@ const AUDIT_ACTIONS = Object.freeze({
   VAT_RATE_CHANGE: 'vat_rate_change',
   WEBSITE_UPDATE: 'website_update',
 });
-
-/**
- * AES-256 encrypt audit details.
- * Replicates the encryptData helper from settings.js/transactions.js
- * to avoid duplication while keeping the same format.
- */
-function encryptData(data) {
-  const key = process.env.INV_AUDIT_KEY;
-  if (!key) throw new Error('INV_AUDIT_KEY not configured');
-  const derivedKey = crypto.createHash('sha256').update(key).digest();
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, iv);
-  let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
 
 /**
  * Log an admin action to the audit trail.

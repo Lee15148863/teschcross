@@ -22,7 +22,6 @@ const DeviceSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-DeviceSchema.index({ serialNumber: 1 }, { unique: true });
 DeviceSchema.index({ status: 1 });
 DeviceSchema.index({ product: 1 });
 

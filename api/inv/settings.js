@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const crypto = require('crypto');
+const { encryptData } = require('../../utils/inv-crypto');
 const SystemSetting = require('../../models/inv/SystemSetting');
 const AuditLog = require('../../models/inv/AuditLog');
 const { jwtAuth, requireRole, requirePermission } = require('../../middleware/inv-auth');
@@ -28,18 +28,6 @@ const DEFAULT_SETTINGS = {
   receiptShowBarcode: false,
   receiptShowSerialNumbers: true,
 };
-
-// ─── Helper: AES-256 encrypt ────────────────────────────────────────────────
-function encryptData(data) {
-  const key = process.env.INV_AUDIT_KEY;
-  if (!key) throw new Error('INV_AUDIT_KEY not configured');
-  const derivedKey = crypto.createHash('sha256').update(key).digest();
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, iv);
-  let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
 
 // ─── Helper: load all settings merged with defaults ─────────────────────────
 async function loadSettings() {

@@ -8,14 +8,12 @@ const STORAGE_KEY = 'techcross_announcement';
 
 // Check if already logged in
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('Page loaded, checking login status...');
     const isLoggedIn = sessionStorage.getItem('announcement_admin_logged_in');
     if (isLoggedIn === 'true') {
-        console.log('Already logged in');
         showManagementSection();
         loadAnnouncementData();
     }
-    
+
     // Setup real-time preview listeners
     setupPreviewListeners();
 });
@@ -24,21 +22,13 @@ window.addEventListener('DOMContentLoaded', () => {
 function login() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
-    
-    console.log('Login attempt:');
-    console.log('  Username:', username);
-    console.log('  Password:', password);
-    console.log('  Expected username:', ADMIN_CREDENTIALS.username);
-    console.log('  Expected password:', ADMIN_CREDENTIALS.password);
-    
+
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-        console.log('✅ Login successful!');
         sessionStorage.setItem('announcement_admin_logged_in', 'true');
         showManagementSection();
         loadAnnouncementData();
         showMessage('Login successful!', 'success');
     } else {
-        console.log('❌ Login failed!');
         showMessage('Invalid username or password', 'error');
     }
 }
@@ -55,14 +45,12 @@ function logout() {
 
 // Show management section
 function showManagementSection() {
-    console.log('Showing management section...');
     document.getElementById('loginSection').style.display = 'none';
     document.getElementById('managementSection').style.display = 'block';
 }
 
 // Load announcement data
 function loadAnnouncementData() {
-    console.log('Loading announcement data...');
     const data = getAnnouncementData();
     
     document.getElementById('announcementEnabled').checked = data.enabled;
@@ -117,7 +105,6 @@ function saveAnnouncement() {
         scrollSpeed: parseInt(document.getElementById('scrollSpeed').value)
     };
     
-    console.log('Saving announcement:', data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     showMessage('Announcement settings saved successfully!', 'success');
     
@@ -236,5 +223,4 @@ document.addEventListener('keypress', (e) => {
     }
 });
 
-console.log('announcement-admin.js loaded successfully');
-console.log('Admin credentials:', ADMIN_CREDENTIALS);
+// (loaded)

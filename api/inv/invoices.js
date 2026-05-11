@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { createTransporter } = require('../../utils/inv-crypto');
 const mongoose = require('mongoose');
 const Invoice = require('../../models/inv/Invoice');
 const Transaction = require('../../models/inv/Transaction');
@@ -85,18 +85,6 @@ function makeInvoiceNumber(receiptNumber) {
 }
 
 // ─── Helper: Create SMTP transporter ────────────────────────────────────
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: (parseInt(process.env.SMTP_PORT) || 587) === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
-  });
-}
-
 // ─── Helper: Build professional invoice email ──────────────────────────
 function buildInvoiceEmail(invoice, pdfBuffer, recipientEmail) {
   const customerName = invoice.customerName || 'Valued Customer';
@@ -276,6 +264,31 @@ router.post('/:transactionId/generate', async (req, res) => {
       };
     });
 
+    // ─── Order discount line item ────────────────────────────────
+    // When an order-level discount exists, add a negative line so that
+    // sum(invoice.items.lineTotal) === invoice.grossTotal (transaction.totalAmount).
+    // The discount line has vatRate=0 / vatAmount=0 — VAT was already
+    // computed on the discounted amounts stored in the transaction.
+    const hasOrderDiscount = transaction.orderDiscount
+      && transaction.orderDiscount.type
+      && transaction.orderDiscount.value > 0;
+    if (hasOrderDiscount && transaction.subtotalBeforeOrderDiscount != null) {
+      const discountAmount = Math.round(
+        (transaction.subtotalBeforeOrderDiscount - transaction.totalAmount) * 100
+      ) / 100;
+      if (discountAmount > 0) {
+        invoiceItems.push({
+          name: 'Order Discount',
+          quantity: 1,
+          unitPrice: -discountAmount,
+          vatType: 'standard',
+          vatRate: 0,
+          vatAmount: 0,
+          lineTotal: -discountAmount,
+        });
+      }
+    }
+
     // Round to avoid floating-point display issues
     standardVatSum = Math.round(standardVatSum * 100) / 100;
     reducedVatSum = Math.round(reducedVatSum * 100) / 100;
@@ -328,8 +341,8 @@ router.post('/:transactionId/generate', async (req, res) => {
     try {
       await AuditLog.create({
         action: 'INVOICE_GENERATED',
-        entityType: 'Invoice',
-        entityId: invoice._id,
+        targetType: 'Invoice',
+        targetId: invoice._id,
         details: {
           invoiceNumber: invoiceNumber,
           receiptNumber: transaction.receiptNumber,

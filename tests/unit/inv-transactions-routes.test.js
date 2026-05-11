@@ -151,9 +151,12 @@ describe('Transaction routes — auth middleware', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/inv/transactions/checkout — input validation
 // ═══════════════════════════════════════════════════════════════════════════════
+// Note: these tests require a live MongoDB connection since the checkout
+// service calls requireSystemActive() which queries the DB.
+const hasDB = !!process.env.DBCon;
 describe('POST /api/inv/transactions/checkout — input validation', () => {
   it('should return 400 when items is missing', async () => {
-    if (!transactionsRouter) return;
+    if (!transactionsRouter || !hasDB) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/transactions/checkout')
@@ -164,7 +167,7 @@ describe('POST /api/inv/transactions/checkout — input validation', () => {
   });
 
   it('should return 400 when items is empty array', async () => {
-    if (!transactionsRouter) return;
+    if (!transactionsRouter || !hasDB) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/transactions/checkout')
@@ -175,7 +178,7 @@ describe('POST /api/inv/transactions/checkout — input validation', () => {
   });
 
   it('should return 400 when items is not an array', async () => {
-    if (!transactionsRouter) return;
+    if (!transactionsRouter || !hasDB) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/transactions/checkout')
@@ -186,7 +189,7 @@ describe('POST /api/inv/transactions/checkout — input validation', () => {
   });
 
   it('should return 400 when paymentMethod is missing', async () => {
-    if (!transactionsRouter) return;
+    if (!transactionsRouter || !hasDB) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/transactions/checkout')
@@ -198,7 +201,7 @@ describe('POST /api/inv/transactions/checkout — input validation', () => {
   });
 
   it('should return 400 when paymentMethod is invalid', async () => {
-    if (!transactionsRouter) return;
+    if (!transactionsRouter || !hasDB) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/transactions/checkout')
@@ -213,7 +216,7 @@ describe('POST /api/inv/transactions/checkout — input validation', () => {
   });
 
   it('should return 400 when item is missing product ID', async () => {
-    if (!transactionsRouter) return;
+    if (!transactionsRouter || !hasDB) return;
     const app = createApp();
     const res = await request(app)
       .post('/api/inv/transactions/checkout')

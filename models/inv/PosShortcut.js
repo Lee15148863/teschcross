@@ -11,6 +11,4 @@ const PosShortcutSchema = new mongoose.Schema({
   updatedAt:  { type: Date, default: Date.now }
 });
 
-PosShortcutSchema.index({ sort_no: 1 }, { unique: true });
-
 module.exports = mongoose.model('PosShortcut', PosShortcutSchema);

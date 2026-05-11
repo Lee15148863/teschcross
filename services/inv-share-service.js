@@ -7,6 +7,7 @@
  */
 
 const crypto = require('crypto');
+const { encryptData } = require('../utils/inv-crypto');
 const mongoose = require('mongoose');
 const ShareToken = require('../models/inv/ShareToken');
 const Transaction = require('../models/inv/Transaction');
@@ -18,17 +19,6 @@ const TOKEN_DAYS = 14;       // 14-day expiry
 const BASE_URL = process.env.BASE_URL || 'https://techcross.ie';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
-
-function encryptData(data) {
-  const key = process.env.INV_AUDIT_KEY;
-  if (!key) throw new Error('INV_AUDIT_KEY not configured');
-  const derivedKey = crypto.createHash('sha256').update(key).digest();
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, iv);
-  let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
 
 /**
  * Generate a cryptographically random token string.

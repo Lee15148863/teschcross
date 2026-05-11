@@ -7,8 +7,7 @@
  * All deliveries are audit-logged.
  */
 
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { encryptData, createTransporter } = require('../utils/inv-crypto');
 const mongoose = require('mongoose');
 const Transaction = require('../models/inv/Transaction');
 const AuditLog = require('../models/inv/AuditLog');
@@ -16,35 +15,6 @@ const { generateReceipt } = require('../utils/inv-receipt-generator');
 const shareService = require('./inv-share-service');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
-
-/**
- * Encrypt data for AuditLog using INV_AUDIT_KEY.
- */
-function encryptData(data) {
-  const key = process.env.INV_AUDIT_KEY;
-  if (!key) throw new Error('INV_AUDIT_KEY not configured');
-  const derivedKey = crypto.createHash('sha256').update(key).digest();
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-cbc', derivedKey, iv);
-  let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
-
-/**
- * Create an SMTP transporter from env vars.
- */
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: (parseInt(process.env.SMTP_PORT) || 587) === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
-  });
-}
 
 /**
  * Build a lightweight receipt HTML email body.

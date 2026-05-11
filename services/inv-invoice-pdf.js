@@ -71,7 +71,8 @@ function sectionCalc(items, rate) {
 }
 
 // ─── HEADER ────────────────────────────────────────────────────────────
-function drawHeader(doc) {
+function drawHeader(doc, invoice) {
+  var ci = (invoice && invoice.companyInfo) || COMPANY;
   var y = MARGIN + 10;
 
   // TAX INVOICE title (ONLY ONE)
@@ -87,17 +88,25 @@ function drawHeader(doc) {
 
   y += 28;
 
-  // Company address block
+  // Company address block (from invoice snapshot, fallback to hardcoded)
   doc.font('Helvetica').fontSize(10).fillColor(GRAY);
-  doc.text(COMPANY.name, MARGIN, y);
+  doc.text(ci.businessName || COMPANY.name, MARGIN, y);
   y += 14;
-  doc.text(COMPANY.address, MARGIN, y);
+  var addr = ci.address || COMPANY.address;
+  // address may include the second line — split if it contains a comma-newline pattern
+  var addrParts = addr.split(', ');
+  doc.text(addrParts[0], MARGIN, y);
   y += 12;
-  doc.text(COMPANY.address2, MARGIN, y);
+  if (addrParts.length > 1) {
+    doc.text(addrParts.slice(1).join(', '), MARGIN, y);
+    y += 12;
+  } else {
+    doc.text(COMPANY.address2, MARGIN, y);
+    y += 12;
+  }
+  doc.text('VAT No: ' + (ci.vatNumber || COMPANY.vatNumber), MARGIN, y);
   y += 12;
-  doc.text('VAT No: ' + COMPANY.vatNumber, MARGIN, y);
-  y += 12;
-  doc.text('Tel: ' + COMPANY.phone + ' | Mob/WhatsApp: ' + COMPANY.mobile, MARGIN, y);
+  doc.text('Tel: ' + (ci.phone || COMPANY.phone) + ' | Mob/WhatsApp: ' + COMPANY.mobile, MARGIN, y);
   y += 22;
 
   hr(doc, y);
@@ -320,7 +329,7 @@ async function generate(invoice) {
       margin: MARGIN,
       info: {
         Title: 'VAT Invoice - ' + (invoice.invoiceNumber || ''),
-        Author: COMPANY.name,
+        Author: (invoice.companyInfo && invoice.companyInfo.businessName) || COMPANY.name,
         Subject: 'VAT Invoice',
         Keywords: 'invoice, vat, techcross',
       },
@@ -332,7 +341,7 @@ async function generate(invoice) {
     doc.on('error', reject);
 
     try {
-      var y = drawHeader(doc);
+      var y = drawHeader(doc, invoice);
       y = drawInvoiceInfo(doc, invoice, y);
 
       var groups = groupItems(invoice.items);

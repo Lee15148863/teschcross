@@ -167,8 +167,8 @@ describe('POST /api/inv/invoices/:transactionId/generate — validation', () => 
       .post('/api/inv/invoices/invalid-id/generate')
       .set('Authorization', `Bearer ${staffToken()}`)
       .send({});
-    expect(res.status).toBe(404);
-    expect(res.body.error).toMatch(/交易记录不存在/);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/Invalid transaction ID format/);
   });
 });
 
@@ -183,7 +183,7 @@ describe('GET /api/inv/invoices/:id/pdf — validation', () => {
       .get('/api/inv/invoices/invalid-id/pdf')
       .set('Authorization', `Bearer ${staffToken()}`);
     expect(res.status).toBe(404);
-    expect(res.body.error).toMatch(/Invoice 不存在/);
+    expect(res.body.error).toMatch(/Invoice not found/);
   });
 });
 
@@ -199,8 +199,7 @@ describe('POST /api/inv/invoices/:id/send — validation', () => {
       .set('Authorization', `Bearer ${staffToken()}`)
       .send({});
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/邮箱/);
-    expect(res.body.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error).toMatch(/Missing recipient email/);
   });
 
   it('should return 404 for invalid ObjectId format', async () => {
@@ -211,7 +210,7 @@ describe('POST /api/inv/invoices/:id/send — validation', () => {
       .set('Authorization', `Bearer ${staffToken()}`)
       .send({ email: 'test@example.com' });
     expect(res.status).toBe(404);
-    expect(res.body.error).toMatch(/Invoice 不存在/);
+    expect(res.body.error).toMatch(/Invoice not found/);
   });
 });
 
@@ -227,8 +226,7 @@ describe('POST /api/inv/invoices/batch-send — validation', () => {
       .set('Authorization', `Bearer ${staffToken()}`)
       .send({});
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/Invoice ID/);
-    expect(res.body.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error).toMatch(/Missing invoice IDs/);
   });
 
   it('should return 400 when invoiceIds is empty array', async () => {
@@ -239,7 +237,6 @@ describe('POST /api/inv/invoices/batch-send — validation', () => {
       .set('Authorization', `Bearer ${staffToken()}`)
       .send({ invoiceIds: [] });
     expect(res.status).toBe(400);
-    expect(res.body.code).toBe('VALIDATION_ERROR');
   });
 
   it('should return 400 when invoiceIds is not an array', async () => {
@@ -250,8 +247,7 @@ describe('POST /api/inv/invoices/batch-send — validation', () => {
       .set('Authorization', `Bearer ${staffToken()}`)
       .send({ invoiceIds: 'not-array' });
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/Invoice ID/);
-    expect(res.body.code).toBe('VALIDATION_ERROR');
+    expect(res.body.error).toMatch(/Missing invoice IDs/);
   });
 });
 

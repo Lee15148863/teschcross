@@ -3,6 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
 const InvUser = require('../../models/inv/User');
 const { SYSTEM_ROOTS } = require('../../models/inv/User');
 const TrustedDevice = require('../../models/inv/TrustedDevice');
@@ -19,6 +20,15 @@ const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 const CAPTCHA_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 const DEVICE_CAPTCHA_THRESHOLD = 3; // Failed attempts before CAPTCHA required per device
 const DEVICE_COOLDOWN_MS = 10 * 60 * 1000; // 10 min device cooldown after failures
+
+// ─── Rate limiter for login (brute-force protection) ─────────────────────────
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many login attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ─── Server-side CAPTCHA store ──────────────────────────────────────────────
 // Map<captchaId, { answer: number, expiresAt: number }>
@@ -67,7 +77,7 @@ router.post('/captcha', (req, res) => {
 // ─── POST /api/inv/auth/login ───────────────────────────────────────────────
 // Validate username, password, and CAPTCHA; handle account lockout
 // Supports device trust to skip CAPTCHA for known devices
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { username, password, captchaId, captchaAnswer, humanCheck, deviceId, trustDevice } = req.body;
 

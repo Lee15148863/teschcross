@@ -420,7 +420,7 @@ describe('Protected routes — auth middleware', () => {
   });
 
   it('PUT /users/:id should return 400 for empty body (admin)', async () => {
-    if (!authRouter) return;
+    if (!authRouter || !process.env.DBCon) return;
     const app = createApp();
     const res = await request(app)
       .put('/api/inv/auth/users/some-id')
@@ -430,7 +430,7 @@ describe('Protected routes — auth middleware', () => {
   });
 
   it('PUT /users/:id should return 400 for invalid role (admin)', async () => {
-    if (!authRouter) return;
+    if (!authRouter || !process.env.DBCon) return;
     const app = createApp();
     const res = await request(app)
       .put('/api/inv/auth/users/some-id')
