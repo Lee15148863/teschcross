@@ -30,6 +30,15 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// ─── Rate limiter for CAPTCHA (prevent memory exhaustion) ────────────────────
+const captchaLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: 'Too many CAPTCHA requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // ─── Server-side CAPTCHA store ──────────────────────────────────────────────
 // Map<captchaId, { answer: number, expiresAt: number }>
 const captchaStore = new Map();
@@ -59,7 +68,7 @@ if (captchaCleanupInterval.unref) {
 
 // ─── POST /api/inv/auth/captcha ─────────────────────────────────────────────
 // Generate a simple math CAPTCHA
-router.post('/captcha', (req, res) => {
+router.post('/captcha', captchaLimiter, (req, res) => {
   const a = Math.floor(Math.random() * 20) + 1;
   const b = Math.floor(Math.random() * 20) + 1;
   const answer = a + b;
@@ -79,7 +88,7 @@ router.post('/captcha', (req, res) => {
 // Supports device trust to skip CAPTCHA for known devices
 router.post('/login', loginLimiter, async (req, res) => {
   try {
-    const { username, password, captchaId, captchaAnswer, humanCheck, deviceId, trustDevice } = req.body;
+    const { username, password, captchaId, captchaAnswer, deviceId, trustDevice } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: '用户名和密码不能为空' });
@@ -142,10 +151,9 @@ router.post('/login', loginLimiter, async (req, res) => {
     } else if (captchaRequired) {
       // CAPTCHA is required but not provided — tell frontend
       return res.status(400).json({ error: '需要验证码', captchaRequired: true });
-    } else if (!humanCheck && !deviceTrusted) {
-      // Simple checkbox mode (only for non-trusted devices without captcha)
-      return res.status(400).json({ error: '请确认您不是机器人' });
     }
+    // Note: humanCheck removed — client-sent boolean offers no real protection.
+    // LoginLimiter + device failure tracking + CAPTCHA provide the actual defense.
 
     // Find user
     const user = await InvUser.findOne({ username });
@@ -303,7 +311,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err.message, err.stack);
-    res.status(500).json({ error: '服务器错误', detail: err.message });
+    res.status(500).json({ error: '服务器错误' });
   }
 });
 

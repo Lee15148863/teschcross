@@ -13,10 +13,32 @@
 const path = require('path');
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const shareService = require('../../services/inv-share-service');
 const pdfGenerator = require('../../services/inv-invoice-pdf');
 
 const ROOT = path.join(__dirname, '..', '..');
+
+const shareLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const pdfLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { error: 'Too many PDF requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.use(shareLimiter);
+
+// Override with stricter limit for PDF generation (resource intensive)
+router.use('/invoice/:token/pdf', pdfLimiter);
 
 // ─── Serve HTML pages ──────────────────────────────────────────────────
 router.get('/receipt/:token', function (req, res) {
@@ -126,7 +148,7 @@ router.get('/invoice/:token/pdf', async (req, res) => {
     const pdfBuffer = await pdfGenerator.generate(result.invoice);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="' + result.invoice.invoiceNumber + '.pdf"');
+    res.setHeader('Content-Disposition', 'inline; filename*=UTF-8\'\'' + encodeURIComponent(result.invoice.invoiceNumber) + '.pdf');
     res.send(pdfBuffer);
   } catch (err) {
     if (err.code === 'EXPIRED') {

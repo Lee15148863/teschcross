@@ -13,6 +13,10 @@ const mongoose = require('mongoose');
 const Invoice = require('../models/inv/Invoice');
 const AuditLog = require('../models/inv/AuditLog');
 const pdfGenerator = require('./inv-invoice-pdf');
+
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 const shareService = require('./inv-share-service');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -52,6 +56,14 @@ async function emailInvoice(invoiceId, recipientEmail, operatorId) {
 
   const totalFormatted = '€' + (invoice.grossTotal || 0).toFixed(2);
 
+  const esc = {
+    customerName: escapeHtml(customerName),
+    storeName: escapeHtml(storeName),
+    storeAddress: escapeHtml(storeAddress),
+    storePhone: escapeHtml(storePhone),
+    vatNumber: escapeHtml(company.vatNumber || ''),
+  };
+
   const htmlBody = '<!DOCTYPE html>'
     + '<html><head><meta charset="UTF-8"><style>'
     + 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f4f4f7;margin:0;padding:0}'
@@ -71,24 +83,24 @@ async function emailInvoice(invoiceId, recipientEmail, operatorId) {
     + '</style></head><body>'
     + '<div class="container">'
     + '<div class="card">'
-    + '<div class="logo">' + storeName + '</div>'
-    + '<div class="tagline">' + storeAddress + (storePhone ? ' &middot; ' + storePhone : '') + '</div>'
+    + '<div class="logo">' + esc.storeName + '</div>'
+    + '<div class="tagline">' + esc.storeAddress + (esc.storePhone ? ' &middot; ' + esc.storePhone : '') + '</div>'
     + '<h1>Thank you for your purchase!</h1>'
-    + '<p>Dear ' + customerName + ',</p>'
-    + '<p>Please find attached your VAT Invoice <strong>' + invoice.invoiceNumber + '</strong> for your recent purchase at ' + storeName + '.</p>'
+    + '<p>Dear ' + esc.customerName + ',</p>'
+    + '<p>Please find attached your VAT Invoice <strong>' + invoice.invoiceNumber + '</strong> for your recent purchase at ' + esc.storeName + '.</p>'
     + '<div class="invoice-box">'
     + '<div class="invoice-row"><span class="invoice-label">Invoice Number</span><span class="invoice-value">' + invoice.invoiceNumber + '</span></div>'
     + '<div class="invoice-row"><span class="invoice-label">Total Paid</span><span class="invoice-value">' + totalFormatted + '</span></div>'
     + '</div>'
     + '<p>Your invoice PDF is attached to this email. You may also access it anytime through your shared link.</p>'
     + '<p>We look forward to welcoming you again. If you have any questions, please don\'t hesitate to contact us.</p>'
-    + '<p style="margin-bottom:0">Best regards,<br><strong>' + storeName + ' Team</strong></p>'
+    + '<p style="margin-bottom:0">Best regards,<br><strong>' + esc.storeName + ' Team</strong></p>'
     + '</div>'
     + '<div class="footer">'
-    + '<strong>' + storeName + '</strong><br>'
-    + storeAddress + '<br>'
-    + (storePhone ? 'Phone: ' + storePhone + '<br>' : '')
-    + (company.vatNumber ? 'VAT: ' + company.vatNumber : '')
+    + '<strong>' + esc.storeName + '</strong><br>'
+    + esc.storeAddress + '<br>'
+    + (esc.storePhone ? 'Phone: ' + esc.storePhone + '<br>' : '')
+    + (esc.vatNumber ? 'VAT: ' + esc.vatNumber : '')
     + '</div>'
     + '</div></body></html>';
 

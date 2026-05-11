@@ -22,7 +22,7 @@ router.get('/:brand', async (req, res) => {
         if (!doc) return res.status(404).json({ error: 'Brand not found' });
         res.json(doc.data);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
         const docs = await Pricing.find({}, 'brand updatedAt');
         res.json(docs);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -46,7 +46,7 @@ router.put('/:brand', adminAuth, async (req, res) => {
         );
         res.json({ success: true, updatedAt: doc.updatedAt });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 

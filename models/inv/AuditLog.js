@@ -20,4 +20,29 @@ AuditLogSchema.index({ action: 1, createdAt: -1 });
 AuditLogSchema.index({ module: 1, createdAt: -1 });
 AuditLogSchema.index({ operator: 1, createdAt: -1 });
 
+// ─── Immutability: AuditLog is append-only ──────────────────────────────
+AuditLogSchema.pre('save', function () {
+  if (!this.isNew) {
+    throw new Error('AUDITLOG_IMMUTABLE: Audit log entries cannot be modified.');
+  }
+});
+AuditLogSchema.pre('findOneAndUpdate', function () {
+  throw new Error('AUDITLOG_IMMUTABLE: Audit log entries cannot be updated.');
+});
+AuditLogSchema.pre('updateOne', function () {
+  throw new Error('AUDITLOG_IMMUTABLE: Audit log entries cannot be updated.');
+});
+AuditLogSchema.pre('updateMany', function () {
+  throw new Error('AUDITLOG_IMMUTABLE: Audit log entries cannot be updated.');
+});
+AuditLogSchema.pre('deleteOne', function () {
+  throw new Error('AUDITLOG_IMMUTABLE: Audit log entries cannot be deleted.');
+});
+AuditLogSchema.pre('deleteMany', function () {
+  throw new Error('AUDITLOG_IMMUTABLE: Audit log entries cannot be deleted.');
+});
+AuditLogSchema.pre('findOneAndDelete', function () {
+  throw new Error('AUDITLOG_IMMUTABLE: Audit log entries cannot be deleted.');
+});
+
 module.exports = mongoose.model('AuditLog', AuditLogSchema);

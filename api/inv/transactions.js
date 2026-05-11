@@ -274,7 +274,7 @@ router.get('/', async (req, res) => {
 
     // Receipt number search
     if (q && typeof q === 'string' && q.trim()) {
-      filter.receiptNumber = { $regex: q.trim(), $options: 'i' };
+      filter.receiptNumber = { $regex: q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     }
 
     // Date range filter — parse as local dates to avoid UTC timezone shift
@@ -478,7 +478,7 @@ router.patch('/:id/edit-items', requireRole('root'), async (req, res) => {
     await transaction.save();
     res.json({ success: true, transaction });
   } catch (err) {
-    res.status(500).json({ error: '服务器错误: ' + err.message });
+    res.status(500).json({ error: '服务器错误' });
   }
 });
 

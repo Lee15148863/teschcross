@@ -43,7 +43,7 @@ router.post('/receipt/email', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to send receipt email: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to send receipt email' });
   }
 });
 
@@ -68,7 +68,7 @@ router.get('/receipt/whatsapp/:transactionId', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to generate WhatsApp link: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to generate WhatsApp link' });
   }
 });
 
@@ -88,7 +88,7 @@ router.get('/receipt/print/:transactionId', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to get print data: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to get print data' });
   }
 });
 
@@ -114,7 +114,7 @@ router.post('/invoice/email', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to send invoice email: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to send invoice email' });
   }
 });
 
@@ -139,7 +139,7 @@ router.get('/invoice/pdf/:invoiceId', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to generate PDF: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to generate PDF' });
   }
 });
 
@@ -159,7 +159,7 @@ router.get('/invoice/:invoiceId', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to get invoice: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to get invoice' });
   }
 });
 
@@ -186,7 +186,7 @@ router.get('/invoice/whatsapp/:invoiceId', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to generate WhatsApp link: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to generate WhatsApp link' });
   }
 });
 
@@ -208,7 +208,7 @@ router.post('/share/receipt/:transactionId', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to create share link: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to create share link' });
   }
 });
 
@@ -228,7 +228,7 @@ router.post('/share/invoice/:invoiceId', async (req, res) => {
     if (err.code === 'VALIDATION_ERROR') {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: 'Failed to create share link: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Failed to create share link' });
   }
 });
 

@@ -161,10 +161,10 @@ router.get('/', async (req, res) => {
     const { invoiceNumber, customer, startDate, endDate } = req.query;
 
     if (invoiceNumber) {
-      filter.invoiceNumber = { $regex: invoiceNumber, $options: 'i' };
+      filter.invoiceNumber = { $regex: invoiceNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     }
     if (customer) {
-      filter.customerName = { $regex: customer, $options: 'i' };
+      filter.customerName = { $regex: customer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     }
     if (startDate || endDate) {
       filter.createdAt = {};
@@ -376,7 +376,7 @@ router.post('/:transactionId/generate', async (req, res) => {
     if (err.name === 'CastError') {
       return res.status(404).json({ error: 'Transaction not found' });
     }
-    res.status(500).json({ error: 'Server error: ' + (err.message || 'Unknown') });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

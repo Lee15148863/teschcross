@@ -31,7 +31,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         const res = await fetch('/api/inv/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, humanCheck: true })
+            body: JSON.stringify({ username, password })
         });
         const data = await res.json();
         if (res.ok && data.token && data.user && data.user.role === 'root') {

@@ -20,14 +20,15 @@ router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 router.get('/customers', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
+    const qEsc = q ? q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
     const results = [];
 
     // Gather from Invoice records
     const invoiceMatch = {};
     if (q) {
       invoiceMatch.$or = [
-        { customerName: { $regex: q, $options: 'i' } },
-        { customerContact: { $regex: q, $options: 'i' } },
+        { customerName: { $regex: qEsc, $options: 'i' } },
+        { customerContact: { $regex: qEsc, $options: 'i' } },
       ];
     }
     const invoices = await Invoice.find(invoiceMatch)
@@ -53,8 +54,8 @@ router.get('/customers', async (req, res) => {
     const noteMatch = {};
     if (q) {
       noteMatch.$or = [
-        { name: { $regex: q, $options: 'i' } },
-        { phone: { $regex: q, $options: 'i' } },
+        { name: { $regex: qEsc, $options: 'i' } },
+        { phone: { $regex: qEsc, $options: 'i' } },
       ];
     }
     const notes = await CustomerNote.find(noteMatch)

@@ -1,6 +1,10 @@
 ﻿// Enhanced Admin Core Functions
 // This file provides common functionality for all brand admin pages
 
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 class EnhancedAdmin {
     constructor(config) {
         this.brandName = config.brandName;
@@ -122,14 +126,14 @@ class EnhancedAdmin {
             if (key === 'screen' && screenIsObject) {
                 html += `<th>Screen (Compatible)</th><th>Screen (Original)</th>`;
             } else {
-                html += `<th>${service.name}</th>`;
+                html += `<th>${escapeHtml(service.name)}</th>`;
             }
         }
 
         html += '</tr></thead><tbody>';
 
         for (const [modelKey, model] of Object.entries(models)) {
-            html += `<tr><td><strong>${model.name}</strong></td>`;
+            html += `<tr><td><strong>${escapeHtml(model.name)}</strong></td>`;
 
             for (const serviceKey of Object.keys(serviceTypes)) {
                 const val = model.services[serviceKey];
@@ -163,9 +167,9 @@ class EnhancedAdmin {
         
         for (const [modelKey, model] of Object.entries(models)) {
             html += `<tr>`;
-            html += `<td><code>${modelKey}</code></td>`;
-            html += `<td><input type="text" value="${model.name}" data-model="${modelKey}" style="width: 300px;"></td>`;
-            html += `<td><button class="btn-delete" onclick="admin.deleteModel('${modelKey}')">Delete</button></td>`;
+            html += `<td><code>${escapeHtml(modelKey)}</code></td>`;
+            html += `<td><input type="text" value="${escapeHtml(model.name)}" data-model="${modelKey}" style="width: 300px;"></td>`;
+            html += `<td><button class="btn-delete" onclick="admin.deleteModel('${escapeHtml(modelKey)}')">Delete</button></td>`;
             html += `</tr>`;
         }
         
@@ -182,10 +186,10 @@ class EnhancedAdmin {
         
         let html = '<div class="pricing-table"><table><thead><tr><th>Service ID</th><th>Service Name</th><th>Description</th><th>Actions</th></tr></thead><tbody>';
         for (const [key, service] of Object.entries(serviceTypes)) {
-            html += `<tr><td><code>${key}</code></td>`;
-            html += `<td><input type="text" value="${service.name}" data-service="${key}" data-field="name" style="width: 200px;"></td>`;
-            html += `<td><input type="text" value="${service.description}" data-service="${key}" data-field="description" style="width: 300px;"></td>`;
-            html += `<td><button class="btn-delete" onclick="admin.deleteService('${key}')">Delete</button></td></tr>`;
+            html += `<tr><td><code>${escapeHtml(key)}</code></td>`;
+            html += `<td><input type="text" value="${escapeHtml(service.name)}" data-service="${key}" data-field="name" style="width: 200px;"></td>`;
+            html += `<td><input type="text" value="${escapeHtml(service.description)}" data-service="${key}" data-field="description" style="width: 300px;"></td>`;
+            html += `<td><button class="btn-delete" onclick="admin.deleteService('${escapeHtml(key)}')">Delete</button></td></tr>`;
         }
         html += '</tbody></table></div>';
         editor.innerHTML = html;

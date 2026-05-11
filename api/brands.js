@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
         const result = {};
         docs.forEach(d => { result[d.brandId] = { name: d.name, types: d.types }; });
         res.json(result);
-    } catch(e) { res.status(500).json({ error: e.message }); }
+    } catch(e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // GET /api/brands/:brandId
@@ -31,7 +31,7 @@ router.get('/:brandId', async (req, res) => {
         const doc = await Brand.findOne({ brandId: req.params.brandId });
         if (!doc) return res.status(404).json({ error: 'Not found' });
         res.json({ name: doc.name, types: doc.types });
-    } catch(e) { res.status(500).json({ error: e.message }); }
+    } catch(e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // PUT /api/brands/:brandId — create or update
@@ -44,7 +44,7 @@ router.put('/:brandId', adminAuth, async (req, res) => {
             { upsert: true, returnDocument: 'after' }
         );
         res.json({ success: true });
-    } catch(e) { res.status(500).json({ error: e.message }); }
+    } catch(e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 // DELETE /api/brands/:brandId
@@ -52,7 +52,7 @@ router.delete('/:brandId', adminAuth, async (req, res) => {
     try {
         await Brand.deleteOne({ brandId: req.params.brandId });
         res.json({ success: true });
-    } catch(e) { res.status(500).json({ error: e.message }); }
+    } catch(e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
 module.exports = router;

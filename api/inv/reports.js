@@ -994,7 +994,7 @@ router.post('/monthly/generate', requireRole('root'), async (req, res) => {
     if (err.code === 11000) {
       return res.status(409).json({ error: `${req.body.month} 月报表已存在`, code: 'ALREADY_GENERATED' });
     }
-    res.status(500).json({ error: '月报表生成失败: ' + (err.message || '未知') });
+    res.status(500).json({ error: '月报表生成失败' });
   }
 });
 
