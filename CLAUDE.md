@@ -186,6 +186,41 @@ npx http-server -p 8000
 - Bootstrap script (`scripts/bootstrap-users.js`) creates Lee087 with `boss: true`
 - Only one boss account exists — hard-coded as `['Lee087']` in the model
 
+## SaaS System (Separate Layer)
+
+A **new standalone SaaS onboarding layer** for future external store owners, completely separate from current TechCross POS.
+
+### Routes
+| Path | Page |
+|------|------|
+| `/saas/` | Landing page — features, pricing, CTAs |
+| `/saas/login` | Store owner login (separate from TechCross login) |
+| `/saas/register` | Store signup request form |
+| `/api/saas/auth/login` | SaaS auth (JWT) |
+| `/api/saas/signup` | Store registration (pending approval) |
+| `/api/saas/stores` | Super admin store management |
+
+### Permission Hierarchy
+```
+super_admin    ← Lee087 (new role, above root)
+     ↑
+store_root     ← Future store owners (each controls only their store)
+     ↑
+manager
+     ↑
+staff
+```
+
+### Super Admin (Lee087)
+- Created via `scripts/bootstrap-saas.js` or API bootstrap
+- Can: create/approve/reject/suspend stores, access all stores, impersonate store owners
+- Stored in `SaaSUser` collection (separate from POS `InvUser`)
+
+### Key Separation
+- SaaS users (`models/saas/SaaSUser`) are in a **separate MongoDB collection** from POS users
+- SaaS routes are under `/api/saas/*`, distinct from `/api/inv/*`
+- Existing TechCross login, POS, and financial core are **untouched**
+
 ## Critical Constraints
 
 - NEVER modify VAT logic, invoice calculations, financial workflows, or accounting structure without **triple confirmation** (see DEPLOYMENT_SAFETY_RULES.md)

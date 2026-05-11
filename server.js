@@ -95,6 +95,11 @@ mongoose.connect(process.env.DBCon, { dbName: 'techcross' })
         app.use('/api/inv/delivery', require('./api/inv/delivery'));
         app.use('/api/inv/whatsapp', require('./api/inv/whatsapp'));
 
+        // ─── SaaS routes (separate from TechCross POS) ───────────────────────────
+        app.use('/api/saas/auth', require('./api/saas/auth'));
+        app.use('/api/saas/signup', require('./api/saas/signup'));
+        app.use('/api/saas/stores', require('./api/saas/stores'));
+
         // ─── Public share routes (MUST be before the catch-all) ────────────────
         app.use('/share', require('./api/inv/share-public'));
         app.use('/api/share', require('./api/inv/share-public'));
