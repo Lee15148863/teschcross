@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — TechCross SaaS</title>
+  <link rel="icon" type="image/png" href="../logo-sm.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
+    body { background: #f2f2f7; min-height: 100vh; padding: 24px; display: flex; flex-direction: column; align-items: center; }
+
+    .card { background: #fff; border-radius: 20px; padding: 32px; width: 100%; max-width: 560px; box-shadow: 0 1px 10px rgba(0,0,0,.05); text-align: center; }
+    .logo { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 24px; }
+    .logo img { height: 36px; }
+    .logo span { font-size: 22px; font-weight: 700; color: #1d1d1f; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .sub { color: #8e8e93; font-size: 14px; margin-bottom: 24px; }
+
+    .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; }
+    .info-row .label { color: #8e8e93; }
+    .info-row .value { font-weight: 500; }
+
+    .btn-primary { display: inline-block; padding: 12px 24px; background: #0071e3; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; margin-top: 20px; }
+    .btn-primary:hover { background: #0077ed; }
+    .btn-danger { padding: 8px 16px; background: #ff3b30; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; margin-top: 20px; }
+
+    .admin-banner { background: linear-gradient(135deg, #1d1d1f, #3a3a3c); color: #fff; padding: 20px; border-radius: 14px; margin-bottom: 20px; text-align: center; }
+    .admin-banner h2 { font-size: 18px; margin-bottom: 4px; }
+    .admin-banner p { font-size: 13px; opacity: .8; margin-bottom: 12px; }
+    .admin-banner a { display: inline-block; padding: 8px 20px; background: #0071e3; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <img src="../logo-sm.png" alt="TechCross">
+      <span>TechCross SaaS</span>
+    </div>
+
+    <div id="adminBanner" style="display:none;" class="admin-banner">
+      <h2>Welcome, Super Admin</h2>
+      <p>You have full access to all stores and the management console.</p>
+      <a href="/saas/admin.html">Open Admin Console</a>
+    </div>
+
+    <h1 id="greeting">Welcome!</h1>
+    <p class="sub">You are signed in to the SaaS platform.</p>
+
+    <div>
+      <div class="info-row"><span class="label">Username</span><span class="value" id="dispUsername">-</span></div>
+      <div class="info-row"><span class="label">Name</span><span class="value" id="dispName">-</span></div>
+      <div class="info-row"><span class="label">Role</span><span class="value" id="dispRole">-</span></div>
+      <div class="info-row"><span class="label">Store ID</span><span class="value" id="dispStore">-</span></div>
+    </div>
+
+    <button class="btn-danger" onclick="logout()">Sign Out</button>
+  </div>
+
+  <script>
+    var token = localStorage.getItem('saas_token');
+    var user = JSON.parse(localStorage.getItem('saas_user') || '{}');
+
+    if (!token) { window.location.href = '/saas/login.html'; }
+
+    document.getElementById('dispUsername').textContent = user.username || '-';
+    document.getElementById('dispName').textContent = user.displayName || '-';
+    document.getElementById('dispRole').textContent = user.role || '-';
+    document.getElementById('dispStore').textContent = user.storeId || 'N/A (super admin)';
+
+    if (user.role === 'super_admin') {
+      document.getElementById('adminBanner').style.display = 'block';
+      document.getElementById('greeting').textContent = 'Super Admin Panel';
+    } else if (user.role === 'store_root') {
+      document.getElementById('greeting').textContent = 'Store Owner Dashboard';
+    } else {
+      document.getElementById('greeting').textContent = 'Staff Dashboard';
+    }
+
+    function logout() {
+      localStorage.removeItem('saas_token');
+      localStorage.removeItem('saas_user');
+      window.location.href = '/saas/login.html';
+    }
+  </script>
+</body>
+</html>

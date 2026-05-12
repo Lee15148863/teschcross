@@ -93,4 +93,76 @@ router.put('/:id/activate', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── Super Admin Impersonation ───────────────────────────────────────────────
+
+// POST /api/saas/stores/impersonate/:storeId — super_admin enters any store
+router.post('/impersonate/:storeId', superAdminAuth, async (req, res) => {
+  try {
+    const store = await Store.findById(req.params.storeId);
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    // Generate a scoped JWT that keeps super_admin role but targets this store
+    const token = jwt.sign(
+      { userId: req.user.userId, username: req.user.username, role: 'super_admin', storeId: req.params.storeId, impersonating: true },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({ token, store: { id: store._id, name: store.name } });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Store User Management (super_admin only) ─────────────────────────────────
+
+// GET /api/saas/stores/:storeId/users — list users for a store (super_admin invisible)
+router.get('/:storeId/users', superAdminAuth, async (req, res) => {
+  try {
+    const users = await SaaSUser.find(
+      { storeId: req.params.storeId, role: { $ne: 'super_admin' } },
+      '-password'
+    ).sort({ createdAt: -1 });
+    res.json(users);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/saas/stores/:storeId/users/:userId — delete a store user (protect super_admin)
+router.delete('/:storeId/users/:userId', superAdminAuth, async (req, res) => {
+  try {
+    const targetUser = await SaaSUser.findById(req.params.userId);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    if (targetUser.role === 'super_admin') {
+      return res.status(403).json({ error: 'Cannot delete super admin' });
+    }
+    await SaaSUser.findByIdAndDelete(req.params.userId);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/saas/stores/:storeId/users/:userId/disable — disable a user (protect super_admin)
+router.put('/:storeId/users/:userId/disable', superAdminAuth, async (req, res) => {
+  try {
+    const targetUser = await SaaSUser.findById(req.params.userId);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    if (targetUser.role === 'super_admin') {
+      return res.status(403).json({ error: 'Cannot disable super admin' });
+    }
+    targetUser.active = false;
+    targetUser.updatedAt = new Date();
+    await targetUser.save();
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/saas/stores/:storeId/users/:userId/enable — re-enable a disabled user
+router.put('/:storeId/users/:userId/enable', superAdminAuth, async (req, res) => {
+  try {
+    const targetUser = await SaaSUser.findById(req.params.userId);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    targetUser.active = true;
+    targetUser.updatedAt = new Date();
+    await targetUser.save();
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;

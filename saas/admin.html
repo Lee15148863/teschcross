@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin — TechCross SaaS</title>
+  <link rel="icon" type="image/png" href="../logo-sm.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
+    body { background: #f2f2f7; min-height: 100vh; padding: 24px; }
+
+    .header { max-width: 1200px; margin: 0 auto 24px; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 22px; font-weight: 700; }
+    .header .user-badge { font-size: 13px; color: #8e8e93; }
+    .header .user-badge strong { color: #1d1d1f; }
+    .header .logout-btn { padding: 6px 16px; border: none; background: #ff3b30; color: #fff; border-radius: 8px; cursor: pointer; font-size: 13px; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; max-width: 1200px; margin: 0 auto 20px; }
+    .tab { padding: 10px 20px; border-radius: 10px; background: #e8e8ed; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; border: none; }
+    .tab:hover { background: #d1d1d6; }
+    .tab.active { background: #0071e3; color: #fff; }
+
+    .panel { display: none; max-width: 1200px; margin: 0 auto; }
+    .panel.active { display: block; }
+
+    .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 10px rgba(0,0,0,.05); margin-bottom: 16px; }
+    .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+
+    .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .store-card { background: #fff; border-radius: 14px; padding: 16px; border: 1.5px solid #e8e8ed; transition: all .2s; }
+    .store-card:hover { border-color: #0071e3; box-shadow: 0 2px 12px rgba(0,113,227,.1); }
+    .store-card .store-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .store-card .store-meta { font-size: 12px; color: #8e8e93; margin-bottom: 8px; }
+    .store-card .store-status { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .store-card .store-status.active { background: #e8f5e9; color: #2e7d32; }
+    .store-card .store-status.suspended { background: #fef2f2; color: #dc2626; }
+    .store-card .store-status.pending { background: #fff8e1; color: #f57f17; }
+    .store-card .actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .store-card .actions button { padding: 5px 12px; border: none; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .2s; }
+
+    .btn-primary { background: #0071e3; color: #fff; }
+    .btn-primary:hover { background: #0077ed; }
+    .btn-danger { background: #ff3b30; color: #fff; }
+    .btn-danger:hover { background: #d32f2f; }
+    .btn-outline { background: transparent; border: 1.5px solid #d2d2d7; }
+    .btn-outline:hover { background: #f2f2f7; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+    .signup-table { width: 100%; border-collapse: collapse; }
+    .signup-table th, .signup-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e8e8ed; font-size: 13px; }
+    .signup-table th { color: #8e8e93; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+
+    .user-table { width: 100%; border-collapse: collapse; }
+    .user-table th, .user-table td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #e8e8ed; font-size: 13px; }
+    .user-table th { color: #8e8e93; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-green { background: #e8f5e9; color: #2e7d32; }
+    .badge-red { background: #fef2f2; color: #dc2626; }
+    .badge-gray { background: #f2f2f7; color: #555; }
+    .badge-blue { background: #e3f2fd; color: #1565c0; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+
+    .empty-state { text-align: center; padding: 40px; color: #8e8e93; font-size: 14px; }
+
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      .store-grid { grid-template-columns: 1fr; }
+      .header { flex-direction: column; gap: 12px; align-items: flex-start; }
+      .tabs { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Super Admin Console</h1>
+      <div class="user-badge"><strong id="displayName">-</strong> &middot; <span id="userRole">-</span></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Sign Out</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="stores">Stores</button>
+    <button class="tab" data-tab="signups">Signups</button>
+  </div>
+
+  <!-- Stores Panel -->
+  <div class="panel active" id="panel-stores">
+    <div class="card">
+      <h2>All Stores</h2>
+      <div id="storeList"><div class="empty-state">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- Signups Panel -->
+  <div class="panel" id="panel-signups">
+    <div class="card">
+      <h2>Pending Signups</h2>
+      <div id="signupList"><div class="empty-state">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- Users Modal -->
+  <div id="usersModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; display:none; align-items:center; justify-content:center;" onclick="if(event.target===this)closeUsers()">
+    <div style="background:#fff; border-radius:20px; padding:24px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto;" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="font-size:18px; font-weight:600;">Users — <span id="usersStoreName"></span></h2>
+        <button onclick="closeUsers()" style="border:none; background:#f2f2f7; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:16px;">&times;</button>
+      </div>
+      <div id="usersList"><div class="empty-state">Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var token = localStorage.getItem('saas_token');
+    var userData = JSON.parse(localStorage.getItem('saas_user') || '{}');
+
+    if (!token || userData.role !== 'super_admin') {
+      window.location.href = '/saas/login.html';
+    }
+
+    document.getElementById('displayName').textContent = userData.displayName || userData.username;
+    document.getElementById('userRole').textContent = userData.role;
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    function getAuthHeaders() {
+      return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+    }
+
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(function() { t.classList.remove('show'); }, 2500);
+    }
+
+    function logout() {
+      localStorage.removeItem('saas_token');
+      localStorage.removeItem('saas_user');
+      window.location.href = '/saas/login.html';
+    }
+
+    // ─── Stores ──────────────────────────────────────────────────────────────
+
+    function loadStores() {
+      fetch('/api/saas/stores', { headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); })
+        .then(function(stores) {
+          var el = document.getElementById('storeList');
+          if (!stores.length) { el.innerHTML = '<div class="empty-state">No stores yet.</div>'; return; }
+          el.innerHTML = '<div class="store-grid">' + stores.map(function(s) {
+            var statusClass = s.status === 'active' ? 'active' : (s.status === 'suspended' ? 'suspended' : 'pending');
+            return '<div class="store-card">' +
+              '<div class="store-name">' + escHtml(s.name) + '</div>' +
+              '<div class="store-meta">' + escHtml(s.ownerName || '-') + ' &middot; ' + escHtml(s.email) + '</div>' +
+              '<div><span class="store-status ' + statusClass + '">' + s.status + '</span></div>' +
+              '<div class="actions">' +
+                '<button class="btn-primary btn-sm" onclick="impersonateStore(\'' + s._id + '\')">Enter Store</button>' +
+                '<button class="btn-outline btn-sm" onclick="showUsers(\'' + s._id + '\',\'' + escJs(s.name) + '\')">Users</button>' +
+                (s.status === 'active' ? '<button class="btn-danger btn-sm" onclick="suspendStore(\'' + s._id + '\')">Suspend</button>' : '') +
+                (s.status === 'suspended' ? '<button class="btn-primary btn-sm" onclick="activateStore(\'' + s._id + '\')">Activate</button>' : '') +
+              '</div></div>';
+          }).join('') + '</div>';
+        })
+        .catch(function() { document.getElementById('storeList').innerHTML = '<div class="empty-state">Failed to load stores.</div>'; });
+    }
+
+    function impersonateStore(storeId) {
+      fetch('/api/saas/stores/impersonate/' + storeId, { method: 'POST', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.token) {
+            localStorage.setItem('saas_token', data.token);
+            showToast('Entered ' + data.store.name + '. Token updated.');
+          } else {
+            showToast('Failed: ' + (data.error || 'unknown error'));
+          }
+        })
+        .catch(function() { showToast('Network error'); });
+    }
+
+    function suspendStore(id) {
+      if (!confirm('Suspend this store?')) return;
+      fetch('/api/saas/stores/' + id + '/suspend', { method: 'PUT', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Store suspended'); loadStores(); } else { showToast(d.error); } })
+        .catch(function() { showToast('Network error'); });
+    }
+
+    function activateStore(id) {
+      fetch('/api/saas/stores/' + id + '/activate', { method: 'PUT', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Store activated'); loadStores(); } else { showToast(d.error); } })
+        .catch(function() { showToast('Network error'); });
+    }
+
+    // ─── Store Users ─────────────────────────────────────────────────────────
+
+    function showUsers(storeId, storeName) {
+      document.getElementById('usersStoreName').textContent = storeName;
+      document.getElementById('usersModal').style.display = 'flex';
+      document.getElementById('usersList').innerHTML = '<div class="empty-state">Loading...</div>';
+
+      fetch('/api/saas/stores/' + storeId + '/users', { headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); })
+        .then(function(users) {
+          var el = document.getElementById('usersList');
+          if (!users.length) { el.innerHTML = '<div class="empty-state">No users for this store.</div>'; return; }
+          el.innerHTML = '<table class="user-table"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>' +
+            users.map(function(u) {
+              var roleBadge = u.role === 'store_root' ? 'badge-blue' : (u.role === 'manager' ? 'badge-green' : 'badge-gray');
+              var statusBadge = u.active ? 'badge-green' : 'badge-red';
+              return '<tr>' +
+                '<td><strong>' + escHtml(u.username) + '</strong></td>' +
+                '<td>' + escHtml(u.displayName) + '</td>' +
+                '<td><span class="badge ' + roleBadge + '">' + u.role + '</span></td>' +
+                '<td><span class="badge ' + statusBadge + '">' + (u.active ? 'active' : 'disabled') + '</span></td>' +
+                '<td>' +
+                  (u.active
+                    ? '<button class="btn-danger btn-sm" onclick="disableUser(\'' + storeId + '\',\'' + u._id + '\')">Disable</button> '
+                    : '<button class="btn-primary btn-sm" onclick="enableUser(\'' + storeId + '\',\'' + u._id + '\')">Enable</button> ') +
+                  '<button class="btn-danger btn-sm" onclick="deleteUser(\'' + storeId + '\',\'' + u._id + '\')">Delete</button>' +
+                '</td></tr>';
+            }).join('') + '</tbody></table>';
+        })
+        .catch(function() { document.getElementById('usersList').innerHTML = '<div class="empty-state">Failed to load users.</div>'; });
+    }
+
+    function closeUsers() {
+      document.getElementById('usersModal').style.display = 'none';
+    }
+
+    function deleteUser(storeId, userId) {
+      if (!confirm('Delete this user? This cannot be undone.')) return;
+      fetch('/api/saas/stores/' + storeId + '/users/' + userId, { method: 'DELETE', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); }).then(function(d) {
+          if (d.success) { showToast('User deleted'); showUsers(storeId, document.getElementById('usersStoreName').textContent); }
+          else { showToast(d.error || 'Delete failed'); }
+        }).catch(function() { showToast('Network error'); });
+    }
+
+    function disableUser(storeId, userId) {
+      if (!confirm('Disable this user?')) return;
+      fetch('/api/saas/stores/' + storeId + '/users/' + userId + '/disable', { method: 'PUT', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); }).then(function(d) {
+          if (d.success) { showToast('User disabled'); showUsers(storeId, document.getElementById('usersStoreName').textContent); }
+          else { showToast(d.error || 'Failed'); }
+        }).catch(function() { showToast('Network error'); });
+    }
+
+    function enableUser(storeId, userId) {
+      fetch('/api/saas/stores/' + storeId + '/users/' + userId + '/enable', { method: 'PUT', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); }).then(function(d) {
+          if (d.success) { showToast('User enabled'); showUsers(storeId, document.getElementById('usersStoreName').textContent); }
+          else { showToast(d.error || 'Failed'); }
+        }).catch(function() { showToast('Network error'); });
+    }
+
+    // ─── Signups ─────────────────────────────────────────────────────────────
+
+    function loadSignups() {
+      fetch('/api/saas/signup', { headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); })
+        .then(function(signups) {
+          var el = document.getElementById('signupList');
+          var pending = signups.filter(function(s) { return s.status === 'pending'; });
+          if (!pending.length) { el.innerHTML = '<div class="empty-state">No pending signups.</div>'; return; }
+          el.innerHTML = '<table class="signup-table"><thead><tr><th>Store</th><th>Owner</th><th>Email</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead><tbody>' +
+            pending.map(function(s) {
+              return '<tr>' +
+                '<td><strong>' + escHtml(s.storeName) + '</strong></td>' +
+                '<td>' + escHtml(s.ownerName) + '</td>' +
+                '<td>' + escHtml(s.email) + '</td>' +
+                '<td>' + escHtml(s.businessType || '-') + '</td>' +
+                '<td>' + new Date(s.createdAt).toLocaleDateString() + '</td>' +
+                '<td>' +
+                  '<button class="btn-primary btn-sm" onclick="approveSignup(\'' + s._id + '\')">Approve</button> ' +
+                  '<button class="btn-danger btn-sm" onclick="rejectSignup(\'' + s._id + '\')">Reject</button>' +
+                '</td></tr>';
+            }).join('') + '</tbody></table>';
+        })
+        .catch(function() { document.getElementById('signupList').innerHTML = '<div class="empty-state">Failed to load signups.</div>'; });
+    }
+
+    function approveSignup(id) {
+      if (!confirm('Approve this signup? A store account will be created.')) return;
+      fetch('/api/saas/stores/approve/' + id, { method: 'POST', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); }).then(function(d) {
+          if (d.success) {
+            showToast('Store ' + d.store.name + ' approved! Username: ' + d.credentials.username);
+            loadSignups(); loadStores();
+          } else { showToast(d.error || 'Approval failed'); }
+        }).catch(function() { showToast('Network error'); });
+    }
+
+    function rejectSignup(id) {
+      if (!confirm('Reject this signup?')) return;
+      fetch('/api/saas/stores/reject/' + id, { method: 'POST', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); }).then(function(d) {
+          if (d.success) { showToast('Signup rejected'); loadSignups(); }
+          else { showToast(d.error || 'Failed'); }
+        }).catch(function() { showToast('Network error'); });
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    function escHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    function escJs(str) {
+      return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    // ─── Init ────────────────────────────────────────────────────────────────
+
+    loadStores();
+    loadSignups();
+  </script>
+</body>
+</html>
