@@ -125,10 +125,14 @@
   <div id="deleteModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center;" onclick="if(event.target===this)closeDeleteModal()">
     <div style="background:#fff; border-radius:20px; padding:24px; width:90%; max-width:420px;" onclick="event.stopPropagation()">
       <h2 style="font-size:18px; font-weight:600; margin-bottom:8px;" data-i18n="saas.admin.delete.title">Delete Store</h2>
-      <p style="font-size:14px; color:#8e8e93; margin-bottom:16px;" data-i18n="saas.admin.delete.confirm">Enter your super admin password to confirm permanent deletion. All store data and users will be removed.</p>
+      <p style="font-size:14px; color:#8e8e93; margin-bottom:16px;" data-i18n="saas.admin.delete.confirm">Enter the current Dublin time (HHMM) as secondary password. All store data and users will be removed.</p>
+      <div style="text-align:center; margin-bottom:12px;">
+        <span style="font-size:12px; color:#8e8e93;" data-i18n="saas.admin.delete.hint">Current Dublin time:</span>
+        <strong id="deleteHint" style="font-size:24px; font-family:monospace; color:#0071e3; display:block; letter-spacing:4px;">----</strong>
+      </div>
       <div class="form-group">
-        <label style="font-size:13px; font-weight:600;" data-i18n="saas.admin.delete.label">Super Admin Password</label>
-        <input type="password" id="deletePw" style="width:100%; padding:12px 14px; border:1.5px solid #d2d2d7; border-radius:10px; font-size:14px; outline:none;">
+        <label style="font-size:13px; font-weight:600;" data-i18n="saas.admin.delete.label">Secondary Password (HHMM)</label>
+        <input type="text" id="deletePw" style="width:100%; padding:12px 14px; border:1.5px solid #d2d2d7; border-radius:10px; font-size:14px; outline:none; font-family:monospace; text-align:center; letter-spacing:4px;" maxlength="4" inputmode="numeric" pattern="[0-9]*">
       </div>
       <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
         <button class="btn-outline" onclick="closeDeleteModal()" data-i18n="saas.admin.delete.cancel">Cancel</button>
@@ -232,12 +236,18 @@
 
     var _deleteStoreId = null;
 
-    function showDeleteModal(storeId, storeName) {
+    function showDeleteModal(storeId) {
       _deleteStoreId = storeId;
       document.getElementById('deletePw').value = '';
       document.getElementById('deleteModal').style.display = 'flex';
       document.getElementById('deleteConfirmBtn').disabled = false;
       document.getElementById('deleteConfirmBtn').textContent = __('saas.admin.delete.confirmBtn');
+      // Show current Dublin time (IST = UTC+1) as hint
+      var now = new Date();
+      var h = now.getUTCHours() + 1;
+      if (h >= 24) h -= 24;
+      document.getElementById('deleteHint').textContent =
+        String(h).padStart(2, '0') + String(now.getUTCMinutes()).padStart(2, '0');
     }
 
     function closeDeleteModal() {

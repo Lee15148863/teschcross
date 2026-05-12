@@ -93,17 +93,21 @@ router.put('/:id/activate', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// DELETE /api/saas/stores/:id — delete a store permanently (super_admin, requires password confirmation)
+// DELETE /api/saas/stores/:id — delete a store permanently (super_admin, requires dynamic Dublin HHMM code)
 router.delete('/:id', superAdminAuth, async (req, res) => {
   try {
     const { password } = req.body;
-    if (!password) return res.status(400).json({ error: 'Password confirmation required' });
+    if (!password) return res.status(400).json({ error: 'Secondary password (Dublin HHMM) required' });
 
-    // Verify super admin password
-    const admin = await SaaSUser.findById(req.user.userId);
-    if (!admin) return res.status(401).json({ error: 'Admin not found' });
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) return res.status(403).json({ error: 'Incorrect password' });
+    // Verify Dublin time HHMM code
+    const now = new Date();
+    const dublinTime = new Intl.DateTimeFormat('en-IE', {
+      timeZone: 'Europe/Dublin', hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(now);
+    const expectedCode = dublinTime.replace(':', '');
+    if (password !== expectedCode) {
+      return res.status(403).json({ error: 'Incorrect secondary password. Use current Dublin time (HHMM).' });
+    }
 
     const store = await Store.findById(req.params.id);
     if (!store) return res.status(404).json({ error: 'Store not found' });
