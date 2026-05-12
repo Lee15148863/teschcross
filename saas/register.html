@@ -154,7 +154,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     document.getElementById('successEmail').textContent = document.getElementById('email').value;
     document.getElementById('formCard').style.display = 'none';
     document.getElementById('successCard').style.display = 'block';
-  } catch(e) { err.textContent = __('saas.register.error.network'); err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); }
+  } catch(e) { console.error('Signup error:', e); err.textContent = __('saas.register.error.network'); err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); }
 });
 
 applyLang();
