@@ -503,15 +503,16 @@
           addContinueOption(q);
         }
       } else if (hasPhone) {
-        // Phone input, no customer found → go directly to compose
-        openComposeForPhone(q);
+        // Phone input, no customer found → show button instead of auto-navigate
+        // User must click to confirm number is complete
+        addContinueOption(q);
       } else {
         if (resultsEl) resultsEl.innerHTML = '<div class="wc-empty">No customers found / 未找到客户</div>';
       }
     }).catch(function () {
       // On error, if phone-like, still allow sending
       if (hasPhone) {
-        openComposeForPhone(q);
+        addContinueOption(q);
       } else if (resultsEl) {
         resultsEl.innerHTML = '<div class="wc-empty wc-error">Search failed / 搜索失败</div>';
       }
