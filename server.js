@@ -60,11 +60,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── SaaS SPA: serve /saas/ → saas/index.html (BEFORE static to avoid fallthrough)
+// ─── SaaS SPA: route /saas/* → saas/*.html (BEFORE static to avoid fallthrough)
+const SAAS_PAGES = ['', 'login', 'register', 'dashboard', 'admin'];
 app.use((req, res, next) => {
-  const p = req.path;
-  if (p === '/saas/' || p === '/saas') {
-    return res.sendFile(path.join(__dirname, 'saas', 'index.html'));
+  const m = req.path.match(/^\/saas\/([a-z]*)$/);
+  if (m && SAAS_PAGES.includes(m[1])) {
+    return res.sendFile(path.join(__dirname, 'saas', (m[1] || 'index') + '.html'));
   }
   next();
 });
