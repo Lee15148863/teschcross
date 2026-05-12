@@ -14,4 +14,7 @@ const StoreSignupSchema = new mongoose.Schema({
   createdAt:    { type: Date, default: Date.now }
 });
 
+// Prevent duplicate pending signups per email
+StoreSignupSchema.index({ email: 1, status: 1 }, { partialFilterExpression: { status: 'pending' }, unique: true });
+
 module.exports = mongoose.model('StoreSignup', StoreSignupSchema);
