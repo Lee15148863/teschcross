@@ -142,6 +142,24 @@
     <div id="storeInfoContent"></div>
   </div>
 
+  <!-- Password change card (store owners only) -->
+  <div id="pwCard" class="card" style="display:none;">
+    <h2 class="section-title" data-i18n="saas.dash.password.title">Change Password</h2>
+    <div class="form-group">
+      <label data-i18n="saas.dash.password.current">Current Password</label>
+      <input type="password" id="pwCurrent" autocomplete="current-password">
+    </div>
+    <div class="form-group">
+      <label data-i18n="saas.dash.password.new">New Password</label>
+      <input type="password" id="pwNew" autocomplete="new-password" minlength="6">
+    </div>
+    <div class="form-group">
+      <label data-i18n="saas.dash.password.confirm">Confirm New Password</label>
+      <input type="password" id="pwConfirm" autocomplete="new-password">
+    </div>
+    <button class="btn-primary" onclick="changePassword()" data-i18n="saas.dash.password.btn">Update Password</button>
+  </div>
+
   <div class="card" style="text-align:center;">
     <button class="btn-danger" onclick="logout()" data-i18n="saas.dash.signOut">Sign Out</button>
   </div>
@@ -174,6 +192,7 @@
     // Show store settings card only for store owners
     if (!isSuperAdmin && user.storeId) {
       document.getElementById('settingsCard').style.display = 'block';
+      document.getElementById('pwCard').style.display = 'block';
       loadSettings();
     } else if (isSuperAdmin && user.storeId) {
       // Super admin impersonating a store — show read-only info
@@ -295,6 +314,37 @@
       t.className = 'toast show' + (isError ? ' error' : ' success');
       clearTimeout(t._hide);
       t._hide = setTimeout(function() { t.classList.remove('show'); }, 3000);
+    }
+
+    function changePassword() {
+      var current = document.getElementById('pwCurrent').value;
+      var newPw = document.getElementById('pwNew').value;
+      var confirm = document.getElementById('pwConfirm').value;
+      if (!current || !newPw) { showToast(__('saas.dash.password.errorRequired'), true); return; }
+      if (newPw.length < 6) { showToast(__('saas.dash.password.errorLength'), true); return; }
+      if (newPw !== confirm) { showToast(__('saas.dash.password.errorMismatch'), true); return; }
+
+      var btn = document.querySelector('#pwCard .btn-primary');
+      btn.disabled = true; btn.textContent = __('saas.dash.password.saving');
+
+      fetch('/api/saas/stores/' + user.storeId + '/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          btn.disabled = false; btn.textContent = __('saas.dash.password.btn');
+          if (data.success) {
+            showToast(__('saas.dash.password.saved'), false);
+            document.getElementById('pwCurrent').value = '';
+            document.getElementById('pwNew').value = '';
+            document.getElementById('pwConfirm').value = '';
+          } else {
+            showToast(data.error || __('saas.dash.password.errorGeneric'), true);
+          }
+        })
+        .catch(function() { btn.disabled = false; btn.textContent = __('saas.dash.password.btn'); showToast('Network error', true); });
     }
 
     function logout() {

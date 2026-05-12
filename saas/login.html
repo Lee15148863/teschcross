@@ -93,7 +93,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
       body: JSON.stringify({ username: document.getElementById('username').value, password: document.getElementById('password').value })
     });
     var data = await res.json();
-    if (!res.ok) { err.textContent = __('saas.login.error.invalid'); err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.login.btn'); return; }
+    if (!res.ok) { err.textContent = data.error || __('saas.login.error.invalid'); err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.login.btn'); return; }
     localStorage.setItem('saas_token', data.token);
     localStorage.setItem('saas_user', JSON.stringify(data.user));
     window.location.href = data.user && data.user.role === 'super_admin' ? '/saas/admin.html' : '/saas/dashboard.html';

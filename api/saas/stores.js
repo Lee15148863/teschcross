@@ -93,6 +93,30 @@ router.put('/:id/activate', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// DELETE /api/saas/stores/:id — delete a store permanently (super_admin, requires password confirmation)
+router.delete('/:id', superAdminAuth, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password confirmation required' });
+
+    // Verify super admin password
+    const admin = await SaaSUser.findById(req.user.userId);
+    if (!admin) return res.status(401).json({ error: 'Admin not found' });
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) return res.status(403).json({ error: 'Incorrect password' });
+
+    const store = await Store.findById(req.params.id);
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    // Delete all users associated with this store (protect super_admin)
+    await SaaSUser.deleteMany({ storeId: req.params.id, role: { $ne: 'super_admin' } });
+    // Delete the store
+    await Store.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'Store and all associated users deleted' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── Super Admin Impersonation ───────────────────────────────────────────────
 
 // POST /api/saas/stores/impersonate/:storeId — super_admin enters any store
@@ -202,6 +226,55 @@ router.put('/:storeId/users/:userId/enable', superAdminAuth, async (req, res) =>
     targetUser.updatedAt = new Date();
     await targetUser.save();
     res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ─── Password Management ─────────────────────────────────────────────────────
+
+// POST /api/saas/stores/:storeId/users/:userId/reset-password — super admin resets a user's password
+router.post('/:storeId/users/:userId/reset-password', superAdminAuth, async (req, res) => {
+  try {
+    const targetUser = await SaaSUser.findById(req.params.userId);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    if (targetUser.role === 'super_admin') {
+      return res.status(403).json({ error: 'Cannot reset super admin password' });
+    }
+
+    const newPw = 'store_' + Math.random().toString(36).slice(2, 8) + '!';
+    const hashed = await bcrypt.hash(newPw, BCRYPT_SALT_ROUNDS);
+    targetUser.password = hashed;
+    targetUser.loginAttempts = 0;
+    targetUser.lockUntil = null;
+    targetUser.updatedAt = new Date();
+    await targetUser.save();
+
+    res.json({ success: true, username: targetUser.username, newPassword: newPw });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/saas/stores/:id/password — store owner changes their own password
+router.put('/:id/password', storeOrSuperAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    const user = await SaaSUser.findById(req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(401).json({ error: 'Current password is incorrect' });
+
+    const hashed = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+    user.password = hashed;
+    user.updatedAt = new Date();
+    await user.save();
+
+    res.json({ success: true, message: 'Password updated' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

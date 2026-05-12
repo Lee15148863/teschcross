@@ -121,6 +121,22 @@
     </div>
   </div>
 
+  <!-- Delete Store Confirmation Modal -->
+  <div id="deleteModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center;" onclick="if(event.target===this)closeDeleteModal()">
+    <div style="background:#fff; border-radius:20px; padding:24px; width:90%; max-width:420px;" onclick="event.stopPropagation()">
+      <h2 style="font-size:18px; font-weight:600; margin-bottom:8px;" data-i18n="saas.admin.delete.title">Delete Store</h2>
+      <p style="font-size:14px; color:#8e8e93; margin-bottom:16px;" data-i18n="saas.admin.delete.confirm">Enter your super admin password to confirm permanent deletion. All store data and users will be removed.</p>
+      <div class="form-group">
+        <label style="font-size:13px; font-weight:600;" data-i18n="saas.admin.delete.label">Super Admin Password</label>
+        <input type="password" id="deletePw" style="width:100%; padding:12px 14px; border:1.5px solid #d2d2d7; border-radius:10px; font-size:14px; outline:none;">
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+        <button class="btn-outline" onclick="closeDeleteModal()" data-i18n="saas.admin.delete.cancel">Cancel</button>
+        <button class="btn-danger" id="deleteConfirmBtn" onclick="confirmDeleteStore()" data-i18n="saas.admin.delete.confirmBtn">Delete Forever</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="../lang.js"></script>
@@ -180,6 +196,7 @@
                 '<button class="btn-outline btn-sm" onclick="showUsers(\'' + s._id + '\',\'' + escJs(s.name) + '\')">' + __('saas.admin.btn.users') + '</button>' +
                 (s.status === 'active' ? '<button class="btn-danger btn-sm" onclick="suspendStore(\'' + s._id + '\')">' + __('saas.admin.btn.suspend') + '</button>' : '') +
                 (s.status === 'suspended' ? '<button class="btn-primary btn-sm" onclick="activateStore(\'' + s._id + '\')">' + __('saas.admin.btn.activate') + '</button>' : '') +
+                '<button class="btn-danger btn-sm" onclick="showDeleteModal(\'' + s._id + '\',\'' + escJs(s.name) + '\')">' + __('saas.admin.btn.deleteStore') + '</button>' +
               '</div></div>';
           }).join('') + '</div>';
         })
@@ -213,6 +230,48 @@
         .catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
+    var _deleteStoreId = null;
+
+    function showDeleteModal(storeId, storeName) {
+      _deleteStoreId = storeId;
+      document.getElementById('deletePw').value = '';
+      document.getElementById('deleteModal').style.display = 'flex';
+      document.getElementById('deleteConfirmBtn').disabled = false;
+      document.getElementById('deleteConfirmBtn').textContent = __('saas.admin.delete.confirmBtn');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+      _deleteStoreId = null;
+    }
+
+    function confirmDeleteStore() {
+      var pw = document.getElementById('deletePw').value;
+      if (!pw) { showToast(__('saas.admin.delete.noPw')); return; }
+      if (!confirm(__('saas.admin.delete.finalWarning'))) return;
+
+      var btn = document.getElementById('deleteConfirmBtn');
+      btn.disabled = true; btn.textContent = __('saas.admin.delete.deleting');
+
+      fetch('/api/saas/stores/' + _deleteStoreId, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.success) {
+            showToast(__('saas.admin.toast.storeDeleted'));
+            closeDeleteModal();
+            loadStores(); loadSignups();
+          } else {
+            showToast(__('saas.admin.toast.failed', { error: d.error || __('saas.admin.toast.failedGeneric') }));
+            btn.disabled = false; btn.textContent = __('saas.admin.delete.confirmBtn');
+          }
+        })
+        .catch(function() { showToast(__('saas.admin.toast.networkError')); btn.disabled = false; btn.textContent = __('saas.admin.delete.confirmBtn'); });
+    }
+
     // ─── Store Users ─────────────────────────────────────────────────────────
 
     function showUsers(storeId, storeName) {
@@ -238,6 +297,7 @@
                   (u.active
                     ? '<button class="btn-danger btn-sm" onclick="disableUser(\'' + storeId + '\',\'' + u._id + '\')">' + __('saas.admin.btn.disable') + '</button> '
                     : '<button class="btn-primary btn-sm" onclick="enableUser(\'' + storeId + '\',\'' + u._id + '\')">' + __('saas.admin.btn.enable') + '</button> ') +
+                  '<button class="btn-outline btn-sm" onclick="resetUserPassword(\'' + storeId + '\',\'' + u._id + '\')">' + __('saas.admin.btn.resetPw') + '</button> ' +
                   '<button class="btn-danger btn-sm" onclick="deleteUser(\'' + storeId + '\',\'' + u._id + '\')">' + __('saas.admin.btn.delete') + '</button>' +
                 '</td></tr>';
             }).join('') + '</tbody></table>';
@@ -272,6 +332,19 @@
         .then(function(r) { return r.json(); }).then(function(d) {
           if (d.success) { showToast(__('saas.admin.toast.userEnabled')); showUsers(storeId, document.getElementById('usersModalTitle').textContent); }
           else { showToast(__('saas.admin.toast.failed', { error: d.error || __('saas.admin.toast.failedGeneric') })); }
+        }).catch(function() { showToast(__('saas.admin.toast.networkError')); });
+    }
+
+    function resetUserPassword(storeId, userId) {
+      if (!confirm(__('saas.admin.confirm.resetPw'))) return;
+      fetch('/api/saas/stores/' + storeId + '/users/' + userId + '/reset-password', { method: 'POST', headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); }).then(function(d) {
+          if (d.success) {
+            showToast(__('saas.admin.toast.passwordReset'));
+            alert(__('saas.admin.resetPwResult', { username: d.username, password: d.newPassword }));
+          } else {
+            showToast(__('saas.admin.toast.failed', { error: d.error || __('saas.admin.toast.failedGeneric') }));
+          }
         }).catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
