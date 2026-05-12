@@ -240,6 +240,10 @@
         .then(function(data) {
           if (data.token) {
             localStorage.setItem('saas_token', data.token);
+            // Update stored user so dashboard reads correct storeId
+            var cur = JSON.parse(localStorage.getItem('saas_user') || '{}');
+            cur.storeId = data.store.id;
+            localStorage.setItem('saas_user', JSON.stringify(cur));
             showToast(__('saas.admin.toast.entered', { name: data.store.name }));
             setTimeout(function() { window.location.href = '/saas/dashboard.html'; }, 500);
           } else {
