@@ -112,6 +112,46 @@ router.post('/impersonate/:storeId', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── Store settings API (store owner + super_admin) ─────────────────────────────
+
+function storeOrSuperAuth(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const decoded = jwt.verify(authHeader.slice(7), JWT_SECRET);
+      if (decoded.role === 'super_admin') { req.user = decoded; return next(); }
+      if (decoded.storeId === req.params.id && (decoded.role === 'store_root' || decoded.role === 'manager' || decoded.role === 'staff')) {
+        req.user = decoded; return next();
+      }
+    } catch (e) { /* fall through */ }
+  }
+  return res.status(401).json({ error: 'Unauthorized' });
+}
+
+// GET /api/saas/stores/:id/settings — get store display settings
+router.get('/:id/settings', storeOrSuperAuth, async (req, res) => {
+  try {
+    const store = await Store.findById(req.params.id).select('name logo address phone email vatNumber receiptTC');
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+    res.json(store);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/saas/stores/:id/settings — update store display settings
+router.put('/:id/settings', storeOrSuperAuth, async (req, res) => {
+  try {
+    const allowed = ['name', 'logo', 'address', 'phone', 'email', 'vatNumber', 'receiptTC'];
+    const updates = {};
+    for (const field of allowed) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+    updates.updatedAt = new Date();
+    const store = await Store.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true }).select('name logo address phone email vatNumber receiptTC');
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+    res.json({ success: true, store });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── Store User Management (super_admin only) ─────────────────────────────────
 
 // GET /api/saas/stores/:storeId/users — list users for a store (super_admin invisible)

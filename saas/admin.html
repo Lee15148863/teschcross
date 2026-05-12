@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Super Admin — TechCross SaaS</title>
+  <title data-i18n="saas.admin.title">Super Admin — TechCross SaaS</title>
   <link rel="icon" type="image/png" href="../logo-sm.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,6 +15,8 @@
     .header .user-badge { font-size: 13px; color: #8e8e93; }
     .header .user-badge strong { color: #1d1d1f; }
     .header .logout-btn { padding: 6px 16px; border: none; background: #ff3b30; color: #fff; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .header .lang-btn { padding: 6px 12px; border: 1.5px solid #d2d2d7; background: #fff; color: #1d1d1f; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; margin-right: 8px; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
 
     .tabs { display: flex; gap: 8px; margin-bottom: 20px; max-width: 1200px; margin: 0 auto 20px; }
     .tab { padding: 10px 20px; border-radius: 10px; background: #e8e8ed; cursor: pointer; font-size: 14px; font-weight: 500; transition: all .2s; border: none; }
@@ -62,7 +64,7 @@
     .badge-gray { background: #f2f2f7; color: #555; }
     .badge-blue { background: #e3f2fd; color: #1565c0; }
 
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 200; }
     .toast.show { opacity: 1; }
 
     .empty-state { text-align: center; padding: 40px; color: #8e8e93; font-size: 14px; }
@@ -78,46 +80,50 @@
 <body>
   <div class="header">
     <div>
-      <h1>Super Admin Console</h1>
+      <h1 data-i18n="saas.admin.title">Super Admin Console</h1>
       <div class="user-badge"><strong id="displayName">-</strong> &middot; <span id="userRole">-</span></div>
     </div>
-    <button class="logout-btn" onclick="logout()">Sign Out</button>
+    <div class="header-right">
+      <button class="lang-btn" id="langToggle" onclick="toggleLang()">中</button>
+      <button class="logout-btn" onclick="logout()" data-i18n="saas.admin.signOut">Sign Out</button>
+    </div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" data-tab="stores">Stores</button>
-    <button class="tab" data-tab="signups">Signups</button>
+    <button class="tab active" data-tab="stores" data-i18n="saas.admin.tab.stores">Stores</button>
+    <button class="tab" data-tab="signups" data-i18n="saas.admin.tab.signups">Signups</button>
   </div>
 
   <!-- Stores Panel -->
   <div class="panel active" id="panel-stores">
     <div class="card">
-      <h2>All Stores</h2>
-      <div id="storeList"><div class="empty-state">Loading...</div></div>
+      <h2 data-i18n="saas.admin.allStores">All Stores</h2>
+      <div id="storeList"><div class="empty-state" data-i18n="saas.admin.loading">Loading...</div></div>
     </div>
   </div>
 
   <!-- Signups Panel -->
   <div class="panel" id="panel-signups">
     <div class="card">
-      <h2>Pending Signups</h2>
-      <div id="signupList"><div class="empty-state">Loading...</div></div>
+      <h2 data-i18n="saas.admin.pendingSignups">Pending Signups</h2>
+      <div id="signupList"><div class="empty-state" data-i18n="saas.admin.loading">Loading...</div></div>
     </div>
   </div>
 
   <!-- Users Modal -->
-  <div id="usersModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; display:none; align-items:center; justify-content:center;" onclick="if(event.target===this)closeUsers()">
+  <div id="usersModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center;" onclick="if(event.target===this)closeUsers()">
     <div style="background:#fff; border-radius:20px; padding:24px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto;" onclick="event.stopPropagation()">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 style="font-size:18px; font-weight:600;">Users — <span id="usersStoreName"></span></h2>
+        <h2 id="usersModalTitle" style="font-size:18px; font-weight:600;"></h2>
         <button onclick="closeUsers()" style="border:none; background:#f2f2f7; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:16px;">&times;</button>
       </div>
-      <div id="usersList"><div class="empty-state">Loading...</div></div>
+      <div id="usersList"><div class="empty-state" data-i18n="saas.admin.loading">Loading...</div></div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
+  <script src="../lang.js"></script>
   <script>
     var token = localStorage.getItem('saas_token');
     var userData = JSON.parse(localStorage.getItem('saas_user') || '{}');
@@ -162,22 +168,22 @@
         .then(function(r) { return r.json(); })
         .then(function(stores) {
           var el = document.getElementById('storeList');
-          if (!stores.length) { el.innerHTML = '<div class="empty-state">No stores yet.</div>'; return; }
+          if (!stores.length) { el.innerHTML = '<div class="empty-state">' + __('saas.admin.empty.stores') + '</div>'; return; }
           el.innerHTML = '<div class="store-grid">' + stores.map(function(s) {
             var statusClass = s.status === 'active' ? 'active' : (s.status === 'suspended' ? 'suspended' : 'pending');
             return '<div class="store-card">' +
               '<div class="store-name">' + escHtml(s.name) + '</div>' +
               '<div class="store-meta">' + escHtml(s.ownerName || '-') + ' &middot; ' + escHtml(s.email) + '</div>' +
-              '<div><span class="store-status ' + statusClass + '">' + s.status + '</span></div>' +
+              '<div><span class="store-status ' + statusClass + '">' + __('saas.admin.status.' + s.status) + '</span></div>' +
               '<div class="actions">' +
-                '<button class="btn-primary btn-sm" onclick="impersonateStore(\'' + s._id + '\')">Enter Store</button>' +
-                '<button class="btn-outline btn-sm" onclick="showUsers(\'' + s._id + '\',\'' + escJs(s.name) + '\')">Users</button>' +
-                (s.status === 'active' ? '<button class="btn-danger btn-sm" onclick="suspendStore(\'' + s._id + '\')">Suspend</button>' : '') +
-                (s.status === 'suspended' ? '<button class="btn-primary btn-sm" onclick="activateStore(\'' + s._id + '\')">Activate</button>' : '') +
+                '<button class="btn-primary btn-sm" onclick="impersonateStore(\'' + s._id + '\')">' + __('saas.admin.btn.enter') + '</button>' +
+                '<button class="btn-outline btn-sm" onclick="showUsers(\'' + s._id + '\',\'' + escJs(s.name) + '\')">' + __('saas.admin.btn.users') + '</button>' +
+                (s.status === 'active' ? '<button class="btn-danger btn-sm" onclick="suspendStore(\'' + s._id + '\')">' + __('saas.admin.btn.suspend') + '</button>' : '') +
+                (s.status === 'suspended' ? '<button class="btn-primary btn-sm" onclick="activateStore(\'' + s._id + '\')">' + __('saas.admin.btn.activate') + '</button>' : '') +
               '</div></div>';
           }).join('') + '</div>';
         })
-        .catch(function() { document.getElementById('storeList').innerHTML = '<div class="empty-state">Failed to load stores.</div>'; });
+        .catch(function() { document.getElementById('storeList').innerHTML = '<div class="empty-state">' + __('saas.admin.toast.networkError') + '</div>'; });
     }
 
     function impersonateStore(storeId) {
@@ -186,40 +192,40 @@
         .then(function(data) {
           if (data.token) {
             localStorage.setItem('saas_token', data.token);
-            showToast('Entered ' + data.store.name + '. Token updated.');
+            showToast(__('saas.admin.toast.entered', { name: data.store.name }));
           } else {
-            showToast('Failed: ' + (data.error || 'unknown error'));
+            showToast(__('saas.admin.toast.failed', { error: data.error || __('saas.admin.toast.unknownError') }));
           }
         })
-        .catch(function() { showToast('Network error'); });
+        .catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
     function suspendStore(id) {
-      if (!confirm('Suspend this store?')) return;
+      if (!confirm(__('saas.admin.confirm.suspend'))) return;
       fetch('/api/saas/stores/' + id + '/suspend', { method: 'PUT', headers: getAuthHeaders() })
-        .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Store suspended'); loadStores(); } else { showToast(d.error); } })
-        .catch(function() { showToast('Network error'); });
+        .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast(__('saas.admin.toast.suspended')); loadStores(); } else { showToast(__('saas.admin.toast.failed', { error: d.error })); } })
+        .catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
     function activateStore(id) {
       fetch('/api/saas/stores/' + id + '/activate', { method: 'PUT', headers: getAuthHeaders() })
-        .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Store activated'); loadStores(); } else { showToast(d.error); } })
-        .catch(function() { showToast('Network error'); });
+        .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast(__('saas.admin.toast.activated')); loadStores(); } else { showToast(__('saas.admin.toast.failed', { error: d.error })); } })
+        .catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
     // ─── Store Users ─────────────────────────────────────────────────────────
 
     function showUsers(storeId, storeName) {
-      document.getElementById('usersStoreName').textContent = storeName;
+      document.getElementById('usersModalTitle').textContent = __('saas.admin.users.title', { name: storeName });
       document.getElementById('usersModal').style.display = 'flex';
-      document.getElementById('usersList').innerHTML = '<div class="empty-state">Loading...</div>';
+      document.getElementById('usersList').innerHTML = '<div class="empty-state">' + __('saas.admin.loading') + '</div>';
 
       fetch('/api/saas/stores/' + storeId + '/users', { headers: getAuthHeaders() })
         .then(function(r) { return r.json(); })
         .then(function(users) {
           var el = document.getElementById('usersList');
-          if (!users.length) { el.innerHTML = '<div class="empty-state">No users for this store.</div>'; return; }
-          el.innerHTML = '<table class="user-table"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>' +
+          if (!users.length) { el.innerHTML = '<div class="empty-state">' + __('saas.admin.empty.users') + '</div>'; return; }
+          el.innerHTML = '<table class="user-table"><thead><tr><th>' + __('saas.admin.users.colUsername') + '</th><th>' + __('saas.admin.users.colName') + '</th><th>' + __('saas.admin.users.colRole') + '</th><th>' + __('saas.admin.users.colStatus') + '</th><th>' + __('saas.admin.colActions') + '</th></tr></thead><tbody>' +
             users.map(function(u) {
               var roleBadge = u.role === 'store_root' ? 'badge-blue' : (u.role === 'manager' ? 'badge-green' : 'badge-gray');
               var statusBadge = u.active ? 'badge-green' : 'badge-red';
@@ -227,16 +233,16 @@
                 '<td><strong>' + escHtml(u.username) + '</strong></td>' +
                 '<td>' + escHtml(u.displayName) + '</td>' +
                 '<td><span class="badge ' + roleBadge + '">' + u.role + '</span></td>' +
-                '<td><span class="badge ' + statusBadge + '">' + (u.active ? 'active' : 'disabled') + '</span></td>' +
+                '<td><span class="badge ' + statusBadge + '">' + (u.active ? __('saas.admin.status.active') : __('saas.admin.status.disabled')) + '</span></td>' +
                 '<td>' +
                   (u.active
-                    ? '<button class="btn-danger btn-sm" onclick="disableUser(\'' + storeId + '\',\'' + u._id + '\')">Disable</button> '
-                    : '<button class="btn-primary btn-sm" onclick="enableUser(\'' + storeId + '\',\'' + u._id + '\')">Enable</button> ') +
-                  '<button class="btn-danger btn-sm" onclick="deleteUser(\'' + storeId + '\',\'' + u._id + '\')">Delete</button>' +
+                    ? '<button class="btn-danger btn-sm" onclick="disableUser(\'' + storeId + '\',\'' + u._id + '\')">' + __('saas.admin.btn.disable') + '</button> '
+                    : '<button class="btn-primary btn-sm" onclick="enableUser(\'' + storeId + '\',\'' + u._id + '\')">' + __('saas.admin.btn.enable') + '</button> ') +
+                  '<button class="btn-danger btn-sm" onclick="deleteUser(\'' + storeId + '\',\'' + u._id + '\')">' + __('saas.admin.btn.delete') + '</button>' +
                 '</td></tr>';
             }).join('') + '</tbody></table>';
         })
-        .catch(function() { document.getElementById('usersList').innerHTML = '<div class="empty-state">Failed to load users.</div>'; });
+        .catch(function() { document.getElementById('usersList').innerHTML = '<div class="empty-state">' + __('saas.admin.toast.networkError') + '</div>'; });
     }
 
     function closeUsers() {
@@ -244,29 +250,29 @@
     }
 
     function deleteUser(storeId, userId) {
-      if (!confirm('Delete this user? This cannot be undone.')) return;
+      if (!confirm(__('saas.admin.confirm.deleteUser'))) return;
       fetch('/api/saas/stores/' + storeId + '/users/' + userId, { method: 'DELETE', headers: getAuthHeaders() })
         .then(function(r) { return r.json(); }).then(function(d) {
-          if (d.success) { showToast('User deleted'); showUsers(storeId, document.getElementById('usersStoreName').textContent); }
-          else { showToast(d.error || 'Delete failed'); }
-        }).catch(function() { showToast('Network error'); });
+          if (d.success) { showToast(__('saas.admin.toast.userDeleted')); showUsers(storeId, document.getElementById('usersModalTitle').textContent); }
+          else { showToast(__('saas.admin.toast.deleteFailed')); }
+        }).catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
     function disableUser(storeId, userId) {
-      if (!confirm('Disable this user?')) return;
+      if (!confirm(__('saas.admin.confirm.disableUser'))) return;
       fetch('/api/saas/stores/' + storeId + '/users/' + userId + '/disable', { method: 'PUT', headers: getAuthHeaders() })
         .then(function(r) { return r.json(); }).then(function(d) {
-          if (d.success) { showToast('User disabled'); showUsers(storeId, document.getElementById('usersStoreName').textContent); }
-          else { showToast(d.error || 'Failed'); }
-        }).catch(function() { showToast('Network error'); });
+          if (d.success) { showToast(__('saas.admin.toast.userDisabled')); showUsers(storeId, document.getElementById('usersModalTitle').textContent); }
+          else { showToast(__('saas.admin.toast.failed', { error: d.error || __('saas.admin.toast.failedGeneric') })); }
+        }).catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
     function enableUser(storeId, userId) {
       fetch('/api/saas/stores/' + storeId + '/users/' + userId + '/enable', { method: 'PUT', headers: getAuthHeaders() })
         .then(function(r) { return r.json(); }).then(function(d) {
-          if (d.success) { showToast('User enabled'); showUsers(storeId, document.getElementById('usersStoreName').textContent); }
-          else { showToast(d.error || 'Failed'); }
-        }).catch(function() { showToast('Network error'); });
+          if (d.success) { showToast(__('saas.admin.toast.userEnabled')); showUsers(storeId, document.getElementById('usersModalTitle').textContent); }
+          else { showToast(__('saas.admin.toast.failed', { error: d.error || __('saas.admin.toast.failedGeneric') })); }
+        }).catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
     // ─── Signups ─────────────────────────────────────────────────────────────
@@ -277,8 +283,8 @@
         .then(function(signups) {
           var el = document.getElementById('signupList');
           var pending = signups.filter(function(s) { return s.status === 'pending'; });
-          if (!pending.length) { el.innerHTML = '<div class="empty-state">No pending signups.</div>'; return; }
-          el.innerHTML = '<table class="signup-table"><thead><tr><th>Store</th><th>Owner</th><th>Email</th><th>Type</th><th>Date</th><th>Actions</th></tr></thead><tbody>' +
+          if (!pending.length) { el.innerHTML = '<div class="empty-state">' + __('saas.admin.empty.signups') + '</div>'; return; }
+          el.innerHTML = '<table class="signup-table"><thead><tr><th>' + __('saas.admin.signups.colStore') + '</th><th>' + __('saas.admin.signups.colOwner') + '</th><th>' + __('saas.admin.signups.colEmail') + '</th><th>' + __('saas.admin.signups.colType') + '</th><th>' + __('saas.admin.signups.colDate') + '</th><th>' + __('saas.admin.colActions') + '</th></tr></thead><tbody>' +
             pending.map(function(s) {
               return '<tr>' +
                 '<td><strong>' + escHtml(s.storeName) + '</strong></td>' +
@@ -287,32 +293,32 @@
                 '<td>' + escHtml(s.businessType || '-') + '</td>' +
                 '<td>' + new Date(s.createdAt).toLocaleDateString() + '</td>' +
                 '<td>' +
-                  '<button class="btn-primary btn-sm" onclick="approveSignup(\'' + s._id + '\')">Approve</button> ' +
-                  '<button class="btn-danger btn-sm" onclick="rejectSignup(\'' + s._id + '\')">Reject</button>' +
+                  '<button class="btn-primary btn-sm" onclick="approveSignup(\'' + s._id + '\')">' + __('saas.admin.btn.approve') + '</button> ' +
+                  '<button class="btn-danger btn-sm" onclick="rejectSignup(\'' + s._id + '\')">' + __('saas.admin.btn.reject') + '</button>' +
                 '</td></tr>';
             }).join('') + '</tbody></table>';
         })
-        .catch(function() { document.getElementById('signupList').innerHTML = '<div class="empty-state">Failed to load signups.</div>'; });
+        .catch(function() { document.getElementById('signupList').innerHTML = '<div class="empty-state">' + __('saas.admin.toast.networkError') + '</div>'; });
     }
 
     function approveSignup(id) {
-      if (!confirm('Approve this signup? A store account will be created.')) return;
+      if (!confirm(__('saas.admin.confirm.approve'))) return;
       fetch('/api/saas/stores/approve/' + id, { method: 'POST', headers: getAuthHeaders() })
         .then(function(r) { return r.json(); }).then(function(d) {
           if (d.success) {
-            showToast('Store ' + d.store.name + ' approved! Username: ' + d.credentials.username);
+            showToast(__('saas.admin.toast.approvedWithUser', { name: d.store.name, username: d.credentials.username }));
             loadSignups(); loadStores();
-          } else { showToast(d.error || 'Approval failed'); }
-        }).catch(function() { showToast('Network error'); });
+          } else { showToast(__('saas.admin.toast.approvalFailed')); }
+        }).catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
     function rejectSignup(id) {
-      if (!confirm('Reject this signup?')) return;
+      if (!confirm(__('saas.admin.confirm.reject'))) return;
       fetch('/api/saas/stores/reject/' + id, { method: 'POST', headers: getAuthHeaders() })
         .then(function(r) { return r.json(); }).then(function(d) {
-          if (d.success) { showToast('Signup rejected'); loadSignups(); }
-          else { showToast(d.error || 'Failed'); }
-        }).catch(function() { showToast('Network error'); });
+          if (d.success) { showToast(__('saas.admin.toast.rejected')); loadSignups(); }
+          else { showToast(__('saas.admin.toast.failed', { error: d.error || __('saas.admin.toast.failedGeneric') })); }
+        }).catch(function() { showToast(__('saas.admin.toast.networkError')); });
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -331,6 +337,7 @@
 
     loadStores();
     loadSignups();
+    applyLang();
   </script>
 </body>
 </html>

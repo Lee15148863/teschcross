@@ -60,10 +60,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// ─── SaaS SPA: serve /saas/ → saas/index.html (BEFORE static to avoid fallthrough)
+app.use((req, res, next) => {
+  const p = req.path;
+  if (p === '/saas/' || p === '/saas') {
+    return res.sendFile(path.join(__dirname, 'saas', 'index.html'));
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname), {
   dotfiles: 'deny',
   index: false
 }));
+
+// ─── SaaS API routes & SPA fallback ─────────────────────────
 
 // Connect to MongoDB, then start listening
 mongoose.connect(process.env.DBCon, { dbName: 'techcross' })

@@ -27,10 +27,21 @@
       "Bash(curl -s -D - http://localhost:8080/api/inv/auth/login -X POST -H \"Content-Type: application/json\" -d '{}')",
       "Bash(git restore *)",
       "Bash(git config *)",
-      "Bash(GIT_AUTHOR_NAME=\"TechCross\" GIT_AUTHOR_EMAIL=\"dev@techcross.ie\" GIT_COMMITTER_NAME=\"TechCross\" GIT_COMMITTER_EMAIL=\"dev@techcross.ie\" git commit *)"
+      "Bash(GIT_AUTHOR_NAME=\"TechCross\" GIT_AUTHOR_EMAIL=\"dev@techcross.ie\" GIT_COMMITTER_NAME=\"TechCross\" GIT_COMMITTER_EMAIL=\"dev@techcross.ie\" git commit *)",
+      "PowerShell(npm install *)",
+      "PowerShell(npm view *)",
+      "Bash(git *)",
+      "Bash(curl -s http://localhost:8080/api/pricing/samsung)",
+      "Bash(curl -s http://localhost:8080/api/pricing/multi)",
+      "Bash(curl *)",
+      "PowerShell($data = Invoke-RestMethod -Uri http://localhost:8080/api/pricing/google; Write-Host \"models: $\\($data.models.PSObject.Properties.Name.Count\\)\"; Write-Host \"serviceTypes: $\\($data.serviceTypes.PSObject.Properties.Name.Count\\)\"; Write-Host \"has name property: $\\($null -ne $data.name\\)\")",
+      "PowerShell($data = Invoke-RestMethod -Uri http://localhost:8080/api/pricing/samsung; Write-Host \"Top keys: $\\($data.PSObject.Properties.Name -join ', '\\)\"; Write-Host \"phone.models: $\\($data.phone.models.PSObject.Properties.Name.Count\\)\"; Write-Host \"tablet.models: $\\($data.tablet.models.PSObject.Properties.Name.Count\\)\")",
+      "WebFetch(domain:techcross.ie)",
+      "PowerShell(Get-Command *)",
+      "Bash(timeout 5)",
+      "PowerShell(curl *)"
     ],
     "deny": [
-      "Bash(git push *)",
       "Bash(rm *)",
       "Bash(del *)",
       "Bash(format *)",

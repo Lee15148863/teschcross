@@ -12,7 +12,13 @@ const StoreSchema = new mongoose.Schema({
   approvedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'SaaSUser', default: null },
   approvedAt:   { type: Date },
   createdAt:    { type: Date, default: Date.now },
-  updatedAt:    { type: Date, default: Date.now }
+  updatedAt:    { type: Date, default: Date.now },
+
+  // Store-level settings (editable by store owner)
+  logo:         { type: String, default: '' },       // base64 data URI or URL
+  address:      { type: String, default: '' },
+  vatNumber:    { type: String, default: '' },
+  receiptTC:    { type: String, default: '' }        // text-only terms & conditions
 });
 
 StoreSchema.index({ email: 1 });

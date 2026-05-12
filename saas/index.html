@@ -3,193 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TechCross SaaS — POS for Repair Shops</title>
+  <title>TechCross SaaS</title>
   <link rel="icon" type="image/png" href="../logo-sm.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif; font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
-    body { background: #fafafa; color: #1d1d1f; }
+    html { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif; font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { background: #f2f2f7; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
 
-    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    .card { background: #fff; border-radius: 24px; padding: 48px 40px; width: 100%; max-width: 460px; box-shadow: 0 2px 20px rgba(0,0,0,.06); text-align: center; position: relative; }
+    .logo { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 12px; }
+    .logo img { height: 40px; }
+    .logo span { font-size: 24px; font-weight: 700; color: #1d1d1f; }
+    .logo span .saas-label { font-weight: 400; color: #6e6e73; }
+    .sub { color: #8e8e93; font-size: 14px; margin-bottom: 36px; }
 
-    /* ─── Nav ───────────────────────────────────────────── */
-    .nav { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; max-width: 1120px; margin: 0 auto; }
-    .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; text-decoration: none; color: #1d1d1f; }
-    .nav-logo img { height: 32px; }
-    .nav-links { display: flex; gap: 24px; align-items: center; }
-    .nav-links a { text-decoration: none; font-size: 14px; font-weight: 500; color: #555; transition: color .2s; }
-    .nav-links a:hover { color: #0071e3; }
-    .nav-cta { background: #0071e3; color: #fff !important; padding: 8px 20px; border-radius: 980px; font-weight: 600 !important; }
-    .nav-cta:hover { background: #0077ed; }
+    .lang-btn { position: absolute; top: 16px; right: 16px; padding: 6px 12px; border: 1.5px solid #d2d2d7; background: #fff; color: #1d1d1f; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .lang-btn:hover { background: #f2f2f7; }
 
-    /* ─── Hero ──────────────────────────────────────────── */
-    .hero { text-align: center; padding: 80px 24px 60px; }
-    .hero h1 { font-size: 48px; font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; max-width: 800px; margin: 0 auto 20px; }
-    .hero h1 span { color: #0071e3; }
-    .hero p { font-size: 20px; color: #6e6e73; max-width: 640px; margin: 0 auto 36px; line-height: 1.5; }
-    .hero-buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-    .btn-primary { background: #0071e3; color: #fff; padding: 14px 32px; border-radius: 980px; font-size: 16px; font-weight: 600; text-decoration: none; display: inline-block; transition: all .2s; }
+    .btn-group { display: flex; flex-direction: column; gap: 14px; }
+    .btn-primary, .btn-secondary { display: block; padding: 18px; border-radius: 14px; font-size: 17px; font-weight: 600; text-decoration: none; transition: all .2s; }
+    .btn-primary { background: #0071e3; color: #fff; }
     .btn-primary:hover { background: #0077ed; transform: translateY(-1px); }
-    .btn-secondary { background: #f2f2f7; color: #1d1d1f; padding: 14px 32px; border-radius: 980px; font-size: 16px; font-weight: 600; text-decoration: none; display: inline-block; transition: all .2s; }
+    .btn-secondary { background: #f2f2f7; color: #1d1d1f; border: 1.5px solid #e5e5ea; }
     .btn-secondary:hover { background: #e5e5ea; transform: translateY(-1px); }
 
-    /* ─── Section ───────────────────────────────────────── */
-    .section { padding: 80px 24px; }
-    .section-title { text-align: center; font-size: 36px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.02em; }
-    .section-sub { text-align: center; font-size: 18px; color: #6e6e73; max-width: 600px; margin: 0 auto 48px; }
+    .footer { margin-top: 24px; font-size: 13px; color: #8e8e93; }
+    .footer a { color: #0071e3; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
 
-    /* ─── Features Grid ─────────────────────────────────── */
-    .features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
-    .feature-card { background: #fff; border-radius: 18px; padding: 28px 24px; border: 1.5px solid #e5e5ea; transition: all .25s; }
-    .feature-card:hover { border-color: #0071e3; box-shadow: 0 8px 24px rgba(0,113,227,.08); transform: translateY(-2px); }
-    .feature-icon { font-size: 32px; margin-bottom: 14px; }
-    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    .feature-card p { font-size: 14px; color: #6e6e73; line-height: 1.5; }
-
-    /* ─── Pricing ───────────────────────────────────────── */
-    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; }
-    .pricing-card { background: #fff; border-radius: 18px; padding: 36px 28px; border: 1.5px solid #e5e5ea; text-align: center; }
-    .pricing-card.featured { border-color: #0071e3; background: #f0f7ff; }
-    .pricing-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-    .pricing-card .price { font-size: 42px; font-weight: 800; margin-bottom: 4px; }
-    .pricing-card .price-sub { font-size: 14px; color: #6e6e73; margin-bottom: 24px; }
-    .pricing-card ul { list-style: none; text-align: left; margin-bottom: 28px; }
-    .pricing-card li { padding: 8px 0; font-size: 14px; color: #3a3a3c; border-bottom: 1px solid #f2f2f7; }
-    .pricing-card li::before { content: '✓ '; color: #34c759; font-weight: 700; }
-
-    /* ─── CTA ───────────────────────────────────────────── */
-    .cta-section { background: #1d1d1f; color: #fff; text-align: center; padding: 80px 24px; }
-    .cta-section h2 { font-size: 36px; font-weight: 700; margin-bottom: 16px; }
-    .cta-section p { font-size: 18px; color: #a1a1a6; margin-bottom: 32px; }
-    .cta-section .btn-primary { background: #0071e3; }
-
-    /* ─── Footer ────────────────────────────────────────── */
-    .footer { text-align: center; padding: 32px 24px; font-size: 13px; color: #8e8e93; border-top: 1px solid #e5e5ea; }
-
-    /* ─── Responsive ────────────────────────────────────── */
-    @media (max-width: 640px) {
-      .hero h1 { font-size: 32px; }
-      .hero { padding: 48px 16px 40px; }
-      .section { padding: 48px 16px; }
-      .section-title { font-size: 28px; }
-      .nav-links a:not(.nav-cta) { display: none; }
+    @media (max-width: 480px) {
+      .card { padding: 32px 24px; }
     }
   </style>
 </head>
 <body>
-
-<!-- ─── Nav ──────────────────────────────────────────────── -->
-<nav class="nav">
-  <a class="nav-logo" href="/">
-    <img src="../logo-sm.png" alt="TechCross">
-    <span>TechCross <span style="font-weight:400;color:#6e6e73;">SaaS</span></span>
-  </a>
-  <div class="nav-links">
-    <a href="#features">Features</a>
-    <a href="#pricing">Pricing</a>
-    <a href="/saas/login">Store Login</a>
-    <a href="/saas/register" class="nav-cta">Create Your Store</a>
-  </div>
-</nav>
-
-<!-- ─── Hero ─────────────────────────────────────────────── -->
-<section class="hero">
-  <h1>Run Your Repair Shop with <span>TechCross SaaS</span></h1>
-  <p>Everything you need to manage repairs, POS, inventory, and staff — in one modern platform.</p>
-  <div class="hero-buttons">
-    <a href="/saas/register" class="btn-primary">Create Your Store</a>
-    <a href="/saas/login" class="btn-secondary">Store Owner Login</a>
-  </div>
-</section>
-
-<!-- ─── Features ─────────────────────────────────────────── -->
-<section class="section" id="features">
-  <h2 class="section-title">All-in-One Shop Management</h2>
-  <p class="section-sub">Built for phone and electronics repair shops, by people who know the trade.</p>
-  <div class="features-grid">
-    <div class="feature-card"><div class="feature-icon">🛒</div><h3>Point of Sale</h3><p>Fast, intuitive POS with barcode scanning, discounts, and multi-payment support.</p></div>
-    <div class="feature-card"><div class="feature-icon">📦</div><h3>Inventory</h3><p>Track stock, manage suppliers, receive purchase orders, and get low-stock alerts.</p></div>
-    <div class="feature-card"><div class="feature-icon">🔧</div><h3>Repair Workflow</h3><p>Full repair lifecycle: check-in, diagnostics, parts ordering, status updates, collection.</p></div>
-    <div class="feature-card"><div class="feature-icon">🇪🇺</div><h3>VAT Compliance</h3><p>Automatic 23%/13.5% VAT, margin scheme for second-hand goods, and tax reports.</p></div>
-    <div class="feature-card"><div class="feature-icon">🧾</div><h3>Receipts &amp; Invoices</h3><p>Professional receipts and VAT invoices with automatic numbering and email delivery.</p></div>
-    <div class="feature-card"><div class="feature-icon">💬</div><h3>WhatsApp Integration</h3><p>Send repair updates, quotes, and invoices directly to customers via WhatsApp.</p></div>
-    <div class="feature-card"><div class="feature-icon">📊</div><h3>Reports</h3><p>Daily sales, profit &amp; loss, VAT summaries, and monthly close reports.</p></div>
-    <div class="feature-card"><div class="feature-icon">👥</div><h3>Multi-User Staff</h3><p>Role-based accounts: staff, manager, and store owner with granular permissions.</p></div>
-    <div class="feature-card"><div class="feature-icon">🖨️</div><h3>Thermal Printing</h3><p>ESC/POS receipt printing with local print agent — works with standard 80mm printers.</p></div>
-  </div>
-</section>
-
-<!-- ─── Screenshots ─────────────────────────────────────── -->
-<section class="section" style="background:#f2f2f7;">
-  <h2 class="section-title">See It in Action</h2>
-  <p class="section-sub">Clean, fast, and built for the counter.</p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;max-width:900px;margin:0 auto;">
-    <div style="background:#e5e5ea;border-radius:16px;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:#8e8e93;font-size:14px;font-weight:500;">📸 POS Screenshot</div>
-    <div style="background:#e5e5ea;border-radius:16px;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:#8e8e93;font-size:14px;font-weight:500;">📸 Dashboard Screenshot</div>
-    <div style="background:#e5e5ea;border-radius:16px;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:#8e8e93;font-size:14px;font-weight:500;">📸 Inventory Screenshot</div>
-  </div>
-</section>
-
-<!-- ─── Pricing ─────────────────────────────────────────── -->
-<section class="section" id="pricing">
-  <h2 class="section-title">Simple Pricing</h2>
-  <p class="section-sub">Start small, scale as you grow. No hidden fees.</p>
-  <div class="pricing-grid">
-    <div class="pricing-card">
-      <h3>Starter</h3>
-      <div class="price">€29</div>
-      <div class="price-sub">per month</div>
-      <ul>
-        <li>Up to 500 transactions/month</li>
-        <li>1 staff account</li>
-        <li>Basic inventory</li>
-        <li>Receipt printing</li>
-        <li>Email support</li>
-      </ul>
-      <a href="/saas/register" class="btn-secondary" style="display:block;">Get Started</a>
+  <div class="card">
+    <button class="lang-btn" id="langToggle" onclick="toggleLang()">中</button>
+    <div class="logo">
+      <img src="../logo-sm.png" alt="TechCross">
+      <span>TechCross <span class="saas-label">SaaS</span></span>
     </div>
-    <div class="pricing-card featured">
-      <h3>Pro</h3>
-      <div class="price">€59</div>
-      <div class="price-sub">per month</div>
-      <ul>
-        <li>Unlimited transactions</li>
-        <li>Up to 5 staff accounts</li>
-        <li>Full inventory + suppliers</li>
-        <li>VAT compliance &amp; reports</li>
-        <li>WhatsApp integration</li>
-        <li>Priority support</li>
-      </ul>
-      <a href="/saas/register" class="btn-primary" style="display:block;">Get Started</a>
-    </div>
-    <div class="pricing-card">
-      <h3>Enterprise</h3>
-      <div class="price">€99</div>
-      <div class="price-sub">per month</div>
-      <ul>
-        <li>Unlimited everything</li>
-        <li>Unlimited staff accounts</li>
-        <li>Multi-store support</li>
-        <li>Custom integrations</li>
-        <li>Dedicated account manager</li>
-        <li>99.9% SLA</li>
-      </ul>
-      <a href="/saas/register" class="btn-secondary" style="display:block;">Contact Us</a>
+    <p class="sub" data-i18n="saas.landing.hero.subtitle">POS for repair shops — simple, powerful, cloud-based.</p>
+
+    <div class="btn-group">
+      <a href="/saas/register.html" class="btn-primary" data-i18n="saas.landing.hero.btnCreate">Create Your Store</a>
+      <a href="/saas/login.html" class="btn-secondary" data-i18n="saas.landing.hero.btnLogin">Store Owner Login</a>
     </div>
   </div>
-</section>
 
-<!-- ─── CTA ─────────────────────────────────────────────── -->
-<section class="cta-section">
-  <h2>Ready to Take Control?</h2>
-  <p>Join shop owners who trust TechCross to run their business.</p>
-  <a href="/saas/register" class="btn-primary">Create Your Store — It's Free to Start</a>
-</section>
+  <div class="footer">
+    <a href="/" data-i18n="saas.register.backHome">&larr; Back to homepage</a>
+  </div>
 
-<!-- ─── Footer ──────────────────────────────────────────── -->
-<footer class="footer">
-  <p>&copy; 2026 TechCross. All rights reserved. | <a href="/" style="color:#0071e3;text-decoration:none;">TechCross Repair Centre</a></p>
-</footer>
-
+  <script src="../lang.js"></script>
+  <script>applyLang();</script>
 </body>
 </html>
