@@ -1,29 +1,20 @@
 const mongoose = require('mongoose');
 
-const auditSchema = new mongoose.Schema({
-  deploymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'SaaSDeployment', required: true },
-  storeName:    { type: String, default: '' },
-  serviceName:  { type: String, default: '' },
-
-  action:   { type: String, required: true },
-  result:   { type: String, enum: ['success', 'failed'], default: 'success' },
-  reason:   { type: String, default: '' },
-  details:  { type: mongoose.Schema.Types.Mixed, default: {} },
-
-  adminUser:   { type: mongoose.Schema.Types.ObjectId, ref: 'SaaSUser' },
-  adminName:   { type: String, default: '' },
-
-  snapshot: {
-    status:   String,
-    version:  String,
-    imageTag: String
-  }
-}, {
-  timestamps: true
+const DeploymentAuditSchema = new mongoose.Schema({
+  deploymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'SaaDeployment', required: true },
+  storeName:    { type: String },
+  serviceName:  { type: String },
+  action:       { type: String, required: true },
+  result:       { type: String, enum: ['success', 'failed'], required: true },
+  reason:       { type: String },
+  details:      { type: mongoose.Schema.Types.Mixed },
+  adminUser:    { type: String },
+  adminName:    { type: String },
+  snapshot:     { type: mongoose.Schema.Types.Mixed },
+  createdAt:    { type: Date, default: Date.now }
 });
 
-auditSchema.index({ deploymentId: 1, createdAt: -1 });
-auditSchema.index({ action: 1 });
-auditSchema.index({ createdAt: -1 });
+DeploymentAuditSchema.index({ deploymentId: 1, createdAt: -1 });
+DeploymentAuditSchema.index({ action: 1 });
 
-module.exports = mongoose.model('SaaSDeploymentAudit', auditSchema);
+module.exports = mongoose.model('SaaDeploymentAudit', DeploymentAuditSchema);

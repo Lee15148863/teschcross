@@ -140,6 +140,9 @@
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 200; }
     .toast.show { opacity: 1; }
 
+    .warning-banner { background: #fff8e1; border: 1.5px solid #f9a825; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; font-size: 13px; color: #6d4c00; line-height: 1.5; max-width: 1200px; margin-left: auto; margin-right: auto; }
+    .warning-banner strong { color: #e65100; }
+
     @media (max-width: 720px) {
       body { padding: 12px; }
       .header { flex-direction: column; gap: 12px; align-items: flex-start; }
@@ -160,6 +163,10 @@
     <button class="btn btn-outline" onclick="location.href='/saas/admin.html'">Admin Console</button>
     <button class="logout-btn" onclick="logout()">Sign Out</button>
   </div>
+</div>
+
+<div class="warning-banner">
+  <strong>&#9888; Notice:</strong> gcp-admin.js is a stub. Cloud Run deployment, health checks, and log retrieval are not yet functional. This UI displays deployment records for planning purposes only. Actual deployment requires the GCP admin module.
 </div>
 
 <div class="card">
@@ -420,6 +427,14 @@ function getHealthCell(d) {
 function mongoStateLabel(state) {
   var states = { 0: 'Disconnected', 1: 'Connected', 2: 'Connecting', 3: 'Disconnecting' };
   return states[state] || (state === -1 ? '-' : 'Unknown');
+}
+
+function getDepValidationBadge(status) {
+  if (!status || status === '' || status === 'pending') return '<span class="badge badge-pending">pending</span>';
+  if (status === 'passed') return '<span class="badge badge-running">passed</span>';
+  if (status === 'failed') return '<span class="badge badge-failed">failed</span>';
+  if (status === 'error') return '<span class="badge badge-failed">error</span>';
+  return '<span class="badge badge-pending">' + escHtml(status) + '</span>';
 }
 
 function updateHealthSummary() {
@@ -984,6 +999,9 @@ function showDetail(id) {
       '<div class="detail-item"><div class="label">Health</div><div class="value">' + getHealthCell(dep) + '</div></div>' +
       '<div class="detail-item"><div class="label">Mongo State</div><div class="value mono">' + mongoStateLabel(dep.lastMongoStatus) + '</div></div>' +
       '<div class="detail-item"><div class="label">Health Check</div><div class="value">' + (dep.lastHealthCheck ? timeAgo(dep.lastHealthCheck) + ' ago' : '-') + '</div></div>' +
+      '<div class="detail-item"><div class="label">MongoDB URI</div><div class="value mono" style="font-size:11px;">' + escHtml(dep.mongoUriMasked || '-') + '</div></div>' +
+      '<div class="detail-item"><div class="label">URI Validation</div><div class="value">' + getDepValidationBadge(dep.mongoUriValidationStatus) + '</div></div>' +
+      '<div class="detail-item"><div class="label">Last Validated</div><div class="value">' + (dep.mongoUriLastValidatedAt ? new Date(dep.mongoUriLastValidatedAt).toLocaleString() : '-') + '</div></div>' +
       '<div class="detail-item" style="grid-column:1/-1;border-top:1px solid #e8e8ed;padding-top:8px;margin-top:4px;"><div class="label" style="font-weight:700;">Subscription</div></div>' +
       '<div class="detail-item"><div class="label">Status</div><div class="value">' + getSubscriptionCell(dep) + '</div></div>' +
       '<div class="detail-item"><div class="label">Grace Period</div><div class="value">' + (dep.gracePeriodDays != null ? dep.gracePeriodDays + ' days' : '7 days') + '</div></div>' +

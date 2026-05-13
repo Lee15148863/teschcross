@@ -2,23 +2,29 @@ const mongoose = require('mongoose');
 
 const StoreSchema = new mongoose.Schema({
   name:         { type: String, required: true, trim: true },
-  ownerName:    { type: String, required: true, trim: true },
-  email:        { type: String, required: true, trim: true, lowercase: true },
+  ownerName:    { type: String, trim: true },
+  email:        { type: String, trim: true, lowercase: true },
   phone:        { type: String, trim: true },
   country:      { type: String, trim: true },
   businessType: { type: String, trim: true },
   notes:        { type: String, trim: true },
-  status:       { type: String, enum: ['pending', 'active', 'suspended'], default: 'pending' },
-  approvedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'SaaSUser', default: null },
-  approvedAt:   { type: Date },
-  createdAt:    { type: Date, default: Date.now },
-  updatedAt:    { type: Date, default: Date.now },
 
-  // Store-level settings (editable by store owner)
-  logo:         { type: String, default: '' },       // base64 data URI or URL
-  address:      { type: String, default: '' },
-  vatNumber:    { type: String, default: '' },
-  receiptTC:    { type: String, default: '' }        // text-only terms & conditions
+  // Store display settings (from dashboard)
+  logo:       { type: String },
+  address:    { type: String, trim: true },
+  vatNumber:  { type: String, trim: true },
+  receiptTC:  { type: String, trim: true },
+
+  status:      { type: String, enum: ['active', 'suspended', 'pending'], default: 'pending' },
+  approvedBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'SaaSUser', default: null },
+  approvedAt:  { type: Date },
+
+  // T20/T21 — timezone and currency from signup, no mongoUri here
+  timezone:    { type: String, trim: true },
+  currency:    { type: String, trim: true },
+
+  createdAt:  { type: Date, default: Date.now },
+  updatedAt:  { type: Date, default: Date.now }
 });
 
 StoreSchema.index({ email: 1 });

@@ -6,6 +6,7 @@ const { defaultKeyGenerator } = rateLimit;
 const Deployment = require('../../models/saas/Deployment');
 const DeploymentAudit = require('../../models/saas/DeploymentAudit');
 const { getLocalHHMM, getLocalHHMMRange, isTimezoneSupported, SUPPORTED_TIMEZONES, verifyActionCode, recordAudit } = require('../../utils/deployment-security');
+const { maskMongoUri, validateMongoUri } = require('../../utils/mongo-uri-validator');
 
 // ─── Rate limiters ─────────────────────────────────────────────────────────
 
@@ -123,7 +124,7 @@ router.get('/:id', superAdminAuth, async (req, res) => {
 // POST /api/saas/deployments — create a new deployment record
 router.post('/', superAdminAuth, async (req, res) => {
   try {
-    const { storeName, subdomain, mongoUri, env, deployPin, timezone, subscriptionStatus, subscriptionExpiresAt } = req.body;
+    const { storeName, storeId, subdomain, mongoUri, env, deployPin, timezone, subscriptionStatus, subscriptionExpiresAt, mongoUriStorageMode: reqStorageMode } = req.body;
     if (!storeName || !subdomain || !mongoUri) {
       return res.status(400).json({ error: 'storeName, subdomain, and mongoUri required' });
     }
@@ -172,11 +173,32 @@ router.post('/', superAdminAuth, async (req, res) => {
       pinHash = await bcrypt.hash(pinStr, 10);
     }
 
+    // Generate masked URI
+    var maskedUri = maskMongoUri(mongoUri);
+
+    // T21c — optional Secret Manager storage
+    var sm = require('../../utils/gcp-secret-manager');
+    var storageMode = (reqStorageMode === 'secret_manager') ? 'secret_manager' : 'plaintext_admin_db';
+    var secretRef = null;
+    var projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || '';
+
+    if (storageMode === 'secret_manager' && projectId) {
+      try {
+        secretRef = await sm.storeMongoUri(sm.buildSecretName(storeName), mongoUri, projectId);
+        if (secretRef && secretRef.dryRun) storageMode = 'plaintext_admin_db';
+      } catch (smErr) {
+        console.warn('[deployments] Secret Manager write failed, falling back to plaintext:', smErr.message);
+        storageMode = 'plaintext_admin_db';
+      }
+    }
+
     var createFields = {
       storeName: storeName.trim(),
+      storeId: storeId || undefined,
       subdomain: subdomain.trim().toLowerCase(),
       serviceName: serviceName,
-      mongoUri: mongoUri,
+      mongoUriStorageMode: storageMode,
+      mongoUriMasked: maskedUri,
       status: 'pending',
       deployedBy: req.user.userId,
       env: env || {},
@@ -184,13 +206,28 @@ router.post('/', superAdminAuth, async (req, res) => {
       pinSetAt: pinHash ? new Date() : undefined,
       timezone: storeTimezone
     };
+
+    if (storageMode === 'secret_manager' && secretRef) {
+      createFields.mongoUriSecretName = secretRef.name;
+      createFields.mongoUriSecretVersion = secretRef.version;
+      createFields.secretLastUpdatedAt = new Date();
+      createFields.mongoUri = '';
+    } else {
+      createFields.mongoUri = mongoUri;
+    }
+
     if (subStatus) createFields.subscriptionStatus = subStatus;
     if (subscriptionExpiresAt) {
       createFields.subscriptionExpiresAt = new Date(subscriptionExpiresAt);
     }
     const dep = await Deployment.create(createFields);
 
-    res.status(201).json(dep);
+    // Return deployment without full mongoUri — use masked only
+    var depObj = dep.toObject();
+    delete depObj.mongoUri;
+    depObj.mongoUriMasked = maskedUri;
+
+    res.status(201).json(depObj);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -210,6 +247,50 @@ router.delete('/:id', dangerousActionLimiter, superAdminAuth, async (req, res) =
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── URI Validation ───────────────────────────────────────────────────────
+
+// POST /api/saas/deployments/:id/validate-uri — validate stored MongoDB URI
+router.post('/:id/validate-uri', superAdminAuth, async (req, res) => {
+  try {
+    const dep = await Deployment.findById(req.params.id).select('+mongoUri');
+    if (!dep) return res.status(404).json({ error: 'Deployment not found' });
+
+    if (!dep.mongoUri) {
+      return res.status(400).json({ error: 'No MongoDB URI configured for this deployment' });
+    }
+
+    const valResult = await validateMongoUri(dep.mongoUri, {
+      mainPosDbName: process.env.STORE_NAME || 'techcross',
+      adminDbName: process.env.SAAS_DB_NAME || 'saas_admin',
+      timeoutMs: 5000
+    });
+
+    // Update validation metadata
+    dep.mongoUriValidationStatus = valResult.ok ? 'passed' : 'failed';
+    dep.mongoUriLastValidatedAt = new Date();
+    dep.mongoUriMasked = maskMongoUri(dep.mongoUri);
+
+    if (valResult.dbName) {
+      // Store dbName in env for reference (not mandatory)
+      if (!dep.env) dep.env = new Map();
+    }
+
+    await dep.save();
+
+    // Response — masked only, never full URI
+    res.json({
+      ok: valResult.ok,
+      code: valResult.code,
+      message: valResult.ok ? 'Validation passed' : (valResult.message || 'Validation failed'),
+      maskedUri: dep.mongoUriMasked,
+      dbName: valResult.dbName || null,
+      validatedAt: dep.mongoUriLastValidatedAt
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Validation error' });
   }
 });
 
@@ -258,7 +339,7 @@ async function verifyDangerousAction(req, res, dep, actionName) {
 
 router.post('/:id/deploy', deployLimiter, superAdminAuth, async (req, res) => {
   try {
-    const dep = await Deployment.findById(req.params.id);
+    const dep = await Deployment.findById(req.params.id).select('+mongoUri');
     if (!dep) return res.status(404).json({ error: 'Deployment not found' });
 
     if (dep.status === 'deploying') {
@@ -314,11 +395,26 @@ router.post('/:id/deploy', deployLimiter, superAdminAuth, async (req, res) => {
     dep.error = '';
     await dep.save();
 
+    // T21c — resolve mongoUri from Secret Manager if needed
+    var deployMongoUri = dep.mongoUri;
+    if ((dep.mongoUriStorageMode === 'secret_manager' || !deployMongoUri) && dep.mongoUriSecretName && dep.mongoUriSecretVersion) {
+      try {
+        var sm = require('../../utils/gcp-secret-manager');
+        var resolved = await sm.retrieveMongoUri(dep.mongoUriSecretName, dep.mongoUriSecretVersion, projectId);
+        if (resolved) deployMongoUri = resolved;
+      } catch (smErr) {
+        return res.status(500).json({ error: 'Failed to resolve MongoDB URI from Secret Manager: ' + smErr.message });
+      }
+    }
+    if (!deployMongoUri) {
+      return res.status(500).json({ error: 'No MongoDB URI available for deployment' });
+    }
+
     var result;
     try {
       result = await gcp.triggerDeployBuild(
         projectId, region, dep.serviceName,
-        dep.storeName, dep.mongoUri, Object.fromEntries(dep.env || new Map()),
+        dep.storeName, deployMongoUri, Object.fromEntries(dep.env || new Map()),
         gitCommit
       );
     } catch (buildErr) {

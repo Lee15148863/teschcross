@@ -6,6 +6,9 @@ const Store = require('../../models/saas/Store');
 const StoreSignup = require('../../models/saas/StoreSignup');
 const SaaSUser = require('../../models/saas/SaaSUser');
 const { createTransporter } = require('../../utils/inv-crypto');
+const { verifyActionCode, recordAudit } = require('../../utils/deployment-security');
+const Deployment = require('../../models/saas/Deployment');
+const { maskMongoUri, validateMongoUri } = require('../../utils/mongo-uri-validator');
 
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 const BCRYPT_SALT_ROUNDS = 10;
@@ -33,18 +36,145 @@ router.get('/', superAdminAuth, async (req, res) => {
 // POST /api/saas/stores/approve/:signupId — approve a store signup (super_admin)
 router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
   try {
-    const signup = await StoreSignup.findById(req.params.signupId);
+    // Load signup — need mongoUri explicitly since select:false
+    const signup = await StoreSignup.findById(req.params.signupId).select('+mongoUri +deploymentPinHash');
     if (!signup) return res.status(404).json({ error: 'Signup not found' });
     if (signup.status !== 'pending') return res.status(400).json({ error: 'Signup already processed' });
 
-    // Create the store
-    const store = await Store.create({
+    // Build store data from signup
+    const storeData = {
       name: signup.storeName, ownerName: signup.ownerName, email: signup.email,
       phone: signup.phone, country: signup.country, businessType: signup.businessType,
       notes: signup.notes, status: 'active', approvedBy: req.user.userId, approvedAt: new Date()
-    });
+    };
 
-    // Create store_root user — use custom username if provided, else auto-generate
+    // If signup has mongoUri — production onboarding path
+    if (signup.mongoUri) {
+      // Validate timezone + currency are set
+      if (!signup.timezone || !signup.currency) {
+        return res.status(400).json({ error: 'Signup missing timezone/currency for production deployment' });
+      }
+
+      // Run full URI validation (connect + write/read/delete)
+      const valResult = await validateMongoUri(signup.mongoUri, {
+        mainPosDbName: process.env.STORE_NAME || 'techcross',
+        adminDbName: process.env.SAAS_DB_NAME || 'saas_admin',
+        timeoutMs: 5000
+      });
+
+      if (!valResult.ok) {
+        // Block deployment with safe error
+        return res.status(400).json({
+          error: 'MongoDB URI validation failed: ' + (valResult.message || 'URI is not valid'),
+          code: valResult.code,
+          maskedUri: valResult.maskedUri,
+          dbName: valResult.dbName || null
+        });
+      }
+
+      // Validation passed — proceed with store + user + deployment creation
+      if (signup.timezone) storeData.timezone = signup.timezone;
+      if (signup.currency) storeData.currency = signup.currency;
+      const store = await Store.create(storeData);
+
+      // Create store_root user
+      const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      let credentials;
+      if (signup.password) {
+        const rootUser = await SaaSUser.create({
+          username: finalUsername, password: signup.password, displayName: signup.ownerName,
+          email: signup.email, role: 'store_root', storeId: store._id, active: true
+        });
+        credentials = { username: rootUser.username, message: 'Use the password you set during registration to sign in.' };
+      } else {
+        const defaultPw = require('crypto').randomBytes(4).toString('hex') + 'X1!';
+        const hashed = await bcrypt.hash(defaultPw, BCRYPT_SALT_ROUNDS);
+        const rootUser = await SaaSUser.create({
+          username: finalUsername, password: hashed, displayName: signup.ownerName,
+          email: signup.email, role: 'store_root', storeId: store._id, active: true
+        });
+        credentials = { username: rootUser.username, password: defaultPw };
+      }
+
+      // T21c — store URI in Secret Manager for production path
+      const sm = require('../../utils/gcp-secret-manager');
+      let mongoUriStorageMode = 'plaintext_admin_db';
+      let secretRef = null;
+      const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || '';
+
+      try {
+        secretRef = await sm.storeMongoUri(
+          sm.buildSecretName(store.name),
+          signup.mongoUri,
+          projectId
+        );
+        if (secretRef && !secretRef.dryRun) {
+          mongoUriStorageMode = 'secret_manager';
+        }
+      } catch (smErr) {
+        console.warn('[stores] Secret Manager write failed, falling back to plaintext:', smErr.message);
+      }
+
+      // Create deployment for this store
+      const serviceName = store.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-').replace(/^-|-$/g, '').slice(0, 63);
+      const subdomain = serviceName;
+      const maskedUri = maskMongoUri(signup.mongoUri);
+
+      const depFields = {
+        storeName: store.name,
+        storeId: store._id,
+        subdomain: subdomain,
+        serviceName: serviceName || 'store-' + store._id,
+        mongoUriStorageMode: mongoUriStorageMode,
+        mongoUriMasked: maskedUri,
+        mongoUriValidationStatus: 'passed',
+        mongoUriLastValidatedAt: new Date(),
+        mongoUriUpdatedAt: new Date(),
+        pinHash: signup.deploymentPinHash || '',
+        pinSetAt: signup.pinSetAt || new Date(),
+        timezone: signup.timezone || 'Europe/Dublin',
+        status: 'pending',
+        atlasOwnershipConfirmed: signup.atlasOwnershipConfirmed || false,
+        subscriptionStatus: 'trial',
+      };
+
+      if (mongoUriStorageMode === 'secret_manager' && secretRef) {
+        depFields.mongoUriSecretName = secretRef.name;
+        depFields.mongoUriSecretVersion = secretRef.version;
+        depFields.secretLastUpdatedAt = new Date();
+        depFields.mongoUri = '';
+      } else {
+        depFields.mongoUri = signup.mongoUri;
+      }
+
+      await Deployment.create(depFields);
+
+      // Mark signup as approved
+      signup.status = 'approved';
+      signup.reviewedBy = req.user.userId;
+      signup.reviewedAt = new Date();
+      signup.mongoUriValidationStatus = 'passed';
+      signup.mongoUriLastValidatedAt = new Date();
+      await signup.save();
+
+      return res.json({
+        success: true,
+        store: { id: store._id, name: store.name, timezone: signup.timezone, currency: signup.currency },
+        deployment: { mongoUriMasked: maskedUri, storageMode: mongoUriStorageMode, status: 'pending', validationStatus: 'passed' },
+        credentials
+      });
+    }
+
+    // Production gate: reject legacy approval unless ALLOW_LEGACY_SIGNUP=true
+    if (process.env.ALLOW_LEGACY_SIGNUP !== 'true') {
+      return res.status(400).json({ error: 'Legacy signup (without MongoDB URI) rejected. Set ALLOW_LEGACY_SIGNUP=true for development.' });
+    }
+
+    // Legacy path — signup without mongoUri (existing behavior)
+    storeData.notes = (signup.notes || '') + ' [LEGACY: no MongoDB URI]';
+    const store = await Store.create(storeData);
+
+    // Create store_root user
     const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
     let credentials;
     if (signup.password) {
@@ -69,7 +199,7 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
     signup.reviewedAt = new Date();
     await signup.save();
 
-    res.json({ success: true, store: { id: store._id, name: store.name }, credentials });
+    res.json({ success: true, store: { id: store._id, name: store.name, legacy: true }, credentials });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -104,29 +234,41 @@ router.put('/:id/activate', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// DELETE /api/saas/stores/:id — delete a store permanently (super_admin, requires dynamic Dublin HHMM code)
+// DELETE /api/saas/stores/:id — delete a store permanently (super_admin, requires HHMM+PIN+reason+audit)
 router.delete('/:id', superAdminAuth, async (req, res) => {
   try {
-    const { password } = req.body;
-    if (!password) return res.status(400).json({ error: 'Secondary password (Dublin HHMM) required' });
-
-    // Verify Dublin time HHMM code
-    const now = new Date();
-    const dublinTime = new Intl.DateTimeFormat('en-IE', {
-      timeZone: 'Europe/Dublin', hour: '2-digit', minute: '2-digit', hour12: false
-    }).format(now);
-    const expectedCode = dublinTime.replace(':', '');
-    if (password !== expectedCode) {
-      return res.status(403).json({ error: 'Incorrect secondary password. Use current Dublin time (HHMM).' });
-    }
+    const { actionCode, reason } = req.body;
+    if (!actionCode) return res.status(400).json({ error: 'Verification code (HHMM+PIN) required' });
+    if (!reason || !reason.trim()) return res.status(400).json({ error: 'Reason required for dangerous action' });
 
     const store = await Store.findById(req.params.id);
     if (!store) return res.status(404).json({ error: 'Store not found' });
 
+    // Require a deployment with PIN configured (Option A per spec)
+    // Use storeId if available, fallback to storeName for legacy records
+    const dep = await Deployment.findOne({
+      $or: [
+        { storeId: store._id },
+        { storeName: store.name }
+      ]
+    }).sort({ storeId: -1 }).select('pinHash timezone');
+    if (!dep || !dep.pinHash) {
+      return res.status(400).json({ error: 'Store has no deployment PIN configured. Set a PIN via deployment settings before deleting.' });
+    }
+
+    // Verify HHMM+PIN via centralized verification
+    var verification = await verifyActionCode(dep, actionCode);
+    if (!verification.valid) {
+      await recordAudit(dep._id, 'store_delete', 'failed', reason, req.user, { error: verification.error, ip: req.ip, storeId: store._id.toString(), storeName: store.name });
+      return res.status(403).json({ error: verification.error });
+    }
+
     // Delete all users associated with this store (protect super_admin)
-    await SaaSUser.deleteMany({ storeId: req.params.id, role: { $ne: 'super_admin' } });
+    const delResult = await SaaSUser.deleteMany({ storeId: req.params.id, role: { $ne: 'super_admin' } });
     // Delete the store
     await Store.findByIdAndDelete(req.params.id);
+
+    await recordAudit(dep._id, 'store_delete', 'success', reason, req.user, { storeId: store._id.toString(), storeName: store.name, usersDeleted: delResult.deletedCount });
 
     res.json({ success: true, message: 'Store and all associated users deleted' });
   } catch (e) { res.status(500).json({ error: e.message }); }

@@ -235,11 +235,37 @@
             html += '<div class="info-row"><span class="label">Address</span><span class="value">' + escHtml(data.address || '-') + '</span></div>';
             html += '<div class="info-row"><span class="label">Phone</span><span class="value">' + escHtml(data.phone || '-') + '</span></div>';
             html += '<div class="info-row"><span class="label">VAT</span><span class="value">' + escHtml(data.vatNumber || '-') + '</span></div>';
+            html += '<div class="info-row"><span class="label">Timezone</span><span class="value">' + escHtml(data.timezone || '-') + '</span></div>';
+            html += '<div class="info-row"><span class="label">Currency</span><span class="value">' + escHtml(data.currency || '-') + '</span></div>';
             html += '<div class="info-row"><span class="label">T&amp;C</span><span class="value">' + escHtml((data.receiptTC || '-').slice(0,100)) + '</span></div>';
             if (data.logo) {
               html += '<div style="margin-top:12px;"><img src="' + data.logo + '" style="max-height:60px;max-width:200px;border-radius:6px;"></div>';
             }
             document.getElementById('storeInfoContent').innerHTML = html;
+
+            // Also fetch deployment info for masked URI display
+            fetch('/api/saas/deployments', { headers: { 'Authorization': 'Bearer ' + token } })
+              .then(function(r) { return r.json(); })
+              .then(function(deps) {
+                var dep = deps.find(function(d) { return d.storeId === storeId; });
+                if (dep && dep.mongoUriMasked) {
+                  var depHtml = '<div style="border-top:1px solid #e8e8ed;margin-top:16px;padding-top:12px;"><div class="section-title" style="font-size:14px;margin:0 0 8px;">Deployment Database</div>';
+                  depHtml += '<div class="info-row"><span class="label">MongoDB URI</span><span class="value mono" style="font-size:11px;">' + escHtml(dep.mongoUriMasked) + '</span></div>';
+                  var validLabel = '-';
+                  if (dep.mongoUriValidationStatus === 'passed') validLabel = '<span style="color:#2e7d32;">passed</span>';
+                  else if (dep.mongoUriValidationStatus === 'failed') validLabel = '<span style="color:#dc2626;">failed</span>';
+                  else if (dep.mongoUriValidationStatus === 'error') validLabel = '<span style="color:#dc2626;">error</span>';
+                  else if (dep.mongoUriValidationStatus) validLabel = dep.mongoUriValidationStatus;
+                  depHtml += '<div class="info-row"><span class="label">Validation</span><span class="value">' + validLabel + '</span></div>';
+                  if (dep.mongoUriLastValidatedAt) {
+                    depHtml += '<div class="info-row"><span class="label">Last Validated</span><span class="value">' + new Date(dep.mongoUriLastValidatedAt).toLocaleString() + '</span></div>';
+                  }
+                  depHtml += '</div>';
+                  document.getElementById('storeInfoContent').innerHTML += depHtml;
+                }
+              })
+              .catch(function() { /* non-critical */ });
+
             return;
           }
 

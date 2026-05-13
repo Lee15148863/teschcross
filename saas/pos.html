@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS — StoreFlow Test Shell</title>
+  <link rel="icon" type="image/png" href="../logo-sm.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
+    body { background: #f2f2f7; min-height: 100vh; padding: 24px; display: flex; flex-direction: column; align-items: center; }
+
+    .card { background: #fff; border-radius: 20px; padding: 32px; width: 100%; max-width: 720px; box-shadow: 0 1px 10px rgba(0,0,0,.05); position: relative; margin-bottom: 20px; }
+    .logo-header { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 20px; }
+    .logo-header img { height: 36px; }
+    .logo-header span { font-size: 22px; font-weight: 700; color: #1d1d1f; }
+    .back-link { position: absolute; top: 16px; left: 16px; color: #0071e3; text-decoration: none; font-size: 13px; font-weight: 600; }
+    .back-link:hover { text-decoration: underline; }
+
+    .frozen-banner { display: none; background: #ff3b30; color: #fff; padding: 12px 20px; border-radius: 12px; text-align: center; font-weight: 600; font-size: 14px; margin-bottom: 20px; }
+
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; text-align: center; }
+    .sub { color: #8e8e93; font-size: 14px; margin-bottom: 24px; text-align: center; }
+
+    .section-title { font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: #1d1d1f; display: flex; justify-content: space-between; align-items: center; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 8px 10px; border-bottom: 2px solid #e5e5ea; color: #6e6e73; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+    td { padding: 8px 10px; border-bottom: 1px solid #f2f2f7; }
+    .inactive { color: #c7c7cc; text-decoration: line-through; }
+
+    .form-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin: 12px 0; }
+    .form-group { display: flex; flex-direction: column; gap: 2px; }
+    .form-group label { font-size: 11px; font-weight: 600; color: #6e6e73; text-transform: uppercase; letter-spacing: .5px; }
+    .form-group input, .form-group select { padding: 8px 10px; border: 1.5px solid #d2d2d7; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; }
+    .form-group input:focus, .form-group select:focus { border-color: #0071e3; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
+    .summary-item { background: #f2f2f7; border-radius: 12px; padding: 16px; text-align: center; }
+    .summary-item .num { font-size: 24px; font-weight: 700; color: #1d1d1f; }
+    .summary-item .lbl { font-size: 11px; color: #8e8e93; margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+
+    .btn-sm { padding: 6px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-primary { background: #0071e3; color: #fff; }
+    .btn-primary:hover { background: #0077ed; }
+    .btn-danger { background: #ff3b30; color: #fff; }
+    .btn-danger:hover { background: #d63031; }
+    .btn-outline { background: transparent; color: #0071e3; border: 1.5px solid #0071e3; }
+    .btn-outline:hover { background: #f0f7ff; }
+
+    .btn-primary:disabled, .btn-danger:disabled { opacity: .4; cursor: not-allowed; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 100; }
+    .toast.show { opacity: 1; }
+    .toast.error { background: #ff3b30; }
+    .toast.success { background: #34c759; }
+
+    .empty { text-align: center; color: #c7c7cc; padding: 24px; font-size: 14px; }
+
+    @media (max-width: 480px) {
+      .card { padding: 20px 16px; }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="/saas/dashboard.html" class="back-link">&larr; Dashboard</a>
+    <div class="logo-header">
+      <img src="../logo-sm.png" alt="TechCross">
+      <span>StoreFlow POS</span>
+    </div>
+
+    <div id="frozenBanner" class="frozen-banner">System is in read-only mode.</div>
+
+    <p class="sub">StoreFlow Test Shell — fake data only</p>
+
+    <!-- ─── Summary ─── -->
+    <div class="section-title">Today's Summary</div>
+    <div class="summary-grid" id="summaryGrid">
+      <div class="summary-item"><div class="num" id="summaryCount">0</div><div class="lbl">Transactions</div></div>
+      <div class="summary-item"><div class="num" id="summaryTotal">€0</div><div class="lbl">Total Sales</div></div>
+      <div class="summary-item"><div class="num" id="summaryCash">€0</div><div class="lbl">Cash / Card</div></div>
+    </div>
+
+    <!-- ─── Products ─── -->
+    <div class="section-title">Test Products</div>
+    <div id="productForm" class="form-row">
+      <div class="form-group"><label>Name</label><input id="prodName" placeholder="Product name"></div>
+      <div class="form-group"><label>Price</label><input id="prodPrice" type="number" step="0.01" min="0" placeholder="0.00"></div>
+      <div class="form-group"><label>Category</label><input id="prodCategory" placeholder="e.g. screen"></div>
+      <button class="btn-sm btn-primary" id="addProductBtn" onclick="addProduct()">Add</button>
+    </div>
+    <div id="productEmpty" class="empty">No products. Add one above.</div>
+    <table id="productTable" style="display:none;">
+      <thead><tr><th>Name</th><th>Price</th><th>Category</th><th></th></tr></thead>
+      <tbody id="productBody"></tbody>
+    </table>
+
+    <!-- ─── Transactions ─── -->
+    <div class="section-title">Test Transactions</div>
+    <div id="txForm" class="form-row">
+      <div class="form-group"><label>Product</label><select id="txProduct"><option value="">— Manual entry —</option></select></div>
+      <div class="form-group"><label>Amount</label><input id="txAmount" type="number" step="0.01" min="0" placeholder="0.00"></div>
+      <div class="form-group"><label>Payment</label><select id="txPayment"><option value="cash">Cash</option><option value="card">Card</option></select></div>
+      <button class="btn-sm btn-primary" id="addTxBtn" onclick="addTransaction()">Add Sale</button>
+    </div>
+    <div id="txEmpty" class="empty">No transactions today.</div>
+    <table id="txTable" style="display:none;">
+      <thead><tr><th>Items</th><th>Total</th><th>Payment</th><th>Time</th></tr></thead>
+      <tbody id="txBody"></tbody>
+    </table>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="pos.js"></script>
+</body>
+</html>

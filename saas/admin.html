@@ -462,31 +462,50 @@
 
     // ─── Signups ─────────────────────────────────────────────────────────────
 
+    function getValidationBadge(status) {
+      if (!status || status === '' || status === 'pending') return '<span class="badge badge-gray">pending</span>';
+      if (status === 'passed') return '<span class="badge badge-green">passed</span>';
+      if (status === 'failed') return '<span class="badge badge-red">failed</span>';
+      if (status === 'error') return '<span class="badge badge-red">error</span>';
+      return '<span class="badge badge-gray">' + escHtml(status) + '</span>';
+    }
+
     function loadSignups() {
       fetch('/api/saas/signup', { headers: getAuthHeaders() })
         .then(function(r) { return r.json(); })
         .then(function(signups) {
+          window._allSignups = signups;
           var el = document.getElementById('signupList');
           var pending = signups.filter(function(s) { return s.status === 'pending'; });
           if (!pending.length) { el.innerHTML = '<div class="empty-state">' + __('saas.admin.empty.signups') + '</div>'; return; }
-          el.innerHTML = '<table class="signup-table"><thead><tr><th>' + __('saas.admin.signups.colStore') + '</th><th>' + __('saas.admin.signups.colOwner') + '</th><th>' + __('saas.admin.signups.colEmail') + '</th><th>' + __('saas.admin.signups.colType') + '</th><th>' + __('saas.admin.signups.colDate') + '</th><th>' + __('saas.admin.colActions') + '</th></tr></thead><tbody>' +
+          el.innerHTML = '<div style="overflow-x:auto;"><table class="signup-table"><thead><tr><th>' + __('saas.admin.signups.colStore') + '</th><th>' + __('saas.admin.signups.colOwner') + '</th><th>' + __('saas.admin.signups.colEmail') + '</th><th>' + __('saas.admin.signups.colType') + '</th><th style="font-size:10px;">TZ</th><th style="font-size:10px;">Cur</th><th>MongoDB URI</th><th>Own</th><th>Valid</th><th>' + __('saas.admin.signups.colDate') + '</th><th>' + __('saas.admin.colActions') + '</th></tr></thead><tbody>' +
             pending.map(function(s) {
+              var tzDisplay = s.timezone ? (s.timezone.split('/')[1] || s.timezone) : '-';
               return '<tr>' +
                 '<td><strong>' + escHtml(s.storeName) + '</strong></td>' +
                 '<td>' + escHtml(s.ownerName) + '</td>' +
                 '<td>' + escHtml(s.email) + '</td>' +
                 '<td>' + escHtml(s.businessType || '-') + '</td>' +
-                '<td>' + new Date(s.createdAt).toLocaleDateString() + '</td>' +
-                '<td>' +
+                '<td style="font-size:11px;">' + escHtml(tzDisplay) + '</td>' +
+                '<td style="font-size:11px;">' + escHtml(s.currency || '-') + '</td>' +
+                '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;" title="' + escHtml(s.mongoUriMasked || '') + '">' + escHtml(s.mongoUriMasked || '-') + '</td>' +
+                '<td>' + (s.atlasOwnershipConfirmed ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-gray">-</span>') + '</td>' +
+                '<td>' + getValidationBadge(s.mongoUriValidationStatus) + '</td>' +
+                '<td style="white-space:nowrap;">' + new Date(s.createdAt).toLocaleDateString() + '</td>' +
+                '<td style="white-space:nowrap;">' +
                   '<button class="btn-primary btn-sm" onclick="approveSignup(\'' + s._id + '\')">' + __('saas.admin.btn.approve') + '</button> ' +
                   '<button class="btn-danger btn-sm" onclick="rejectSignup(\'' + s._id + '\')">' + __('saas.admin.btn.reject') + '</button>' +
                 '</td></tr>';
-            }).join('') + '</tbody></table>';
+            }).join('') + '</tbody></table></div>';
         })
         .catch(function() { document.getElementById('signupList').innerHTML = '<div class="empty-state">' + __('saas.admin.toast.networkError') + '</div>'; });
     }
 
     function approveSignup(id) {
+      var signup = (window._allSignups || []).find(function(s) { return s._id === id; });
+      if (signup && (signup.mongoUriValidationStatus === 'failed' || signup.mongoUriValidationStatus === 'error')) {
+        if (!confirm('WARNING: MongoDB URI validation ' + signup.mongoUriValidationStatus.toUpperCase() + ' for this signup. Approving may cause deployment issues. Continue anyway?')) return;
+      }
       if (!confirm(__('saas.admin.confirm.approve'))) return;
       fetch('/api/saas/stores/approve/' + id, { method: 'POST', headers: getAuthHeaders() })
         .then(function(r) { return r.json(); }).then(function(d) {
