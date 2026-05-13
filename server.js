@@ -22,11 +22,11 @@ app.use(helmet({
       scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers in HTML
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", `https://${DOMAIN}`, `https://www.${DOMAIN}`, "http://localhost:*", "https://www.google-analytics.com", "https://www.googletagmanager.com"],
+      connectSrc: ["'self'", `https://${DOMAIN}`, `https://www.${DOMAIN}`, "http://localhost:*", "https://www.google-analytics.com", "https://www.googletagmanager.com", "https://www.facebook.com", "https://facebook.com"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameSrc: ["'none'"]
+      frameSrc: ["https://www.facebook.com", "https://facebook.com"]
     }
   },
   crossOriginEmbedderPolicy: false
