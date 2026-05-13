@@ -4,7 +4,7 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'europe-west3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/teschcross:$SHORT_SHA'
+      - 'europe-west3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/teschcross:$_TAG'
       - '-t'
       - 'europe-west3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/teschcross:latest'
       - '--no-cache'
@@ -14,7 +14,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'europe-west3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/teschcross:$SHORT_SHA'
+      - 'europe-west3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/teschcross:$_TAG'
   
   # 推送镜像到 Artifact Registry (latest标签)
   - name: 'gcr.io/cloud-builders/docker'
@@ -49,7 +49,7 @@ steps:
       - '--timeout'
       - '300'
       - '--revision-suffix'
-      - '$SHORT_SHA'
+      - '$_TAG'
   
   # 获取并显示Cloud Run URL
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -73,8 +73,12 @@ steps:
 
 # 镜像列表
 images:
-  - 'europe-west3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/teschcross:$SHORT_SHA'
+  - 'europe-west3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/teschcross:$_TAG'
   - 'europe-west3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/teschcross:latest'
+
+# 自定义替换 — SHORT_SHA 只对 git 触发可用, 手动构建用 git rev-parse
+substitutions:
+  _TAG: 'manual'
 
 # 构建超时
 timeout: '1200s'
