@@ -19,11 +19,12 @@ Checkpoint date: 2026-05-13
 
 ## Current Blockers
 
-- gcp-admin.js still stub — no real Cloud Run / Cloud Build operations
-- Node.js Secret Manager client needs ADC: `gcloud auth application-default login`
+- separate customer Cloud Run deploy not tested
 - Atlas IP whitelist needs current IP (83.71.3.40) or static Cloud Run egress
-- real customer Cloud Run deploy not tested
+- gcp-admin.js Slice 1 implemented but real customer deploy not validated
 - rollback traffic switch not tested
+
+## Tonight: Main Website Test Module Release (2026-05-13)
 
 ## Security Rules
 
@@ -53,16 +54,64 @@ Checkpoint date: 2026-05-13
 | Secret Manager unit tests | 16/16 passed |
 | Deployment storeId unit tests | 3/3 passed |
 | Production gate unit tests | 4/4 passed |
-| Backend onboarding integration checks | 27/27 passed (previously, rate-limited on replay) |
+| Backend onboarding integration checks | 29/29 passed |
 | SaaS E2E | 13/13 passed (previously, rate-limited on replay) |
-| Main POS smoke | PASS — no regressions |
-| Full test suite | 492/545 pass, 53 skipped (3 pre-existing mongod failures) |
+| Main POS unit tests | 164/164 passed |
+| Main POS HTTP smoke | 6/6 passed (landing, auth 401, brands, pricing, captcha) |
+| Full test suite | 492/492 pass (20 files), 53 skipped, 3 pre-existing EFTYPE |
+| SaaS full onboarding check | 29/29 passed |
+| gcp-admin.js dry-run test | 7/7 passed |
 | Main POS files touched | NO |
 
 ## Next Recommended Steps
 
-1. ADC setup + real Node.js Secret Manager validation
-2. Real gcp-admin.js implementation (per specs/gcp-admin-replacement.md)
-3. Real staging tenant deployment to Cloud Run
-4. Rollback traffic switch test
-5. Atlas IP whitelist configuration
+1. Pull repo on new computer
+2. Run `npm install`, start server with .env
+3. Verify StoreFlow Test Shop login + dashboard locally
+4. Eventually: real customer Cloud Run deploy (separate services)
+5. Rollback traffic switch test
+6. Atlas IP whitelist configuration
+
+---
+
+## Tonight: Main Website Test Module Release (2026-05-13)
+
+### What is going live
+- StoreFlow SaaS test module runs **inside the existing main website/service**
+- NOT a separate customer Cloud Run deployment
+- Test module accessible at `/saas/*` routes on the existing main domain
+
+### Test module access
+- Super admin: Lee087 (same as Main POS boss account)
+- Test shop owner: `test_owner` / `testpass123`
+- Test shop name: StoreFlow Test Shop
+- Login: `/saas/login.html`
+- Dashboard: `/saas/dashboard.html`
+- Admin panel: `/saas/admin.html`
+- Deployments: `/saas/admin-deployments.html`
+- POS test: `/saas/pos.html`
+- Recreate test store: `node scripts/create-test-store.js` (idempotent, safe)
+
+### What remains disabled / future
+- Real customer Cloud Run deployment — NOT active, gcp-admin.js stays in dry-run
+- Real Secret Manager usage — SECRET_MANAGER_DRY_RUN=true
+- Atlas IP whitelist — not configured
+- Rollback traffic switching — not tested
+- gcp-admin.js stubs: updateCloudRunService, updateServiceEnv
+
+### Recent changes committed
+- `utils/gcp-admin.js` — Slice 1 real implementation (5 functions, dry-run default)
+- `.gitignore` — added `*-key.json` pattern
+- `.env.example` — added dry-run vars, ALLOW_LEGACY_SIGNUP=false default
+
+### Known risks
+1. StoreFlow uses dry-run mode for all GCP operations — no real Cloud Run impact
+2. ALLOW_LEGACY_SIGNUP=false means legacy signups rejected in production (expected)
+3. gcp-admin.js has `assertNotMainPos()` safety blocking Main POS service names
+4. service account key `storeflow-local-dev-key.json` exists in repo root but is gitignored
+5. CRLF warnings on Windows — cosmetic only
+
+### Rollback instruction
+- `git revert HEAD` and redeploy to undo this commit
+- Does NOT affect MongoDB data or customer/store data
+- Previous known-good revision: `9c2262b`

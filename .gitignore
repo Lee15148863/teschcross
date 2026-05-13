@@ -41,3 +41,6 @@ mongodb/
 
 # SaaS standalone project (separate repo)
 techcross-saas-pos/
+
+# GCP service account keys
+*-key.json
