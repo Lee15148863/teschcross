@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const StoreSignup = require('../../models/saas/StoreSignup');
 
-const JWT_SECRET = process.env.INV_JWT_SECRET || 'saas-dev-secret';
+const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 
 function superAdminAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -23,10 +23,10 @@ router.post('/', async (req, res) => {
     if (!storeName || !ownerName || !email) {
       return res.status(400).json({ error: 'Store name, owner name, and email are required' });
     }
-    // Reject duplicate pending signup
+    // Idempotent: if pending signup exists, treat as success (retry-safe)
     const existing = await StoreSignup.findOne({ email: email.toLowerCase(), status: 'pending' });
     if (existing) {
-      return res.status(409).json({ error: 'A pending signup already exists for this email' });
+      return res.json({ success: true, message: 'Registration submitted. Awaiting approval.', id: existing._id });
     }
     const signup = await StoreSignup.create({
       storeName, ownerName, email, phone: phone || '', country: country || '',

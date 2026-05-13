@@ -31,3 +31,13 @@ node_modules/
 .env
 .env.local
 !.env.example
+
+# Claude internal files
+.claude/
+
+# Local MongoDB data
+Data/db/
+mongodb/
+
+# SaaS standalone project (separate repo)
+techcross-saas-pos/

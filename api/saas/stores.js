@@ -7,7 +7,7 @@ const StoreSignup = require('../../models/saas/StoreSignup');
 const SaaSUser = require('../../models/saas/SaaSUser');
 const { createTransporter } = require('../../utils/inv-crypto');
 
-const JWT_SECRET = process.env.INV_JWT_SECRET || 'saas-dev-secret';
+const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 const BCRYPT_SALT_ROUNDS = 10;
 
 // Super admin auth middleware
