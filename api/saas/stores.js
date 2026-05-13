@@ -44,24 +44,21 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
       notes: signup.notes, status: 'active', approvedBy: req.user.userId, approvedAt: new Date()
     });
 
-    // Create store_root user
+    // Create store_root user — use custom username if provided, else auto-generate
+    const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
     let credentials;
     if (signup.password) {
-      // User set their own password during registration
       const rootUser = await SaaSUser.create({
-        username: 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
-        password: signup.password, displayName: signup.ownerName, email: signup.email,
-        role: 'store_root', storeId: store._id, active: true
+        username: finalUsername, password: signup.password, displayName: signup.ownerName,
+        email: signup.email, role: 'store_root', storeId: store._id, active: true
       });
       credentials = { username: rootUser.username, message: 'Use the password you set during registration to sign in.' };
     } else {
-      // Legacy: no password in signup — generate random one
       const defaultPw = require('crypto').randomBytes(4).toString('hex') + 'X1!';
       const hashed = await bcrypt.hash(defaultPw, BCRYPT_SALT_ROUNDS);
       const rootUser = await SaaSUser.create({
-        username: 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
-        password: hashed, displayName: signup.ownerName, email: signup.email,
-        role: 'store_root', storeId: store._id, active: true
+        username: finalUsername, password: hashed, displayName: signup.ownerName,
+        email: signup.email, role: 'store_root', storeId: store._id, active: true
       });
       credentials = { username: rootUser.username, password: defaultPw };
     }
