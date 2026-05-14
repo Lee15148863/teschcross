@@ -337,28 +337,26 @@ async function switchTraffic(projectId, region, serviceName, revisionName, perce
     throw new Error('Percent must be 0-100, got ' + percent);
   }
 
-  var svcUrl = 'https://run.googleapis.com/v1/projects/' + projectId + '/locations/' + region + '/services/' + serviceName;
-
-  var patchBody = {
-    spec: {
-      traffic: [
-        { revisionName: revisionName, percent: percent },
-        { latestReadyRevision: true, percent: 100 - percent }
-      ]
-    }
-  };
+  var exec = require('child_process').exec;
+  var cmd = 'gcloud run services update-traffic ' + serviceName
+    + ' --region=' + region
+    + ' --to-revisions ' + revisionName + '=' + percent
+    + ' --project=' + projectId;
 
   log('switching traffic:', serviceName, revisionName, percent + '%');
 
-  try {
-    var result = await withRetry(function() {
-      return gcpRequest('PATCH', svcUrl + '?updateMask=spec.traffic', patchBody);
-    }, 1, 2000);
-    return result;
-  } catch (e) {
-    log('switchTraffic failed:', e.message);
-    throw e;
-  }
+  var result = await new Promise(function(resolve, reject) {
+    exec(cmd, { timeout: 60000 }, function(err, stdout, stderr) {
+      if (err) {
+        var detail = stderr ? stderr.split('\n').slice(-3).join(' ').trim() : err.message;
+        reject(new Error(detail));
+      } else {
+        resolve({ updated: true, rawOutput: stdout.slice(-1000) });
+      }
+    });
+  });
+
+  return result;
 }
 
 // ─── Existing stubs (carried over, not yet implemented) ──────────────
@@ -385,38 +383,37 @@ async function updateServiceEnv(projectId, region, serviceName, envVars) {
     throw new Error('envVars must be a non-empty object');
   }
 
-  // Build env array from envVars object
-  var envArray = [];
+  // Build --update-env-vars string
+  var envPairs = [];
   Object.keys(envVars).forEach(function(k) {
-    envArray.push({ name: k, value: String(envVars[k]) });
+    var v = envVars[k];
+    if (v === null || v === undefined) {
+      envPairs.push(k + '-'); // Remove env var
+    } else {
+      envPairs.push(k + '=' + String(v));
+    }
   });
 
-  var svcUrl = 'https://run.googleapis.com/v1/projects/' + projectId + '/locations/' + region + '/services/' + serviceName;
+  var exec = require('child_process').exec;
+  var cmd = 'gcloud run services update ' + serviceName
+    + ' --region=' + region
+    + ' --update-env-vars=' + envPairs.join(',')
+    + ' --project=' + projectId;
 
-  var patchBody = {
-    spec: {
-      template: {
-        spec: {
-          containers: [
-            { env: envArray }
-          ]
-        }
+  log('updating env vars for', serviceName, '(' + envPairs.length + ' vars)');
+
+  var result = await new Promise(function(resolve, reject) {
+    exec(cmd, { timeout: 60000 }, function(err, stdout, stderr) {
+      if (err) {
+        var detail = stderr ? stderr.split('\n').slice(-3).join(' ').trim() : err.message;
+        reject(new Error(detail));
+      } else {
+        resolve({ updated: true, rawOutput: stdout.slice(-1000) });
       }
-    }
-  };
+    });
+  });
 
-  log('updating env vars for', serviceName, '(' + envArray.length + ' vars)');
-
-  try {
-    var result = await withRetry(function() {
-      return gcpRequest('PATCH', svcUrl + '?updateMask=spec.template.spec.containers.env', patchBody);
-    }, 1, 2000);
-    log('env vars updated for', serviceName);
-    return { updated: true };
-  } catch (e) {
-    log('updateServiceEnv failed:', e.message);
-    throw e;
-  }
+  return result;
 }
 
 async function getCloudRunService(projectId, region, serviceName) {

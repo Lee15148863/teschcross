@@ -264,3 +264,12 @@ Dead code cleaned:
 - customer DB touched: NO
 - Tests: Round 1 model/route/safety PASS, Round 2 rollout PIN/deploy/health PASS
 - Next: single-store rollback backend
+
+## StoreFlow Single-Store Rollback Backend — Complete (2026-05-14)
+
+- POST /api/saas/releases/:id/stores/:upgradeId/rollback endpoint implemented
+- switchTraffic + updateServiceEnv refactored to gcloud CLI (REST API PATCH unavailable)
+- Rollback: HHMM+PIN verification → switchTraffic → update upgrade/deployment records
+- Test rollback: storeflow-test-mainpos → restored to rev 00002-f7w
+- Main POS touched: NO
+- customer DB touched: NO

@@ -344,4 +344,110 @@ router.get('/:id', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── POST /api/saas/releases/:id/stores/:upgradeId/rollback ──────────
+router.post('/:id/stores/:upgradeId/rollback', superAdminAuth, async (req, res) => {
+  try {
+    var { actionCode, reason } = req.body;
+    if (!actionCode) {
+      return res.status(400).json({ error: 'Verification code (HHMM+PIN) required' });
+    }
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ error: 'Reason required for rollback' });
+    }
+
+    var release = await Release.findById(req.params.id);
+    if (!release) return res.status(404).json({ error: 'Release not found' });
+
+    var ug = await StoreUpgrade.findById(req.params.upgradeId);
+    if (!ug) return res.status(404).json({ error: 'Store upgrade record not found' });
+    if (ug.releaseId.toString() !== release._id.toString()) {
+      return res.status(400).json({ error: 'Upgrade does not belong to this release' });
+    }
+
+    // Block if no previous revision to roll back to
+    if (!ug.previousRevision) {
+      return res.status(400).json({ error: 'No previous revision available. This was the first deployment.' });
+    }
+
+    // Block double-rollback
+    if (ug.status === 'rolled_back') {
+      return res.status(400).json({ error: 'Store was already rolled back on this release.' });
+    }
+
+    // Verify PIN
+    var verifyDep = await Deployment.findOne({ serviceName: ug.serviceName }).select('pinHash timezone');
+    if (!verifyDep || !verifyDep.pinHash) {
+      verifyDep = await Deployment.findOne({ pinHash: { $ne: '' } }).select('pinHash timezone');
+    }
+    if (!verifyDep || !verifyDep.pinHash) {
+      return res.status(400).json({ error: 'No deployment with PIN configured for verification.' });
+    }
+
+    var verification = await verifyActionCode(verifyDep, actionCode);
+    if (!verification.valid) {
+      await recordAudit(ug.deploymentId || verifyDep._id, 'store_rollback', 'failed', reason, req.user, {
+        error: verification.error,
+        releaseId: release._id, serviceName: ug.serviceName,
+        previousRevision: ug.previousRevision
+      });
+      return res.status(403).json({ error: verification.error });
+    }
+
+    // Execute rollback: switch traffic to previous revision
+    console.log('[releases] Rolling back', ug.serviceName, 'to', ug.previousRevision);
+
+    try {
+      await gcp.switchTraffic(PROJECT_ID, ug.region, ug.serviceName, ug.previousRevision, 100);
+    } catch (e) {
+      ug.status = 'failed';
+      ug.error = 'rollback switchTraffic failed: ' + e.message;
+      ug.finishedAt = new Date();
+      await ug.save();
+
+      await recordAudit(ug.deploymentId || '', 'store_rollback', 'failed', reason, req.user, {
+        error: e.message,
+        releaseId: release._id, serviceName: ug.serviceName,
+        previousRevision: ug.previousRevision
+      });
+      return res.status(500).json({ error: 'Rollback traffic switch failed: ' + e.message });
+    }
+
+    // Update upgrade record
+    ug.status = 'rolled_back';
+    ug.error = '';
+    ug.finishedAt = new Date();
+    await ug.save();
+
+    // Update deployment record
+    await Deployment.findOneAndUpdate(
+      { serviceName: ug.serviceName },
+      { latestRevision: ug.previousRevision, status: 'running', updatedAt: new Date() }
+    );
+
+    // Update release if needed
+    if (release.status === 'completed' || release.status === 'failed') {
+      release.status = 'rolled_back';
+      release.notes = (release.notes || '') + '\nStore ' + ug.serviceName + ' rolled back: ' + reason;
+      await release.save();
+    }
+
+    await recordAudit(ug.deploymentId || '', 'store_rollback', 'success', reason, req.user, {
+      releaseId: release._id, serviceName: ug.serviceName,
+      previousRevision: ug.previousRevision,
+      rollbackCommand: ug.rollbackCommand
+    });
+
+    res.json({
+      success: true,
+      serviceName: ug.serviceName,
+      restoredRevision: ug.previousRevision,
+      rollbackCommand: ug.rollbackCommand,
+      message: 'Traffic switched to ' + ug.previousRevision + '. Store has been rolled back.'
+    });
+  } catch (e) {
+    console.error('[releases] rollback error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
