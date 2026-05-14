@@ -344,10 +344,11 @@ router.get('/:id', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ─── POST /api/saas/releases/:id/stores/:upgradeId/rollback ──────────
-router.post('/:id/stores/:upgradeId/rollback', superAdminAuth, async (req, res) => {
+// ─── POST /api/saas/releases/:id/stores/:storeId/rollback ──────────
+// Rollback one store from StoreUpgrade.previousRevision.
+router.post('/:id/stores/:storeId/rollback', superAdminAuth, async (req, res) => {
   try {
-    var { actionCode, reason } = req.body;
+    var { actionCode, reason, includeMainPos } = req.body;
     if (!actionCode) {
       return res.status(400).json({ error: 'Verification code (HHMM+PIN) required' });
     }
@@ -358,10 +359,22 @@ router.post('/:id/stores/:upgradeId/rollback', superAdminAuth, async (req, res) 
     var release = await Release.findById(req.params.id);
     if (!release) return res.status(404).json({ error: 'Release not found' });
 
-    var ug = await StoreUpgrade.findById(req.params.upgradeId);
-    if (!ug) return res.status(404).json({ error: 'Store upgrade record not found' });
-    if (ug.releaseId.toString() !== release._id.toString()) {
-      return res.status(400).json({ error: 'Upgrade does not belong to this release' });
+    // Find latest StoreUpgrade for this release + store
+    var store = await Store.findById(req.params.storeId);
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    var ug = await StoreUpgrade.findOne({
+      releaseId: release._id,
+      storeId: req.params.storeId
+    }).sort({ createdAt: -1 });
+
+    if (!ug) {
+      return res.status(404).json({ error: 'No upgrade record found for this store in this release' });
+    }
+
+    // Safety: block Main POS unless explicitly allowed
+    if (!includeMainPos && ug.serviceName === MAIN_POS_SERVICE) {
+      return res.status(403).json({ error: 'Cannot rollback Main POS service. Set includeMainPos=true if intended.' });
     }
 
     // Block if no previous revision to roll back to
@@ -388,6 +401,7 @@ router.post('/:id/stores/:upgradeId/rollback', superAdminAuth, async (req, res) 
       await recordAudit(ug.deploymentId || verifyDep._id, 'store_rollback', 'failed', reason, req.user, {
         error: verification.error,
         releaseId: release._id, serviceName: ug.serviceName,
+        storeId: req.params.storeId,
         previousRevision: ug.previousRevision
       });
       return res.status(403).json({ error: verification.error });
@@ -407,6 +421,7 @@ router.post('/:id/stores/:upgradeId/rollback', superAdminAuth, async (req, res) 
       await recordAudit(ug.deploymentId || '', 'store_rollback', 'failed', reason, req.user, {
         error: e.message,
         releaseId: release._id, serviceName: ug.serviceName,
+        storeId: req.params.storeId,
         previousRevision: ug.previousRevision
       });
       return res.status(500).json({ error: 'Rollback traffic switch failed: ' + e.message });
@@ -427,18 +442,20 @@ router.post('/:id/stores/:upgradeId/rollback', superAdminAuth, async (req, res) 
     // Update release if needed
     if (release.status === 'completed' || release.status === 'failed') {
       release.status = 'rolled_back';
-      release.notes = (release.notes || '') + '\nStore ' + ug.serviceName + ' rolled back: ' + reason;
+      release.notes = (release.notes || '') + '\nStore ' + store.name + ' (' + ug.serviceName + ') rolled back: ' + reason;
       await release.save();
     }
 
     await recordAudit(ug.deploymentId || '', 'store_rollback', 'success', reason, req.user, {
       releaseId: release._id, serviceName: ug.serviceName,
+      storeId: req.params.storeId,
       previousRevision: ug.previousRevision,
       rollbackCommand: ug.rollbackCommand
     });
 
     res.json({
       success: true,
+      storeName: store.name,
       serviceName: ug.serviceName,
       restoredRevision: ug.previousRevision,
       rollbackCommand: ug.rollbackCommand,
