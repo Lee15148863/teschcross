@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 语言
+- 默认用中文回答。除非用户用英文提问，则用英文回答。
+
 ## Overview
 
 Tech Cross Repair Centre is a dual-system project:

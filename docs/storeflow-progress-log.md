@@ -115,3 +115,56 @@ Checkpoint date: 2026-05-13
 - `git revert HEAD` and redeploy to undo this commit
 - Does NOT affect MongoDB data or customer/store data
 - Previous known-good revision: `9c2262b`
+
+## Local Mac Verification — StoreFlow Test Shop (2026-05-14)
+
+Date: 2026-05-14
+
+Environment:
+- macOS VS Code
+- repo: Lee15148863/teschcross.git
+- branch: main
+- latest commit: a27b49e StoreFlow test module main-site readiness
+- server: http://localhost:8080
+- MongoDB connected
+
+Pull result:
+- fast-forward bb585aa..a27b49e
+- no conflicts
+- StoreFlow files now present
+
+Verification results:
+- Super admin login Lee087: PASS
+- StoreFlow Test Shop visible: PASS
+- no MongoDB URI leak: PASS
+- test_owner login: PASS
+- role: store_root
+- correct storeId: PASS
+- /saas/pos.html opens: PASS
+- fake product created: Test Cable, €10, accessory
+- fake transaction created: 2 × Test Cable = €20, cash
+- summary updated: transactionCount 1, totalSales 20, cashTotal 20, cardTotal 0
+
+Main POS smoke:
+- / 200
+- /inv-login.html 200
+- /api/brands 200
+- /api/pricing 200
+- /api/health 200
+
+Safety check:
+- real transactions unchanged
+- cashledgers unchanged
+- invoices unchanged
+- dailycloses unchanged
+- only saatestproducts and saatesttransactions received new test records
+- Main POS/VAT/invoice/CashLedger untouched
+
+Local stash:
+- stash@{0}: local inv-system-audit.test.js fix
+- patch saved to ~/Desktop/inv-system-audit-local-change.patch
+- do not apply yet
+
+Next step:
+- Decide whether to keep or drop the local stash after reviewing it
+- Then continue with either production live check or next StoreFlow task
