@@ -266,3 +266,17 @@ Dead code cleaned:
 - Main POS touched: NO
 - customer DB touched: NO
 - Tests: Round 1 backend PASS, Round 2 rollout deploy/health PASS, rollback refusal PASS
+
+## StoreFlow Release Management UI — Complete (2026-05-14)
+
+- Page: /saas/admin-releases.html
+- Release list with status badges
+- Create Release button
+- Mark Test Passed button (enabled only for draft/testing)
+- Rollout All button (enabled only for test_passed, requires HHMM+PIN + reason)
+- StoreUpgrade table with per-store status + revisions
+- Per-store Rollback button (requires HHMM+PIN + reason, blocks double-rollback)
+- Link from saas/admin.html tabs
+- No /api/inv calls, no secrets exposed
+- Main POS touched: NO, customer DB touched: NO
+- Test: page 200, JS loads, safety grep clean
