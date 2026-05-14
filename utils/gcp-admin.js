@@ -138,7 +138,7 @@ async function triggerDeployBuild(projectId, region, serviceName, storeName, mon
 
   if (!google) throw new Error('google-auth-library not available. Cannot trigger real build.');
 
-  var imageTag = region + '-docker.pkg.dev/' + projectId + '/storeflow/' + serviceName + ':' + (gitCommit || 'latest');
+  var imageTag = region + '-docker.pkg.dev/' + projectId + '/cloud-run-source-deploy/' + serviceName + ':' + (gitCommit || 'latest');
 
   // Sanitize env var values for shell safety
   function sanitizeEnvVal(val) {
