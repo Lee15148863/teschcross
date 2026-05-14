@@ -36,7 +36,7 @@ const { validateMongoUri, maskMongoUri } = require('../utils/mongo-uri-validator
 
 const DB = process.env.DBCon || process.env.MONGO_URI;
 const DB_NAME = process.env.STORE_NAME || 'techcross';
-const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || '';
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || 'project-0bb407e6-67ba-4d3e-8da';
 const REGION = 'europe-west1';
 
 // ─── Helpers ──────────────────────────────────────────────────────────

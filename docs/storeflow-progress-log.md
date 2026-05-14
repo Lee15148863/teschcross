@@ -252,3 +252,15 @@ Deploy flow implemented:
 Dead code cleaned:
 - Removed `listRevisions()` (0 callers)
 - Removed `POLL_INTERVAL_MS`, `MAX_POLL_ATTEMPTS` (synchronous deploy)
+
+## StoreFlow Release Rollout-All Backend — Complete (2026-05-14)
+
+- Release / StoreUpgrade backend implemented
+- rollout-all sequential deployment + PIN verification + health check per store
+- test rollout completed: 1 store → healthy, rev storeflow-test-mainpos-00002-f7w
+- Release status: completed
+- StoreUpgrade: healthy
+- Main POS touched: NO
+- customer DB touched: NO
+- Tests: Round 1 model/route/safety PASS, Round 2 rollout PIN/deploy/health PASS
+- Next: single-store rollback backend
