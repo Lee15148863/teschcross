@@ -253,23 +253,16 @@ Dead code cleaned:
 - Removed `listRevisions()` (0 callers)
 - Removed `POLL_INTERVAL_MS`, `MAX_POLL_ATTEMPTS` (synchronous deploy)
 
-## StoreFlow Release Rollout-All Backend — Complete (2026-05-14)
+## StoreFlow Rollout-All + Single Store Rollback Backend — Complete (2026-05-14)
 
-- Release / StoreUpgrade backend implemented
-- rollout-all sequential deployment + PIN verification + health check per store
-- test rollout completed: 1 store → healthy, rev storeflow-test-mainpos-00002-f7w
-- Release status: completed
-- StoreUpgrade: healthy
+- Release model: version, gitCommit, status (draft→testing→test_passed→rolling_out→completed/failed/rolled_back)
+- StoreUpgrade model: per-store upgrade tracking with previousRevision, newRevision, rollbackCommand
+- api/saas/releases.js: create, mark-test-passed, rollout-all, list, detail, rollback
+- rollout-all: sequential Cloud Run deploy with PIN verification, health check, StoreUpgrade records
+- test rollout: storeflow-test-mainpos → rev storeflow-test-mainpos-00002-f7w, release completed, StoreUpgrade healthy
+- single-store rollback: POST /api/saas/releases/:id/stores/:storeId/rollback
+- rollback rules: super_admin + reason + HHMM+PIN, double-rollback blocked, Main POS guard (includeMainPos)
+- switchTraffic + updateServiceEnv refactored to gcloud CLI
 - Main POS touched: NO
 - customer DB touched: NO
-- Tests: Round 1 model/route/safety PASS, Round 2 rollout PIN/deploy/health PASS
-- Next: single-store rollback backend
-
-## StoreFlow Single-Store Rollback Backend — Complete (2026-05-14)
-
-- POST /api/saas/releases/:id/stores/:upgradeId/rollback endpoint implemented
-- switchTraffic + updateServiceEnv refactored to gcloud CLI (REST API PATCH unavailable)
-- Rollback: HHMM+PIN verification → switchTraffic → update upgrade/deployment records
-- Test rollback: storeflow-test-mainpos → restored to rev 00002-f7w
-- Main POS touched: NO
-- customer DB touched: NO
+- Tests: Round 1 backend PASS, Round 2 rollout deploy/health PASS, rollback refusal PASS
