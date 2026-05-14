@@ -136,6 +136,10 @@ async function triggerDeployBuild(projectId, region, serviceName, storeName, mon
     return { buildId: 'dry-run-' + Date.now(), imageTag: serviceName + ':dry-run' };
   }
 
+  if (!google) throw new Error('google-auth-library not available. Cannot trigger real build.');
+
+  var imageTag = region + '-docker.pkg.dev/' + projectId + '/storeflow/' + serviceName + ':' + (gitCommit || 'latest');
+
   // Sanitize env var values for shell safety
   function sanitizeEnvVal(val) {
     return String(val || '').replace(/[^a-zA-Z0-9_.\-:@/=]/g, '_');
@@ -156,56 +160,91 @@ async function triggerDeployBuild(projectId, region, serviceName, storeName, mon
   }
   var envStr = envPairs.join(',');
 
-  // Use gcloud run deploy --source . via child_process
-  // This handles source upload, Cloud Build, and Cloud Run deploy in one command
-  var deployCmd = 'gcloud run deploy ' + serviceName
-    + ' --source .'
-    + ' --region=' + region
-    + ' --allow-unauthenticated'
-    + ' --concurrency=80'
-    + ' --timeout=300'
-    + ' --labels=app=storeflow,store=' + (storeName || '').toLowerCase().replace(/[^a-z0-9_-]/g, '_') + ',managed-by=storeflow-saas'
-    + ' --set-env-vars=' + envStr
-    + ' --project=' + projectId;
+  // Use Cloud Build API with git clone step — works inside any container
+  var buildSteps = [
+    {
+      name: 'gcr.io/cloud-builders/git',
+      args: ['clone', '--depth=1', 'https://github.com/Lee15148863/teschcross.git', '.'],
+    },
+    {
+      name: 'gcr.io/cloud-builders/docker',
+      args: ['build', '-t', imageTag, '.']
+    },
+    {
+      name: 'gcr.io/cloud-builders/docker',
+      args: ['push', imageTag]
+    },
+    {
+      name: 'gcr.io/google.com/cloudsdktool/cloud-sdk',
+      entrypoint: 'gcloud',
+      args: [
+        'run', 'deploy', serviceName,
+        '--image=' + imageTag,
+        '--region=' + region,
+        '--platform=managed',
+        '--allow-unauthenticated',
+        '--concurrency=80',
+        '--timeout=300',
+        '--labels=app=storeflow,store=' + (storeName || '').toLowerCase().replace(/[^a-z0-9_-]/g, '_') + ',managed-by=storeflow-saas',
+        '--set-env-vars=' + envStr
+      ]
+    }
+  ];
 
-  log('running gcloud deploy for', serviceName);
-  log('command: gcloud run deploy ' + serviceName + ' --source . --region=' + region + ' [env vars hidden]');
+  var buildBody = {
+    steps: buildSteps,
+    timeout: '600s',
+    options: {
+      machineType: 'E2_HIGHCPU_8',
+      logging: 'CLOUD_LOGGING_ONLY'
+    },
+    tags: ['storeflow', 'saas-deploy', serviceName]
+  };
 
-  var exec = require('child_process').exec;
-  var result = await new Promise(function(resolve, reject) {
-    exec(deployCmd, {
-      cwd: process.cwd(),
-      maxBuffer: 10 * 1024 * 1024,
-      timeout: 600000
-    }, function(err, stdout, stderr) {
-      if (err) {
-        log('gcloud deploy failed:', err.message);
-        // Extract more detail from stderr
-        var detail = stderr ? stderr.split('\n').slice(-5).join(' ').trim() : err.message;
-        reject(new Error(detail));
-      } else {
-        // Parse revision name from output: "revision [xxx-abc] has been deployed"
-        var revMatch = stdout.match(/revision\s+\[([^\]]+)\]/);
-        var revName = revMatch ? revMatch[1] : '';
-        var urlMatch = stdout.match(/Service URL:\s+(\S+)/);
-        var url = urlMatch ? urlMatch[1] : '';
+  var buildUrl = 'https://cloudbuild.googleapis.com/v1/projects/' + projectId + '/builds';
 
-        log('deploy succeeded for', serviceName, 'rev:', revName);
-        resolve({
-          revisionName: revName,
-          serviceUrl: url,
-          rawOutput: stdout.slice(-2000)
-        });
-      }
-    });
-  });
+  log('submitting Cloud Build for', serviceName);
+
+  var result;
+  try {
+    result = await withRetry(function() {
+      return gcpRequest('POST', buildUrl, buildBody);
+    }, 1, 2000);
+  } catch (e) {
+    log('build trigger failed:', e.message);
+    throw e;
+  }
+
+  var buildId = (result.metadata && result.metadata.build && result.metadata.build.id) || '';
+
+  log('build submitted:', buildId || 'unknown', 'for', serviceName);
+
+  // Poll for completion
+  var finalStatus = 'UNKNOWN';
+  for (var attempt = 1; attempt <= 60; attempt++) {
+    await new Promise(function(r) { setTimeout(r, 10000); });
+    var st = await getBuildStatus(projectId, buildId || result.name || '');
+    finalStatus = st.status;
+    log('  build status:', finalStatus);
+    if (finalStatus === 'SUCCESS' || finalStatus === 'FAILURE' || finalStatus === 'INTERNAL_ERROR' || finalStatus === 'TIMEOUT') break;
+  }
+
+  if (finalStatus !== 'SUCCESS') {
+    throw new Error('Cloud Build ' + finalStatus);
+  }
+
+  // Get service URL and revision after deploy
+  var serviceUrl = '', revName = '';
+  try { serviceUrl = await getServiceUrl(projectId, region, serviceName); } catch (_) {}
+  try { revName = await getLatestReadyRevision(projectId, region, serviceName); } catch (_) {}
+
+  log('deploy succeeded:', serviceName, 'rev:', revName);
 
   return {
-    buildId: 'gcloud-' + Date.now(),
-    imageTag: serviceName + ':latest',
-    revisionName: result.revisionName,
-    serviceUrl: result.serviceUrl,
-    rawOutput: result.rawOutput
+    buildId: buildId,
+    imageTag: imageTag,
+    revisionName: revName,
+    serviceUrl: serviceUrl
   };
 }
 
