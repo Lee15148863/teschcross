@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Releases — StoreFlow Admin</title>
+  <style>
+    *,::before,::after{box-sizing:border-box;margin:0;padding:0}
+    html{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:16px;background:#f2f2f7;color:#1d1d1f}
+    body{max-width:1100px;margin:0 auto;padding:24px}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+    .header h1{font-size:24px;font-weight:700}
+    .warning{background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#856404}
+    .section{background:#fff;border-radius:16px;padding:20px 24px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    .section h2{font-size:17px;font-weight:600;margin-bottom:14px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:8px 6px;border-bottom:2px solid #e5e5ea;color:#6e6e73;font-weight:600;white-space:nowrap}
+    td{padding:8px 6px;border-bottom:1px solid #f2f2f7;vertical-align:middle}
+    tr:hover{background:#f9f9fb}
+    button{padding:8px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+    button:disabled{opacity:.4;cursor:not-allowed}
+    .btn-primary{background:#0071e3;color:#fff}
+    .btn-primary:hover:not(:disabled){background:#0060c0}
+    .btn-danger{background:#e53e3e;color:#fff}
+    .btn-danger:hover:not(:disabled){background:#c53030}
+    .btn-sm{padding:4px 10px;font-size:12px}
+    .btn-outline{background:#fff;border:1.5px solid #d2d2d7;color:#1d1d1f}
+    .btn-outline:hover:not(:disabled){background:#f2f2f7}
+    .badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;text-transform:uppercase}
+    .b-draft{background:#e5e5ea;color:#6e6e73}.b-testing{background:#dbeafe;color:#1e40af}
+    .b-test_passed{background:#d1fae5;color:#065f46}.b-rolling_out{background:#fef3c7;color:#92400e}
+    .b-completed{background:#d1fae5;color:#065f46}.b-failed{background:#fee2e2;color:#991b1b}
+    .b-rolled_back{background:#fce7f3;color:#9d174d}.b-skipped{background:#e5e5ea;color:#6e6e73}
+    .b-healthy{background:#d1fae5;color:#065f46}.b-deploying{background:#dbeafe;color:#1e40af}
+    .b-pending{background:#f3f4f6;color:#6b7280}
+    input,textarea,select{padding:8px 12px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;width:100%;margin-bottom:8px}
+    label{font-size:12px;font-weight:600;color:#6e6e73;display:block;margin-bottom:4px}
+    .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .mt{margin-top:12px}.mb{margin-bottom:12px}
+    .col-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    #loginGuard{display:none;text-align:center;padding:60px 20px}
+    #loginGuard input{max-width:300px;margin:0 auto 8px}
+    #loginGuard button{max-width:300px;margin:0 auto;display:block}
+    .toast{position:fixed;top:16px;right:16px;padding:12px 20px;border-radius:10px;color:#fff;font-size:13px;font-weight:600;z-index:999;animation:fadeIn .3s}
+    .toast-ok{background:#16a34a}.toast-err{background:#dc2626}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .mono{font-family:'SF Mono',monospace;font-size:11px;color:#6e6e73;word-break:break-all}
+  </style>
+</head>
+<body>
+<div id="loginGuard"><h2>Super Admin Login</h2><p style="color:#6e6e73;margin:12px 0">Sign in to manage releases.</p>
+  <input id="lgUser" placeholder="Username"><input id="lgPass" type="password" placeholder="Password">
+  <button onclick="doLogin()" class="btn-primary">Sign In</button>
+  <p id="lgErr" style="color:#dc2626;font-size:13px;margin-top:8px"></p>
+</div>
+<div id="app" style="display:none">
+  <div class="header">
+    <h1>StoreFlow Releases</h1>
+    <a href="/saas/admin.html" style="font-size:13px;color:#0071e3;text-decoration:none">← Admin Panel</a>
+  </div>
+  <div class="warning">⚠ This upgrades cloned customer Cloud Run services only. It does not modify customer MongoDB data.</div>
+
+  <!-- Release List -->
+  <div class="section">
+    <div class="flex" style="justify-content:space-between">
+      <h2>Releases</h2>
+      <div class="flex">
+        <input id="ver" placeholder="Version (e.g. v2.0)" style="width:140px;margin:0">
+        <button class="btn-primary" onclick="createRel()" id="btnCreate">Create Release</button>
+      </div>
+    </div>
+    <div id="relList"></div>
+  </div>
+
+  <!-- Selected Release Detail -->
+  <div class="section" id="detailSec" style="display:none">
+    <h2 id="detailTitle">Release Detail</h2>
+    <div id="detailInfo" class="mb"></div>
+    <div class="flex mb">
+      <button class="btn-outline" onclick="markPass()" id="btnMarkPass" disabled>Mark Test Passed</button>
+      <button class="btn-primary" onclick="showRollout()" id="btnRollout" disabled>Rollout All</button>
+    </div>
+    <div id="rolloutForm" style="display:none" class="mb">
+      <div class="col-2">
+        <div><label>Action Code (HHMM + PIN)</label><input id="roCode" placeholder="e.g. 14324825"></div>
+        <div><label>Reason</label><input id="roReason" placeholder="Why rollout?"></div>
+      </div>
+      <button class="btn-primary" onclick="doRollout()">Execute Rollout All</button>
+      <button class="btn-outline btn-sm" onclick="document.getElementById('rolloutForm').style.display='none'" style="margin-left:8px">Cancel</button>
+    </div>
+    <h3 style="font-size:14px;margin-top:16px">Store Upgrades</h3>
+    <div id="upgrades"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+var TOKEN='', SEL={};
+var STATUS_ORDER=['draft','testing','test_passed','rolling_out','completed','failed','rolled_back'];
+var STATUS_NAME={draft:'Draft',testing:'Testing',test_passed:'Test Passed',rolling_out:'Rolling Out',completed:'Completed',failed:'Failed',rolled_back:'Rolled Back'};
+
+function api(path,opts){
+  opts=opts||{};opts.headers=opts.headers||{};
+  if(TOKEN)opts.headers['Authorization']='Bearer '+TOKEN;
+  return fetch(path,opts).then(r=>r.json());
+}
+
+function toast(msg,ok){var e=document.getElementById('toast');e.textContent=msg;e.className='toast toast-'+(ok?'ok':'err');setTimeout(function(){e.textContent=''},3000)}
+
+// Login
+async function doLogin(){
+  var u=document.getElementById('lgUser').value,p=document.getElementById('lgPass').value;
+  var cap=await api('/api/saas/auth/captcha');
+  var q=cap.question;var a=eval(q);
+  var r=await api('/api/saas/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,captchaToken:cap.token,captchaAnswer:a})});
+  if(r.token){TOKEN=r.token;document.getElementById('loginGuard').style.display='none';document.getElementById('app').style.display='block';loadReleases()}
+  else{document.getElementById('lgErr').textContent=r.error||'Login failed'}
+}
+
+function badge(s){var c='b-'+s;if(s&&s.indexOf('_')>=0)c='b-'+s;return '<span class="badge '+c+'">'+(STATUS_NAME[s]||s)+'</span>'}
+
+// Release list
+async function loadReleases(){
+  var rels=await api('/api/saas/releases');
+  if(!Array.isArray(rels)){toast('Failed to load releases',0);return}
+  var h='<table><thead><tr><th>Version</th><th>Status</th><th>Created</th><th>Test Service</th><th>Notes</th><th></th></tr></thead><tbody>';
+  rels.forEach(function(r){
+    h+='<tr><td><b>'+r.version+'</b></td><td>'+badge(r.status)+'</td><td>'+new Date(r.createdAt).toISOString().slice(0,16)+'</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+r.testServiceName+'">'+r.testServiceName+'</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.notes+'</td><td><button class="btn-sm btn-outline" onclick="selectRel(\''+r._id+'\')">View</button></td></tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('relList').innerHTML=h||'<p style="color:#6e6e73">No releases. Create one.</p>';
+}
+
+// Select release
+async function selectRel(id){
+  var r=await api('/api/saas/releases/'+id);
+  SEL=r;var rel=r.release,ups=r.upgrades||[];
+  document.getElementById('detailSec').style.display='block';
+  document.getElementById('detailTitle').textContent=rel.version+' — '+badge(rel.status);
+  document.getElementById('detailInfo').innerHTML='<div class="mono">ID: '+rel._id+' | Test Service: '+(rel.testServiceName||'-')+' | Created: '+new Date(rel.createdAt).toISOString().slice(0,16)+'</div><p style="font-size:12px;color:#6e6e73;margin-top:4px">'+(rel.notes||'')+'</p>';
+  document.getElementById('btnMarkPass').disabled=!(rel.status==='draft'||rel.status==='testing');
+  document.getElementById('btnRollout').disabled=rel.status!=='test_passed';
+
+  var h='<table><thead><tr><th>Service</th><th>Status</th><th>Prev Rev</th><th>New Rev</th><th>Error</th><th></th></tr></thead><tbody>';
+  ups.forEach(function(u){
+    h+='<tr><td><span title="'+u.serviceName+'">'+u.serviceName.slice(0,28)+'</span></td><td>'+badge(u.status)+'</td><td class="mono">'+(u.previousRevision||'-')+'</td><td class="mono">'+(u.newRevision||'-')+'</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#dc2626">'+(u.error||'')+'</td><td>'+(u.previousRevision&&u.status!=='rolled_back'?'<button class="btn-sm btn-danger" onclick="rollbackStore(\''+rel._id+'\',\''+(u.storeId||'')+'\')">Rollback</button>':'')+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('upgrades').innerHTML=h||'<p style="color:#6e6e73">No upgrades yet.</p>';
+}
+
+// Create release
+async function createRel(){
+  var v=document.getElementById('ver').value.trim()||'v'+Date.now().toString(36);
+  var r=await api('/api/saas/releases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:v,notes:'Created from admin UI'})});
+  if(r._id){toast('Release '+v+' created',1);loadReleases();document.getElementById('ver').value=''}
+  else{toast(r.error||'Failed',0)}
+}
+
+// Mark test passed
+async function markPass(){
+  if(!SEL.release)return;
+  var reason=prompt('Reason:','Test store verified');
+  if(!reason)return;
+  var r=await api('/api/saas/releases/'+SEL.release._id+'/mark-test-passed',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:reason})});
+  if(r.success){toast('Marked test passed',1);selectRel(SEL.release._id);loadReleases()}
+  else{toast(r.error||'Failed',0)}
+}
+
+// Show rollout form
+function showRollout(){document.getElementById('rolloutForm').style.display='block'}
+
+// Execute rollout
+async function doRollout(){
+  if(!SEL.release)return;
+  var code=document.getElementById('roCode').value.trim();
+  var reason=document.getElementById('roReason').value.trim();
+  if(!code||!reason){toast('Action code and reason required',0);return}
+  var r=await api('/api/saas/releases/'+SEL.release._id+'/rollout-all',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({actionCode:code,reason:reason})});
+  if(r.accepted){toast('Rollout started: '+r.totalStores+' stores',1);selectRel(SEL.release._id);loadReleases();document.getElementById('rolloutForm').style.display='none'}
+  else{toast(r.error||'Failed',0)}
+}
+
+// Rollback store
+async function rollbackStore(rid,sid){
+  if(!sid){toast('Store ID not available for this upgrade record',0);return}
+  var code=prompt('Action Code (HHMM + PIN):','');
+  if(!code)return;
+  var reason=prompt('Reason:','');
+  if(!reason)return;
+  var r=await api('/api/saas/releases/'+rid+'/stores/'+sid+'/rollback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({actionCode:code,reason:reason})});
+  if(r.success){toast('Rolled back to '+r.restoredRevision,1);selectRel(rid);loadReleases()}
+  else{toast(r.error||'Failed',0)}
+}
+</script>
+</body>
+</html>

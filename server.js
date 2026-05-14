@@ -74,7 +74,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // ─── SaaS SPA: route /saas/* → saas/*.html (BEFORE static to avoid fallthrough)
-const SAAS_PAGES = ['', 'login', 'register', 'dashboard', 'admin', 'admin-deployments', 'pos'];
+const SAAS_PAGES = ['', 'login', 'register', 'dashboard', 'admin', 'admin-deployments', 'admin-releases', 'pos'];
 app.use((req, res, next) => {
   const m = req.path.match(/^\/saas\/([a-z-]*)$/);
   if (m && SAAS_PAGES.includes(m[1])) {
