@@ -168,3 +168,47 @@ Local stash:
 Next step:
 - Decide whether to keep or drop the local stash after reviewing it
 - Then continue with either production live check or next StoreFlow task
+
+## Live Main Website Deployment — StoreFlow Test Module Online (2026-05-14)
+
+Date: 2026-05-14 20:00 UTC
+
+Project: project-0bb407e6-67ba-4d3e-8da
+Service: teschcross-git
+Region: europe-west1
+Previous revision: teschcross-git-00239-zmv
+New revision: teschcross-git-00245-42q
+Traffic: 100% to teschcross-git-00245-42q
+
+Rollback command:
+```
+gcloud run services update-traffic teschcross-git \
+  --region=europe-west1 \
+  --to-revisions teschcross-git-00239-zmv=100
+```
+
+Smoke test:
+- / 200
+- /inv-login.html 200
+- /api/brands 200
+- /api/pricing 200
+- /api/health 200 revision 00245-42q
+- /saas/login.html 200
+- /saas/admin.html 200
+- /saas/dashboard.html 200
+- /saas/pos.html 200 real page (not catch-all)
+- /saas/pos.js 200 real JS (not catch-all)
+- /api/saas/pos/products unauthenticated returns 401 JSON
+
+Live test:
+- 1 fake product created (Live Test Cable, €15)
+- 1 fake transaction created (1 × Live Test Cable, €15, cash)
+- data went only to SaaTest* collections
+
+Safety:
+- Real transactions unchanged (27)
+- CashLedger unchanged (44)
+- Invoices unchanged (11)
+- DailyClose untouched (0)
+- Main POS intact
+- Rollback not needed
