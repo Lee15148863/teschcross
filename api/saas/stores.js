@@ -523,4 +523,106 @@ router.put('/:id/password', storeOrSuperAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ─── Deploy Main POS Clone ──────────────────────────────────────────────
+
+// POST /api/saas/stores/:id/deploy-mainpos-clone
+// Super admin only. Requires PIN + reason validation.
+// Triggers Cloud Build → Cloud Run deploy of Main POS code as a tenant store.
+router.post('/:id/deploy-mainpos-clone', superAdminAuth, async (req, res) => {
+  try {
+    const { actionCode, reason } = req.body;
+    if (!actionCode) {
+      return res.status(400).json({ error: 'Verification code (HHMM+PIN) required' });
+    }
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ error: 'Reason required for deploy action' });
+    }
+
+    // Resolve store → deployment
+    const store = await Store.findById(req.params.id);
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    const dep = await Deployment.findOne({ storeId: store._id }).select('pinHash timezone serviceName region status');
+    if (!dep) {
+      return res.status(404).json({ error: 'No deployment found for this store. Approve signup first.' });
+    }
+    if (dep.status === 'suspended' || dep.status === 'readonly_frozen') {
+      return res.status(400).json({ error: 'Store is ' + dep.status + '. Activate before deploying.' });
+    }
+
+    // Verify HHMM+PIN
+    const { verifyActionCode, recordAudit } = require('../../utils/deployment-security');
+    const verification = await verifyActionCode(dep, actionCode);
+    if (!verification.valid) {
+      await recordAudit(dep._id, 'deploy_mainpos_clone', 'failed', reason, req.user, {
+        error: verification.error, ip: req.ip,
+        storeId: store._id.toString(), storeName: store.name
+      });
+      return res.status(403).json({ error: verification.error });
+    }
+
+    // Record pre-deploy state
+    const prevRevision = dep.latestRevision || '';
+
+    // Run deployment via script (child process)
+    const { spawn } = require('child_process');
+    const scriptPath = require('path').join(__dirname, '../../scripts/deploy-tenant-store.js');
+
+    console.log('[stores] Starting deploy for store:', store.name, 'service:', dep.serviceName);
+
+    const child = spawn('node', [scriptPath, dep._id.toString()], {
+      cwd: require('path').join(__dirname, '../..'),
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: process.env
+    });
+
+    let stdout = '', stderr = '';
+    child.stdout.on('data', (d) => { stdout += d.toString(); });
+    child.stderr.on('data', (d) => { stderr += d.toString(); });
+
+    const exitCode = await new Promise((resolve) => {
+      child.on('close', resolve);
+      child.on('error', () => resolve(1));
+    });
+
+    // Read updated deployment
+    const updatedDep = await Deployment.findById(dep._id).lean();
+
+    await recordAudit(dep._id, 'deploy_mainpos_clone', exitCode === 0 ? 'success' : 'failed', reason, req.user, {
+      exitCode, storeId: store._id.toString(), storeName: store.name,
+      serviceName: dep.serviceName,
+      previousRevision: prevRevision,
+      latestRevision: updatedDep ? updatedDep.latestRevision : '',
+      rollbackCommand: updatedDep ? updatedDep.rollbackCommand : '',
+      stdout: stdout.slice(-2000),
+      stderr: stderr.slice(-2000)
+    });
+
+    if (exitCode !== 0) {
+      return res.status(500).json({
+        error: 'Deploy failed',
+        exitCode,
+        stderr: stderr.slice(-1000),
+        details: 'Check server logs for full output'
+      });
+    }
+
+    res.json({
+      success: true,
+      store: store.name,
+      serviceName: dep.serviceName,
+      previousRevision: prevRevision,
+      latestRevision: updatedDep ? updatedDep.latestRevision : '',
+      cloudRunUrl: updatedDep ? updatedDep.cloudRunUrl : '',
+      rollbackCommand: updatedDep ? updatedDep.rollbackCommand : '',
+      healthStatus: updatedDep ? updatedDep.lastHealthStatus : '',
+      message: 'Main POS clone deployed. Run rollback command if store is unhealthy.'
+    });
+
+  } catch (e) {
+    console.error('[stores] deploy-mainpos-clone error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

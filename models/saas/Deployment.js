@@ -18,6 +18,7 @@ const DeploymentSchema = new mongoose.Schema({
   storeId:      { type: mongoose.Schema.Types.ObjectId, ref: 'SaaStore', index: true },
   subdomain:    { type: String, required: true, trim: true },
   serviceName:  { type: String, required: true, unique: true, trim: true },
+  region:       { type: String, default: 'europe-west1', trim: true },
   mongoUri:     { type: String, select: false },
   status:       { type: String, enum: ['pending', 'deploying', 'running', 'suspended', 'failed', 'readonly_frozen'], default: 'pending' },
   env:          { type: Map, of: String, default: {} },
@@ -33,6 +34,10 @@ const DeploymentSchema = new mongoose.Schema({
   deployedAt:   { type: Date },
   deployedBy:   { type: String },
   error:        { type: String },
+
+  previousRevision: { type: String },
+  latestRevision:   { type: String },
+  rollbackCommand:  { type: String },
 
   versions:     [VersionSchema],
 

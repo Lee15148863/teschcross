@@ -212,3 +212,43 @@ Safety:
 - DailyClose untouched (0)
 - Main POS intact
 - Rollback not needed
+
+## StoreFlow Main POS Clone Deployment — Test Service Online (2026-05-14)
+
+Architecture: StoreFlow = existing Main POS cloned to independent tenant services.
+Not a new POS. Not SaaTest POS. Each tenant gets its own Cloud Run + MongoDB Atlas.
+
+Test clone:
+- serviceName: storeflow-test-mainpos
+- service URL: https://storeflow-test-mainpos-jsd5o6n4la-ew.a.run.app
+- deploymentId: 6a05f031d0a5ae65b64a00bb
+- database: storeflow_test_mainpos
+- validation: PASS
+- previous revision: none
+- new revision: storeflow-test-mainpos-00001-rnx
+- rollback: none (first revision)
+
+Smoke:
+- /api/health 200
+- / 200
+- /inv-login.html 200
+- /api/brands 200
+- /api/pricing 200
+- /api/inv/products unauthenticated 401 JSON
+
+Safety:
+- TechCross production DB touched: NO
+- Main POS code touched: NO
+- real transactions/cashledgers/invoices/dailycloses touched: NO
+- Conclusion: existing Main POS can now be cloned to an independent Cloud Run service with independent Atlas DB
+
+Deploy flow implemented:
+- `scripts/deploy-tenant-store.js` — orchestration script
+- `api/saas/stores.js` — POST /:id/deploy-mainpos-clone endpoint (super_admin + PIN)
+- `utils/gcp-admin.js` — triggerDeployBuild via `gcloud run deploy --source .` + updateServiceEnv
+- `models/saas/Deployment.js` — region, previousRevision, latestRevision, rollbackCommand
+- `specs/storeflow-rollout-spec.md` — rollout architecture + rollout-all design (not yet implemented)
+
+Dead code cleaned:
+- Removed `listRevisions()` (0 callers)
+- Removed `POLL_INTERVAL_MS`, `MAX_POLL_ATTEMPTS` (synchronous deploy)

@@ -136,77 +136,76 @@ async function triggerDeployBuild(projectId, region, serviceName, storeName, mon
     return { buildId: 'dry-run-' + Date.now(), imageTag: serviceName + ':dry-run' };
   }
 
-  if (!google) throw new Error('google-auth-library not available. Cannot trigger real build.');
-
-  var imageTag = region + '-docker.pkg.dev/' + projectId + '/storeflow/' + serviceName + ':' + (gitCommit || 'latest');
+  // Sanitize env var values for shell safety
+  function sanitizeEnvVal(val) {
+    return String(val || '').replace(/[^a-zA-Z0-9_.\-:@/=]/g, '_');
+  }
 
   // Build env vars string for gcloud run deploy --set-env-vars
   var envPairs = [];
-  if (mongoUri) envPairs.push('MONGO_URI=' + mongoUri);
-  if (storeName) envPairs.push('STORE_NAME=' + storeName);
+  if (mongoUri) {
+    envPairs.push('MONGO_URI=' + mongoUri);
+    envPairs.push('DBCon=' + mongoUri);
+  }
+  if (storeName) envPairs.push('STORE_NAME=' + sanitizeEnvVal(storeName));
   if (env && typeof env === 'object') {
     Object.keys(env).forEach(function(k) {
-      envPairs.push(k + '=' + String(env[k]));
+      if (k === 'DBCon' || k === 'MONGO_URI' || k === 'PORT') return; // set above or system-reserved
+      envPairs.push(k + '=' + sanitizeEnvVal(String(env[k])));
     });
   }
   var envStr = envPairs.join(',');
 
-  var buildSteps = [
-    {
-      name: 'gcr.io/cloud-builders/docker',
-      args: ['build', '-t', imageTag, '.']
-    },
-    {
-      name: 'gcr.io/cloud-builders/docker',
-      args: ['push', imageTag]
-    },
-    {
-      name: 'gcr.io/google.com/cloudsdktool/cloud-sdk',
-      entrypoint: 'gcloud',
-      args: [
-        'run', 'deploy', serviceName,
-        '--image=' + imageTag,
-        '--region=' + region,
-        '--platform=managed',
-        '--allow-unauthenticated',
-        '--concurrency=80',
-        '--timeout=300',
-        '--labels=app=storeflow,store=' + (storeName || '').replace(/[^a-zA-Z0-9_-]/g, '_') + ',managed-by=storeflow-saas',
-        '--set-env-vars=' + envStr,
-        '--service-account=' + serviceName + '@' + projectId + '.iam.gserviceaccount.com'
-      ]
-    }
-  ];
+  // Use gcloud run deploy --source . via child_process
+  // This handles source upload, Cloud Build, and Cloud Run deploy in one command
+  var deployCmd = 'gcloud run deploy ' + serviceName
+    + ' --source .'
+    + ' --region=' + region
+    + ' --allow-unauthenticated'
+    + ' --concurrency=80'
+    + ' --timeout=300'
+    + ' --labels=app=storeflow,store=' + (storeName || '').toLowerCase().replace(/[^a-z0-9_-]/g, '_') + ',managed-by=storeflow-saas'
+    + ' --set-env-vars=' + envStr
+    + ' --project=' + projectId;
 
-  var buildBody = {
-    steps: buildSteps,
-    timeout: '600s',
-    options: {
-      machineType: 'E2_HIGHCPU_8',
-      logging: 'CLOUD_LOGGING_ONLY'
-    },
-    tags: ['storeflow', 'saas-deploy', serviceName]
-  };
+  log('running gcloud deploy for', serviceName);
+  log('command: gcloud run deploy ' + serviceName + ' --source . --region=' + region + ' [env vars hidden]');
 
-  var buildUrl = 'https://cloudbuild.googleapis.com/v1/projects/' + projectId + '/builds';
+  var exec = require('child_process').exec;
+  var result = await new Promise(function(resolve, reject) {
+    exec(deployCmd, {
+      cwd: process.cwd(),
+      maxBuffer: 10 * 1024 * 1024,
+      timeout: 600000
+    }, function(err, stdout, stderr) {
+      if (err) {
+        log('gcloud deploy failed:', err.message);
+        // Extract more detail from stderr
+        var detail = stderr ? stderr.split('\n').slice(-5).join(' ').trim() : err.message;
+        reject(new Error(detail));
+      } else {
+        // Parse revision name from output: "revision [xxx-abc] has been deployed"
+        var revMatch = stdout.match(/revision\s+\[([^\]]+)\]/);
+        var revName = revMatch ? revMatch[1] : '';
+        var urlMatch = stdout.match(/Service URL:\s+(\S+)/);
+        var url = urlMatch ? urlMatch[1] : '';
 
-  log('submitting build for', serviceName);
-
-  var result;
-  try {
-    result = await withRetry(function() {
-      return gcpRequest('POST', buildUrl, buildBody);
-    }, 1, 2000);
-  } catch (e) {
-    log('build trigger failed:', e.message);
-    throw e;
-  }
-
-  log('build submitted:', result.id, 'for', serviceName);
+        log('deploy succeeded for', serviceName, 'rev:', revName);
+        resolve({
+          revisionName: revName,
+          serviceUrl: url,
+          rawOutput: stdout.slice(-2000)
+        });
+      }
+    });
+  });
 
   return {
-    buildId: result.id || result.name,
-    imageTag: imageTag
+    buildId: 'gcloud-' + Date.now(),
+    imageTag: serviceName + ':latest',
+    revisionName: result.revisionName,
+    serviceUrl: result.serviceUrl,
+    rawOutput: result.rawOutput
   };
 }
 
@@ -217,12 +216,33 @@ async function getBuildStatus(projectId, buildId) {
     return { status: 'SUCCESS' };
   }
 
-  var buildUrl = 'https://cloudbuild.googleapis.com/v1/projects/' + projectId + '/builds/' + encodeURIComponent(buildId);
+  // If buildId starts with 'operations/', use the operations API
+  var buildUrl;
+  if (buildId && buildId.indexOf('operations/') === 0) {
+    buildUrl = 'https://cloudbuild.googleapis.com/v1/' + buildId;
+  } else {
+    buildUrl = 'https://cloudbuild.googleapis.com/v1/projects/' + projectId + '/builds/' + encodeURIComponent(buildId);
+  }
 
   try {
     var result = await withRetry(function() {
       return gcpRequest('GET', buildUrl);
     }, 2, 1000);
+
+    // If using operations API, check if operation is done
+    if (buildId && buildId.indexOf('operations/') === 0) {
+      if (result.done && result.response) {
+        var build = result.response;
+        return {
+          status: build.status || 'UNKNOWN',
+          failureInfo: build.failureInfo || null
+        };
+      }
+      if (result.done && result.error) {
+        return { status: 'FAILURE', failureInfo: { detail: result.error.message } };
+      }
+      return { status: 'WORKING', failureInfo: null };
+    }
 
     return {
       status: result.status || 'UNKNOWN',
@@ -354,13 +374,49 @@ async function updateCloudRunService(projectId, region, serviceName, path, patch
 }
 
 async function updateServiceEnv(projectId, region, serviceName, envVars) {
+  assertNotMainPos(serviceName);
+
   if (isDryRun()) {
-    log('[DRY-RUN] updateServiceEnv', serviceName);
-    return {};
+    log('[DRY-RUN] updateServiceEnv', serviceName, Object.keys(envVars || {}).length, 'vars');
+    return { updated: true, dryRun: true };
   }
-  // Not yet implemented
-  log('updateServiceEnv not implemented');
-  return {};
+
+  if (!envVars || typeof envVars !== 'object' || Object.keys(envVars).length === 0) {
+    throw new Error('envVars must be a non-empty object');
+  }
+
+  // Build env array from envVars object
+  var envArray = [];
+  Object.keys(envVars).forEach(function(k) {
+    envArray.push({ name: k, value: String(envVars[k]) });
+  });
+
+  var svcUrl = 'https://run.googleapis.com/v1/projects/' + projectId + '/locations/' + region + '/services/' + serviceName;
+
+  var patchBody = {
+    spec: {
+      template: {
+        spec: {
+          containers: [
+            { env: envArray }
+          ]
+        }
+      }
+    }
+  };
+
+  log('updating env vars for', serviceName, '(' + envArray.length + ' vars)');
+
+  try {
+    var result = await withRetry(function() {
+      return gcpRequest('PATCH', svcUrl + '?updateMask=spec.template.spec.containers.env', patchBody);
+    }, 1, 2000);
+    log('env vars updated for', serviceName);
+    return { updated: true };
+  } catch (e) {
+    log('updateServiceEnv failed:', e.message);
+    throw e;
+  }
 }
 
 async function getCloudRunService(projectId, region, serviceName) {
@@ -382,59 +438,11 @@ async function getCloudRunService(projectId, region, serviceName) {
   }
 }
 
-async function listRevisions(projectId, region, serviceName) {
-  assertNotMainPos(serviceName);
-
-  if (isDryRun()) {
-    return {
-      revisions: [
-        { name: serviceName + '/dry-run-revision', revisionName: serviceName + '-dry-run-revision', image: serviceName + ':dry-run', created: new Date().toISOString(), serving: true, status: 'Ready' }
-      ]
-    };
-  }
-
-  var revUrl = 'https://run.googleapis.com/v1/projects/' + projectId + '/locations/' + region + '/revisions?filter=metadata.annotations%5B%27serving.knative.dev%2Fservice%27%5D%3D' + encodeURIComponent(serviceName);
-
-  try {
-    var result = await withRetry(function() {
-      return gcpRequest('GET', revUrl);
-    }, 2, 1000);
-
-    var items = result.items || [];
-    return {
-      revisions: items.map(function(r) {
-        var parts = (r.metadata && r.metadata.name) ? r.metadata.name.split('/') : [];
-        var status = 'Unknown';
-        if (r.status && r.status.conditions) {
-          for (var i = 0; i < r.status.conditions.length; i++) {
-            if (r.status.conditions[i].type === 'Ready') {
-              status = r.status.conditions[i].status === 'True' ? 'Ready' : (r.status.conditions[i].status === 'False' ? 'Failed' : 'Unknown');
-              break;
-            }
-          }
-        }
-        return {
-          name: r.metadata ? r.metadata.name : '',
-          revisionName: parts[parts.length - 1] || '',
-          image: (r.spec && r.spec.containers && r.spec.containers[0]) ? r.spec.containers[0].image : '',
-          created: r.metadata ? r.metadata.creationTimestamp : '',
-          serving: (r.status && r.status.servingStatus) === 'SERVING',
-          status: status
-        };
-      })
-    };
-  } catch (e) {
-    log('listRevisions failed:', e.message);
-    throw e;
-  }
-}
-
 module.exports = {
   triggerDeployBuild,
   getBuildStatus,
   getServiceUrl,
   getLatestReadyRevision,
-  listRevisions,
   switchTraffic,
   updateCloudRunService,
   updateServiceEnv,
