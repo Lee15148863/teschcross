@@ -32,7 +32,7 @@ const Deployment = require('../models/saas/Deployment');
 const Store = require('../models/saas/Store');
 const gcp = require('../utils/gcp-admin');
 const sm = require('../utils/gcp-secret-manager');
-const { validateMongoUri, maskMongoUri } = require('../utils/mongo-uri-validator');
+const { validateMongoUri, maskMongoUri, parseMongoDbName } = require('../utils/mongo-uri-validator');
 
 const DB = process.env.DBCon || process.env.MONGO_URI;
 const DB_NAME = process.env.STORE_NAME || 'techcross';
@@ -154,11 +154,22 @@ async function main(deployOrStoreId) {
     return String(val || '').replace(/[^a-zA-Z0-9_.\-:@/=]/g, '_');
   }
 
+  // Derive STORE_NAME from MongoDB URI database name, NOT from serviceName.
+  // serviceName uses hyphens (storeflow-test-mainpos), DB names use underscores.
+  var dbName = parseMongoDbName(mongoUri);
+  if (!dbName) {
+    console.error('FATAL: Cannot extract database name from MongoDB URI');
+    console.error('  Ensure URI includes /dbname, e.g. mongodb+srv://.../storeflow_mystore');
+    await mongoose.disconnect();
+    process.exit(1);
+  }
+  var storeNameEnv = dbName.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 63);
+
   var env = {
     DBCon: mongoUri,
     INV_JWT_SECRET: invJwtSecret,
     INV_AUDIT_KEY: invAuditKey,
-    STORE_NAME: sanitizeEnvVal(serviceName).slice(0, 63) || 'storeflow',
+    STORE_NAME: storeNameEnv,
     STORE_FROZEN: 'false',
     NODE_ENV: 'production',
     DOMAIN: sanitizeEnvVal(process.env.DOMAIN || 'techcross.ie'),
@@ -172,7 +183,7 @@ async function main(deployOrStoreId) {
   console.log('  DBCon: [' + maskMongoUri(mongoUri) + ']');
   console.log('  INV_JWT_SECRET: [' + mask(invJwtSecret) + ']');
   console.log('  INV_AUDIT_KEY: [' + mask(invAuditKey) + ']');
-  console.log('  STORE_NAME: ' + env.STORE_NAME);
+  console.log('  STORE_NAME: ' + env.STORE_NAME + ' (from URI dbName: ' + dbName + ')');
 
   // 5. Record current revision for rollback
   var previousRevision = '';

@@ -294,6 +294,16 @@ Dead code cleaned:
 - mongoUri always select: false — never returned in API responses
 - Admin display: combined acceptance badge with notice version/accepted timestamp
 - R1 test: missing checkbox rejected, all accepted stores evidence, no URI leak
+
+## Fix: STORE_NAME from MongoDB URI dbName, not serviceName (2026-05-15)
+
+Root cause: deploy-tenant-store.js + releases.js derived STORE_NAME from serviceName, producing e.g. `storeflow-test-mainpos` (hyphens). MongoDB database name is `storeflow_test_mainpos` (underscores). Mongoose `dbName` option overrode URI database, causing connection failure (mongo:0).
+
+Fix:
+- scripts/deploy-tenant-store.js: STORE_NAME = parseMongoDbName(mongoUri) — from actual DB name
+- api/saas/releases.js: same fix in deployStoresAsync()
+- Guard: if dbName cannot be extracted from URI, abort with clear error
+- Rule: Cloud Run serviceName uses hyphens. STORE_NAME (MongoDB dbName) uses URI dbName. Never derive one from the other.
 - Main POS touched: NO
 - Next: solicitor review of Terms/Privacy/DPA before commercial launch
 - Test: page 200, JS loads, safety grep clean

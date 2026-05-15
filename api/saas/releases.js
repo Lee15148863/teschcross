@@ -11,7 +11,7 @@ const Deployment = require('../../models/saas/Deployment');
 const Store = require('../../models/saas/Store');
 const gcp = require('../../utils/gcp-admin');
 const { verifyActionCode, recordAudit } = require('../../utils/deployment-security');
-const { maskMongoUri } = require('../../utils/mongo-uri-validator');
+const { maskMongoUri, parseMongoDbName } = require('../../utils/mongo-uri-validator');
 
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || 'project-0bb407e6-67ba-4d3e-8da';
@@ -231,11 +231,20 @@ async function deployStoresAsync(releaseId, targets, upgrades, continueOnFailure
       var invJwtSecret = generateSecret(48);
       var invAuditKey = generateSecret(32);
 
+      // Derive STORE_NAME from URI database name, not serviceName
+      var dbName = parseMongoDbName(mongoUri);
+      if (!dbName) {
+        console.error('[releases] Cannot extract database name from URI for', serviceName);
+        ug.status = 'failed'; ug.error = 'Cannot extract database name from MongoDB URI'; ug.finishedAt = new Date(); await ug.save();
+        failed = true; if (continueOnFailure) continue; else break;
+      }
+      var storeNameEnv = (dbName || '').replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 63);
+
       var env = {
         DBCon: mongoUri,
         INV_JWT_SECRET: invJwtSecret,
         INV_AUDIT_KEY: invAuditKey,
-        STORE_NAME: sanitizeEnvVal(serviceName).slice(0, 63) || 'storeflow',
+        STORE_NAME: storeNameEnv,
         STORE_FROZEN: 'false',
         NODE_ENV: 'production',
         DOMAIN: sanitizeEnvVal(process.env.DOMAIN || 'techcross.ie'),
