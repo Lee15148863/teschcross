@@ -199,61 +199,31 @@
     </div>
     <div class="checkbox-group">
       <label>
-        <input type="checkbox" id="atlasOwnershipConfirmed">
+        <input type="checkbox" id="atlasOwnershipConfirmed" onchange="updateSubmitState()">
         <span data-i18n="saas.register.checkbox.ownership">I confirm that this MongoDB Atlas account and database are owned by, or lawfully controlled by, my business. I am responsible for Atlas billing, account security, MFA, database users, passwords, network access rules, backups, exports, and all data stored in this database.</span>
       </label>
     </div>
     <div class="checkbox-group">
       <label>
-        <input type="checkbox" id="atlasResponsibilityAccepted">
+        <input type="checkbox" id="atlasResponsibilityAccepted" onchange="updateSubmitState()">
         <span data-i18n="saas.register.checkbox.responsibility">I understand that MongoDB Atlas free clusters have limited storage and features. I am responsible for backing up and exporting my own sales, invoice, cash ledger, inventory, repair, report, and business records. StoreFlow does not guarantee recovery of lost, deleted, corrupted, or unavailable Atlas data.</span>
       </label>
     </div>
     <div class="checkbox-group">
       <label>
-        <input type="checkbox" id="storeflowConnectionAuthorised">
+        <input type="checkbox" id="storeflowConnectionAuthorised" onchange="updateSubmitState()">
         <span data-i18n="saas.register.checkbox.connection">I authorise StoreFlow to validate this MongoDB connection string and, if my account is approved, to use it only to deploy, connect, operate, secure, maintain, and support my StoreFlow service.</span>
       </label>
     </div>
     <div class="checkbox-group">
       <label>
-        <input type="checkbox" id="legalTermsAccepted">
+        <input type="checkbox" id="legalTermsAccepted" onchange="updateSubmitState()">
         <span data-i18n="saas.register.checkbox.terms">I have read and agree to the StoreFlow Terms, Privacy Notice, and the <a href="/saas/mongodb-atlas-notice.html" target="_blank">MongoDB Atlas Responsibility Notice</a>.</span>
       </label>
     </div>
 
 
-    <div class="disclaimer-box" id="disclaimerBox">
-      <h4>StoreFlow MongoDB Atlas — User Guide & Responsibility Notice</h4>
-
-      <p><strong>Video Tutorial:</strong> <a href="https://youtube.com/shorts/pIHvoXkwmq4?si=rPbI5zHgpvHNotfO" target="_blank" style="color:#0071e3;">youtube.com/shorts/pIHvoXkwmq4</a></p>
-
-      <p><strong>Setup Summary:</strong></p>
-      <ol style="padding-left:18px;margin-bottom:10px;">
-        <li>Create a MongoDB Atlas account at <a href="https://www.mongodb.com/atlas/database" target="_blank" style="color:#0071e3;">mongodb.com/atlas</a> under your business name.</li>
-        <li>Create a dedicated database deployment (Free M0 is sufficient to start).</li>
-        <li>Create a dedicated database user for StoreFlow. Do not reuse personal passwords.</li>
-        <li>Configure Network Access — restrict IP access for production.</li>
-        <li>Copy the connection string, replace <code>&lt;password&gt;</code>, and add a database name.</li>
-        <li>Only submit through this secure registration form.</li>
-      </ol>
-
-      <p><strong>Important:</strong></p>
-      <ul style="padding-left:18px;margin-bottom:10px;">
-        <li>Atlas Free clusters have limited storage, performance, and may lack backup features. Not suitable for production reliance.</li>
-        <li><strong>If you use the free Atlas tier, we recommend you export your transaction records and back up your data regularly.</strong></li>
-        <li>You own and control your Atlas account, database, billing, credentials, backups, and all data.</li>
-        <li>StoreFlow provides software deployment and connection services only — it does not own, control, or guarantee recovery of your Atlas data.</li>
-        <li>You are responsible for compliance with tax, accounting, privacy, and data protection laws.</li>
-      </ul>
-
-      <p style="font-size:12px;color:#8e8e93;">Full legal notice: <a href="/saas/mongodb-atlas-notice.html" target="_blank">StoreFlow MongoDB Atlas User Guide and Responsibility Notice (v1.0)</a></p>
-    </div>
-
-    <div class="agree-row">
-      <input type="checkbox" id="disclaimerAgreed" onchange="updateSubmitState()">
-      <label for="disclaimerAgreed">I have read the Usage Guide and agree to the Responsibility Notice above (scroll to bottom to enable)</label>
-    </div>
+    <p style="font-size:12px;color:#8e8e93;margin:4px 0 16px;">📖 <a href="/saas/mongodb-atlas-notice.html" target="_blank">StoreFlow MongoDB Atlas User Guide and Responsibility Notice (v1.0)</a> — Read before submitting.</p>
 
     <button type="submit" class="btn-submit" id="submitBtn" data-i18n="saas.register.btn" disabled>Submit Registration</button>
   </form>
@@ -382,19 +352,13 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 
 applyLang();
 
-// Disclaimer scroll-to-enable logic
-var _disclaimerScrolled = false;
-document.getElementById('disclaimerBox').addEventListener('scroll', function() {
-  var el = this;
-  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-    _disclaimerScrolled = true;
-  }
-  updateSubmitState();
-});
-
+// Enable submit only when all 4 checkboxes confirmed
 function updateSubmitState() {
-  var agreed = document.getElementById('disclaimerAgreed').checked;
-  document.getElementById('submitBtn').disabled = !(agreed && _disclaimerScrolled);
+  var all4 = document.getElementById('atlasOwnershipConfirmed').checked
+          && document.getElementById('atlasResponsibilityAccepted').checked
+          && document.getElementById('storeflowConnectionAuthorised').checked
+          && document.getElementById('legalTermsAccepted').checked;
+  document.getElementById('submitBtn').disabled = !all4;
 }
 </script>
 
