@@ -114,7 +114,7 @@
 <script>
 (function() {
 'use strict';
-var user = Auth.requireRole('root');
+var user = Auth.requireRole('staff');
 if (!user) return;
 
 document.getElementById('displayName').textContent = user.displayName || user.name || user.username || '-';

@@ -3194,12 +3194,17 @@
         list = [];
       }
       bar.innerHTML = '';
+      var productNames = {};
+      var idsToFetch = list.filter(function(x){return x.product_id;}).map(function(x){return x.product_id;});
+      var uniqueIds = idsToFetch.filter(function(id,i,arr){return arr.indexOf(id)===i;});
+      for (var fi=0;fi<uniqueIds.length;fi++){try{var pr=await apiFetch('/products/'+uniqueIds[fi]);if(pr&&pr.ok){var pd=await pr.json();productNames[uniqueIds[fi]]=pd.name||'';}}catch(e){}}
       for (var i = 1; i <= totalKeys; i++) {
         var item = list.find(function(x) { return x.sort_no === i; }) || null;
         var div = document.createElement('div');
         if (item && item.product_id && item.status !== false) {
           div.className = 'shortcut-item';
-          div.textContent = item.title || ('Key' + i);
+          div.textContent = productNames[item.product_id] || item.title || ('Key' + i);
+          div.title = productNames[item.product_id] || item.title || '';
           div.dataset.productId = item.product_id;
           div.addEventListener('click', (function(pid) {
             return function() { window._addToCart(pid); };

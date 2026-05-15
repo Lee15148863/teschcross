@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
 
 // ─── PUT /api/inv/pos-shortcuts ─────────────────────────────────────────────
 // 批量保存 20 个快捷按钮配置（仅 Admin）
-router.put('/', requireRole('root'), async (req, res) => {
+router.put('/', requireRole('root', 'manager', 'staff'), async (req, res) => {
   try {
     const { shortcuts } = req.body;
 
