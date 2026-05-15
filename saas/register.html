@@ -61,11 +61,14 @@
       .form-row { flex-direction: column; gap: 0; }
     }
 
-    .disclaimer-box { border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 16px; margin: 18px 0 12px; background: #f9f9fb; max-height: 220px; overflow-y: auto; font-size: 12px; line-height: 1.6; color: #3a3a3c; }
+    .disclaimer-box { border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 16px; margin: 18px 0 12px; background: #f9f9fb; max-height: 300px; overflow-y: auto; font-size: 12px; line-height: 1.6; color: #3a3a3c; }
     .disclaimer-box::-webkit-scrollbar { width: 4px; }
     .disclaimer-box::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
     .disclaimer-box h4 { font-size: 13px; margin-bottom: 8px; color: #1d1d1f; }
     .disclaimer-box p { margin-bottom: 6px; }
+    .disclaimer-box ol { margin-bottom: 8px; }
+    .disclaimer-box ol li { margin-bottom: 3px; }
+    .disclaimer-box hr { margin: 12px 0; }
     .agree-row { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 18px; font-size: 13px; color: #1d1d1f; }
     .agree-row input { margin-top: 2px; width: auto; }
   </style>
@@ -203,16 +206,34 @@
 
 
     <div class="disclaimer-box" id="disclaimerBox">
-      <h4 data-i18n="saas.register.disclaimer.title">Terms of Use & Disclaimer</h4>
-      <p data-i18n="saas.register.disclaimer.p1">[Disclaimer text will be provided — placeholder for now.]</p>
-      <p data-i18n="saas.register.disclaimer.p2">StoreFlow provides software deployment and platform services. The customer retains full ownership, control, and responsibility for their MongoDB Atlas database, including all data stored therein.</p>
-      <p data-i18n="saas.register.disclaimer.p3">StoreFlow does not access, modify, delete, or assume liability for customer data. The customer is solely responsible for database backups, security credentials, access control, and compliance with applicable laws.</p>
+      <!-- Part 1: Usage Guide -->
+      <h4 data-i18n="saas.register.guide.title">StoreFlow Usage Guide</h4>
+      <p data-i18n="saas.register.guide.p1">StoreFlow is a POS (Point of Sale) system designed for electronics repair shops. It handles sales, inventory, staff management, expenses, daily close, VAT invoices, and financial reports.</p>
+      <p data-i18n="saas.register.guide.p2">To use StoreFlow, you need your own MongoDB Atlas database (free tier is sufficient). Here's how to set it up:</p>
+      <ol data-i18n="saas.register.guide.steps" style="padding-left:18px;margin-bottom:8px;">
+        <li data-i18n="saas.register.guide.step1">Go to <a href="https://www.mongodb.com/atlas/database" target="_blank" style="color:#0071e3;">mongodb.com/atlas</a> and create a free account.</li>
+        <li data-i18n="saas.register.guide.step2">Create a new cluster (the free M0 tier is sufficient to start).</li>
+        <li data-i18n="saas.register.guide.step3">Create a database user with read/write permissions. Save the username and password.</li>
+        <li data-i18n="saas.register.guide.step4">Go to Network Access → add your IP address or allow access from anywhere (0.0.0.0/0) for initial setup.</li>
+        <li data-i18n="saas.register.guide.step5">Click "Connect" → "Drivers" → copy the connection string. It looks like: <code>mongodb+srv://user:pass@cluster.mongodb.net/dbname</code></li>
+        <li data-i18n="saas.register.guide.step6">Replace <code>user</code> and <code>pass</code> with your database credentials, and <code>dbname</code> with a database name of your choice (e.g., <code>mystore_pos</code>).</li>
+        <li data-i18n="saas.register.guide.step7">Paste the connection string in the MongoDB Atlas field above.</li>
+      </ol>
+      <p data-i18n="saas.register.guide.p3">After submitting your registration, StoreFlow will verify your MongoDB URI and set up the software for your store. You can add staff accounts, manage products, and start using the POS system immediately.</p>
+
+      <hr style="border:none;border-top:1px solid #d2d2d7;margin:12px 0;">
+
+      <!-- Part 2: Disclaimer -->
+      <h4 data-i18n="saas.register.disclaimer.title">Disclaimer</h4>
+      <p data-i18n="saas.register.disclaimer.p1">StoreFlow provides software deployment and platform services only. The customer retains full ownership, control, and responsibility for their MongoDB Atlas database, including all data stored therein.</p>
+      <p data-i18n="saas.register.disclaimer.p2">StoreFlow does not access, modify, delete, or assume liability for customer data. The customer is solely responsible for database backups, security credentials, access control, and compliance with applicable laws.</p>
+      <p data-i18n="saas.register.disclaimer.p3">StoreFlow is not liable for any data loss, service interruption, or damages arising from the use of the software. The customer agrees to use StoreFlow at their own risk.</p>
       <p data-i18n="saas.register.disclaimer.p4">By using StoreFlow, you acknowledge that you have read, understood, and agree to these terms.</p>
     </div>
 
     <div class="agree-row">
       <input type="checkbox" id="disclaimerAgreed" onchange="updateSubmitState()">
-      <label for="disclaimerAgreed" data-i18n="saas.register.disclaimer.agree">I have read and agree to the Terms of Use & Disclaimer (scroll to bottom to enable)</label>
+      <label for="disclaimerAgreed" data-i18n="saas.register.disclaimer.agree">I have read the Usage Guide and agree to the Disclaimer above (scroll to bottom to enable)</label>
     </div>
 
     <button type="submit" class="btn-submit" id="submitBtn" data-i18n="saas.register.btn" disabled>Submit Registration</button>
