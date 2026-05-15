@@ -644,4 +644,60 @@ router.get('/devices/status', jwtAuth, async (req, res) => {
 // Export for testing
 router._captchaStore = captchaStore;
 
+// POST /api/inv/auth/saas-login — auto-login from SaaS dashboard token
+const SAAS_JWT_SECRET = process.env.SAAS_JWT_SECRET;
+router.post('/saas-login', async (req, res) => {
+  try {
+    const { saas_token } = req.body;
+    if (!saas_token) return res.status(400).json({ error: 'saas_token required' });
+    if (!SAAS_JWT_SECRET) return res.status(500).json({ error: 'SAAS_JWT_SECRET not configured' });
+
+    // Verify SaaS token
+    let decoded;
+    try {
+      decoded = jwt.verify(saas_token, SAAS_JWT_SECRET);
+    } catch (e) {
+      return res.status(401).json({ error: 'Invalid or expired SaaS token' });
+    }
+
+    var username = decoded.username || decoded.userId || 'saas_user';
+    var displayName = decoded.displayName || username;
+    var saasRole = decoded.role || 'staff';
+
+    // Find or create POS user
+    var user = await InvUser.findOne({ username: username });
+    if (!user) {
+      var posRole = (saasRole === 'super_admin' || saasRole === 'store_root') ? 'root' : 'staff';
+      var boss = (saasRole === 'super_admin');
+      var hashedPw = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), BCRYPT_SALT_ROUNDS);
+      user = await InvUser.create({
+        username: username,
+        password: hashedPw,
+        displayName: displayName,
+        role: posRole,
+        boss: boss,
+        active: true,
+        permissions: posRole === 'root' ? {} : { pos: true, refund: true }
+      });
+    }
+
+    // Mark active and update role if needed
+    if (!user.active) user.active = true;
+    if (saasRole === 'super_admin' && user.role !== 'root') user.role = 'root';
+    await user.save();
+
+    // Generate POS JWT (8h)
+    const token = jwt.sign(
+      { userId: user._id, username: user.username, role: user.role, boss: user.boss, displayName: user.displayName },
+      JWT_SECRET,
+      { expiresIn: TOKEN_EXPIRES_IN }
+    );
+
+    res.json({ token, user: { id: user._id, username: user.username, displayName: user.displayName, role: user.role, boss: user.boss } });
+  } catch (e) {
+    console.error('saas-login error:', e.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

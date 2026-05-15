@@ -392,10 +392,10 @@
             // Also check GET /api/saas/stores/:id route isn't for deployments; try by service name
             return;
           }
-          var posUrl = dep.cloudRunUrl + '/inv-pos.html';
-          var loginUrl = dep.cloudRunUrl + '/inv-login.html';
+          // Auto-login: pass SaaS token so POS login page auto-authenticates
+          var loginUrl = dep.cloudRunUrl + '/inv-login.html?saas_token=' + encodeURIComponent(token) + '&redirect=' + encodeURIComponent(dep.cloudRunUrl + '/inv-pos.html');
           var btn = document.getElementById('posEntranceBtn');
-          btn.href = posUrl;
+          btn.href = loginUrl;
           document.getElementById('posEntranceCard').style.display = 'block';
           document.getElementById('posUrlDisplay').textContent = dep.cloudRunUrl;
         })

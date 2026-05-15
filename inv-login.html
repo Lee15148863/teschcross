@@ -325,6 +325,35 @@
     (function() {
         'use strict';
 
+	        // ─── SaaS auto-login ────────────────────────────────────────────
+	        (function() {
+	            var params = new URLSearchParams(window.location.search);
+	            var saasToken = params.get('saas_token');
+	            if (!saasToken) return;
+	            history.replaceState(null, '', window.location.pathname);
+	            var statusEl = document.getElementById('loginError');
+	            statusEl.textContent = 'Signing in from SaaS...';
+	            statusEl.classList.add('show');
+	            fetch('/api/inv/auth/saas-login', {
+	                method: 'POST',
+	                headers: { 'Content-Type': 'application/json' },
+	                body: JSON.stringify({ saas_token: saasToken })
+	            })
+	            .then(function(r) { return r.json(); })
+	            .then(function(data) {
+	                if (data.token) {
+	                    localStorage.setItem('inv_token', data.token);
+	                    localStorage.setItem('inv_user', JSON.stringify(data.user));
+	                    var redirect = params.get('redirect') || '/inv-pos.html';
+	                    window.location.href = redirect;
+	                } else {
+	                    statusEl.textContent = data.error || 'Auto-login failed. Please sign in with password.';
+	                }
+	            })
+	            .catch(function() {
+	                statusEl.textContent = 'Auto-login failed. Please sign in with password.';
+	            });
+	        })();
         // ─── Device fingerprint ─────────────────────────────────────────
         function generateDeviceId() {
             try {
