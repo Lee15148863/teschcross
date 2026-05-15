@@ -60,6 +60,14 @@
       .register-card { padding: 24px 18px; border-radius: 16px; }
       .form-row { flex-direction: column; gap: 0; }
     }
+
+    .disclaimer-box { border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 16px; margin: 18px 0 12px; background: #f9f9fb; max-height: 220px; overflow-y: auto; font-size: 12px; line-height: 1.6; color: #3a3a3c; }
+    .disclaimer-box::-webkit-scrollbar { width: 4px; }
+    .disclaimer-box::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
+    .disclaimer-box h4 { font-size: 13px; margin-bottom: 8px; color: #1d1d1f; }
+    .disclaimer-box p { margin-bottom: 6px; }
+    .agree-row { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 18px; font-size: 13px; color: #1d1d1f; }
+    .agree-row input { margin-top: 2px; width: auto; }
   </style>
 </head>
 <body>
@@ -193,7 +201,21 @@
       </label>
     </div>
 
-    <button type="submit" class="btn-submit" id="submitBtn" data-i18n="saas.register.btn">Submit Registration</button>
+
+    <div class="disclaimer-box" id="disclaimerBox">
+      <h4 data-i18n="saas.register.disclaimer.title">Terms of Use & Disclaimer</h4>
+      <p data-i18n="saas.register.disclaimer.p1">[Disclaimer text will be provided — placeholder for now.]</p>
+      <p data-i18n="saas.register.disclaimer.p2">StoreFlow provides software deployment and platform services. The customer retains full ownership, control, and responsibility for their MongoDB Atlas database, including all data stored therein.</p>
+      <p data-i18n="saas.register.disclaimer.p3">StoreFlow does not access, modify, delete, or assume liability for customer data. The customer is solely responsible for database backups, security credentials, access control, and compliance with applicable laws.</p>
+      <p data-i18n="saas.register.disclaimer.p4">By using StoreFlow, you acknowledge that you have read, understood, and agree to these terms.</p>
+    </div>
+
+    <div class="agree-row">
+      <input type="checkbox" id="disclaimerAgreed" onchange="updateSubmitState()">
+      <label for="disclaimerAgreed" data-i18n="saas.register.disclaimer.agree">I have read and agree to the Terms of Use & Disclaimer (scroll to bottom to enable)</label>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn" data-i18n="saas.register.btn" disabled>Submit Registration</button>
   </form>
 
   <div class="back-link">
@@ -310,6 +332,21 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 });
 
 applyLang();
+
+// Disclaimer scroll-to-enable logic
+var _disclaimerScrolled = false;
+document.getElementById('disclaimerBox').addEventListener('scroll', function() {
+  var el = this;
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+    _disclaimerScrolled = true;
+  }
+  updateSubmitState();
+});
+
+function updateSubmitState() {
+  var agreed = document.getElementById('disclaimerAgreed').checked;
+  document.getElementById('submitBtn').disabled = !(agreed && _disclaimerScrolled);
+}
 </script>
 
 </body>
