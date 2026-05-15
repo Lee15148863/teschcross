@@ -13,12 +13,14 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
     if (e.request.method !== 'GET') return;
     var url = e.request.url;
-    // API, inv-*, staff-portal, admin-*: ALWAYS network only
-    if (url.includes('/api/') || url.includes('/inv-') || url.includes('/staff-portal') || url.includes('/admin')) {
+    // External third-party URLs (CDN, analytics, images): pass through, don't cache
+    if (!url.startsWith(self.location.origin)) return;
+    // API, inv-*, staff-portal, admin-*, saas-*: network only, don't cache
+    if (url.includes('/api/') || url.includes('/inv-') || url.includes('/staff-portal') || url.includes('/admin') || url.includes('/saas/')) {
         e.respondWith(fetch(e.request));
         return;
     }
-    // Static assets only: cache first
+    // Same-origin static assets only: cache first
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
         var clone = res.clone();
         caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
