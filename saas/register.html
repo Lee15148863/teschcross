@@ -135,7 +135,7 @@
     </div>
 
     <div class="section-divider"></div>
-    <h3 class="section-title">MongoDB Atlas (Optional)</h3>
+    <h3 class="section-title">MongoDB Atlas (Required for Production)</h3>
     <p class="guidance-text">
       <strong>Production deployment requires your own MongoDB Atlas database.</strong><br>
       Your business owns and manages the Atlas account, billing, backups, users, credentials, and all data.<br>
@@ -181,12 +181,12 @@
     </div>
     <div class="form-group">
       <label>MongoDB Atlas Connection String</label>
-      <input type="password" id="mongoUri" placeholder="mongodb+srv://user:password@cluster.mongodb.net/dbname">
+      <input type="text" id="mongoUri" placeholder="mongodb+srv://user:password@cluster.mongodb.net/dbname" autocomplete="off" spellcheck="false">
       <div class="field-hint">Enter your MongoDB Atlas SRV connection string using a dedicated database for StoreFlow.</div>
     </div>
     <div class="form-group">
       <label>Deployment PIN <span style="font-weight:400;color:#8e8e93;">(4-20 digits)</span></label>
-      <input type="password" id="deploymentPin" placeholder="e.g. 4825" maxlength="20" inputmode="numeric">
+      <input type="password" id="deploymentPin" placeholder="e.g. 4825" maxlength="20" inputmode="numeric" autocomplete="off">
       <div class="field-hint">Required for sensitive actions (suspend, delete, rollback). Store this PIN securely.</div>
     </div>
     <div class="checkbox-group">
