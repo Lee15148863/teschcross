@@ -664,30 +664,19 @@ router.post('/saas-login', async (req, res) => {
     var tokenStoreId = decoded.storeId;
 
     // ─── Store scoping: verify token belongs to this POS service ───
-    var serviceName = process.env.K_SERVICE || process.env.SERVICE_NAME || '';
-    if (serviceName) {
-      // Only check store scoping for non-super_admin users
-      if (saasRole !== 'super_admin') {
-        if (!tokenStoreId) {
-          return res.status(403).json({ error: 'SaaS token has no storeId. Cannot verify store ownership.' });
-        }
-        // Lookup deployment to verify storeId matches this service
-        try {
-          const Deployment = require('../../models/saas/Deployment');
-          var dep = await Deployment.findOne({ serviceName: serviceName }).lean();
-          if (!dep || !dep.storeId) {
-            return res.status(403).json({ error: 'Service [' + serviceName + '] has no associated store. SSO not allowed.' });
-          }
-          if (dep.storeId.toString() !== tokenStoreId.toString()) {
-            return res.status(403).json({ error: 'SaaS token storeId (' + tokenStoreId + ') does not match this service (' + dep.storeId + '). Cross-store login blocked.' });
-          }
-        } catch (e) {
-          return res.status(500).json({ error: 'Store verification failed: ' + e.message });
-        }
+    // Tenant stores have STOREFLOW_STORE_ID env set to their SaaS Store._id
+    // super_admin bypasses (can access any store). Others must match.
+    if (saasRole !== 'super_admin') {
+      var envStoreId = process.env.STOREFLOW_STORE_ID || '';
+      if (!envStoreId) {
+        return res.status(403).json({ error: 'STOREFLOW_STORE_ID not configured on this service. SSO requires store identity.' });
       }
-    } else {
-      // No service name configured — only allow on main POS with explicit opt-in
-      return res.status(403).json({ error: 'K_SERVICE not set. SSO requires Cloud Run service identity.' });
+      if (!tokenStoreId) {
+        return res.status(403).json({ error: 'SaaS token has no storeId. Cannot verify store ownership.' });
+      }
+      if (envStoreId !== tokenStoreId.toString()) {
+        return res.status(403).json({ error: 'SaaS token storeId (' + tokenStoreId + ') does not match this service (' + envStoreId + '). Cross-store login blocked.' });
+      }
     }
 
     var username = decoded.username || decoded.userId || 'saas_user';
