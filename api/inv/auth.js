@@ -674,7 +674,7 @@ router.post('/saas-login', async (req, res) => {
         // Lookup deployment to verify storeId matches this service
         try {
           const Deployment = require('../../models/saas/Deployment');
-          var dep = await Deployment.findOne({ serviceName: serviceName }).select('storeId').lean();
+          var dep = await Deployment.findOne({ serviceName: serviceName }).lean();
           if (!dep || !dep.storeId) {
             return res.status(403).json({ error: 'Service [' + serviceName + '] has no associated store. SSO not allowed.' });
           }
