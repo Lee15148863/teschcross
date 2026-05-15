@@ -676,20 +676,18 @@ router.post('/saas-login', async (req, res) => {
           const Deployment = require('../../models/saas/Deployment');
           var dep = await Deployment.findOne({ serviceName: serviceName }).select('storeId').lean();
           if (!dep || !dep.storeId) {
-            return res.status(403).json({ error: 'Service has no associated store. SSO not allowed.' });
+            return res.status(403).json({ error: 'Service [' + serviceName + '] has no associated store. SSO not allowed.' });
           }
           if (dep.storeId.toString() !== tokenStoreId.toString()) {
-            return res.status(403).json({ error: 'SaaS token storeId does not match this service. Cross-store login blocked.' });
+            return res.status(403).json({ error: 'SaaS token storeId (' + tokenStoreId + ') does not match this service (' + dep.storeId + '). Cross-store login blocked.' });
           }
         } catch (e) {
-          return res.status(500).json({ error: 'Store verification failed' });
+          return res.status(500).json({ error: 'Store verification failed: ' + e.message });
         }
       }
     } else {
       // No service name configured — only allow on main POS with explicit opt-in
-      if (process.env.STORE_NAME !== 'techcross') {
-        return res.status(403).json({ error: 'Service identity not configured. SSO requires K_SERVICE or SERVICE_NAME env.' });
-      }
+      return res.status(403).json({ error: 'K_SERVICE not set. SSO requires Cloud Run service identity.' });
     }
 
     var username = decoded.username || decoded.userId || 'saas_user';
