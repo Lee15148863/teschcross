@@ -86,6 +86,14 @@
     </div>
   </div>
 
+  <!-- POS entrance card -->
+  <div id="posEntranceCard" class="card" style="display:none;text-align:center;">
+    <h2 class="section-title" data-i18n="saas.dash.pos.title">POS System</h2>
+    <p style="font-size:13px;color:#8e8e93;margin-bottom:14px;" data-i18n="saas.dash.pos.desc">Open your store's POS till to process sales, manage inventory, and more.</p>
+    <a id="posEntranceBtn" href="#" target="_blank" class="btn-primary" style="display:inline-block;padding:14px 40px;font-size:16px;" data-i18n="saas.dash.pos.btn">Enter POS</a>
+    <p style="font-size:11px;color:#8e8e93;margin-top:10px;" id="posUrlDisplay"></p>
+  </div>
+
   <!-- Store settings card (hidden for super_admin without impersonation) -->
   <div id="settingsCard" class="card" style="display:none;">
     <h2 class="section-title" data-i18n="saas.dash.settings.title">Store Settings</h2>
@@ -196,6 +204,9 @@
       document.getElementById('storeInfoCard').style.display = 'block';
       loadSettings();
     }
+
+    // Show POS entrance for any user with a storeId
+    if (user.storeId) { loadPOSEntrance(); }
 
     // Logo file upload handler
     document.getElementById('logoInput').addEventListener('change', function(e) {
@@ -368,6 +379,29 @@
           }
         })
         .catch(function() { btn.disabled = false; btn.textContent = __('saas.dash.password.btn'); showToast('Network error', true); });
+    }
+
+    function loadPOSEntrance() {
+      var storeId = user.storeId;
+      if (!storeId) return;
+      fetch('/api/saas/deployments', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); })
+        .then(function(deps) {
+          var dep = Array.isArray(deps) ? deps.find(function(d) { return d.storeId === storeId || (d._id && d.storeId && d.storeId.toString() === storeId); }) : deps[0];
+          if (!dep || !dep.cloudRunUrl) {
+            // Also check GET /api/saas/stores/:id route isn't for deployments; try by service name
+            return;
+          }
+          var posUrl = dep.cloudRunUrl + '/inv-pos.html';
+          var loginUrl = dep.cloudRunUrl + '/inv-login.html';
+          var btn = document.getElementById('posEntranceBtn');
+          btn.href = posUrl;
+          document.getElementById('posEntranceCard').style.display = 'block';
+          document.getElementById('posUrlDisplay').textContent = dep.cloudRunUrl;
+        })
+        .catch(function(e) {
+          console.log('POS entrance load failed:', e);
+        });
     }
 
     function logout() {

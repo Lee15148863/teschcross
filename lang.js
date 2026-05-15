@@ -548,6 +548,9 @@ const LANG = {
 
     /* ─── Store Settings (SaaS) ─── */
     'saas.dash.storeInfo': 'Store Information',
+    'saas.dash.pos.title': 'POS System',
+    'saas.dash.pos.desc': "Open your store's POS till to process sales, manage inventory, and more.",
+    'saas.dash.pos.btn': 'Enter POS',
     'saas.dash.settings.title': 'Store Settings',
     'saas.dash.settings.logo': 'Store Logo',
     'saas.dash.settings.uploadLogo': 'Upload Logo',
@@ -1115,6 +1118,9 @@ const LANG = {
 
     /* ─── Store Settings (SaaS) ─── */
     'saas.dash.storeInfo': '店铺信息',
+    'saas.dash.pos.title': 'POS 系统',
+    'saas.dash.pos.desc': '打开店铺 POS 收银台，处理销售、管理库存等。',
+    'saas.dash.pos.btn': '进入 POS',
     'saas.dash.settings.title': '店铺设置',
     'saas.dash.settings.logo': '店铺 Logo',
     'saas.dash.settings.uploadLogo': '上传 Logo',
