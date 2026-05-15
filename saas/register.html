@@ -200,7 +200,25 @@
     <div class="checkbox-group">
       <label>
         <input type="checkbox" id="atlasOwnershipConfirmed">
-        <span>I confirm this MongoDB Atlas database is owned and managed by my business. I am responsible for Atlas billing, database users, network access, backups, access credentials, and all data stored in this database. StoreFlow provides software and deployment service only and does not own or control this database.</span>
+        <span data-i18n="saas.register.checkbox.ownership">I confirm that this MongoDB Atlas account and database are owned by, or lawfully controlled by, my business. I am responsible for Atlas billing, account security, MFA, database users, passwords, network access rules, backups, exports, and all data stored in this database.</span>
+      </label>
+    </div>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="atlasResponsibilityAccepted">
+        <span data-i18n="saas.register.checkbox.responsibility">I understand that MongoDB Atlas free clusters have limited storage and features. I am responsible for backing up and exporting my own sales, invoice, cash ledger, inventory, repair, report, and business records. StoreFlow does not guarantee recovery of lost, deleted, corrupted, or unavailable Atlas data.</span>
+      </label>
+    </div>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="storeflowConnectionAuthorised">
+        <span data-i18n="saas.register.checkbox.connection">I authorise StoreFlow to validate this MongoDB connection string and, if my account is approved, to use it only to deploy, connect, operate, secure, maintain, and support my StoreFlow service.</span>
+      </label>
+    </div>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="legalTermsAccepted">
+        <span data-i18n="saas.register.checkbox.terms">I have read and agree to the StoreFlow Terms, Privacy Notice, and the <a href="/saas/mongodb-atlas-notice.html" target="_blank">MongoDB Atlas Responsibility Notice</a>.</span>
       </label>
     </div>
 
@@ -286,11 +304,17 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         var tz = document.getElementById('timezone').value;
         var cur = document.getElementById('currency').value;
         var pin = document.getElementById('deploymentPin').value.trim();
-        var confirmed = document.getElementById('atlasOwnershipConfirmed').checked;
+        var ownershipCb = document.getElementById('atlasOwnershipConfirmed').checked;
+        var responsibilityCb = document.getElementById('atlasResponsibilityAccepted').checked;
+        var connectionCb = document.getElementById('storeflowConnectionAuthorised').checked;
+        var termsCb = document.getElementById('legalTermsAccepted').checked;
         if (!tz) { err.textContent = 'Timezone is required when providing a MongoDB URI'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
         if (!cur) { err.textContent = 'Currency is required when providing a MongoDB URI'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
         if (!pin) { err.textContent = 'Deployment PIN is required when providing a MongoDB URI'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
-        if (!confirmed) { err.textContent = 'You must confirm Atlas data ownership'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
+        if (!ownershipCb) { err.textContent = 'You must confirm Atlas data ownership'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
+        if (!responsibilityCb) { err.textContent = 'You must accept backup and data responsibility'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
+        if (!connectionCb) { err.textContent = 'You must authorise StoreFlow to use this connection string'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
+        if (!termsCb) { err.textContent = 'You must accept the Terms, Privacy Notice, and Atlas Responsibility Notice'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
         if (pin.length < 4 || pin.length > 20 || !/^\d+$/.test(pin)) { err.textContent = 'Deployment PIN must be 4-20 digits'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
       }
 
@@ -310,7 +334,10 @@ document.getElementById('registerForm').addEventListener('submit', async functio
       if (mongoUri) {
         body.mongoUri = mongoUri;
         body.deploymentPin = document.getElementById('deploymentPin').value.trim();
-        body.atlasOwnershipConfirmed = true;
+        body.atlasOwnershipConfirmed = ownershipCb;
+        body.atlasResponsibilityAccepted = responsibilityCb;
+        body.storeflowConnectionAuthorised = connectionCb;
+        body.legalTermsAccepted = termsCb;
       }
 
       var res = await fetch(API_BASE + '/api/saas/signup', {

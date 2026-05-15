@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoreFlow MongoDB Atlas Responsibility Notice</title>
+  <link rel="icon" type="image/png" href="../logo-sm.png">
+  <style>
+    *,::before,::after{box-sizing:border-box;margin:0;padding:0}
+    html{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;font-size:16px;background:#f2f2f7;color:#1d1d1f}
+    body{max-width:760px;margin:0 auto;padding:40px 24px}
+    .card{background:#fff;border-radius:16px;padding:32px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+    h1{font-size:22px;font-weight:700;margin-bottom:8px}
+    .version{font-size:12px;color:#8e8e93;margin-bottom:20px}
+    .notice{background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#856404}
+    .lang-bar{text-align:right;margin-bottom:16px}
+    .lang-bar button{padding:6px 14px;border:1.5px solid #d2d2d7;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600}
+    .lang-bar button.active{background:#0071e3;color:#fff;border-color:#0071e3}
+    h2{font-size:17px;font-weight:600;margin:24px 0 10px;padding-top:16px;border-top:1px solid #e5e5ea}
+    h2:first-of-type{border-top:none;padding-top:0}
+    p,li{font-size:14px;line-height:1.7;color:#3a3a3c;margin-bottom:8px}
+    ol,ul{padding-left:20px;margin-bottom:12px}
+    .en{display:block}.zh{display:none}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="lang-bar">
+    <button id="btnEn" class="active" onclick="setLang('en')">EN</button>
+    <button id="btnZh" onclick="setLang('zh')">中文</button>
+  </div>
+
+  <h1>StoreFlow MongoDB Atlas User Guide and Responsibility Notice</h1>
+  <div class="version">Version 1.0 — Effective 2026-05-15</div>
+
+  <div class="notice">⚠ This document is legally binding in its English version. The Chinese translation is provided for convenience only. In case of conflict, the English version prevails.</div>
+
+  <!-- ========== ENGLISH ========== -->
+  <div class="en">
+
+<h2>1. Purpose</h2>
+<p>This notice sets out the relationship between StoreFlow and the customer regarding the customer's MongoDB Atlas database. It must be read, understood, and accepted before StoreFlow will connect to or deploy services using the customer's MongoDB Atlas connection string ("URI").</p>
+
+<h2>2. MongoDB Atlas Setup Summary</h2>
+<ol>
+  <li>Create a free MongoDB Atlas account at <a href="https://www.mongodb.com/atlas" target="_blank">mongodb.com/atlas</a>.</li>
+  <li>Create a new cluster (free M0 tier is sufficient for small shops).</li>
+  <li>Create a database user with read/write permissions. Store the username and password securely.</li>
+  <li>Under Network Access, add your IP address or allow access from anywhere (0.0.0.0/0).</li>
+  <li>Click "Connect" → "Drivers" → copy your connection string. It looks like: <code>mongodb+srv://user:pass@cluster.mongodb.net/dbname</code></li>
+  <li>Replace <code>user</code>, <code>pass</code>, and <code>dbname</code> with your actual values.</li>
+  <li>Provide this URI during StoreFlow registration.</li>
+</ol>
+
+<h2>3. Free Cluster Limitation Warning</h2>
+<p><strong>MongoDB Atlas free tier (M0) clusters are limited.</strong> They provide up to 512 MB of storage with restricted performance and features. They may not be suitable for high-volume production use, advanced backup schedules, point-in-time recovery, or certain security compliance requirements. Customers are responsible for monitoring their Atlas usage and upgrading to a paid tier before reaching storage or performance limits. StoreFlow is not responsible for service degradation caused by Atlas free tier limits.</p>
+
+<h2>4. Customer Responsibilities</h2>
+<p>The customer acknowledges and agrees that they are solely responsible for:</p>
+<ul>
+  <li><strong>Account ownership and billing:</strong> The MongoDB Atlas account is owned by and billed to the customer. StoreFlow does not pay for or subsidise Atlas costs.</li>
+  <li><strong>Database users and passwords:</strong> Creating, rotating, and securing database credentials.</li>
+  <li><strong>Multi-factor authentication (MFA):</strong> Enabling MFA on the Atlas account.</li>
+  <li><strong>Network access rules:</strong> Configuring IP whitelists and network access controls.</li>
+  <li><strong>Data backups and exports:</strong> Performing regular backups and exports of POS data, including sales records, invoices, cash ledgers, inventory, repair records, reports, and business data.</li>
+  <li><strong>Region selection:</strong> Choosing the appropriate Atlas deployment region for data residency requirements.</li>
+  <li><strong>Compliance:</strong> Ensuring the use of Atlas complies with applicable laws, regulations, and industry standards.</li>
+  <li><strong>All data stored in the database:</strong> The customer owns and controls all data. StoreFlow does not have access credentials beyond those provided by the customer.</li>
+</ul>
+
+<h2>5. StoreFlow Responsibilities</h2>
+<p>StoreFlow provides software deployment, connection, operation, maintenance, and support services only. Specifically:</p>
+<ul>
+  <li>StoreFlow validates the MongoDB URI for format and connectivity.</li>
+  <li>StoreFlow uses the URI to deploy, connect, and operate the StoreFlow POS service for the customer's store.</li>
+  <li>StoreFlow stores the URI in encrypted or access-controlled storage for operational purposes.</li>
+  <li>StoreFlow may mask or redact the URI in logs, user interfaces, and API responses.</li>
+  <li>StoreFlow does not access customer data except as necessary to provide, maintain, and support the service, or as directed by the customer.</li>
+</ul>
+
+<h2>6. Limitation of Liability</h2>
+<p><strong>StoreFlow is not liable for:</strong></p>
+<ul>
+  <li>Loss, corruption, deletion, or unavailability of customer data stored in MongoDB Atlas.</li>
+  <li>Service interruption caused by Atlas outages, configuration errors, or free tier limitations.</li>
+  <li>Unauthorised access resulting from weak, shared, or compromised database credentials.</li>
+  <li>Data breaches or security incidents originating from the customer's Atlas account or network configuration.</li>
+  <li>Any indirect, consequential, or special damages arising from the use of StoreFlow or MongoDB Atlas.</li>
+</ul>
+<p>Nothing in this notice excludes or limits liability that cannot legally be excluded or limited.</p>
+
+<h2>7. No Data Recovery Guarantee</h2>
+<p>StoreFlow does not guarantee recovery of lost, deleted, corrupted, or unavailable Atlas data. The customer is responsible for configuring and verifying their own backup strategy. StoreFlow strongly recommends:</p>
+<ul>
+  <li>Enabling MongoDB Atlas automated backups (paid tier).</li>
+  <li>Performing regular exports of critical business data.</li>
+  <li>Testing backup restoration procedures periodically.</li>
+</ul>
+
+<h2>8. Third-Party Services Disclaimer</h2>
+<p>MongoDB Atlas is a third-party cloud database service provided by MongoDB, Inc. StoreFlow is not affiliated with, endorsed by, or sponsored by MongoDB, Inc. The customer's relationship with MongoDB Atlas is governed by MongoDB's own terms of service, privacy policy, and service level agreements. The customer is responsible for reviewing and accepting those terms independently.</p>
+
+<h2>9. Data Protection and Processing</h2>
+<p>Where StoreFlow processes personal data on behalf of the customer, a Data Processing Agreement (DPA) may apply. Customers who process personal data (such as customer names, phone numbers, email addresses, or repair device serial numbers) through StoreFlow should request a DPA by contacting StoreFlow. StoreFlow's standard Privacy Notice is available on request.</p>
+
+<h2>10. Customer Acknowledgement</h2>
+<p>By providing a MongoDB Atlas URI and checking the acceptance boxes during StoreFlow registration, the customer:</p>
+<ul>
+  <li>Confirms that the MongoDB Atlas account and database are owned by or lawfully controlled by the customer's business.</li>
+  <li>Accepts full responsibility for database backups, data exports, access credentials, security, and all data stored in the database.</li>
+  <li>Authorises StoreFlow to validate the URI and, upon approval, to use it to deploy, connect, operate, and maintain the StoreFlow service.</li>
+  <li>Acknowledges that free tier clusters are limited and the customer is responsible for monitoring usage and upgrading if needed.</li>
+  <li>Understands that StoreFlow does not guarantee recovery of Atlas data.</li>
+  <li>Agrees that StoreFlow is not liable for data loss, Atlas outages, or security incidents originating from the customer's Atlas account.</li>
+</ul>
+<p style="margin-top:16px;font-weight:600">This notice takes effect upon submission of the StoreFlow registration form with all acceptance checkboxes confirmed.</p>
+
+  </div>
+
+  <!-- ========== 中文 ========== -->
+  <div class="zh">
+
+<h2>1. 目的</h2>
+<p>本通知阐明 StoreFlow 与客户之间关于客户 MongoDB Atlas 数据库的关系。在 StoreFlow 使用客户的 MongoDB Atlas 连接字符串（"URI"）连接或部署服务之前，客户必须阅读、理解并接受本通知。</p>
+
+<h2>2. MongoDB Atlas 设置概要</h2>
+<ol>
+  <li>在 <a href="https://www.mongodb.com/atlas" target="_blank">mongodb.com/atlas</a> 注册免费 MongoDB Atlas 账号。</li>
+  <li>创建新集群（免费 M0 套餐对小店铺足够）。</li>
+  <li>创建具有读写权限的数据库用户，安全保存用户名和密码。</li>
+  <li>在 Network Access 中添加您的 IP 地址，或允许从任何地方访问（0.0.0.0/0）。</li>
+  <li>点击"Connect" → "Drivers" → 复制连接字符串。格式如：<code>mongodb+srv://用户名:密码@集群地址.mongodb.net/数据库名</code></li>
+  <li>将 <code>用户名</code>、<code>密码</code>、<code>数据库名</code> 替换为您的实际值。</li>
+  <li>在 StoreFlow 注册时提供此 URI。</li>
+</ol>
+
+<h2>3. 免费集群限制警告</h2>
+<p><strong>MongoDB Atlas 免费套餐（M0）集群存在限制。</strong> 仅提供最多 512 MB 存储空间，性能和功能受限。可能不适合高流量生产使用、高级备份计划、时间点恢复或某些安全合规要求。客户负责监控其 Atlas 使用量，并在达到存储或性能限制之前升级到付费套餐。StoreFlow 不对因 Atlas 免费套餐限制导致的服务降级负责。</p>
+
+<h2>4. 客户责任</h2>
+<p>客户确认并同意，客户全权负责以下事项：</p>
+<ul>
+  <li><strong>账号所有权与账单：</strong> MongoDB Atlas 账号由客户拥有并支付费用。StoreFlow 不支付或补贴 Atlas 费用。</li>
+  <li><strong>数据库用户与密码：</strong> 创建、轮换和保护数据库凭证。</li>
+  <li><strong>多因素认证（MFA）：</strong> 为 Atlas 账号启用 MFA。</li>
+  <li><strong>网络访问规则：</strong> 配置 IP 白名单和网络访问控制。</li>
+  <li><strong>数据备份与导出：</strong> 定期备份和导出 POS 数据，包括销售记录、发票、现金账本、库存、维修记录、报表和业务数据。</li>
+  <li><strong>区域选择：</strong> 根据数据驻留要求选择适当的 Atlas 部署区域。</li>
+  <li><strong>合规：</strong> 确保 Atlas 的使用符合适用法律、法规和行业标准。</li>
+  <li><strong>数据库中存储的所有数据：</strong> 客户拥有并控制所有数据。StoreFlow 除客户提供的访问凭证外不持有其他凭证。</li>
+</ul>
+
+<h2>5. StoreFlow 责任</h2>
+<p>StoreFlow 仅提供软件部署、连接、运营、维护和支持服务。具体而言：</p>
+<ul>
+  <li>StoreFlow 验证 MongoDB URI 的格式和连接性。</li>
+  <li>StoreFlow 使用该 URI 为客户店铺部署、连接和运营 StoreFlow POS 服务。</li>
+  <li>StoreFlow 出于运营目的将 URI 存储在加密或访问控制的存储中。</li>
+  <li>StoreFlow 可能会在日志、用户界面和 API 响应中遮盖或隐藏 URI。</li>
+  <li>除非为提供服务、维护和支持所必需或经客户指示，StoreFlow 不访问客户数据。</li>
+</ul>
+
+<h2>6. 责任限制</h2>
+<p><strong>StoreFlow 不对以下事项承担责任：</strong></p>
+<ul>
+  <li>存储在 MongoDB Atlas 中的客户数据丢失、损坏、删除或不可用。</li>
+  <li>因 Atlas 故障、配置错误或免费套餐限制导致的服务中断。</li>
+  <li>因弱密码、共享密码或泄露的数据库凭证导致的未授权访问。</li>
+  <li>源自客户 Atlas 账号或网络配置的数据泄露或安全事件。</li>
+  <li>因使用 StoreFlow 或 MongoDB Atlas 产生的任何间接、附带或特殊损害。</li>
+</ul>
+<p>本通知中的任何内容均不排除或限制依法不能排除或限制的责任。</p>
+
+<h2>7. 无数据恢复保证</h2>
+<p>StoreFlow 不保证能够恢复丢失、删除、损坏或不可用的 Atlas 数据。客户负责配置和验证自己的备份策略。StoreFlow 强烈建议：</p>
+<ul>
+  <li>启用 MongoDB Atlas 自动备份（付费套餐）。</li>
+  <li>定期导出关键业务数据。</li>
+  <li>定期测试备份恢复流程。</li>
+</ul>
+
+<h2>8. 第三方服务免责声明</h2>
+<p>MongoDB Atlas 是由 MongoDB, Inc. 提供的第三方云数据库服务。StoreFlow 与 MongoDB, Inc. 无关联、未获其认可或赞助。客户与 MongoDB Atlas 的关系受 MongoDB 自身的服务条款、隐私政策和服务水平协议约束。客户应独立审阅并接受这些条款。</p>
+
+<h2>9. 数据保护与处理</h2>
+<p>如果 StoreFlow 代表客户处理个人数据，则可能适用数据处理协议（DPA）。通过 StoreFlow 处理个人数据（如客户姓名、电话号码、邮箱地址或维修设备序列号）的客户应联系 StoreFlow 索取 DPA。StoreFlow 的标准隐私通知可根据请求提供。</p>
+
+<h2>10. 客户确认</h2>
+<p>通过在 StoreFlow 注册时提供 MongoDB Atlas URI 并勾选接受复选框，客户：</p>
+<ul>
+  <li>确认 MongoDB Atlas 账号和数据库由客户企业拥有或合法控制。</li>
+  <li>接受数据库备份、数据导出、访问凭证、安全以及数据库中所有数据的全部责任。</li>
+  <li>授权 StoreFlow 验证该 URI，并在获批后使用该 URI 部署、连接、运营和维护 StoreFlow 服务。</li>
+  <li>确认免费套餐集群存在限制，客户负责监控使用量并在需要时升级。</li>
+  <li>理解 StoreFlow 不保证 Atlas 数据的恢复。</li>
+  <li>同意 StoreFlow 不对数据丢失、Atlas 故障或源自客户 Atlas 账号的安全事件承担责任。</li>
+</ul>
+<p style="margin-top:16px;font-weight:600">本通知自 StoreFlow 注册表单提交并获得所有接受复选框确认后生效。</p>
+
+  </div>
+</div>
+
+<script>
+function setLang(l){
+  document.getElementById('btnEn').classList.toggle('active',l==='en');
+  document.getElementById('btnZh').classList.toggle('active',l==='zh');
+  document.querySelector('.en').style.display=l==='en'?'block':'none';
+  document.querySelector('.zh').style.display=l==='zh'?'block':'none';
+}
+</script>
+</body>
+</html>

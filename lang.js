@@ -367,6 +367,10 @@ const LANG = {
     'saas.register.disclaimer.p3': 'StoreFlow is not liable for any data loss, service interruption, or damages arising from the use of the software. The customer agrees to use StoreFlow at their own risk.',
     'saas.register.disclaimer.p4': 'By using StoreFlow, you acknowledge that you have read, understood, and agree to these terms.',
     'saas.register.disclaimer.agree': 'I have read the Usage Guide and agree to the Disclaimer above (scroll to bottom to enable)',
+    'saas.register.checkbox.ownership': 'I confirm that this MongoDB Atlas account and database are owned by, or lawfully controlled by, my business. I am responsible for Atlas billing, account security, MFA, database users, passwords, network access rules, backups, exports, and all data stored in this database.',
+    'saas.register.checkbox.responsibility': 'I understand that MongoDB Atlas free clusters have limited storage and features. I am responsible for backing up and exporting my own sales, invoice, cash ledger, inventory, repair, report, and business records. StoreFlow does not guarantee recovery of lost, deleted, corrupted, or unavailable Atlas data.',
+    'saas.register.checkbox.connection': 'I authorise StoreFlow to validate this MongoDB connection string and, if my account is approved, to use it only to deploy, connect, operate, secure, maintain, and support my StoreFlow service.',
+    'saas.register.checkbox.terms': 'I have read and agree to the StoreFlow Terms, Privacy Notice, and the MongoDB Atlas Responsibility Notice.',
     'saas.register.backHome': '← Back to homepage',
 
     'saas.admin.title': 'Super Admin Console',
@@ -928,6 +932,10 @@ const LANG = {
     'saas.register.disclaimer.p3': 'StoreFlow 对因使用本软件而产生的任何数据丢失、服务中断或损失不承担责任。客户同意自行承担使用 StoreFlow 的风险。',
     'saas.register.disclaimer.p4': '使用 StoreFlow 即表示您确认已阅读、理解并同意上述条款。',
     'saas.register.disclaimer.agree': '我已阅读使用指南并同意上述免责声明（滚动至底部后启用）',
+    'saas.register.checkbox.ownership': '我确认此 MongoDB Atlas 账号和数据库由我的企业拥有或合法控制。我负责 Atlas 账单、账号安全、MFA、数据库用户、密码、网络访问规则、备份、导出以及存储在此数据库中的所有数据。',
+    'saas.register.checkbox.responsibility': '我理解 MongoDB Atlas 免费集群存在存储和功能限制。我负责备份和导出自己的销售、发票、现金账本、库存、维修、报表和业务记录。StoreFlow 不保证恢复丢失、删除、损坏或不可用的 Atlas 数据。',
+    'saas.register.checkbox.connection': '我授权 StoreFlow 验证此 MongoDB 连接字符串，并在账号获批后仅将其用于部署、连接、运营、安全、维护和支持我的 StoreFlow 服务。',
+    'saas.register.checkbox.terms': '我已阅读并同意 StoreFlow 条款、隐私通知以及 MongoDB Atlas 责任通知。',
     'saas.register.error.network': '网络错误，请稍后重试。',
     'saas.register.backHome': '← 返回首页',
 

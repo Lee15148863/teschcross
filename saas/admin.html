@@ -479,18 +479,20 @@
           var el = document.getElementById('signupList');
           var pending = signups.filter(function(s) { return s.status === 'pending'; });
           if (!pending.length) { el.innerHTML = '<div class="empty-state">' + __('saas.admin.empty.signups') + '</div>'; return; }
-          el.innerHTML = '<div style="overflow-x:auto;"><table class="signup-table"><thead><tr><th>' + __('saas.admin.signups.colStore') + '</th><th>' + __('saas.admin.signups.colOwner') + '</th><th>' + __('saas.admin.signups.colEmail') + '</th><th>' + __('saas.admin.signups.colType') + '</th><th style="font-size:10px;">TZ</th><th style="font-size:10px;">Cur</th><th>MongoDB URI</th><th>Own</th><th>Valid</th><th>' + __('saas.admin.signups.colDate') + '</th><th>' + __('saas.admin.colActions') + '</th></tr></thead><tbody>' +
+          el.innerHTML = '<div style="overflow-x:auto;"><table class="signup-table"><thead><tr><th>' + __('saas.admin.signups.colStore') + '</th><th>' + __('saas.admin.signups.colOwner') + '</th><th>' + __('saas.admin.signups.colEmail') + '</th><th>MongoDB URI</th><th>Accept</th><th>Valid</th><th>' + __('saas.admin.signups.colDate') + '</th><th>' + __('saas.admin.colActions') + '</th></tr></thead><tbody>' +
             pending.map(function(s) {
               var tzDisplay = s.timezone ? (s.timezone.split('/')[1] || s.timezone) : '-';
+              var allAccepted = s.atlasOwnershipConfirmed && s.atlasResponsibilityAccepted && s.storeflowConnectionAuthorised && s.legalTermsAccepted;
+              var acceptBadge = s.mongoUri ? (allAccepted
+                ? '<span class="badge badge-green" title="Notice '+escHtml(s.noticeVersionAccepted||'')+' accepted '+new Date(s.noticeAcceptedAt).toLocaleString()+' by '+escHtml(s.noticeAcceptedByUsername||s.email||'')+'">✔ All 4</span>'
+                : '<span class="badge badge-red">' + (s.atlasOwnershipConfirmed?'1':'·') + (s.atlasResponsibilityAccepted?'2':'·') + (s.storeflowConnectionAuthorised?'3':'·') + (s.legalTermsAccepted?'4':'·') + '</span>')
+                : '<span class="badge badge-gray">-</span>';
               return '<tr>' +
                 '<td><strong>' + escHtml(s.storeName) + '</strong></td>' +
                 '<td>' + escHtml(s.ownerName) + '</td>' +
                 '<td>' + escHtml(s.email) + '</td>' +
-                '<td>' + escHtml(s.businessType || '-') + '</td>' +
-                '<td style="font-size:11px;">' + escHtml(tzDisplay) + '</td>' +
-                '<td style="font-size:11px;">' + escHtml(s.currency || '-') + '</td>' +
-                '<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;" title="' + escHtml(s.mongoUriMasked || '') + '">' + escHtml(s.mongoUriMasked || '-') + '</td>' +
-                '<td>' + (s.atlasOwnershipConfirmed ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-gray">-</span>') + '</td>' +
+                '<td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;" title="' + escHtml(s.mongoUriMasked || '') + '">' + escHtml(s.mongoUriMasked || '-') + '</td>' +
+                '<td>' + acceptBadge + '</td>' +
                 '<td>' + getValidationBadge(s.mongoUriValidationStatus) + '</td>' +
                 '<td style="white-space:nowrap;">' + new Date(s.createdAt).toLocaleDateString() + '</td>' +
                 '<td style="white-space:nowrap;">' +

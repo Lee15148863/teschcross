@@ -24,9 +24,27 @@ const StoreSignupSchema = new mongoose.Schema({
   mongoUriLastValidatedAt: { type: Date },
   deploymentPinHash: { type: String, select: false },
   pinSetAt:     { type: Date },
-  atlasOwnershipConfirmed: { type: Boolean, default: false },
   subscriptionPlan: { type: String, trim: true },
   trialLengthDays: { type: Number },
+
+  // T23 — Legal acceptance metadata
+  noticeVersionAccepted:  { type: String },
+  noticeAcceptedAt:       { type: Date },
+  noticeAcceptedIp:       { type: String },
+  noticeAcceptedUserAgent:{ type: String },
+  noticeAcceptedEmail:    { type: String },
+  noticeAcceptedByUsername: { type: String },
+
+  atlasOwnershipConfirmed:      { type: Boolean, default: false },
+  atlasResponsibilityAccepted:  { type: Boolean, default: false },
+  storeflowConnectionAuthorised: { type: Boolean, default: false },
+  legalTermsAccepted:           { type: Boolean, default: false },
+  privacyNoticeAccepted:        { type: Boolean, default: false },
+  dpaNoticeAccepted:            { type: Boolean, default: false },
+
+  termsVersionAccepted:    { type: String },
+  privacyVersionAccepted:  { type: String },
+  dpaVersionAccepted:      { type: String },
 });
 
 module.exports = mongoose.model('StoreSignup', StoreSignupSchema);

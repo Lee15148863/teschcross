@@ -26,7 +26,9 @@ router.post('/', async (req, res) => {
     const {
       storeName, ownerName, username, email, phone, country, businessType, notes, password,
       // T20/T21 optional fields
-      timezone, currency, mongoUri, deploymentPin, atlasOwnershipConfirmed,
+      timezone, currency, mongoUri, deploymentPin,
+      atlasOwnershipConfirmed, atlasResponsibilityAccepted,
+      storeflowConnectionAuthorised, legalTermsAccepted,
       subscriptionPlan, trialLengthDays
     } = req.body;
 
@@ -47,7 +49,16 @@ router.post('/', async (req, res) => {
       if (!currency) return res.status(400).json({ error: 'Currency required when providing MongoDB URI' });
       if (!deploymentPin) return res.status(400).json({ error: 'Deployment PIN required when providing MongoDB URI' });
       if (atlasOwnershipConfirmed !== true) {
-        return res.status(400).json({ error: 'You must confirm Atlas data ownership (atlasOwnershipConfirmed=true)' });
+        return res.status(400).json({ error: 'You must confirm Atlas data ownership (checkbox 1)' });
+      }
+      if (atlasResponsibilityAccepted !== true) {
+        return res.status(400).json({ error: 'You must accept backup and data responsibility (checkbox 2)' });
+      }
+      if (storeflowConnectionAuthorised !== true) {
+        return res.status(400).json({ error: 'You must authorise StoreFlow to use this connection string (checkbox 3)' });
+      }
+      if (legalTermsAccepted !== true) {
+        return res.status(400).json({ error: 'You must accept the Terms, Privacy Notice, and Atlas Notice (checkbox 4)' });
       }
       validatedPinStr = String(deploymentPin).replace(/\D/g, '');
       if (validatedPinStr.length < 4 || validatedPinStr.length > 20) {
@@ -95,7 +106,26 @@ router.post('/', async (req, res) => {
       // Hash deployment PIN immediately — never store plaintext
       signupFields.deploymentPinHash = await bcrypt.hash(validatedPinStr, BCRYPT_SALT_ROUNDS);
       signupFields.pinSetAt = new Date();
+
+      // Store explicit checkbox values
       signupFields.atlasOwnershipConfirmed = true;
+      signupFields.atlasResponsibilityAccepted = true;
+      signupFields.storeflowConnectionAuthorised = true;
+      signupFields.legalTermsAccepted = true;
+      signupFields.privacyNoticeAccepted = true;
+      signupFields.dpaNoticeAccepted = true;
+
+      // Legal acceptance metadata — evidence record
+      signupFields.noticeVersionAccepted = 'mongodb-atlas-notice-v1.0';
+      signupFields.noticeAcceptedAt = new Date();
+      signupFields.noticeAcceptedIp = req.ip || req.socket.remoteAddress || '';
+      signupFields.noticeAcceptedUserAgent = (req.headers['user-agent'] || '').slice(0, 500);
+      signupFields.noticeAcceptedEmail = email.toLowerCase();
+      signupFields.noticeAcceptedByUsername = (username || '').trim();
+
+      signupFields.termsVersionAccepted = 'v1.0';
+      signupFields.privacyVersionAccepted = 'v1.0';
+      signupFields.dpaVersionAccepted = 'v1.0';
 
       if (subscriptionPlan) signupFields.subscriptionPlan = subscriptionPlan;
       if (trialLengthDays) signupFields.trialLengthDays = trialLengthDays;

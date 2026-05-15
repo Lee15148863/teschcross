@@ -279,4 +279,21 @@ Dead code cleaned:
 - Link from saas/admin.html tabs
 - No /api/inv calls, no secrets exposed
 - Main POS touched: NO, customer DB touched: NO
+
+## StoreFlow MongoDB Atlas Legal Authorisation & Evidence Chain (2026-05-15)
+
+- Legal notice page: /saas/mongodb-atlas-notice.html (EN/ZH v1.0)
+- 4 explicit checkboxes replace single checkbox on register:
+  1. Atlas ownership + backup responsibility
+  2. Free tier limitation warning + StoreFlow no recovery guarantee
+  3. StoreFlow connection authorisation
+  4. Terms / Privacy / Atlas Notice acceptance
+- Backend requires all 4 when mongoUri provided
+- StoreSignup model: noticeVersionAccepted, acceptedAt, acceptedIp, acceptedUserAgent, email, username
+- Auto-set privacyNoticeAccepted + dpaNoticeAccepted when legalTermsAccepted
+- mongoUri always select: false — never returned in API responses
+- Admin display: combined acceptance badge with notice version/accepted timestamp
+- R1 test: missing checkbox rejected, all accepted stores evidence, no URI leak
+- Main POS touched: NO
+- Next: solicitor review of Terms/Privacy/DPA before commercial launch
 - Test: page 200, JS loads, safety grep clean
