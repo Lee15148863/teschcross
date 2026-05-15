@@ -59,6 +59,7 @@
             <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
             <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
             <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
+            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
             <div class="nav-section">报表与发票 / Reports</div>
             <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
             <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
@@ -66,10 +67,9 @@
             <div class="nav-section">系统管理 / System</div>
             <a href="inv-settings.html" class="active" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
             <a href="inv-users.html" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
-            <a href="pos-shortcuts-admin.html" data-perm="settings"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
-            <div class="nav-section">网站管理 / Website</div>
-            <a href="admin-brands.html" data-perm="settings"><span class="icon">🔧</span>维修报价管理 / Pricing</a>
-            <a href="admin-reviews.html" data-perm="settings"><span class="icon">⭐</span>评论管理 / Reviews</a>
+            <div class="nav-section techcross-only">网站管理 / Website</div>
+            <a href="admin-brands.html" data-perm="settings" class="techcross-only"><span class="icon">🔧</span>维修报价管理 / Pricing</a>
+            <a href="admin-reviews.html" data-perm="settings" class="techcross-only"><span class="icon">⭐</span>评论管理 / Reviews</a>
         </nav>
     </aside>
     <div class="main">
@@ -145,6 +145,8 @@
 </div>
 <script src="auth-guard.js"></script>
 <script>
+// Hide website management section for non-TechCross tenant stores
+(function(){if(window.location.hostname!=='techcross.ie'){document.querySelectorAll('.techcross-only').forEach(function(el){el.style.display='none';});}})();
 (function(){
 'use strict';
 const user = Auth.requireRole('root'); if (!user) return;
