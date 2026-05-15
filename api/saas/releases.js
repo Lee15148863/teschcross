@@ -245,6 +245,7 @@ async function deployStoresAsync(releaseId, targets, upgrades, continueOnFailure
         INV_JWT_SECRET: invJwtSecret,
         INV_AUDIT_KEY: invAuditKey,
         STORE_NAME: storeNameEnv,
+        STOREFLOW_STORE_ID: (dep.storeId || '').toString(),
         STORE_FROZEN: 'false',
         NODE_ENV: 'production',
         DOMAIN: sanitizeEnvVal(process.env.DOMAIN || 'techcross.ie'),

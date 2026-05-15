@@ -170,6 +170,7 @@ async function main(deployOrStoreId) {
     INV_JWT_SECRET: invJwtSecret,
     INV_AUDIT_KEY: invAuditKey,
     STORE_NAME: storeNameEnv,
+    STOREFLOW_STORE_ID: store ? store._id.toString() : '',
     STORE_FROZEN: 'false',
     NODE_ENV: 'production',
     DOMAIN: sanitizeEnvVal(process.env.DOMAIN || 'techcross.ie'),
