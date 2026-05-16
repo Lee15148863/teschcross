@@ -216,21 +216,148 @@ router.post('/reject/:signupId', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT /api/saas/stores/:id/suspend — suspend a store (super_admin)
+// ─── Helpers ──────────────────────────────────────────────────────────
+
+var MAIN_POS_SERVICE = process.env.MAIN_POS_SERVICE || 'teschcross-git';
+
+function isMainPos(serviceName) {
+  if (!serviceName) return false;
+  return serviceName === MAIN_POS_SERVICE || serviceName.startsWith('teschcross');
+}
+
+function buildTenantStatusEnvCommand(serviceName, region, status) {
+  if (!serviceName) return null;
+  return 'gcloud run services update ' + serviceName
+    + ' --region=' + (region || 'europe-west1')
+    + ' --update-env-vars=STOREFLOW_TENANT_STATUS=' + status;
+}
+
+// PUT /api/saas/stores/:id/suspend — plan to suspend a store (super_admin)
+// DRY-RUN ONLY: generates plan + audit. Store/Deployment status NOT changed.
+// POS enforcement requires running the returned envUpdateCommand in a later phase.
 router.put('/:id/suspend', superAdminAuth, async (req, res) => {
   try {
-    const store = await Store.findByIdAndUpdate(req.params.id, { status: 'suspended', updatedAt: new Date() }, { new: true });
+    const { reason } = req.body;
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ error: 'Reason required for suspend action' });
+    }
+
+    const store = await Store.findById(req.params.id);
     if (!store) return res.status(404).json({ error: 'Store not found' });
-    res.json({ success: true, status: store.status });
+
+    const dep = await Deployment.findOne({ storeId: store._id }).select('serviceName status latestRevision').lean();
+    if (dep && isMainPos(dep.serviceName)) {
+      return res.status(403).json({ error: 'Cannot suspend Main POS service. This operation is blocked.' });
+    }
+
+    const currentStatus = store.status;
+    const plannedStatus = 'suspended';
+
+    // Audit plan only — do NOT change Store.status or Deployment.status
+    await recordAudit(dep ? dep._id : null, 'suspend_plan', 'success', reason, req.user, {
+      storeId: store._id.toString(), storeName: store.name,
+      currentStatus, plannedStatus,
+      serviceName: dep ? dep.serviceName : '',
+      previousRevision: dep ? dep.latestRevision || '' : '',
+      dryRun: true,
+      dryRunEnvUpdate: buildTenantStatusEnvCommand(dep ? dep.serviceName : '', dep ? dep.region : 'europe-west1', plannedStatus)
+    });
+
+    res.json({
+      success: true,
+      plannedStatus,
+      currentStatus,
+      enforced: false,
+      cloudRunEnvUpdated: false,
+      storeId: store._id, storeName: store.name,
+      serviceName: dep ? dep.serviceName : '',
+      message: 'Plan generated only. Store status NOT changed. POS enforcement NOT active. Run envUpdateCommand to enforce.',
+      envUpdateCommand: dep ? buildTenantStatusEnvCommand(dep.serviceName, dep.region || 'europe-west1', plannedStatus) : null
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT /api/saas/stores/:id/activate — activate a store (super_admin)
+// PUT /api/saas/stores/:id/freeze — plan to freeze a store (super_admin)
+router.put('/:id/freeze', superAdminAuth, async (req, res) => {
+  try {
+    const { reason } = req.body;
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ error: 'Reason required for freeze action' });
+    }
+
+    const store = await Store.findById(req.params.id);
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    const dep = await Deployment.findOne({ storeId: store._id }).select('serviceName status latestRevision').lean();
+    if (dep && isMainPos(dep.serviceName)) {
+      return res.status(403).json({ error: 'Cannot freeze Main POS service. This operation is blocked.' });
+    }
+
+    const currentStatus = store.status;
+    const plannedStatus = 'frozen';
+
+    await recordAudit(dep ? dep._id : null, 'freeze_plan', 'success', reason, req.user, {
+      storeId: store._id.toString(), storeName: store.name,
+      currentStatus, plannedStatus,
+      serviceName: dep ? dep.serviceName : '',
+      previousRevision: dep ? dep.latestRevision || '' : '',
+      dryRun: true,
+      dryRunEnvUpdate: buildTenantStatusEnvCommand(dep ? dep.serviceName : '', dep ? dep.region : 'europe-west1', plannedStatus)
+    });
+
+    res.json({
+      success: true,
+      plannedStatus,
+      currentStatus,
+      enforced: false,
+      cloudRunEnvUpdated: false,
+      storeId: store._id, storeName: store.name,
+      serviceName: dep ? dep.serviceName : '',
+      message: 'Plan generated only. Store status NOT changed. POS enforcement NOT active. Run envUpdateCommand to enforce.',
+      envUpdateCommand: dep ? buildTenantStatusEnvCommand(dep.serviceName, dep.region || 'europe-west1', plannedStatus) : null
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/saas/stores/:id/activate — plan to activate a store (super_admin)
 router.put('/:id/activate', superAdminAuth, async (req, res) => {
   try {
-    const store = await Store.findByIdAndUpdate(req.params.id, { status: 'active', updatedAt: new Date() }, { new: true });
+    const { reason } = req.body;
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ error: 'Reason required for activate action' });
+    }
+
+    const store = await Store.findById(req.params.id);
     if (!store) return res.status(404).json({ error: 'Store not found' });
-    res.json({ success: true, status: store.status });
+
+    const dep = await Deployment.findOne({ storeId: store._id }).select('serviceName status latestRevision').lean();
+    if (dep && isMainPos(dep.serviceName)) {
+      return res.status(403).json({ error: 'Cannot manage Main POS via tenant status API.' });
+    }
+
+    const currentStatus = store.status;
+    const plannedStatus = 'active';
+
+    await recordAudit(dep ? dep._id : null, 'activate_plan', 'success', reason, req.user, {
+      storeId: store._id.toString(), storeName: store.name,
+      currentStatus, plannedStatus,
+      serviceName: dep ? dep.serviceName : '',
+      previousRevision: dep ? dep.latestRevision || '' : '',
+      dryRun: true,
+      dryRunEnvUpdate: buildTenantStatusEnvCommand(dep ? dep.serviceName : '', dep ? dep.region : 'europe-west1', plannedStatus)
+    });
+
+    res.json({
+      success: true,
+      plannedStatus,
+      currentStatus,
+      enforced: false,
+      cloudRunEnvUpdated: false,
+      storeId: store._id, storeName: store.name,
+      serviceName: dep ? dep.serviceName : '',
+      message: 'Plan generated only. Store status NOT changed. POS enforcement NOT active. Run envUpdateCommand to enforce.',
+      envUpdateCommand: dep ? buildTenantStatusEnvCommand(dep.serviceName, dep.region || 'europe-west1', plannedStatus) : null
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

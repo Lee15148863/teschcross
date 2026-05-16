@@ -15,7 +15,7 @@ const StoreSchema = new mongoose.Schema({
   vatNumber:  { type: String, trim: true },
   receiptTC:  { type: String, trim: true },
 
-  status:      { type: String, enum: ['active', 'suspended', 'pending'], default: 'pending' },
+  status:      { type: String, enum: ['active', 'suspended', 'frozen', 'pending'], default: 'pending' },
   approvedBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'SaaSUser', default: null },
   approvedAt:  { type: Date },
 

@@ -120,6 +120,24 @@ app.use('/api/reviews', require('./api/reviews'));
 app.use('/api/banner', require('./api/banner'));
 
 // Inventory & Till system routes
+
+	// Tenant status gate — blocks all /api/inv access for suspended/frozen StoreFlow tenants
+	// Only applies when STOREFLOW_STORE_ID env var is set (tenant services, not Main POS)
+	app.use('/api/inv', function(req, res, next) {
+	  if (process.env.STOREFLOW_STORE_ID) {
+	    var tenantStatus = process.env.STOREFLOW_TENANT_STATUS || 'active';
+	    if (req.path === '/health' || req.path === '/') return next();
+	    if (tenantStatus === 'suspended' || tenantStatus === 'frozen') {
+	      return res.status(403).json({
+	        error: 'STORE_' + tenantStatus.toUpperCase(),
+	        message: tenantStatus === 'frozen'
+	          ? 'This store is currently frozen. All access is suspended. Please contact support.'
+	          : 'This store is currently suspended. Please contact support.'
+	      });
+	    }
+	  }
+	  next();
+	});
 // Read-only freeze gate — blocks writes when STORE_FROZEN env var is 'true'
 app.use('/api/inv', function(req, res, next) {
   if (process.env.STORE_FROZEN === 'true' && ['POST', 'PUT', 'PATCH', 'DELETE'].indexOf(req.method) !== -1) {

@@ -88,6 +88,19 @@ router.post('/captcha', captchaLimiter, (req, res) => {
 // Supports device trust to skip CAPTCHA for known devices
 router.post('/login', loginLimiter, async (req, res) => {
   try {
+
+    // Block login when store is suspended or frozen
+    if (process.env.STOREFLOW_STORE_ID) {
+      var _ts = process.env.STOREFLOW_TENANT_STATUS || 'active';
+      if (_ts === 'suspended' || _ts === 'frozen') {
+        return res.status(403).json({
+          error: 'STORE_' + _ts.toUpperCase(),
+          message: _ts === 'frozen'
+            ? 'This store is currently frozen. All access is suspended. Please contact support.'
+            : 'This store is currently suspended. Please contact support.'
+        });
+      }
+    }
     const { username, password, captchaId, captchaAnswer, deviceId, trustDevice } = req.body;
 
     if (!username || !password) {
@@ -648,6 +661,19 @@ router._captchaStore = captchaStore;
 const SAAS_JWT_SECRET = process.env.SAAS_JWT_SECRET;
 router.post('/saas-login', async (req, res) => {
   try {
+
+    // Block SSO login when store is suspended or frozen
+    if (process.env.STOREFLOW_STORE_ID) {
+      var _ts = process.env.STOREFLOW_TENANT_STATUS || 'active';
+      if (_ts === 'suspended' || _ts === 'frozen') {
+        return res.status(403).json({
+          error: 'STORE_' + _ts.toUpperCase(),
+          message: _ts === 'frozen'
+            ? 'This store is currently frozen. All access is suspended. Please contact support.'
+            : 'This store is currently suspended. Please contact support.'
+        });
+      }
+    }
     const { saas_token } = req.body;
     if (!saas_token) return res.status(400).json({ error: 'saas_token required' });
     if (!SAAS_JWT_SECRET) return res.status(500).json({ error: 'SAAS_JWT_SECRET not configured' });
