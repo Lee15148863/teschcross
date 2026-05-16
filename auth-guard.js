@@ -69,11 +69,23 @@
     requireRole: function (role) {
       var user = this.requireAuth();
       if (!user) return null;
-      if (user.role !== role) {
+      if (!this.hasMinRole(role)) {
         this.redirectToLogin();
         return null;
       }
       return user;
+    },
+
+    // ─── Check if user has at least the given role level
+    // Hierarchical: root > manager > staff
+    hasMinRole: function (minRole) {
+      var user = this.getUser();
+      if (!user) return false;
+      var urole = user.role || '';
+      if (urole === 'root') return true;
+      if (urole === 'manager' && minRole !== 'root') return true;
+      if (urole === 'staff' && minRole === 'staff') return true;
+      return urole === minRole;
     },
 
     // ─── Non-blocking role check ───────────────────────────────────────────
