@@ -275,7 +275,10 @@ router.put('/:id', async (req, res) => {
     if (source !== undefined) updateFields.source = source;
     if (marginScheme !== undefined) updateFields.marginScheme = marginScheme;
     if (serialNumber !== undefined) updateFields.serialNumber = serialNumber.trim();
-    if (attributes !== undefined) updateFields.attributes = attributes;
+    if (attributes !== undefined) {
+      const current = await Product.findById(req.params.id).select('attributes').lean();
+      updateFields.attributes = { ...(current?.attributes || {}), ...attributes };
+    }
     if (lowStockThreshold !== undefined) updateFields.lowStockThreshold = lowStockThreshold;
     if (active !== undefined) updateFields.active = active;
 

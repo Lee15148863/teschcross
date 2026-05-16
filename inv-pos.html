@@ -2953,7 +2953,8 @@
           purchasedFromCustomer: source === 'customer',
           marginScheme: margin,
           source: source,
-          serialNumber: serial.trim()
+          serialNumber: serial.trim(),
+          attributes: { buyInNotes: notes }
         };
 
         var r1 = await apiFetch('/products', { method: 'POST', body: JSON.stringify(productBody) });
@@ -2987,8 +2988,39 @@
           showToast('Expense record may need admin to add manually', 'info');
         }
 
+        // Step 4: Link expense to product for receipt reprinting
+        var expenseId = null;
+        if (r3 && r3.ok) {
+          try {
+            var expenseData = await r3.json();
+            expenseId = expenseData._id || expenseData.id;
+            await apiFetch('/products/' + productId, {
+              method: 'PUT',
+              body: JSON.stringify({ attributes: { buyInExpenseId: expenseId, buyInNotes: notes } })
+            });
+          } catch (_) { /* non-critical */ }
+        }
+
         closePanel();
         showToast('✅ Buy Used saved: ' + name + ' | Cost €' + cost.toFixed(2) + ' | Stocked in', 'success');
+
+        // Show print receipt option
+        if (expenseId) {
+          setTimeout(function() {
+            var existing = document.getElementById('_buyInPrintBtn');
+            if (existing) existing.remove();
+            var printBtn = document.createElement('button');
+            printBtn.id = '_buyInPrintBtn';
+            printBtn.textContent = '🖨️ Print Buy-In Receipt';
+            printBtn.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;background:#0071e3;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(0,113,227,0.4);';
+            printBtn.onclick = function() {
+              window.open('inv-device-buyin-receipt.html?expenseId=' + encodeURIComponent(expenseId), '_blank');
+              printBtn.remove();
+            };
+            document.body.appendChild(printBtn);
+            setTimeout(function() { if (printBtn.parentNode) printBtn.remove(); }, 30000);
+          }, 200);
+        }
 
       } catch(e) {
         if (errEl) { errEl.textContent = e.message; errEl.style.display = 'block'; }

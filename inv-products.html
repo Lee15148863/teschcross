@@ -313,6 +313,21 @@ async function loadProducts(page){
             // Actions cell
             const td7 = document.createElement('td');
 
+            // Print receipt for second-hand buy-in products
+            if (p.isSecondHand && p.attributes && p.attributes.buyInExpenseId) {
+                const printBtn = document.createElement('button');
+                printBtn.className = 'btn btn-sm';
+                printBtn.style.background = '#0071e3';
+                printBtn.style.color = '#fff';
+                printBtn.textContent = '📄';
+                printBtn.title = 'Print Buy-In Receipt';
+                printBtn.onclick = function() {
+                    window.open('inv-device-buyin-receipt.html?expenseId=' + encodeURIComponent(p.attributes.buyInExpenseId), '_blank');
+                };
+                td7.appendChild(printBtn);
+                td7.appendChild(document.createTextNode(' '));
+            }
+
             // Edit button
             const editBtn = document.createElement('button');
             editBtn.className = 'btn btn-secondary btn-sm';

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Buy-In Receipt</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #1d1d1f;
+    background: #f5f5f7;
+    line-height: 1.5;
+    padding: 20px;
+  }
+
+  .receipt {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 48px 56px;
+  }
+
+  .header {
+    text-align: center;
+    border-bottom: 2px solid #1d1d1f;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+  .header .store-name { font-size: 22px; font-weight: 700; }
+  .header .store-addr { font-size: 13px; color: #6e6e73; margin-top: 2px; }
+  .header .store-phone { font-size: 13px; color: #6e6e73; }
+  .header .store-vat { font-size: 12px; color: #86868b; margin-top: 2px; }
+
+  .title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .info-grid {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 24px;
+  }
+  .info-block { flex: 1; }
+  .info-block label { font-size: 11px; text-transform: uppercase; color: #86868b; font-weight: 600; letter-spacing: 0.5px; }
+  .info-block .value { font-size: 15px; margin-top: 2px; }
+
+  .section {
+    border-top: 1px solid #d2d2d7;
+    padding-top: 16px;
+    margin-top: 16px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6e6e73;
+    margin-bottom: 10px;
+  }
+
+  table.detail { width: 100%; border-collapse: collapse; }
+  table.detail td { padding: 6px 0; font-size: 15px; vertical-align: top; }
+  table.detail td:first-child { color: #6e6e73; width: 160px; white-space: nowrap; padding-right: 16px; }
+
+  .amount-row { font-size: 20px; font-weight: 700; }
+
+  .declaration {
+    background: #f5f5f7;
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-top: 20px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #1d1d1f;
+  }
+  .declaration strong { display: block; margin-bottom: 6px; font-size: 14px; }
+
+  .signatures {
+    display: flex;
+    gap: 40px;
+    margin-top: 32px;
+  }
+  .sig-block { flex: 1; }
+  .sig-line { border-bottom: 1px solid #1d1d1f; height: 40px; }
+  .sig-label { font-size: 12px; color: #86868b; margin-top: 4px; }
+
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: #aeaeb2;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #d2d2d7;
+  }
+
+  .privacy {
+    font-size: 11px;
+    color: #aeaeb2;
+    text-align: center;
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  .btn-bar {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .btn-bar button {
+    padding: 10px 24px;
+    font-size: 15px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn-print { background: #0071e3; color: #fff; margin-right: 8px; }
+  .btn-print:hover { background: #0077ed; }
+  .btn-close { background: #f5f5f7; color: #1d1d1f; border: 1px solid #d2d2d7; }
+  .btn-close:hover { background: #e8e8ed; }
+
+  .error-box {
+    text-align: center;
+    padding: 60px 20px;
+    color: #ff3b30;
+    font-size: 16px;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .receipt { box-shadow: none; border-radius: 0; padding: 20px 32px; max-width: 100%; }
+    .btn-bar { display: none !important; }
+    @page { margin: 12mm; size: A4; }
+  }
+</style>
+</head>
+<body>
+
+<div class="btn-bar" id="btnBar">
+  <button class="btn-print" onclick="window.print()">Print Receipt</button>
+  <button class="btn-close" onclick="window.close()">Close</button>
+</div>
+
+<div class="receipt" id="receipt">
+  <div id="content"></div>
+</div>
+
+<div class="error-box" id="error" style="display:none;"></div>
+
+<script src="auth-guard.js"></script>
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var expenseId = params.get('expenseId');
+
+  if (!expenseId) {
+    showError('No expense ID provided. Use ?expenseId=...');
+    return;
+  }
+
+  var token = Auth.getToken();
+  if (!token) {
+    window.location.href = 'inv-login.html';
+    return;
+  }
+
+  fetch('/api/inv/buyin-receipt/' + encodeURIComponent(expenseId), {
+    headers: { 'Authorization': 'Bearer ' + token }
+  })
+  .then(function(r) {
+    if (r.status === 401) { localStorage.removeItem('inv_token'); window.location.href = 'inv-login.html'; return; }
+    if (!r.ok) return r.json().then(function(e) { throw new Error(e.error || 'Failed to load'); });
+    return r.json();
+  })
+  .then(function(data) {
+    if (!data) return;
+    render(data);
+    setTimeout(function() { window.print(); }, 600);
+  })
+  .catch(function(e) {
+    showError(e.message || 'Failed to load receipt data');
+  });
+
+  function showError(msg) {
+    document.getElementById('receipt').style.display = 'none';
+    document.getElementById('btnBar').style.display = 'none';
+    var el = document.getElementById('error');
+    el.style.display = 'block';
+    el.textContent = msg;
+  }
+
+  function esc(s) {
+    if (!s) return '';
+    var d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+  }
+
+  function fmtDate(d) {
+    if (!d) return '-';
+    var dt = new Date(d);
+    return dt.toLocaleDateString('en-IE', { day: '2-digit', month: 'short', year: 'numeric' })
+      + ' ' + dt.toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function sourceLabel(s) {
+    if (s === 'customer') return 'From Customer (从客人收购)';
+    if (s === 'dealer') return 'From Dealer (从商人进货)';
+    if (s === 'other') return 'Other (其他)';
+    return s || '-';
+  }
+
+  function paymentLabel(pm) {
+    if (pm === 'cash') return 'Cash (现金)';
+    if (pm === 'card') return 'Card (刷卡)';
+    if (pm === 'bank_transfer') return 'Bank Transfer (转账)';
+    return pm || 'Cash';
+  }
+
+  function render(d) {
+    var h = '';
+
+    // Header
+    h += '<div class="header">';
+    h += '<div class="store-name">' + esc(d.store.name) + '</div>';
+    if (d.store.address) h += '<div class="store-addr">' + esc(d.store.address) + '</div>';
+    if (d.store.phone) h += '<div class="store-phone">Tel: ' + esc(d.store.phone) + '</div>';
+    if (d.store.vatNumber) h += '<div class="store-vat">VAT: ' + esc(d.store.vatNumber) + '</div>';
+    h += '</div>';
+
+    // Title
+    h += '<div class="title">Buy-In Receipt / Purchase Agreement</div>';
+
+    // Info grid
+    h += '<div class="info-grid">';
+    h += '<div class="info-block"><label>Receipt No</label><div class="value">' + esc(d.receiptRef) + '</div></div>';
+    h += '<div class="info-block"><label>Date &amp; Time</label><div class="value">' + fmtDate(d.date) + '</div></div>';
+    h += '<div class="info-block"><label>Staff</label><div class="value">' + esc(d.operator || '-') + '</div></div>';
+    h += '</div>';
+
+    // Device details
+    h += '<div class="section"><div class="section-title">Device Information</div>';
+    h += '<table class="detail">';
+    if (d.device) {
+      h += '<tr><td>Item Name</td><td><strong>' + esc(d.device.name) + '</strong></td></tr>';
+      if (d.device.serialNumber)
+        h += '<tr><td>IMEI / Serial No</td><td>' + esc(d.device.serialNumber) + '</td></tr>';
+      if (d.device.sku)
+        h += '<tr><td>SKU</td><td style="font-family:monospace;">' + esc(d.device.sku) + '</td></tr>';
+      var attrs = d.device.attributes || {};
+      if (attrs['成色']) h += '<tr><td>Condition</td><td>' + esc(attrs['成色']) + '</td></tr>';
+      if (attrs['电池健康度']) h += '<tr><td>Battery Health</td><td>' + esc(attrs['电池健康度']) + '</td></tr>';
+      if (attrs['维修记录']) h += '<tr><td>Repair History</td><td>' + esc(attrs['维修记录']) + '</td></tr>';
+      if (d.device.source)
+        h += '<tr><td>Source</td><td>' + esc(sourceLabel(d.device.source)) + '</td></tr>';
+    } else {
+      h += '<tr><td colspan="2" style="color:#86868b;">Device details not linked. This buy-in record predates the receipt system.</td></tr>';
+    }
+    // Notes from expense description / product attributes
+    var notes = '';
+    if (d.device && d.device.attributes && d.device.attributes.buyInNotes) {
+      notes = d.device.attributes.buyInNotes;
+    }
+    if (!notes && d.buyIn.description) {
+      var desc = d.buyIn.description || '';
+      // Extract notes part after " | "
+      var pipeIdx = desc.lastIndexOf(' | ');
+      if (pipeIdx >= 0) notes = desc.slice(pipeIdx + 3);
+    }
+    if (notes) h += '<tr><td>Notes</td><td>' + esc(notes) + '</td></tr>';
+    h += '</table></div>';
+
+    // Buy-In details
+    h += '<div class="section"><div class="section-title">Transaction Details</div>';
+    h += '<table class="detail">';
+    h += '<tr><td>Amount Paid to Customer</td><td class="amount-row">&euro;' + Number(d.buyIn.amount).toFixed(2) + '</td></tr>';
+    h += '<tr><td>Payment Method</td><td>' + esc(paymentLabel(d.buyIn.paymentMethod)) + '</td></tr>';
+    h += '</table></div>';
+
+    // Customer Declaration
+    h += '<div class="declaration">';
+    h += '<strong>CUSTOMER DECLARATION</strong>';
+    h += '<p>I confirm that I am the legal owner of the device described above and have the right to sell it. ';
+    h += 'I confirm that the device is not stolen, blocked, financed, or subject to any third-party claim ';
+    h += 'to the best of my knowledge. I agree to sell the device to the store for the amount shown above.</p>';
+    h += '<p style="margin-top:8px;">The store may refuse or reverse the purchase if the device is later found to be stolen, ';
+    h += 'blocked, financed, or misrepresented.</p>';
+    h += '</div>';
+
+    // Signatures
+    h += '<div class="signatures">';
+    h += '<div class="sig-block"><div class="sig-line"></div><div class="sig-label">Customer Signature</div></div>';
+    h += '<div class="sig-block"><div class="sig-line"></div><div class="sig-label">Staff Signature</div></div>';
+    h += '<div class="sig-block"><div class="sig-line"></div><div class="sig-label">Date: ' + fmtDate(d.date).split(' ')[0] + '</div></div>';
+    h += '</div>';
+
+    // Privacy
+    h += '<div class="privacy">Customer information is recorded only for transaction, ownership verification, and legal/accounting purposes.</div>';
+
+    // Footer
+    h += '<div class="footer">' + esc(d.receiptFooter || 'Thank you for your business!') + '</div>';
+
+    document.getElementById('content').innerHTML = h;
+  }
+})();
+</script>
+</body>
+</html>
