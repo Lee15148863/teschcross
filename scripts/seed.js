@@ -1,9 +1,33 @@
 /**
- * Seed script: imports all pricing data from JS files into MongoDB
- * Run once: node scripts/seed.js
+ * TECH CROSS MAIN SITE ONLY — Website Repair Pricing Seed Script.
+ *
+ * WARNING:
+ *   This script seeds the techcross main website repair pricing data ONLY.
+ *   It must NEVER be run against a StoreFlow tenant (customer) database.
+ *   StoreFlow tenants start with clean, empty databases.
+ *   See STORE_FLOW_TENANT_RULES.md for the clean tenant policy.
+ *
+ *   NOT called by:
+ *     - deploy-tenant-store.js
+ *     - api/saas/stores.js
+ *     - api/saas/releases.js
+ *     - scripts/bootstrap-users.js
+ *     - any StoreFlow onboarding or deploy flow
+ *
+ *   Hardcoded to dbName: 'techcross'.
+ *   Run: node scripts/seed.js
  */
 require('dotenv').config();
 const mongoose = require('mongoose');
+
+// Guard: refuse to run if STORE_NAME overrides are set (anti-tenant-seed protection)
+const targetDb = process.env.STORE_NAME || 'techcross';
+if (targetDb !== 'techcross') {
+  console.error('BLOCKED: seed.js is for TechCross main site only.');
+  console.error('STORE_NAME=' + targetDb + ' is not allowed.');
+  console.error('See STORE_FLOW_TENANT_RULES.md — StoreFlow tenants must start clean.');
+  process.exit(1);
+}
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');

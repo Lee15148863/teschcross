@@ -660,6 +660,13 @@ router.post('/saas-login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid or expired SaaS token' });
     }
 
+    // SSO exchange window: token must have been issued within last 120 seconds
+    var SSO_MAX_AGE_S = 120;
+    var tokenAge = Math.floor(Date.now() / 1000) - (decoded.iat || 0);
+    if (tokenAge > SSO_MAX_AGE_S) {
+      return res.status(401).json({ error: 'SaaS token too old for SSO. Token age: ' + tokenAge + 's, max: ' + SSO_MAX_AGE_S + 's. Generate a fresh token from dashboard.' });
+    }
+
     var saasRole = decoded.role || 'staff';
     var tokenStoreId = decoded.storeId;
 
