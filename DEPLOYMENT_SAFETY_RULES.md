@@ -322,3 +322,14 @@ Therefore:
 ```txt
 Financial systems must be treated as HIGH RISK infrastructure.
 ```
+
+---
+
+# Cloud Run Env Safety
+
+See [CLOUD_RUN_ENV_SAFETY_RULES.md](CLOUD_RUN_ENV_SAFETY_RULES.md) for:
+- 2026-05-16 Main POS login 500 incident report (missing INV_JWT_SECRET)
+- Required env keys checklist for Main POS and tenant services
+- Post-deploy login smoke test requirements
+- Rollback protocol for login failures
+- Known good/broken revision tracking
