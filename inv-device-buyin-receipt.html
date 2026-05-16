@@ -161,9 +161,10 @@
 (function() {
   var params = new URLSearchParams(window.location.search);
   var expenseId = params.get('expenseId');
+  var productId = params.get('productId');
 
-  if (!expenseId) {
-    showError('No expense ID provided. Use ?expenseId=...');
+  if (!expenseId && !productId) {
+    showError('No expense ID or product ID provided. Use ?expenseId=... or ?productId=...');
     return;
   }
 
@@ -173,7 +174,11 @@
     return;
   }
 
-  fetch('/api/inv/buyin-receipt/' + encodeURIComponent(expenseId), {
+  var apiUrl = productId
+    ? '/api/inv/buyin-receipt/by-product/' + encodeURIComponent(productId)
+    : '/api/inv/buyin-receipt/' + encodeURIComponent(expenseId);
+
+  fetch(apiUrl, {
     headers: { 'Authorization': 'Bearer ' + token }
   })
   .then(function(r) {

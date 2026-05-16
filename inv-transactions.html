@@ -371,6 +371,30 @@ async function loadTransactions(){
             waBtn.onclick = () => showWhatsAppModal(tx._id);
             td7.appendChild(waBtn);
 
+            // Buy-In Receipt button (for transactions with purchased-from-customer items)
+            if (tx.items && tx.items.some(function(it) { return it.purchasedFromCustomer && it.product; })) {
+                td7.appendChild(document.createTextNode(' '));
+                const buyinBtn = document.createElement('button');
+                buyinBtn.className = 'btn btn-sm';
+                buyinBtn.style.background = '#34c759';
+                buyinBtn.style.color = '#fff';
+                buyinBtn.textContent = '📄 Buy-In';
+                buyinBtn.title = 'Print Buy-In Receipt';
+                buyinBtn.onclick = function() {
+                    var productId = null;
+                    for (var i = 0; i < tx.items.length; i++) {
+                        if (tx.items[i].purchasedFromCustomer && tx.items[i].product) {
+                            productId = typeof tx.items[i].product === 'string' ? tx.items[i].product : tx.items[i].product._id;
+                            break;
+                        }
+                    }
+                    if (productId) {
+                        window.open('inv-device-buyin-receipt.html?productId=' + encodeURIComponent(productId), '_blank');
+                    }
+                };
+                td7.appendChild(buyinBtn);
+            }
+
             // Delete button (admin only)
             if (isAdmin) {
                 td7.appendChild(document.createTextNode(' '));

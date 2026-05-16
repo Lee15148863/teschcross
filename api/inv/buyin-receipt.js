@@ -15,8 +15,32 @@ const DEFAULT_COMPANY = {
   vatNumber: 'IE3330982OH'
 };
 
+// GET /api/inv/buyin-receipt/by-product/:productId — lookup by product, find linked expense
+router.get('/by-product/:productId', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.productId).lean();
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    const expenseId = product.attributes && product.attributes.buyInExpenseId;
+    if (!expenseId) {
+      return res.status(404).json({ error: 'No buy-in receipt linked to this product' });
+    }
+    // Forward to expense-based lookup
+    req.params.expenseId = expenseId;
+    return getReceipt(req, res);
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /api/inv/buyin-receipt/:expenseId
-router.get('/:expenseId', async (req, res) => {
+router.get('/:expenseId', getReceipt);
+
+async function getReceipt(req, res) {
   try {
     const expense = await Expense.findById(req.params.expenseId).lean();
     if (!expense) {
@@ -77,6 +101,6 @@ router.get('/:expenseId', async (req, res) => {
     }
     res.status(500).json({ error: 'Server error' });
   }
-});
+}
 
 module.exports = router;
