@@ -53,11 +53,11 @@
         .toast.show{transform:translateX(0);}.toast.success{background:#34c759;color:#fff;}.toast.error{background:#ff3b30;color:#fff;}
     </style>
 </head>
-<body>
+<body><script>(function(){var t="__IS_STOREFLOW_TENANT__",n="__STORE_DISPLAY_NAME__";if(t==="true"){var l=document.getElementById("snLogo");if(l)l.style.display="none";var b=document.getElementById("snBrand");if(b<body><body>n.indexOf("__STORE")!==0)b.textContent=n;}})();</script>
 <div class="toast" id="toast"></div>
 <div class="layout">
     <aside class="sidebar">
-        <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
+        <div class="logo"><img src="logo.png" alt="Tech Cross" id="snLogo"><span id="snBrand">进销存管理系统</span></div>
         <nav>
             <div class="nav-section">业务管理 / Business</div>
             <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
@@ -643,7 +643,7 @@ async function reprintReceipt(id){
         if(!iframe){iframe=document.createElement('iframe');iframe.id='_txPrintFrame';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
         var doc=iframe.contentDocument||iframe.contentWindow.document;
         doc.open();
-        doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title><style>@page{margin:0;size:auto;}html,body{margin:0;padding:0;width:100%;background:#fff;}body{width:420px;max-width:420px;padding:8px 40px 8px 10px;margin:0 auto;font-family:"Courier New",Courier,monospace;font-size:20px;font-weight:700;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}*{box-sizing:border-box;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
+        doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title><style>@page{margin:0;size:auto;}html,body{margin:0;padding:0;width:100%;background:#fff;}body{width:420px;max-width:420px;padding:8px 40px 8px 10px;margin:0 auto;font-family:"Courier New",Courier,monospace;font-size:20px;font-weight:700;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}*{box-sizing:border-box;}img{max-width:100%;height:auto;display:block;}</style></head><body><script>(function(){var t="__IS_STOREFLOW_TENANT__",n="__STORE_DISPLAY_NAME__";if(t==="true"){var l=document.getElementById("snLogo");if(l)l.style.display="none";var b=document.getElementById("snBrand");if(b<body><body>n.indexOf("__STORE")!==0)b.textContent=n;}})();</script>');
         doc.write(receiptHtml);
         doc.write('</body></html>');
         doc.close();
@@ -705,7 +705,7 @@ function printRefundReceipt(refund){
             if(!iframe){iframe=document.createElement('iframe');iframe.id='_txPrintFrame';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
             var doc=iframe.contentDocument||iframe.contentWindow.document;
             doc.open();
-            doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Refund Receipt</title><style>@page{margin:0;size:auto;}html,body{margin:0;padding:0;width:100%;background:#fff;}body{width:420px;max-width:420px;padding:8px 40px 8px 10px;margin:0 auto;font-family:"Courier New",Courier,monospace;font-size:20px;font-weight:700;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}*{box-sizing:border-box;}img{max-width:100%;height:auto;display:block;}</style></head><body>');
+            doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Refund Receipt</title><style>@page{margin:0;size:auto;}html,body{margin:0;padding:0;width:100%;background:#fff;}body{width:420px;max-width:420px;padding:8px 40px 8px 10px;margin:0 auto;font-family:"Courier New",Courier,monospace;font-size:20px;font-weight:700;line-height:1.4;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact;}*{box-sizing:border-box;}img{max-width:100%;height:auto;display:block;}</style></head><body><script>(function(){var t="__IS_STOREFLOW_TENANT__",n="__STORE_DISPLAY_NAME__";if(t==="true"){var l=document.getElementById("snLogo");if(l)l.style.display="none";var b=document.getElementById("snBrand");if(b<body><body>n.indexOf("__STORE")!==0)b.textContent=n;}})();</script>');
             doc.write(h);
             doc.write('</body></html>');
             doc.close();

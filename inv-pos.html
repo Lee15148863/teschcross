@@ -739,7 +739,7 @@
         <!-- LEFT: Product Search -->
         <div class="left-panel">
             <div class="left-header">
-                <img src="logo.png" alt="Tech Cross" class="logo">
+                <img src="logo.png" alt="Tech Cross" class="logo" id="posLogo">
                 <h1 id="posTitle">POS 收银</h1>
                 <button class="lang-toggle" id="langToggle" title="Switch Language">中/EN</button>
             </div>
@@ -1228,8 +1228,24 @@
     var _logoDataUri = '';
     var _qrTermsDataUri = '';
 
-    // Preload logo from local static file
+    // Tenant detection: __IS_STOREFLOW_TENANT__ and __STORE_DISPLAY_NAME__ injected by server
+    var _isStoreflowTenant = '__IS_STOREFLOW_TENANT__' === 'true';
+    var _storeDisplayName = '__STORE_DISPLAY_NAME__';
+
+    if (_isStoreflowTenant) {
+      var headerLogo = document.getElementById('posLogo');
+      if (headerLogo) headerLogo.style.display = 'none';
+      // Set header title to store name
+      if (_storeDisplayName && _storeDisplayName.indexOf('__STORE') !== 0) {
+        document.getElementById('posTitle').textContent = _storeDisplayName;
+        var sb = document.getElementById('snBrand');
+        if (sb) sb.textContent = _storeDisplayName;
+      }
+    }
+
+    // Preload logo from local static file (skip for tenants — they use their own branding)
     (function preloadLogo() {
+      if (_isStoreflowTenant) { _logoDataUri = ''; return; }
       var img = new Image();
       img.onload = function() {
         try {

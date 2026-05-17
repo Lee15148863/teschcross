@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>进销存系统登录 - Tech Cross</title>
+    <title>__STORE_DISPLAY_NAME__ - 登录</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         body {
@@ -270,9 +270,9 @@
         }
     </style>
 </head>
-<body>
+<body><script>(function(){var t="__IS_STOREFLOW_TENANT__";if(t==="true"){var l=document.getElementById("loginLogoDiv");if(l)l.style.display="none";}})();</script><script>(function(){if("__IS_STOREFLOW_TENANT__"==="true"){var d=document.getElementById("loginLogoDiv");if(d)d.style.display="none";}})();</script>
     <div class="login-container">
-        <div class="login-logo">
+        <div class="login-logo" id="loginLogoDiv">
             <img src="logo.png" alt="Tech Cross">
         </div>
 
@@ -315,7 +315,7 @@
             </form>
 
             <div class="login-footer">
-                Tech Cross 内部管理系统
+                __STORE_DISPLAY_NAME__
             </div>
         </div>
     </div>

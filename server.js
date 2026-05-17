@@ -89,11 +89,21 @@ app.use(express.static(path.join(__dirname), {
 }));
 
 // ─── HTML template variable injection ────────────────────────────────────
+function beautifyStoreName(name) {
+  if (!name) return '';
+  return name.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+}
+
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
     const original = res.send.bind(res);
     res.send = function(body) {
       if (typeof body === 'string') {
+        const isTenant = !!process.env.STOREFLOW_STORE_ID;
+        const storeDisplayName = isTenant
+          ? beautifyStoreName(process.env.STORE_NAME || '') || 'Store POS'
+          : process.env.COMPANY_NAME || 'TechCross Repair Centre';
+
         body = body
           .replace(/__DOMAIN__/g, DOMAIN)
           .replace(/__GA_ID__/g, process.env.GOOGLE_ANALYTICS_ID || '')
@@ -103,7 +113,9 @@ app.use((req, res, next) => {
           .replace(/__COMPANY_LOCATION__/g, process.env.COMPANY_ADDRESS || 'Navan, Co. Meath, Ireland')
           .replace(/__COMPANY_EMAIL__/g, process.env.COMPANY_EMAIL || 'info@example.com')
           .replace(/__VAT_NUMBER__/g, process.env.VAT_NUMBER || 'IE3330982OH')
-          .replace(/__FB_PAGE__/g, process.env.FACEBOOK_PAGE || 'techcrossnavan');
+          .replace(/__FB_PAGE__/g, process.env.FACEBOOK_PAGE || 'techcrossnavan')
+          .replace(/__IS_STOREFLOW_TENANT__/g, isTenant ? 'true' : 'false')
+          .replace(/__STORE_DISPLAY_NAME__/g, storeDisplayName);
       }
       return original(body);
     };
