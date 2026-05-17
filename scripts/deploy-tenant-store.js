@@ -165,10 +165,18 @@ async function main(deployOrStoreId) {
   }
   var storeNameEnv = dbName.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 63);
 
+
+	// SAAS_JWT_SECRET — shared between Main POS and tenants for SSO token verification
+	var saasJwtSecret = process.env.SAAS_JWT_SECRET;
+	if (!saasJwtSecret) {
+	  console.error("FATAL: SAAS_JWT_SECRET not set. SSO will fail for this tenant.");
+	  process.exit(1);
+	}
   var env = {
     DBCon: mongoUri,
     INV_JWT_SECRET: invJwtSecret,
     INV_AUDIT_KEY: invAuditKey,
+    SAAS_JWT_SECRET: saasJwtSecret,
     STORE_NAME: storeNameEnv,
     STOREFLOW_STORE_ID: store ? store._id.toString() : '',
     STORE_FROZEN: 'false',
@@ -183,6 +191,7 @@ async function main(deployOrStoreId) {
   console.log('✓ Generated env vars:');
   console.log('  DBCon: [' + maskMongoUri(mongoUri) + ']');
   console.log('  INV_JWT_SECRET: [' + mask(invJwtSecret) + ']');
+  console.log("  SAAS_JWT_SECRET: SET (shared with Main POS for SSO)");
   console.log('  INV_AUDIT_KEY: [' + mask(invAuditKey) + ']');
   console.log('  STORE_NAME: ' + env.STORE_NAME + ' (from URI dbName: ' + dbName + ')');
 
