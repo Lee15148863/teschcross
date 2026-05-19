@@ -5,7 +5,8 @@ const Expense = require('../../models/inv/Expense');
 const DailyClose = require('../../models/inv/DailyClose');
 const MonthlyReport = require('../../models/inv/MonthlyReport');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
-const { requireModule } = require('../../utils/storeflow-permissions');
+const { requireModule, requirePermission } = require('../../utils/storeflow-permissions');
+const { getPlanOrDefault } = require('../../utils/storeflow-plans');
 
 // All routes require Staff+ access
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
@@ -55,7 +56,7 @@ function aggregateProductRanking(transactions) {
 
 // ─── GET /api/inv/reports/daily ─────────────────────────────────────────────
 // Daily report (English output) — broken down by VAT category
-router.get('/daily', requireModule('reports'), async (req, res) => {
+router.get('/daily', requireModule('reports'), requirePermission('reports.dailySummary'), async (req, res) => {
   try {
     const { date, startDate, endDate } = req.query;
 
@@ -212,7 +213,7 @@ router.get('/daily', requireModule('reports'), async (req, res) => {
 
 // ─── GET /api/inv/reports/monthly ───────────────────────────────────────────
 // Monthly tax summary — returns stored report if exists, else live aggregation
-router.get('/monthly', requireModule('reports'), async (req, res) => {
+router.get('/monthly', requireModule('reports'), requirePermission('reports.vatReportExport'), async (req, res) => {
   try {
     const { month } = req.query;
 
@@ -393,7 +394,7 @@ router.get('/monthly', requireModule('reports'), async (req, res) => {
 // ─── GET /api/inv/reports/weekly ────────────────────────────────────────────
 // Weekly report (English output) — same VAT breakdown as daily/monthly
 // Query: ?week=2026-W18 or ?startDate=2026-04-28 (Monday of the week)
-router.get('/weekly', requireModule('reports'), async (req, res) => {
+router.get('/weekly', requireModule('reports'), requirePermission('reports.salesByDateRange'), async (req, res) => {
   try {
     const { week, startDate: qStart } = req.query;
     let weekStart, weekEnd;
@@ -585,7 +586,7 @@ router.get('/weekly', requireModule('reports'), async (req, res) => {
 
 // ─── GET /api/inv/reports/product-ranking ───────────────────────────────────
 // Product sales ranking
-router.get('/product-ranking', requireModule('reports'), async (req, res) => {
+router.get('/product-ranking', requireModule('reports'), requirePermission('reports.salesBasic'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
@@ -617,7 +618,7 @@ router.get('/product-ranking', requireModule('reports'), async (req, res) => {
 
 // ─── GET /api/inv/reports/export ────────────────────────────────────────────
 // Export report (print-friendly format)
-router.get('/export', requireModule('reports'), async (req, res) => {
+router.get('/export', requireModule('reports'), requirePermission('reports.vatReportExport'), async (req, res) => {
   try {
     const { type, date, month, startDate, endDate } = req.query;
 
@@ -802,6 +803,11 @@ router.get('/query', requireModule('reports'), async (req, res) => {
       includeDevices, // 'true' to include device P&L
     } = req.query;
 
+    // Phase 3A.2: restrict advanced query features by plan
+    var planFeatures = (getPlanOrDefault(process.env.STOREFLOW_PLAN || 'free')).features || {};
+    var allowLedger = includeLedger === 'true' && planFeatures.reportsCashLedgerReport !== false;
+    var allowDevices = includeDevices === 'true' && planFeatures.reportsProfitReport !== false;
+
     const { queryTransactions, aggregateTransactions, queryCashLedger, queryDeviceProfitLoss }
       = require('../../services/inv-query-service');
 
@@ -824,7 +830,7 @@ router.get('/query', requireModule('reports'), async (req, res) => {
 
     // ── Optional: cash ledger entries ─────────────────────────────
     let cashLedger = null;
-    if (includeLedger === 'true') {
+    if (allowLedger) {
       cashLedger = await queryCashLedger({
         startDate: startDate || undefined,
         endDate: endDate || undefined,
@@ -834,7 +840,7 @@ router.get('/query', requireModule('reports'), async (req, res) => {
 
     // ── Optional: device profit/loss ──────────────────────────────
     let deviceProfitLoss = null;
-    if (includeDevices === 'true') {
+    if (allowDevices) {
       deviceProfitLoss = await queryDeviceProfitLoss({
         startDate: startDate || undefined,
         endDate: endDate || undefined,
@@ -863,7 +869,7 @@ router.get('/query', requireModule('reports'), async (req, res) => {
 // Generate and store a monthly report from DailyClose snapshots.
 // ROOT only — once generated, the report is IMMUTABLE and becomes the
 // tax record for the month. Transactions for that month can then be cleaned up.
-router.post('/monthly/generate', requireRole('root'), async (req, res) => {
+router.post('/monthly/generate', requireModule('reports'), requireRole('root'), requirePermission('reports.vatReportExport'), async (req, res) => {
   try {
     const { month } = req.body;
 

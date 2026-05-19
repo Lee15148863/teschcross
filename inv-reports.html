@@ -101,24 +101,24 @@
             <div class="tabs">
                 <div class="tab active" data-tab="daily">日结报表</div>
                 <div class="tab" data-tab="weekly">周报表</div>
-                <div class="tab" data-tab="monthly">月度报税报表</div>
+                <div class="tab" data-tab="monthly" data-plan-feature="reportsVatExport">月度报税报表</div>
             </div>
             <!-- 日结 -->
             <div class="tab-content active" id="tab-daily"><div class="card">
-                <div class="toolbar"><input type="date" id="dailyDate"><button class="btn btn-primary" id="btnLoadDaily">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintDaily">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportDaily">📥 导出</button></div>
+                <div class="toolbar"><input type="date" id="dailyDate"><button class="btn btn-primary" id="btnLoadDaily">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintDaily">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportDaily" data-plan-feature="reportsVatExport">📥 导出</button></div>
                 <div class="sum-row" id="dailySummary"></div>
                 <div id="dailyVat"></div>
                 <div style="overflow-x:auto;margin-top:16px;"><table class="tx-table"><thead><tr><th>订单号</th><th>时间</th><th>商品数</th><th>金额</th><th>支付</th><th>操作</th></tr></thead><tbody id="dailyBody"><tr><td colspan="6" class="no-data">请选择日期查询</td></tr></tbody></table></div>
             </div></div>
             <!-- 周报 -->
             <div class="tab-content" id="tab-weekly"><div class="card">
-                <div class="toolbar"><input type="week" id="weeklyDate"><span id="weeklyRange" style="font-size:13px;color:#6e6e73;margin-left:4px;"></span><button class="btn btn-primary" id="btnLoadWeekly">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintWeekly">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportWeekly">📥 导出</button></div>
+                <div class="toolbar"><input type="week" id="weeklyDate"><span id="weeklyRange" style="font-size:13px;color:#6e6e73;margin-left:4px;"></span><button class="btn btn-primary" id="btnLoadWeekly">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintWeekly">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportWeekly" data-plan-feature="reportsVatExport">📥 导出</button></div>
                 <div class="sum-row" id="weeklySummary"></div>
                 <div style="overflow-x:auto;margin-top:16px;"><table class="tx-table"><thead><tr><th>日期</th><th>商品销售</th><th>服务维修</th><th>差价税</th><th>现金</th><th>支出</th><th>卡</th></tr></thead><tbody id="weeklyBody"><tr><td colspan="7" class="no-data">选择周查询</td></tr></tbody></table></div>
             </div></div>
             <!-- 月报 -->
             <div class="tab-content" id="tab-monthly"><div class="card">
-                <div class="toolbar"><input type="month" id="monthlyDate"><button class="btn btn-primary" id="btnLoadMonthly">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintMonthly">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportMonthly">📥 导出</button></div>
+                <div class="toolbar"><input type="month" id="monthlyDate"><button class="btn btn-primary" id="btnLoadMonthly">查询</button><div style="flex:1;"></div><button class="btn btn-secondary" id="btnPrintMonthly">🖨️ 打印</button><button class="btn btn-secondary" id="btnExportMonthly" data-plan-feature="reportsVatExport">📥 导出</button></div>
                 <div class="sum-row" id="monthlySummary"></div>
                 <div style="overflow-x:auto;margin-top:16px;"><table class="tx-table"><thead><tr><th>日期</th><th>商品销售</th><th>服务维修</th><th>差价税</th><th>23%税额</th><th>13.5%税额</th><th>Margin税额</th><th>现金</th><th>支出</th><th>卡</th></tr></thead><tbody id="monthlyBody"><tr><td colspan="10" class="no-data">选择月份查询</td></tr></tbody></table></div>
             </div></div>

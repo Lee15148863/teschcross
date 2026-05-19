@@ -94,6 +94,7 @@
     <button class="tab active" data-tab="stores" data-i18n="saas.admin.tab.stores">Stores</button>
     <button class="tab" data-tab="signups" data-i18n="saas.admin.tab.signups">Signups</button>
     <button class="tab" data-tab="modules">Modules</button>
+    <button class="tab" data-tab="database">Database</button>
     <button class="tab" onclick="location.href='/saas/admin-releases.html'" style="background:#fef3c7;color:#92400e">Releases</button>
   </div>
 
@@ -130,6 +131,21 @@
         <button class="btn-outline" id="btnResetModules" onclick="resetStoreModules()">Reset to Plan Defaults</button>
         <span id="modulesSaveMsg" style="font-size:13px;color:#34c759;display:none;align-self:center;">Saved.</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Database Panel (Phase 3A — read-only) -->
+  <div class="panel" id="panel-database">
+    <div class="card">
+      <h2>Database Hosting</h2>
+      <p style="font-size:13px;color:#8e8e93;margin-bottom:16px;">View managed database info for a store. BYO MongoDB available for enterprise plans only.</p>
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <select id="dbStoreSelect" style="flex:1;max-width:400px;">
+          <option value="">-- Select a store --</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="loadStoreDatabase()">View Database</button>
+      </div>
+      <div id="dbResult"></div>
     </div>
   </div>
 
@@ -702,6 +718,77 @@
       msgEl.textContent = 'Reset to plan defaults. Click Save to persist.';
       msgEl.style.color = '#0071e3';
       msgEl.style.display = '';
+    };
+
+    // ─── Database viewer (Phase 3A — read-only) ───────────────────
+
+    function populateDbDropdown(stores) {
+      var sel = document.getElementById('dbStoreSelect');
+      if (!sel) return;
+      var currentVal = sel.value;
+      sel.innerHTML = '<option value="">-- Select a store --</option>';
+      (stores || []).forEach(function(s) {
+        var opt = document.createElement('option');
+        opt.value = s._id; opt.textContent = s.name + ' (' + (s.plan || 'free') + ')';
+        sel.appendChild(opt);
+      });
+      if (currentVal) sel.value = currentVal;
+    }
+
+    var _origStoreListUpdated = window._storeListUpdatedHandler;
+    window.addEventListener('storeListUpdated', function(e) {
+      populateDbDropdown(e.detail || []);
+    });
+
+    window.loadStoreDatabase = function() {
+      var storeId = document.getElementById('dbStoreSelect').value;
+      var resultEl = document.getElementById('dbResult');
+      if (!storeId) { resultEl.innerHTML = '<p style="color:#8e8e93;">Please select a store.</p>'; return; }
+      resultEl.innerHTML = '<p style="color:#8e8e93;">Loading...</p>';
+      fetch('/api/saas/stores/' + storeId + '/database', {
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('saas_token') || '') }
+      }).then(function(r) {
+        if (r.status === 401) { resultEl.innerHTML = '<p style="color:#ff3b30;">Auth required. Super admin only.</p>'; return; }
+        if (!r.ok) { resultEl.innerHTML = '<p style="color:#ff3b30;">Error: ' + r.status + '</p>'; return; }
+        return r.json();
+      }).then(function(d) {
+        if (!d) return;
+        var usedMB = d.storageUsedMB || 0;
+        var limitMB = d.storageLimitMB || 100;
+        var pct = limitMB > 0 ? Math.min(100, Math.round((usedMB / limitMB) * 100)) : 0;
+        var barColor = pct > 80 ? '#ff3b30' : pct > 60 ? '#f59e0b' : '#34c759';
+        var h = '';
+        h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+        h += '<div style="background:#f2f2f7;border-radius:10px;padding:12px;">';
+        h += '<div style="font-size:11px;color:#8e8e93;text-transform:uppercase;">Mode</div>';
+        h += '<div style="font-size:16px;font-weight:600;">' + escHtml(d.databaseMode || 'managed') + '</div></div>';
+        h += '<div style="background:#f2f2f7;border-radius:10px;padding:12px;">';
+        h += '<div style="font-size:11px;color:#8e8e93;text-transform:uppercase;">DB Name</div>';
+        h += '<div style="font-size:13px;font-weight:600;word-break:break-all;">' + escHtml(d.managedDbName || '—') + '</div></div>';
+        h += '<div style="background:#f2f2f7;border-radius:10px;padding:12px;">';
+        h += '<div style="font-size:11px;color:#8e8e93;text-transform:uppercase;">Backup Policy</div>';
+        h += '<div style="font-size:16px;font-weight:600;">' + escHtml(d.backupPolicy || 'none') + '</div></div>';
+        h += '<div style="background:#f2f2f7;border-radius:10px;padding:12px;">';
+        h += '<div style="font-size:11px;color:#8e8e93;text-transform:uppercase;">Data Region</div>';
+        h += '<div style="font-size:16px;font-weight:600;">' + escHtml(d.dataRegion || 'europe-west1') + '</div></div>';
+        h += '<div style="background:#f2f2f7;border-radius:10px;padding:12px;">';
+        h += '<div style="font-size:11px;color:#8e8e93;text-transform:uppercase;">Data Export</div>';
+        h += '<div style="font-size:16px;font-weight:600;">' + (d.allowDataExport ? 'Enabled' : 'Disabled') + '</div></div>';
+        h += '<div style="background:#f2f2f7;border-radius:10px;padding:12px;">';
+        h += '<div style="font-size:11px;color:#8e8e93;text-transform:uppercase;">BYO MongoDB</div>';
+        h += '<div style="font-size:16px;font-weight:600;">' + (d.byoMongoConfigured ? 'Configured' : 'Not configured') + '</div></div>';
+        h += '</div>';
+        h += '<div style="margin-top:14px;background:#f2f2f7;border-radius:10px;padding:12px;">';
+        h += '<div style="font-size:11px;color:#8e8e93;text-transform:uppercase;margin-bottom:4px;">Storage</div>';
+        h += '<div style="font-size:14px;font-weight:600;margin-bottom:6px;">' + usedMB.toFixed(1) + ' MB / ' + limitMB + ' MB (' + pct + '%)</div>';
+        h += '<div style="background:#e8e8ed;border-radius:6px;height:10px;overflow:hidden;">';
+        h += '<div style="background:' + barColor + ';height:100%;width:' + pct + '%;border-radius:6px;"></div></div></div>';
+        if (d.lastBackupAt) {
+          h += '<div style="margin-top:10px;font-size:12px;color:#8e8e93;">Last backup: ' + escHtml(new Date(d.lastBackupAt).toLocaleString()) + '</div>';
+        }
+        h += '<p style="font-size:11px;color:#8e8e93;margin-top:14px;">Storage values are read-only estimates. BYO MongoDB configuration available for enterprise plans in a future release.</p>';
+        resultEl.innerHTML = h;
+      }).catch(function(e) { resultEl.innerHTML = '<p style="color:#ff3b30;">Error: ' + escHtml(e.message) + '</p>'; });
     };
   </script>
 </body>

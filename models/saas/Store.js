@@ -50,6 +50,30 @@ const StoreSchema = new mongoose.Schema({
   // Custom limits overriding plan defaults
   limits: { type: Map, of: Number, default: {} },
 
+  // ─── Database Hosting (StoreFlow Phase 3A) ──────────
+  databaseMode: {
+    type: String,
+    enum: ['managed', 'byo'],
+    default: 'managed'
+  },
+  // Managed mode: auto-generated DB name on shared cluster
+  managedDbName: { type: String, trim: true },
+  // Storage tracking (soft limits, not enforced yet)
+  storageLimitMB:  { type: Number, default: 50 },
+  storageUsedMB:   { type: Number, default: 0 },
+  storageLastCheckedAt: { type: Date },
+  // BYO mode (future: Secret Manager reference, never raw URI)
+  byoMongoConfigured:  { type: Boolean, default: false },
+  byoMongoSecretName:  { type: String },
+  byoMongoSecretVersion: { type: String },
+  byoMongoVerifiedAt:  { type: Date },
+  byoMongoDbName:      { type: String },
+  // Backup & data control (plan-dependent)
+  backupPolicy:   { type: String, enum: ['none', 'daily', 'weekly'], default: 'none' },
+  lastBackupAt:   { type: Date },
+  dataRegion:     { type: String, default: 'europe-west1' },
+  allowDataExport: { type: Boolean, default: false },
+
   createdAt:  { type: Date, default: Date.now },
   updatedAt:  { type: Date, default: Date.now }
 });

@@ -12,7 +12,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAllModuleKeys, getModule } = require('../../utils/storeflow-modules');
-const { getPlanLimits } = require('../../utils/storeflow-plans');
+const { getPlanLimits, getPlanOrDefault } = require('../../utils/storeflow-plans');
 
 function buildModuleDetails(enabledKeys) {
   var details = {};
@@ -102,6 +102,7 @@ router.get('/', function(req, res) {
         limits = getPlanLimits(process.env.STOREFLOW_PLAN || 'free');
       }
 
+      var planObj = getPlanOrDefault(process.env.STOREFLOW_PLAN || 'free');
       return res.json({
         mainPos: false,
         entitlementSource: 'env',
@@ -113,6 +114,7 @@ router.get('/', function(req, res) {
         effectiveModules: validModules,
         modules: buildModuleDetails(validModules),
         limits: limits,
+        planFeatures: planObj.features || {},
         moduleSchemaVersion: process.env.STOREFLOW_MODULE_SCHEMA_VERSION || '1'
       });
     }

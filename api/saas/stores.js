@@ -9,7 +9,7 @@ const { createTransporter } = require('../../utils/inv-crypto');
 const { verifyActionCode, recordAudit } = require('../../utils/deployment-security');
 const Deployment = require('../../models/saas/Deployment');
 const { maskMongoUri, validateMongoUri } = require('../../utils/mongo-uri-validator');
-const { getPlanDefaultModules } = require('../../utils/storeflow-plans');
+const { getPlanDefaultModules, getPlanDatabasePolicy } = require('../../utils/storeflow-plans');
 
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 const BCRYPT_SALT_ROUNDS = 10;
@@ -84,7 +84,22 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
       storeData.disabledModules = [];
       storeData.subscriptionStatus = 'trialing';
 
+      // Phase 3A: initialize database hosting defaults from plan
+      var dbPolicy = getPlanDatabasePolicy(planKey);
+      storeData.databaseMode = 'managed';
+      storeData.storageLimitMB = dbPolicy.storageLimitMB;
+      storeData.backupPolicy = dbPolicy.backupPolicy;
+      storeData.allowDataExport = dbPolicy.allowDataExport;
+      storeData.dataRegion = signup.preferredRegion || 'europe-west1';
+
       const store = await Store.create(storeData);
+
+      // Generate managedDbName after store creation (needs _id for uniqueness)
+      var storeSlug = store.name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 32);
+      var idSuffix = store._id.toString().slice(-6);
+      store.managedDbName = 'storeflow_' + storeSlug + '_' + idSuffix;
+      store.updatedAt = new Date();
+      await store.save();
 
       // Create store_root user
       const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -189,7 +204,21 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
     storeData.disabledModules = [];
     storeData.subscriptionStatus = 'trialing';
 
+    // Phase 3A: initialize database hosting defaults from plan
+    var dbPolicy = getPlanDatabasePolicy(planKey);
+    storeData.databaseMode = 'managed';
+    storeData.storageLimitMB = dbPolicy.storageLimitMB;
+    storeData.backupPolicy = dbPolicy.backupPolicy;
+    storeData.allowDataExport = dbPolicy.allowDataExport;
+
     const store = await Store.create(storeData);
+
+    // Generate managedDbName after store creation (needs _id for uniqueness)
+    var storeSlug = store.name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 32);
+    var idSuffix = store._id.toString().slice(-6);
+    store.managedDbName = 'storeflow_' + storeSlug + '_' + idSuffix;
+    store.updatedAt = new Date();
+    await store.save();
 
     // Create store_root user
     const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -765,6 +794,39 @@ router.post('/:id/deploy-mainpos-clone', superAdminAuth, async (req, res) => {
 
   } catch (e) {
     console.error('[stores] deploy-mainpos-clone error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── Database Hosting (Phase 3A — read-only) ─────────────────
+// GET /api/saas/stores/:storeId/database
+// Returns database hosting info for a store. Super admin only.
+
+router.get('/:storeId/database', superAdminAuth, async (req, res) => {
+  try {
+    var store = await Store.findById(req.params.storeId).select(
+      'databaseMode managedDbName storageLimitMB storageUsedMB storageLastCheckedAt ' +
+      'backupPolicy lastBackupAt byoMongoConfigured byoMongoDbName dataRegion allowDataExport plan'
+    ).lean();
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    res.json({
+      storeId: store._id,
+      plan: store.plan,
+      databaseMode: store.databaseMode || 'managed',
+      managedDbName: store.managedDbName || null,
+      storageLimitMB: store.storageLimitMB || 100,
+      storageUsedMB: store.storageUsedMB || 0,
+      storageLastCheckedAt: store.storageLastCheckedAt || null,
+      backupPolicy: store.backupPolicy || 'none',
+      lastBackupAt: store.lastBackupAt || null,
+      byoMongoConfigured: store.byoMongoConfigured || false,
+      byoMongoDbName: store.byoMongoDbName || null,
+      dataRegion: store.dataRegion || 'europe-west1',
+      allowDataExport: store.allowDataExport || false
+    });
+  } catch (e) {
+    console.error('[stores] database GET error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });

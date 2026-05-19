@@ -111,10 +111,15 @@ function getRoleDefaultPermissions(role, store) {
         if (p.indexOf('.delete') === -1) perms.push(p);
       });
     } else {
-      // Staff gets read-only permissions
+      // Staff gets read-only permissions + basic sales visibility views
+      var staffReadOnlyViews = [
+        'reports.dailySummary', 'reports.salesBasic',
+        'reports.salesByDateRange', 'reports.salesByVatRateView'
+      ];
       modPerms.forEach(function(p) {
         if (p.indexOf('.read') !== -1 || p.indexOf('.access') !== -1 ||
-            p === 'pos.checkout' || p === 'shortcuts.read') {
+            p === 'pos.checkout' || p === 'shortcuts.read' ||
+            staffReadOnlyViews.indexOf(p) !== -1) {
           perms.push(p);
         }
       });
@@ -234,14 +239,49 @@ function requireModule(moduleKey) {
   };
 }
 
+// ─── Permission-to-plan-feature mapping ────────────────────────────
+// Maps granular permission keys to plan feature flags.
+// If a feature is false for the plan, the permission is denied
+// regardless of user role. Used by requirePermission for env-based tenants.
+
+var PERMISSION_TO_FEATURE = {
+  'reports.dailySummary': 'reportsDailySummary',
+  'reports.salesBasic': 'reportsSalesBasic',
+  'reports.salesByDateRange': 'reportsSalesByDateRange',
+  'reports.salesByVatRateView': 'reportsSalesByVatRateView',
+  'reports.vatReportExport': 'reportsVatExport',
+  'reports.accountingReportExport': 'reportsAccountingExport',
+  'reports.profitReport': 'reportsProfitReport',
+  'reports.cashLedgerReport': 'reportsCashLedgerReport'
+};
+
 /**
- * Express middleware — blocks request if user lacks permission.
- * To be applied per-route in Phase 2+.
+ * Express middleware — blocks request if user lacks permission
+ * OR if the plan does not include the corresponding feature.
+ *
+ * Phase 3A.2: added env-based plan feature check for tenant deployments
+ * that lack req.storeFlowStore.
  */
 function requirePermission(permissionKey) {
   return function(req, res, next) {
+    // Main POS — skip all checks
     if (!process.env.STOREFLOW_STORE_ID) return next();
 
+    // Fast path: env-based plan feature check
+    var featureKey = PERMISSION_TO_FEATURE[permissionKey];
+    if (featureKey) {
+      var planKey = process.env.STOREFLOW_PLAN || 'free';
+      var plan = getPlanOrDefault(planKey);
+      if (plan.features && plan.features[featureKey] === false) {
+        return res.status(403).json({
+          error: 'PERMISSION_DENIED',
+          permission: permissionKey,
+          message: 'This feature is not available on your plan.'
+        });
+      }
+    }
+
+    // User-level permission check
     var user = req.user;
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
 

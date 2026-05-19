@@ -78,12 +78,22 @@ const STOREFLOW_MODULES = {
   },
   reports: {
     key: 'reports',
-    name: 'Reports & Analytics',
+    name: 'Reports & Sales Visibility',
     category: 'finance',
     required: false,
-    description: 'Daily, weekly, monthly reports, tax summary, export',
+    description: 'Daily summary, sales visibility, tax reports, accounting exports',
     defaultVisible: true,
-    permissions: ['reports.read', 'reports.daily', 'reports.weekly', 'reports.monthly', 'reports.export']
+    permissions: [
+      'reports.access',
+      'reports.dailySummary',
+      'reports.salesBasic',
+      'reports.salesByDateRange',
+      'reports.salesByVatRateView',
+      'reports.vatReportExport',
+      'reports.accountingReportExport',
+      'reports.profitReport',
+      'reports.cashLedgerReport'
+    ]
   },
   invoices: {
     key: 'invoices',

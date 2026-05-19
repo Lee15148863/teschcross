@@ -263,6 +263,7 @@ window.StoreFlowAccess = {
   _storeStatus: null,
   _subscriptionStatus: null,
   _limits: null,
+  _planFeatures: null,
 
   init: function(payload) {
     if (!payload) return;
@@ -275,6 +276,7 @@ window.StoreFlowAccess = {
     if (payload.storeStatus) this._storeStatus = payload.storeStatus;
     if (payload.subscriptionStatus) this._subscriptionStatus = payload.subscriptionStatus;
     if (payload.limits) this._limits = payload.limits;
+    if (payload.planFeatures) this._planFeatures = payload.planFeatures;
     this._loaded = true;
   },
 
@@ -322,7 +324,28 @@ window.StoreFlowAccess = {
   getStoreStatus: function() { return this._storeStatus; },
   getSubscriptionStatus: function() { return this._subscriptionStatus; },
   getLimits: function() { return this._limits; },
+  getPlanFeatures: function() { return this._planFeatures; },
   isLoaded: function() { return this._loaded; },
+
+  canUseFeature: function(featureKey) {
+    // Main POS or not loaded — allow all (fail open)
+    if (typeof window.__IS_MAIN_POS__ !== 'undefined' && window.__IS_MAIN_POS__) return true;
+    if (!this._loaded || !this._planFeatures) return true;
+    // If feature is explicitly false, deny. Otherwise allow (undefined = legacy, true = enabled).
+    if (this._planFeatures[featureKey] === false) return false;
+    return true;
+  },
+
+  applyReportVisibility: function() {
+    // Hide elements with data-plan-feature attribute if feature is not available
+    var self = this;
+    document.querySelectorAll('[data-plan-feature]').forEach(function(el) {
+      var feature = el.getAttribute('data-plan-feature');
+      if (feature && !self.canUseFeature(feature)) {
+        el.style.display = 'none';
+      }
+    });
+  },
 
   // Phase 2A — hide disabled sidebar links
   applySidebarVisibility: function() {
@@ -373,6 +396,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   (function() {
     function afterLoad() {
       window.StoreFlowAccess.applySidebarVisibility();
+      window.StoreFlowAccess.applyReportVisibility();
       // Auto-apply page-level guard if body has data-page-module
       var pageModule = document.body && document.body.getAttribute('data-page-module');
       if (pageModule) {
