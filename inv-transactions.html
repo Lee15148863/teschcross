@@ -61,20 +61,20 @@
         <div class="logo"><img src="logo.png" alt="Tech Cross" id="snLogo"><span id="snBrand">进销存管理系统</span></div>
         <nav>
             <div class="nav-section" data-en="Business" data-bi="业务管理 / Business">业务管理 / Business</div>
-            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span><span data-en="Checkout" data-bi="POS 收银 / Checkout">POS 收银 / Checkout</span></a>
-            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span><span data-en="Products" data-bi="商品管理 / Products">商品管理 / Products</span></a>
-            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span><span data-en="Stock" data-bi="库存管理 / Stock">库存管理 / Stock</span></a>
-            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span><span data-en="Suppliers" data-bi="供应商 / Suppliers">供应商 / Suppliers</span></a>
-            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span><span data-en="Purchases" data-bi="采购管理 / Purchases">采购管理 / Purchases</span></a>
-            <a href="inv-transactions.html" class="active" data-perm="transactions"><span class="icon">📋</span><span data-en="Transactions" data-bi="交易记录 / Transactions">交易记录 / Transactions</span></a>
-            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span><span data-en="Shortcuts" data-bi="POS 快捷键 / Shortcuts">POS 快捷键 / Shortcuts</span></a>
+            <a href="inv-pos.html" data-perm="pos" data-module="pos"><span class="icon">💰</span><span data-en="Checkout" data-bi="POS 收银 / Checkout">POS 收银 / Checkout</span></a>
+            <a href="inv-products.html" data-perm="products" data-module="products"><span class="icon">📦</span><span data-en="Products" data-bi="商品管理 / Products">商品管理 / Products</span></a>
+            <a href="inv-stock.html" data-perm="stock" data-module="stock"><span class="icon">🏭</span><span data-en="Stock" data-bi="库存管理 / Stock">库存管理 / Stock</span></a>
+            <a href="inv-suppliers.html" data-perm="suppliers" data-module="suppliers"><span class="icon">🤝</span><span data-en="Suppliers" data-bi="供应商 / Suppliers">供应商 / Suppliers</span></a>
+            <a href="inv-purchases.html" data-perm="purchases" data-module="purchases"><span class="icon">🛒</span><span data-en="Purchases" data-bi="采购管理 / Purchases">采购管理 / Purchases</span></a>
+            <a href="inv-transactions.html" class="active" data-perm="transactions" data-module="transactions"><span class="icon">📋</span><span data-en="Transactions" data-bi="交易记录 / Transactions">交易记录 / Transactions</span></a>
+            <a href="pos-shortcuts-admin.html" data-perm="pos" data-module="shortcuts"><span class="icon">⚡</span><span data-en="Shortcuts" data-bi="POS 快捷键 / Shortcuts">POS 快捷键 / Shortcuts</span></a>
             <div class="nav-section" data-en="Reports" data-bi="报表与发票 / Reports">报表与发票 / Reports</div>
-            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span><span data-en="Reports" data-bi="报表中心 / Reports">报表中心 / Reports</span></a>
-            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span><span data-en="VAT Invoice" data-bi="发票管理 / VAT Invoice">发票管理 / VAT Invoice</span></a>
-            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span><span data-en="Expenses" data-bi="支出管理 / Expenses">支出管理 / Expenses</span></a>
+            <a href="inv-reports.html" data-perm="reports" data-module="reports"><span class="icon">📊</span><span data-en="Reports" data-bi="报表中心 / Reports">报表中心 / Reports</span></a>
+            <a href="inv-invoices.html" data-perm="invoices" data-module="invoices"><span class="icon">🧾</span><span data-en="VAT Invoice" data-bi="发票管理 / VAT Invoice">发票管理 / VAT Invoice</span></a>
+            <a href="inv-expenses.html" data-perm="expenses" data-module="expenses"><span class="icon">💸</span><span data-en="Expenses" data-bi="支出管理 / Expenses">支出管理 / Expenses</span></a>
             <div class="nav-section" id="adminSection" style="display:none;" data-en="System" data-bi="系统管理 / System">系统管理 / System</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span><span data-en="Settings" data-bi="系统设置 / Settings">系统设置 / Settings</span></a>
-            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span><span data-en="Users" data-bi="用户管理 / Users">用户管理 / Users</span></a>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings" data-module="settings"><span class="icon">⚙️</span><span data-en="Settings" data-bi="系统设置 / Settings">系统设置 / Settings</span></a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users" data-module="users"><span class="icon">👥</span><span data-en="Users" data-bi="用户管理 / Users">用户管理 / Users</span></a>
         </nav>
     </aside>
     <div class="main">
@@ -811,10 +811,12 @@ window.sendWhatsAppReceipt = async function() {
         text += 'Thank you for your business!\n';
         text += 'TechCross Repair Centre\n046 905 9854';
 
-        // Build wa.me URL directly — NO share tokens, NO hosted links
+        // Build WhatsApp URLs — prefer desktop app, fallback to web
         var waNumber = phone.replace('+', '').replace(/^00/, '');
-        var waUrl = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(text);
-        window.open(waUrl, '_blank');
+        var encodedText = encodeURIComponent(text);
+        var desktopUrl = 'whatsapp://send?phone=' + waNumber + '&text=' + encodedText;
+        var webUrl = 'https://wa.me/' + waNumber + '?text=' + encodedText;
+        window.open(desktopUrl, '_blank');
         showToast('✅ WhatsApp opened', 'success');
         closeWhatsAppModal();
     } catch (e) { showToast('Error: ' + e.message, 'error'); }

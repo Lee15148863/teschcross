@@ -64,20 +64,20 @@
         <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
         <nav>
             <div class="nav-section">业务管理 / Business</div>
-            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
-            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
-            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
-            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
-            <a href="inv-purchases.html" class="active" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
-            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
-            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
+            <a href="inv-pos.html" data-perm="pos" data-module="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
+            <a href="inv-products.html" data-perm="products" data-module="products"><span class="icon">📦</span>商品管理 / Products</a>
+            <a href="inv-stock.html" data-perm="stock" data-module="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
+            <a href="inv-suppliers.html" data-perm="suppliers" data-module="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
+            <a href="inv-purchases.html" class="active" data-perm="purchases" data-module="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
+            <a href="inv-transactions.html" data-perm="transactions" data-module="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
+            <a href="pos-shortcuts-admin.html" data-perm="pos" data-module="shortcuts"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
             <div class="nav-section">报表与发票 / Reports</div>
-            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
-            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
-            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
+            <a href="inv-reports.html" data-perm="reports" data-module="reports"><span class="icon">📊</span>报表中心 / Reports</a>
+            <a href="inv-invoices.html" data-perm="invoices" data-module="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
+            <a href="inv-expenses.html" data-perm="expenses" data-module="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
             <div class="nav-section" id="adminSection" style="display:none;">系统管理 / System</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
-            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings" data-module="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users" data-module="users"><span class="icon">👥</span>用户管理 / Users</a>
         </nav>
     </aside>
     <div class="main">
@@ -121,6 +121,7 @@
     </div>
 </div>
 
+<script src="inv-common.js"></script>
 <script src="auth-guard.js"></script>
 <script>
 (function(){

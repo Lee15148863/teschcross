@@ -93,6 +93,7 @@
   <div class="tabs">
     <button class="tab active" data-tab="stores" data-i18n="saas.admin.tab.stores">Stores</button>
     <button class="tab" data-tab="signups" data-i18n="saas.admin.tab.signups">Signups</button>
+    <button class="tab" data-tab="modules">Modules</button>
     <button class="tab" onclick="location.href='/saas/admin-releases.html'" style="background:#fef3c7;color:#92400e">Releases</button>
   </div>
 
@@ -109,6 +110,21 @@
     <div class="card">
       <h2 data-i18n="saas.admin.pendingSignups">Pending Signups</h2>
       <div id="signupList"><div class="empty-state" data-i18n="saas.admin.loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- Modules Panel (Phase 1A — read-only) -->
+  <div class="panel" id="panel-modules">
+    <div class="card">
+      <h2>Store Module Status</h2>
+      <p style="font-size:13px;color:#8e8e93;margin-bottom:16px;">Select a store to view its module entitlement.</p>
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <select id="modulesStoreSelect" style="flex:1;max-width:400px;">
+          <option value="">-- Select a store --</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="loadStoreModules()">View Modules</button>
+      </div>
+      <div id="modulesResult"></div>
     </div>
   </div>
 
@@ -546,6 +562,68 @@
     loadStores();
     loadSignups();
     applyLang();
+
+    // ─── Module viewer ─────────────────────────────────────────
+    function populateModulesDropdown(stores) {
+      var sel = document.getElementById('modulesStoreSelect');
+      if (!sel) return;
+      var currentVal = sel.value;
+      sel.innerHTML = '<option value="">-- Select a store --</option>';
+      (stores || []).forEach(function(s) {
+        var opt = document.createElement('option');
+        opt.value = s._id; opt.textContent = s.name + ' (' + (s.plan || 'free') + ')';
+        sel.appendChild(opt);
+      });
+      if (currentVal) sel.value = currentVal;
+    }
+
+    window._allStores = [];
+
+    // Hook into stores fetch for module dropdown
+    window.addEventListener('storeListUpdated', function(e) {
+      window._allStores = e.detail || [];
+      populateModulesDropdown(window._allStores);
+    });
+
+    window.loadStoreModules = function() {
+      var storeId = document.getElementById('modulesStoreSelect').value;
+      var resultEl = document.getElementById('modulesResult');
+      if (!storeId) { resultEl.innerHTML = '<p style="color:#8e8e93;">Please select a store.</p>'; return; }
+      resultEl.innerHTML = '<p style="color:#8e8e93;">Loading...</p>';
+      fetch('/api/saas/stores/' + storeId + '/modules', {
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('saas_token') || '') }
+      }).then(function(r) {
+        if (r.status === 401) { resultEl.innerHTML = '<p style="color:#ff3b30;">Auth required. Super admin only.</p>'; return; }
+        if (!r.ok) { resultEl.innerHTML = '<p style="color:#ff3b30;">Error: ' + r.status + '</p>'; return; }
+        return r.json();
+      }).then(function(d) {
+        if (!d) return;
+        var plan = d.plan || {}; var store = d.store || {}; var mods = d.modules || {};
+        var h = '<div style="background:#f2f2f7;border-radius:10px;padding:14px;margin-bottom:14px;">';
+        h += '<strong>Plan:</strong> ' + escHtml(plan.name || store.plan) + '<br>';
+        h += '<strong>Status:</strong> ' + escHtml(store.status || '') + ' | <strong>Sub:</strong> ' + escHtml(store.subscriptionStatus || '') + '<br>';
+        h += '<strong>Enabled:</strong> ' + (store.enabledModules || []).length + ' modules</div>';
+
+        var cats = {};
+        Object.keys(mods).forEach(function(k) {
+          var c = mods[k].category || 'other';
+          if (!cats[c]) cats[c] = [];
+          cats[c].push(mods[k]);
+        });
+        Object.keys(cats).forEach(function(cat) {
+          h += '<h3 style="font-size:13px;text-transform:uppercase;color:#8e8e93;margin:14px 0 6px;">' + escHtml(cat) + '</h3>';
+          h += '<table><thead><tr><th>Module</th><th>Req</th><th>Plan</th><th>Active</th></tr></thead><tbody>';
+          cats[cat].forEach(function(m) {
+            h += '<tr><td>' + escHtml(m.name) + '</td>';
+            h += '<td>' + (m.required ? '✅' : '—') + '</td>';
+            h += '<td>' + (m.allowedByPlan ? '✅' : '❌') + '</td>';
+            h += '<td style="color:' + (m.enabled ? '#34c759' : '#ff3b30') + ';">' + (m.enabled ? 'YES' : 'NO') + '</td></tr>';
+          });
+          h += '</tbody></table>';
+        });
+        resultEl.innerHTML = h;
+      }).catch(function(e) { resultEl.innerHTML = '<p style="color:#ff3b30;">Error: ' + escHtml(e.message) + '</p>'; });
+    };
   </script>
 </body>
 </html>

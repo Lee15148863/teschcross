@@ -1939,7 +1939,8 @@
         if (!res) return;
         var data = await res.json();
         if (!res.ok) { showToast(data.error || 'Failed', 'error'); return; }
-        window.open(data.link, '_blank');
+        var waUrl = data.desktopUrl || data.webUrl || data.link;
+        window.open(waUrl, '_blank');
         showToast('✅ WhatsApp opened', 'success');
         document.getElementById('whatsAppOverlay').classList.remove('show');
       } catch (err) {

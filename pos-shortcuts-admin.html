@@ -64,20 +64,20 @@
         <div class="logo"><img src="logo.png" alt="Tech Cross"><span>进销存管理系统</span></div>
         <nav>
             <div class="nav-section">业务管理 / Business</div>
-            <a href="inv-pos.html"><span class="icon">💰</span>POS 收银 / Checkout</a>
-            <a href="inv-products.html"><span class="icon">📦</span>商品管理 / Products</a>
-            <a href="inv-stock.html"><span class="icon">🏭</span>库存管理 / Stock</a>
-            <a href="inv-suppliers.html"><span class="icon">🤝</span>供应商 / Suppliers</a>
-            <a href="inv-purchases.html"><span class="icon">🛒</span>采购管理 / Purchases</a>
-            <a href="inv-transactions.html"><span class="icon">📋</span>交易记录 / Transactions</a>
+            <a href="inv-pos.html" data-module="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
+            <a href="inv-products.html" data-module="products"><span class="icon">📦</span>商品管理 / Products</a>
+            <a href="inv-stock.html" data-module="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
+            <a href="inv-suppliers.html" data-module="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
+            <a href="inv-purchases.html" data-module="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
+            <a href="inv-transactions.html" data-module="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
             <div class="nav-section">报表与发票 / Reports</div>
-            <a href="inv-reports.html"><span class="icon">📊</span>报表中心 / Reports</a>
-            <a href="inv-invoices.html"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
-            <a href="inv-expenses.html"><span class="icon">💸</span>支出管理 / Expenses</a>
+            <a href="inv-reports.html" data-module="reports"><span class="icon">📊</span>报表中心 / Reports</a>
+            <a href="inv-invoices.html" data-module="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
+            <a href="inv-expenses.html" data-module="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
             <div class="nav-section">系统管理 / System</div>
-            <a href="inv-settings.html"><span class="icon">⚙️</span>系统设置 / Settings</a>
-            <a href="inv-users.html"><span class="icon">👥</span>用户管理 / Users</a>
-            <a href="pos-shortcuts-admin.html" class="active"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
+            <a href="inv-settings.html" data-module="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
+            <a href="inv-users.html" data-module="users"><span class="icon">👥</span>用户管理 / Users</a>
+            <a href="pos-shortcuts-admin.html" class="active" data-module="shortcuts"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
         </nav>
     </aside>
     <div class="main">
@@ -111,6 +111,7 @@
     </div>
 </div>
 
+<script src="inv-common.js"></script>
 <script src="auth-guard.js"></script>
 <script>
 (function() {

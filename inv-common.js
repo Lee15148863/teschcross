@@ -322,8 +322,112 @@ window.StoreFlowAccess = {
   getStoreStatus: function() { return this._storeStatus; },
   getSubscriptionStatus: function() { return this._subscriptionStatus; },
   getLimits: function() { return this._limits; },
-  isLoaded: function() { return this._loaded; }
+  isLoaded: function() { return this._loaded; },
+
+  // Phase 2A — hide disabled sidebar links
+  applySidebarVisibility: function() {
+    var self = this;
+    document.querySelectorAll('nav a[data-module]').forEach(function(link) {
+      var mod = link.getAttribute('data-module');
+      if (mod && !self.canUseModule(mod)) {
+        link.style.display = 'none';
+      }
+    });
+    // Hide nav-section if all following links (until next nav-section) are hidden
+    document.querySelectorAll('.sidebar .nav-section').forEach(function(section) {
+      var el = section.nextElementSibling;
+      var hasVisible = false;
+      while (el && !el.classList.contains('nav-section')) {
+        if (el.tagName === 'A' && el.style.display !== 'none') hasVisible = true;
+        el = el.nextElementSibling;
+      }
+      if (!hasVisible) section.style.display = 'none';
+    });
+  },
+
+  // Phase 2A — page-level guard
+  guardPage: function(moduleKey) {
+    if (this.canUseModule(moduleKey)) return false; // module enabled, proceed normally
+    // Module disabled — show unavailable message
+    var content = document.querySelector('.content') || document.querySelector('.main') || document.body;
+    if (content) {
+      var msg = document.createElement('div');
+      msg.style.cssText = 'text-align:center;padding:80px 24px;';
+      msg.innerHTML = '<h2 style="font-size:22px;font-weight:600;margin-bottom:12px;color:#1d1d1f;">Module Not Available / 模块不可用</h2>' +
+        '<p style="font-size:14px;color:#6e6e73;max-width:500px;margin:0 auto;">' +
+        'This feature is not included in your current plan. Please contact your store owner or StoreFlow support.' +
+        '</p><p style="font-size:14px;color:#86868b;max-width:500px;margin:16px auto;">' +
+        '此功能未包含在您当前的套餐中，请联系店主或 StoreFlow 客服。' +
+        '</p>';
+      // Clear and show only the message, keeping sidebar/topbar
+      while (content.firstChild) content.removeChild(content.firstChild);
+      content.appendChild(msg);
+    }
+    return true; // page guarded
+  }
 };
+
+// ─── Phase 2A — Auto-load module state + hide disabled sidebar ─────
+// Runs after DOM ready. Fails open — no module info = all modules shown.
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  (function() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        window.StoreFlowAccess.load().then(function() {
+          window.StoreFlowAccess.applySidebarVisibility();
+        });
+      });
+    } else {
+      window.StoreFlowAccess.load().then(function() {
+        window.StoreFlowAccess.applySidebarVisibility();
+      });
+    }
+  })();
+}
+
+// ─── App version check — poll every 5 min, notify on change ───────
+// Does NOT force reload. Uses passive notification only.
+if (typeof window !== 'undefined') {
+  (function() {
+    var _appVersionCheckTimer = null;
+    var _lastKnownVersion = null;
+
+    function checkAppVersion() {
+      try {
+        fetch('/api/app-version', { headers: { 'Accept': 'application/json' } }).then(function(r) {
+          if (!r.ok) return;
+          return r.json();
+        }).then(function(data) {
+          if (!data || !data.version) return;
+          if (_lastKnownVersion && _lastKnownVersion !== data.version) {
+            // Don't notify during active POS checkout
+            if (document.querySelector('.checkout-success-overlay')) return;
+            if (window.invUtils && window.invUtils.showToast) {
+              window.invUtils.showToast('New version available. Refresh to update.', 'info');
+            }
+          }
+          _lastKnownVersion = data.version;
+        }).catch(function() {});
+      } catch (_) {}
+    }
+
+    function startVersionCheck() {
+      if (_appVersionCheckTimer) return;
+      checkAppVersion();
+      _appVersionCheckTimer = setInterval(checkAppVersion, 5 * 60 * 1000);
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) checkAppVersion();
+      });
+    }
+
+    // Start after auth is likely ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() { setTimeout(startVersionCheck, 10000); });
+    } else {
+      setTimeout(startVersionCheck, 10000);
+    }
+  })();
+}
 
 // Export for use in HTML pages
 if (typeof window !== 'undefined') {

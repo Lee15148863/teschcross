@@ -160,10 +160,11 @@
   // ─── WhatsApp Link Generator ───────────────────────────────────────────
   function openWhatsApp(phone, message) {
     var normalized = normalizePhone(phone);
-    // wa.me expects E164 without + or 00 prefix
+    // Prefer WhatsApp desktop app, wa.me as fallback
     var waNumber = normalized.replace('+', '').replace(/^00/, '');
-    var link = 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(message);
-    window.open(link, '_blank');
+    var encodedText = encodeURIComponent(message);
+    var desktopUrl = 'whatsapp://send?phone=' + waNumber + '&text=' + encodedText;
+    window.open(desktopUrl, '_blank');
     addRecentNumber(normalized, '');
     return normalized;
   }

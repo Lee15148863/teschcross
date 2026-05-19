@@ -73,6 +73,26 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ─── App version endpoint (lightweight, for frontend freshness check) ────────
+app.get('/api/app-version', (req, res) => {
+  res.json({
+    version: process.env.APP_VERSION || 'dev',
+    revision: process.env.K_REVISION || '',
+    moduleSchemaVersion: process.env.STOREFLOW_MODULE_SCHEMA_VERSION || '1',
+    buildTime: process.env.BUILD_TIME || ''
+  });
+});
+
+// ─── No-store cache headers for HTML pages ──────────────────────────────────
+app.use(function(req, res, next) {
+  if (req.path.match(/\.html$/) || req.path.match(/^\/saas\/[a-z-]*$/)) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+
 // ─── SaaS SPA: route /saas/* → saas/*.html (BEFORE static to avoid fallthrough)
 const SAAS_PAGES = ['', 'login', 'register', 'dashboard', 'admin', 'admin-deployments', 'admin-releases', 'pos'];
 app.use((req, res, next) => {

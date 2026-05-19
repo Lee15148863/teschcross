@@ -235,9 +235,11 @@ async function getInvoiceWhatsAppLink(invoiceId, phoneNumber, operatorId) {
     + shareUrl + '\n\n'
     + 'This secure link expires in 14 days.';
 
-  const link = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(text);
+  const encodedText = encodeURIComponent(text);
+  const webUrl = 'https://wa.me/' + cleanPhone + '?text=' + encodedText;
+  const desktopUrl = 'whatsapp://send?phone=' + cleanPhone + '&text=' + encodedText;
 
-  return { link, text, shareUrl, pdfUrl, expiresAt };
+  return { link: webUrl, webUrl: webUrl, desktopUrl: desktopUrl, text, shareUrl, pdfUrl, expiresAt };
 }
 
 module.exports = {
