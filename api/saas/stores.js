@@ -9,6 +9,7 @@ const { createTransporter } = require('../../utils/inv-crypto');
 const { verifyActionCode, recordAudit } = require('../../utils/deployment-security');
 const Deployment = require('../../models/saas/Deployment');
 const { maskMongoUri, validateMongoUri } = require('../../utils/mongo-uri-validator');
+const { getPlanDefaultModules } = require('../../utils/storeflow-plans');
 
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 const BCRYPT_SALT_ROUNDS = 10;
@@ -75,6 +76,14 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
       // Validation passed — proceed with store + user + deployment creation
       if (signup.timezone) storeData.timezone = signup.timezone;
       if (signup.currency) storeData.currency = signup.currency;
+
+      // Phase 1B: initialize plan + enabledModules from signup
+      var planKey = signup.subscriptionPlan || 'free';
+      storeData.plan = planKey;
+      storeData.enabledModules = getPlanDefaultModules(planKey);
+      storeData.disabledModules = [];
+      storeData.subscriptionStatus = 'trialing';
+
       const store = await Store.create(storeData);
 
       // Create store_root user
@@ -172,6 +181,14 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
 
     // Legacy path — signup without mongoUri (existing behavior)
     storeData.notes = (signup.notes || '') + ' [LEGACY: no MongoDB URI]';
+
+    // Phase 1B: initialize plan + enabledModules from signup
+    var planKey = signup.subscriptionPlan || 'free';
+    storeData.plan = planKey;
+    storeData.enabledModules = getPlanDefaultModules(planKey);
+    storeData.disabledModules = [];
+    storeData.subscriptionStatus = 'trialing';
+
     const store = await Store.create(storeData);
 
     // Create store_root user
@@ -748,6 +765,73 @@ router.post('/:id/deploy-mainpos-clone', superAdminAuth, async (req, res) => {
 
   } catch (e) {
     console.error('[stores] deploy-mainpos-clone error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── StoreFlow Module/Permission (Phase 1A — read-only) ──────────
+// GET /api/saas/stores/:storeId/modules
+// Returns the effective module state for a store.
+// Super admin only. Read-only. No writes.
+
+const { STOREFLOW_MODULES, getAllModuleKeys } = require('../../utils/storeflow-modules');
+const { STOREFLOW_PLANS, getPlanOrDefault } = require('../../utils/storeflow-plans');
+const { getStoreEnabledModules, getRoleDefaultPermissions } = require('../../utils/storeflow-permissions');
+
+router.get('/:storeId/modules', superAdminAuth, async (req, res) => {
+  try {
+    var store = await Store.findById(req.params.storeId).lean();
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    var plan = getPlanOrDefault(store.plan);
+    var enabled = getStoreEnabledModules(store);
+    var disabled = store.disabledModules || [];
+
+    // Build module details with status
+    var moduleDetails = {};
+    getAllModuleKeys().forEach(function(key) {
+      var mod = STOREFLOW_MODULES[key];
+      var allowedByPlan = plan.allowedModules.indexOf(key) !== -1;
+      var isEnabled = enabled.indexOf(key) !== -1;
+      moduleDetails[key] = {
+        key: key,
+        name: mod.name,
+        category: mod.category,
+        required: mod.required || false,
+        allowedByPlan: allowedByPlan,
+        enabled: isEnabled,
+        permissions: mod.permissions
+      };
+    });
+
+    res.json({
+      store: {
+        _id: store._id,
+        name: store.name,
+        plan: store.plan,
+        subscriptionStatus: store.subscriptionStatus,
+        trialEndsAt: store.trialEndsAt,
+        status: store.status,
+        enabledModules: enabled,
+        disabledModules: disabled
+      },
+      plan: {
+        key: plan.key,
+        name: plan.name,
+        allowedModules: plan.allowedModules,
+        defaultModules: plan.defaultEnabledModules,
+        limits: plan.limits,
+        features: plan.features
+      },
+      modules: moduleDetails,
+      roleDefaults: {
+        root: getRoleDefaultPermissions('root', store),
+        manager: getRoleDefaultPermissions('manager', store),
+        staff: getRoleDefaultPermissions('staff', store)
+      }
+    });
+  } catch (e) {
+    console.error('[stores] modules error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });

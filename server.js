@@ -183,6 +183,7 @@ app.use('/api/inv/root/export', require('./api/inv/root-export'));
 app.use('/api/inv/buyin-receipt', require('./api/inv/buyin-receipt'));
 app.use('/api/inv/delivery', require('./api/inv/delivery'));
 app.use('/api/inv/whatsapp', require('./api/inv/whatsapp'));
+app.use('/api/inv/modules', require('./api/inv/modules'));
 
 // ─── SaaS routes (separate from TechCross POS) ───────────────────────────
 app.use('/api/saas/auth', require('./api/saas/auth'));

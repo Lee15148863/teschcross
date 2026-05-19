@@ -23,6 +23,33 @@ const StoreSchema = new mongoose.Schema({
   timezone:    { type: String, trim: true },
   currency:    { type: String, trim: true },
 
+  // ─── StoreFlow Module / Plan / Permission (Phase 1A) ──────────
+  // Backward compatible: undefined = legacy all-enabled mode
+  plan: {
+    type: String,
+    enum: ['free', 'starter', 'pro', 'enterprise'],
+    default: 'free'
+  },
+  subscriptionStatus: {
+    type: String,
+    enum: ['trialing', 'active', 'past_due', 'canceled', 'expired', 'none'],
+    default: 'trialing'
+  },
+  trialEndsAt: { type: Date },
+
+  // Module control
+  // undefined → legacy (all modules available)
+  // [] → no modules (should not happen — required modules always on)
+  // ['pos','products','transactions',...] → explicit
+  enabledModules:  { type: [String], default: undefined },
+  disabledModules: { type: [String], default: [] },
+
+  // Per-store feature overrides (free-form)
+  featureOverrides: { type: Map, of: mongoose.Schema.Types.Mixed, default: {} },
+
+  // Custom limits overriding plan defaults
+  limits: { type: Map, of: Number, default: {} },
+
   createdAt:  { type: Date, default: Date.now },
   updatedAt:  { type: Date, default: Date.now }
 });

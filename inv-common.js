@@ -252,6 +252,79 @@ function showToast(msg, type) {
   setTimeout(() => { toast.style.transform = 'translateX(120%)'; }, 3000);
 }
 
+// ─── StoreFlow Module Access (Phase 1A — frontend helper) ─────────
+// Provides canUseModule / canDo checks for hiding disabled features.
+// Module list is injected by tenant branding script or set manually.
+// Main POS: all modules enabled. Legacy stores: all enabled.
+window.StoreFlowAccess = {
+  _modules: null,
+  _loaded: false,
+  _plan: null,
+  _storeStatus: null,
+  _subscriptionStatus: null,
+  _limits: null,
+
+  init: function(payload) {
+    if (!payload) return;
+    if (payload.effectiveModules && Array.isArray(payload.effectiveModules)) {
+      this._modules = payload.effectiveModules;
+    } else if (Array.isArray(payload)) {
+      this._modules = payload;
+    }
+    if (payload.plan) this._plan = payload.plan;
+    if (payload.storeStatus) this._storeStatus = payload.storeStatus;
+    if (payload.subscriptionStatus) this._subscriptionStatus = payload.subscriptionStatus;
+    if (payload.limits) this._limits = payload.limits;
+    this._loaded = true;
+  },
+
+  load: async function() {
+    // Main POS — skip load, all modules enabled
+    if (typeof window.__IS_MAIN_POS__ !== 'undefined' && window.__IS_MAIN_POS__) {
+      this._loaded = true;
+      return;
+    }
+    try {
+      var r = await fetch('/api/inv/modules', { headers: { 'Accept': 'application/json' } });
+      if (!r.ok) return; // Fail open — leave _modules null = all enabled
+      var data = await r.json();
+      this.init(data);
+    } catch(_) {
+      // Fail open — network error, allow all modules
+    }
+  },
+
+  getEnabledModules: function() {
+    // Main POS or not tenant — everything enabled
+    if (typeof window.__IS_MAIN_POS__ !== 'undefined' && window.__IS_MAIN_POS__) {
+      return null; // null = all enabled
+    }
+    // Not loaded yet — null = all enabled (fail open)
+    if (!this._loaded) return null;
+    return this._modules;
+  },
+
+  canUseModule: function(moduleKey) {
+    var mods = this.getEnabledModules();
+    // null = all enabled (Main POS or not initialized)
+    if (mods === null) return true;
+    // Legacy — no module list, allow all
+    if (!mods || mods.length === 0) return true;
+    return mods.indexOf(moduleKey) !== -1;
+  },
+
+  canDo: function(permissionKey) {
+    var moduleKey = permissionKey.split('.')[0];
+    return this.canUseModule(moduleKey);
+  },
+
+  getPlan: function() { return this._plan; },
+  getStoreStatus: function() { return this._storeStatus; },
+  getSubscriptionStatus: function() { return this._subscriptionStatus; },
+  getLimits: function() { return this._limits; },
+  isLoaded: function() { return this._loaded; }
+};
+
 // Export for use in HTML pages
 if (typeof window !== 'undefined') {
   window.invAuth = { getToken, getUser, isLoggedIn, requireAuth, requireAdmin, logout, isAdmin, isStaff, initPageAuth };
