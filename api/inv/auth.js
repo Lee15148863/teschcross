@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const InvUser = require('../../models/inv/User');
 const { SYSTEM_ROOTS } = require('../../models/inv/User');
+const { requireModule } = require('../../utils/storeflow-permissions');
 const TrustedDevice = require('../../models/inv/TrustedDevice');
 const LoginLog = require('../../models/inv/LoginLog');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
@@ -330,7 +331,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
 // ─── GET /api/inv/auth/users ────────────────────────────────────────────────
 // Get user list (Admin only) — boss accounts are hidden
-router.get('/users', jwtAuth, requireRole('root'), async (req, res) => {
+router.get('/users', jwtAuth, requireRole('root'), requireModule('users'), async (req, res) => {
   try {
     const users = await InvUser.find({ boss: { $ne: true } }, '-password').sort({ createdAt: -1 });
     res.json(users.map(u => ({ ...u.toObject(), permissions: u.getPermissions() })));

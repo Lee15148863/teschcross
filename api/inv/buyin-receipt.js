@@ -5,6 +5,7 @@ const Product = require('../../models/inv/Product');
 const InvUser = require('../../models/inv/User');
 const SystemSetting = require('../../models/inv/SystemSetting');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
@@ -16,7 +17,7 @@ const DEFAULT_COMPANY = {
 };
 
 // GET /api/inv/buyin-receipt/by-product/:productId — lookup by product, find linked expense
-router.get('/by-product/:productId', async (req, res) => {
+router.get('/by-product/:productId', requireModule('devices'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.productId).lean();
     if (!product) {
@@ -38,7 +39,7 @@ router.get('/by-product/:productId', async (req, res) => {
 });
 
 // GET /api/inv/buyin-receipt/:expenseId
-router.get('/:expenseId', getReceipt);
+router.get('/:expenseId', requireModule('devices'), getReceipt);
 
 async function getReceipt(req, res) {
   try {

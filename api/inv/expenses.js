@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Expense = require('../../models/inv/Expense');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 
 // All routes require admin
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
@@ -31,7 +32,7 @@ router.post('/', async (req, res) => {
 });
 
 // ─── GET /api/inv/expenses ──────────────────────────────────────────────────
-router.get('/', async (req, res) => {
+router.get('/', requireModule('expenses'), async (req, res) => {
   try {
     const { startDate, endDate, category } = req.query;
     const filter = {};
@@ -59,7 +60,7 @@ router.get('/', async (req, res) => {
 
 // ─── GET /api/inv/expenses/summary ──────────────────────────────────────────
 // Aggregate expenses by date range, grouped by category
-router.get('/summary', async (req, res) => {
+router.get('/summary', requireModule('expenses'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const filter = {};

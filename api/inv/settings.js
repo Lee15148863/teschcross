@@ -4,6 +4,7 @@ const { encryptData } = require('../../utils/inv-crypto');
 const SystemSetting = require('../../models/inv/SystemSetting');
 const AuditLog = require('../../models/inv/AuditLog');
 const { jwtAuth, requireRole, requirePermission } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 const { AUDIT_ACTIONS, logAdminAction } = require('../../services/inv-admin-service');
 
 // ─── Default settings ───────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ async function loadSettings() {
 
 // ─── GET /api/inv/settings ──────────────────────────────────────────────────
 // Get all system settings (Staff+ access)
-router.get('/', jwtAuth, requireRole('root', 'manager', 'staff'), async (req, res) => {
+router.get('/', jwtAuth, requireRole('root', 'manager', 'staff'), requireModule('settings'), async (req, res) => {
   try {
     const settings = await loadSettings();
     res.json(settings);
@@ -52,7 +53,7 @@ router.get('/', jwtAuth, requireRole('root', 'manager', 'staff'), async (req, re
 
 // ─── GET /api/inv/settings/audit-log ────────────────────────────────────────
 // View audit log (Root only)
-router.get('/audit-log', jwtAuth, requireRole('root'), async (req, res) => {
+router.get('/audit-log', jwtAuth, requireRole('root'), requireModule('audit'), async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));

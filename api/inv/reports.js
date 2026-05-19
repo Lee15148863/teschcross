@@ -5,6 +5,7 @@ const Expense = require('../../models/inv/Expense');
 const DailyClose = require('../../models/inv/DailyClose');
 const MonthlyReport = require('../../models/inv/MonthlyReport');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 
 // All routes require Staff+ access
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
@@ -54,7 +55,7 @@ function aggregateProductRanking(transactions) {
 
 // ─── GET /api/inv/reports/daily ─────────────────────────────────────────────
 // Daily report (English output) — broken down by VAT category
-router.get('/daily', async (req, res) => {
+router.get('/daily', requireModule('reports'), async (req, res) => {
   try {
     const { date, startDate, endDate } = req.query;
 
@@ -211,7 +212,7 @@ router.get('/daily', async (req, res) => {
 
 // ─── GET /api/inv/reports/monthly ───────────────────────────────────────────
 // Monthly tax summary — returns stored report if exists, else live aggregation
-router.get('/monthly', async (req, res) => {
+router.get('/monthly', requireModule('reports'), async (req, res) => {
   try {
     const { month } = req.query;
 
@@ -392,7 +393,7 @@ router.get('/monthly', async (req, res) => {
 // ─── GET /api/inv/reports/weekly ────────────────────────────────────────────
 // Weekly report (English output) — same VAT breakdown as daily/monthly
 // Query: ?week=2026-W18 or ?startDate=2026-04-28 (Monday of the week)
-router.get('/weekly', async (req, res) => {
+router.get('/weekly', requireModule('reports'), async (req, res) => {
   try {
     const { week, startDate: qStart } = req.query;
     let weekStart, weekEnd;
@@ -584,7 +585,7 @@ router.get('/weekly', async (req, res) => {
 
 // ─── GET /api/inv/reports/product-ranking ───────────────────────────────────
 // Product sales ranking
-router.get('/product-ranking', async (req, res) => {
+router.get('/product-ranking', requireModule('reports'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
@@ -616,7 +617,7 @@ router.get('/product-ranking', async (req, res) => {
 
 // ─── GET /api/inv/reports/export ────────────────────────────────────────────
 // Export report (print-friendly format)
-router.get('/export', async (req, res) => {
+router.get('/export', requireModule('reports'), async (req, res) => {
   try {
     const { type, date, month, startDate, endDate } = req.query;
 
@@ -789,7 +790,7 @@ router.get('/export', async (req, res) => {
 // ─── GET /api/inv/reports/query ──────────────────────────────────────────────
 // Unified transaction query endpoint — filtering + aggregation + device P&L.
 // READ ONLY — never modifies data, never recalculates VAT.
-router.get('/query', async (req, res) => {
+router.get('/query', requireModule('reports'), async (req, res) => {
   try {
     const {
       types,        // comma-separated: sale,refund,quick_sale,device_sale,service

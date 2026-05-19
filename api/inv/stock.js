@@ -4,6 +4,7 @@ const Product = require('../../models/inv/Product');
 const StockMovement = require('../../models/inv/StockMovement');
 const StockRequest = require('../../models/inv/StockRequest');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 
 // All routes require Staff+ access
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
@@ -142,7 +143,7 @@ router.post('/exit', requireRole('root', 'manager'), async (req, res) => {
 // ─── GET /api/inv/stock/history/:productId ──────────────────────────────────
 // Stock movement history for a product, sorted by createdAt descending
 // Supports time range filter: ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
-router.get('/history/:productId', async (req, res) => {
+router.get('/history/:productId', requireModule('stock'), async (req, res) => {
   try {
     const { productId } = req.params;
     const { startDate, endDate } = req.query;
@@ -203,7 +204,7 @@ router.get('/history/:productId', async (req, res) => {
 // ─── GET /api/inv/stock/alerts ──────────────────────────────────────────────
 // Low stock alerts: find all active products where stock > 0 AND stock <= lowStockThreshold
 // Products with stock=0 are excluded (they may not track inventory)
-router.get('/alerts', async (req, res) => {
+router.get('/alerts', requireModule('stock'), async (req, res) => {
   try {
     const alerts = await Product.find({
       active: true,

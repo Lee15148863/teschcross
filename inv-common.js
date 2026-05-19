@@ -371,16 +371,20 @@ window.StoreFlowAccess = {
 // Runs after DOM ready. Fails open — no module info = all modules shown.
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   (function() {
+    function afterLoad() {
+      window.StoreFlowAccess.applySidebarVisibility();
+      // Auto-apply page-level guard if body has data-page-module
+      var pageModule = document.body && document.body.getAttribute('data-page-module');
+      if (pageModule) {
+        window.StoreFlowAccess.guardPage(pageModule);
+      }
+    }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function() {
-        window.StoreFlowAccess.load().then(function() {
-          window.StoreFlowAccess.applySidebarVisibility();
-        });
+        window.StoreFlowAccess.load().then(afterLoad);
       });
     } else {
-      window.StoreFlowAccess.load().then(function() {
-        window.StoreFlowAccess.applySidebarVisibility();
-      });
+      window.StoreFlowAccess.load().then(afterLoad);
     }
   })();
 }

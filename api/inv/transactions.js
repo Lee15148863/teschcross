@@ -8,6 +8,7 @@ const AuditLog = require('../../models/inv/AuditLog');
 const DailyClose = require('../../models/inv/DailyClose');
 const MonthlyReport = require('../../models/inv/MonthlyReport');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 const { authorize, SOURCES } = require('../../utils/inv-integrity-layer');
 
 // All routes require Staff+ access
@@ -267,7 +268,7 @@ router.post('/refund', async (req, res) => {
 
 // ─── GET /api/inv/transactions ──────────────────────────────────────────────
 // Transaction list with date range filter and pagination
-router.get('/', async (req, res) => {
+router.get('/', requireModule('transactions'), async (req, res) => {
   try {
     const filter = {};
     const { startDate, endDate, page, limit, q } = req.query;
@@ -403,7 +404,7 @@ router.get('/export', async (req, res) => {
 
 // ─── GET /api/inv/transactions/:id ──────────────────────────────────────────
 // Transaction detail
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireModule('transactions'), async (req, res) => {
   try {
     const transaction = await Transaction.findById(req.params.id)
       .populate('operator', 'username displayName')

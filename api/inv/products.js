@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../../models/inv/Product');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
-const { validateRequiredFields } = require('../../utils/inv-validators');
+const { requireModule } = require('../../utils/storeflow-permissions');
 const { calculateMarginVat } = require('../../utils/inv-vat-calculator');
 
 // All routes require Staff+ access
@@ -20,7 +20,7 @@ const CATEGORY_TEMPLATES = {
 // ─── GET /api/inv/products/search ───────────────────────────────────────────
 // Fuzzy search by name/SKU/IMEI (case-insensitive)
 // Must be defined BEFORE /:id to avoid route conflict
-router.get('/search', async (req, res) => {
+router.get('/search', requireModule('products'), async (req, res) => {
   try {
     const { q } = req.query;
     if (!q || typeof q !== 'string' || q.trim() === '') {
@@ -48,7 +48,7 @@ router.get('/search', async (req, res) => {
 
 // ─── GET /api/inv/products/templates ────────────────────────────────────────
 // Return category attribute templates; unknown categories get empty object
-router.get('/templates', (req, res) => {
+router.get('/templates', requireModule('products'), (req, res) => {
   const { category } = req.query;
   if (category) {
     return res.json(CATEGORY_TEMPLATES[category] || {});
@@ -58,7 +58,7 @@ router.get('/templates', (req, res) => {
 
 // ─── GET /api/inv/products ──────────────────────────────────────────────────
 // Product list with pagination, category filter, active filter
-router.get('/', async (req, res) => {
+router.get('/', requireModule('products'), async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
@@ -109,7 +109,7 @@ router.get('/', async (req, res) => {
 
 // ─── GET /api/inv/products/:id ──────────────────────────────────────────────
 // Product detail with all custom attributes
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireModule('products'), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {

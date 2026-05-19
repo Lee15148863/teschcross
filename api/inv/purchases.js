@@ -5,13 +5,14 @@ const Product = require('../../models/inv/Product');
 const StockMovement = require('../../models/inv/StockMovement');
 const Supplier = require('../../models/inv/Supplier');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 
 // All routes require Staff+ access
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 // ─── GET /api/inv/purchases ─────────────────────────────────────────────────
 // Purchase order list, support status filter (?status=pending|received|cancelled)
-router.get('/', async (req, res) => {
+router.get('/', requireModule('purchases'), async (req, res) => {
   try {
     const filter = {};
 
@@ -34,7 +35,7 @@ router.get('/', async (req, res) => {
 
 // ─── GET /api/inv/purchases/:id ─────────────────────────────────────────────
 // Purchase order detail, populate supplier and product info
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireModule('purchases'), async (req, res) => {
   try {
     const order = await PurchaseOrder.findById(req.params.id)
       .populate('supplier')

@@ -3,6 +3,7 @@ const router = express.Router();
 const Supplier = require('../../models/inv/Supplier');
 const PurchaseOrder = require('../../models/inv/PurchaseOrder');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 
 // All routes require Staff+ access
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
@@ -70,7 +71,7 @@ router.put('/batch-enable', requireRole('root'), async (req, res) => {
 
 // ─── GET /api/inv/suppliers ─────────────────────────────────────────────────
 // Supplier list, default hide disabled (active=true), support ?showDisabled=true
-router.get('/', async (req, res) => {
+router.get('/', requireModule('suppliers'), async (req, res) => {
   try {
     const filter = {};
 
@@ -88,7 +89,7 @@ router.get('/', async (req, res) => {
 
 // ─── GET /api/inv/suppliers/:id ─────────────────────────────────────────────
 // Supplier detail
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireModule('suppliers'), async (req, res) => {
   try {
     const supplier = await Supplier.findById(req.params.id);
     if (!supplier) {
@@ -195,7 +196,7 @@ router.put('/:id', async (req, res) => {
 
 // ─── GET /api/inv/suppliers/:id/account ─────────────────────────────────────
 // Supplier account reconciliation: aggregate purchase amounts by time range
-router.get('/:id/account', async (req, res) => {
+router.get('/:id/account', requireModule('suppliers'), async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 

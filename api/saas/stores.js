@@ -836,4 +836,107 @@ router.get('/:storeId/modules', superAdminAuth, async (req, res) => {
   }
 });
 
+// ─── StoreFlow Module/Permission (Phase 2B — writable) ───────
+// PUT /api/saas/stores/:storeId/modules
+// Super admin only. Updates store enabledModules/disabledModules.
+// Required core modules (pos, products, transactions) cannot be disabled.
+// Modules not allowed by plan trigger a warning but are not blocked.
+// Does NOT trigger tenant redeploy or env updates.
+
+const { getPlanLimits } = require('../../utils/storeflow-plans');
+
+router.put('/:storeId/modules', superAdminAuth, async (req, res) => {
+  try {
+    var store = await Store.findById(req.params.storeId);
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    var { enabledModules, disabledModules } = req.body;
+
+    if (!Array.isArray(enabledModules)) {
+      return res.status(400).json({ error: 'enabledModules must be an array' });
+    }
+    if (disabledModules && !Array.isArray(disabledModules)) {
+      return res.status(400).json({ error: 'disabledModules must be an array' });
+    }
+
+    // Validate all module keys exist in registry
+    var allKeys = getAllModuleKeys();
+    var unknownModules = [];
+    enabledModules.forEach(function(k) {
+      if (allKeys.indexOf(k) === -1) unknownModules.push(k);
+    });
+    if (disabledModules) {
+      disabledModules.forEach(function(k) {
+        if (allKeys.indexOf(k) === -1) unknownModules.push(k);
+      });
+    }
+    if (unknownModules.length > 0) {
+      return res.status(400).json({ error: 'Unknown module keys: ' + unknownModules.join(', ') });
+    }
+
+    // Enforce required core modules are enabled
+    var requiredKeys = Object.values(STOREFLOW_MODULES).filter(function(m) { return m.required; }).map(function(m) { return m.key; });
+    var missingRequired = requiredKeys.filter(function(k) { return enabledModules.indexOf(k) === -1; });
+    if (missingRequired.length > 0) {
+      return res.status(400).json({ error: 'Required core modules cannot be disabled: ' + missingRequired.join(', ') });
+    }
+
+    // Warn on modules not allowed by plan (but allow — Admin may upgrade plan later)
+    var plan = getPlanOrDefault(store.plan);
+    var planAllowed = plan.allowedModules;
+    var beyondPlan = enabledModules.filter(function(k) { return planAllowed.indexOf(k) === -1; });
+    var warnings = [];
+    if (beyondPlan.length > 0) {
+      warnings.push('Modules beyond plan "' + store.plan + '": ' + beyondPlan.join(', ') + '. Plan upgrade may be needed.');
+    }
+
+    // Build clean disabled list: all known modules NOT in enabled
+    var computedDisabled = allKeys.filter(function(k) { return enabledModules.indexOf(k) === -1; });
+    var finalDisabled = disabledModules || computedDisabled;
+
+    // Save
+    store.enabledModules = enabledModules;
+    store.disabledModules = finalDisabled;
+    store.updatedAt = new Date();
+    await store.save();
+
+    // Build response mirroring GET modules
+    var enabled = getStoreEnabledModules(store);
+    var moduleDetails = {};
+    allKeys.forEach(function(key) {
+      var mod = STOREFLOW_MODULES[key];
+      var allowedByPlan = planAllowed.indexOf(key) !== -1;
+      var isEnabled = enabled.indexOf(key) !== -1;
+      moduleDetails[key] = {
+        key: key,
+        name: mod.name,
+        category: mod.category,
+        required: mod.required || false,
+        allowedByPlan: allowedByPlan,
+        enabled: isEnabled,
+        permissions: mod.permissions
+      };
+    });
+
+    res.json({
+      success: true,
+      store: {
+        _id: store._id,
+        name: store.name,
+        plan: store.plan,
+        subscriptionStatus: store.subscriptionStatus,
+        enabledModules: enabled,
+        disabledModules: finalDisabled
+      },
+      plan: { key: plan.key, name: plan.name, allowedModules: planAllowed, limits: plan.limits },
+      modules: moduleDetails,
+      warnings: warnings.length > 0 ? warnings : undefined,
+      message: 'Module configuration saved. Redeploy tenant for changes to take effect in POS.'
+    });
+  } catch (e) {
+    console.error('[stores] modules PUT error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

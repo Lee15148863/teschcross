@@ -12,6 +12,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAllModuleKeys, getModule } = require('../../utils/storeflow-modules');
+const { getPlanLimits } = require('../../utils/storeflow-plans');
 
 function buildModuleDetails(enabledKeys) {
   var details = {};
@@ -74,13 +75,31 @@ router.get('/', function(req, res) {
       if (rawLimits) {
         try { limits = JSON.parse(rawLimits); } catch (_) {
           // Try key:value|key:value format
+          var parsed = false;
           try {
-            rawLimits.split('|').forEach(function(pair) {
-              var parts = pair.split(':');
-              if (parts.length === 2) limits[parts[0]] = parseInt(parts[1], 10) || 0;
-            });
-          } catch (_2) { limits = {}; }
+            var pairs = rawLimits.split('|');
+            if (pairs.length > 1) {
+              pairs.forEach(function(pair) {
+                var parts = pair.split(':');
+                if (parts.length === 2) { limits[parts[0]] = parseInt(parts[1], 10) || 0; parsed = true; }
+              });
+            }
+          } catch (_2) { /* continue */ }
+          // Fallback: Cloud Build sanitization may have replaced | with _
+          if (!parsed || Object.keys(limits).length === 0) {
+            try {
+              rawLimits.split('_').forEach(function(pair) {
+                var parts = pair.split(':');
+                if (parts.length === 2) { limits[parts[0]] = parseInt(parts[1], 10) || 0; parsed = true; }
+              });
+            } catch (_3) { /* continue */ }
+          }
+          if (!parsed) limits = {};
         }
+      }
+      // Fallback to plan defaults if no limits parsed
+      if (Object.keys(limits).length === 0) {
+        limits = getPlanLimits(process.env.STOREFLOW_PLAN || 'free');
       }
 
       return res.json({

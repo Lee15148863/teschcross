@@ -200,11 +200,27 @@ function requireModule(moduleKey) {
     // Main POS — skip check
     if (!process.env.STOREFLOW_STORE_ID) return next();
 
-    // Store must be loaded by upstream middleware
+    // Fast path: env-based entitlement
+    var envModules = process.env.STOREFLOW_ENABLED_MODULES;
+    if (envModules) {
+      var sep = ':';
+      if (envModules.indexOf(':') === -1 && envModules.indexOf(',') > -1) sep = ',';
+      if (envModules.indexOf(':') === -1 && envModules.indexOf(',') === -1 && envModules.indexOf('_') > -1) sep = '_';
+      var parsedModules = envModules.split(sep).map(function(s) { return s.trim(); }).filter(Boolean);
+      if (parsedModules.indexOf(moduleKey) !== -1) return next();
+
+      return res.status(403).json({
+        error: 'MODULE_DISABLED',
+        module: moduleKey,
+        message: 'Module "' + moduleKey + '" is not available on your plan.'
+      });
+    }
+
+    // Slow path: DB-based store lookup (legacy)
     var store = req.storeFlowStore;
     if (!store) {
-      // Fail open — cannot verify, but log warning (sanitized)
-      console.warn('storeflow-permissions: requireModule(' + moduleKey + ') called but req.storeFlowStore is not set. Failing open.');
+      // Fail open — cannot verify, but log warning
+      console.warn('storeflow-permissions: requireModule(' + moduleKey + ') called but STOREFLOW_ENABLED_MODULES not set and req.storeFlowStore not available. Failing open.');
       return next();
     }
 

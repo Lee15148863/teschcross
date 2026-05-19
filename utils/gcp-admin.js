@@ -142,7 +142,7 @@ async function triggerDeployBuild(projectId, region, serviceName, storeName, mon
 
   // Sanitize env var values for shell safety
   function sanitizeEnvVal(val) {
-    return String(val || '').replace(/[^a-zA-Z0-9_.\-:@/=]/g, '_');
+    return String(val || '').replace(/[^a-zA-Z0-9_.\-:@/=|]/g, '_');
   }
 
   // Build env vars string for gcloud run deploy --set-env-vars

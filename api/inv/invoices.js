@@ -8,6 +8,7 @@ const Transaction = require('../../models/inv/Transaction');
 const SystemSetting = require('../../models/inv/SystemSetting');
 const AuditLog = require('../../models/inv/AuditLog');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 const pdfGenerator = require('../../services/inv-invoice-pdf');
 
 // ─── Helper: Generate share token ───────────────────────────────────────
@@ -155,7 +156,7 @@ function buildInvoiceEmail(invoice, pdfBuffer, recipientEmail) {
 
 // ─── GET /api/inv/invoices ──────────────────────────────────────────────
 // Invoice list with filters
-router.get('/', async (req, res) => {
+router.get('/', requireModule('invoices'), async (req, res) => {
   try {
     const filter = {};
     const { invoiceNumber, customer, startDate, endDate } = req.query;
@@ -189,7 +190,7 @@ router.get('/', async (req, res) => {
 // ─── GET /api/inv/invoices/check-transaction/:receiptNumber ─────────────
 // Check if an invoice exists for a given receipt number.
 // Used by POS frontend to show/hide the "Generate Invoice" button.
-router.get('/check-transaction/:receiptNumber', async (req, res) => {
+router.get('/check-transaction/:receiptNumber', requireModule('invoices'), async (req, res) => {
   try {
     const existing = await Invoice.findOne({ receiptNumber: req.params.receiptNumber })
       .select('invoiceNumber createdAt grossTotal');
@@ -427,7 +428,7 @@ router.get('/:id/pdf', async (req, res) => {
 
 // ─── GET /api/inv/invoices/:id/preview ──────────────────────────────────
 // Preview Invoice PDF in browser (inline, not download)
-router.get('/:id/preview', async (req, res) => {
+router.get('/:id/preview', requireModule('invoices'), async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) {

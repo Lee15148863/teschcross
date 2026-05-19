@@ -113,18 +113,23 @@
     </div>
   </div>
 
-  <!-- Modules Panel (Phase 1A — read-only) -->
+  <!-- Modules Panel (Phase 2B — writable) -->
   <div class="panel" id="panel-modules">
     <div class="card">
-      <h2>Store Module Status</h2>
-      <p style="font-size:13px;color:#8e8e93;margin-bottom:16px;">Select a store to view its module entitlement.</p>
+      <h2>Store Module Configuration</h2>
+      <p style="font-size:13px;color:#8e8e93;margin-bottom:16px;">Toggle modules on/off per store. Core modules (POS, Products, Transactions) cannot be disabled. Changes apply after tenant redeploy.</p>
       <div style="display:flex;gap:10px;margin-bottom:16px;">
         <select id="modulesStoreSelect" style="flex:1;max-width:400px;">
           <option value="">-- Select a store --</option>
         </select>
-        <button class="btn btn-primary btn-sm" onclick="loadStoreModules()">View Modules</button>
+        <button class="btn btn-primary btn-sm" onclick="loadStoreModules()">Load Modules</button>
       </div>
       <div id="modulesResult"></div>
+      <div id="modulesActions" style="display:none; margin-top:16px; display:none; gap:10px;">
+        <button class="btn btn-primary" id="btnSaveModules" onclick="saveStoreModules()">Save Changes</button>
+        <button class="btn-outline" id="btnResetModules" onclick="resetStoreModules()">Reset to Plan Defaults</button>
+        <span id="modulesSaveMsg" style="font-size:13px;color:#34c759;display:none;align-self:center;">Saved.</span>
+      </div>
     </div>
   </div>
 
@@ -563,7 +568,10 @@
     loadSignups();
     applyLang();
 
-    // ─── Module viewer ─────────────────────────────────────────
+    // ─── Module viewer (Phase 2B — writable) ────────────────────
+    var _modulesStoreId = null;
+    var _modulesData = null;
+
     function populateModulesDropdown(stores) {
       var sel = document.getElementById('modulesStoreSelect');
       if (!sel) return;
@@ -588,8 +596,10 @@
     window.loadStoreModules = function() {
       var storeId = document.getElementById('modulesStoreSelect').value;
       var resultEl = document.getElementById('modulesResult');
-      if (!storeId) { resultEl.innerHTML = '<p style="color:#8e8e93;">Please select a store.</p>'; return; }
+      var actionsEl = document.getElementById('modulesActions');
+      if (!storeId) { resultEl.innerHTML = '<p style="color:#8e8e93;">Please select a store.</p>'; actionsEl.style.display = 'none'; return; }
       resultEl.innerHTML = '<p style="color:#8e8e93;">Loading...</p>';
+      actionsEl.style.display = 'none';
       fetch('/api/saas/stores/' + storeId + '/modules', {
         headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('saas_token') || '') }
       }).then(function(r) {
@@ -598,11 +608,15 @@
         return r.json();
       }).then(function(d) {
         if (!d) return;
+        _modulesStoreId = storeId;
+        _modulesData = d;
         var plan = d.plan || {}; var store = d.store || {}; var mods = d.modules || {};
+
         var h = '<div style="background:#f2f2f7;border-radius:10px;padding:14px;margin-bottom:14px;">';
-        h += '<strong>Plan:</strong> ' + escHtml(plan.name || store.plan) + '<br>';
-        h += '<strong>Status:</strong> ' + escHtml(store.status || '') + ' | <strong>Sub:</strong> ' + escHtml(store.subscriptionStatus || '') + '<br>';
-        h += '<strong>Enabled:</strong> ' + (store.enabledModules || []).length + ' modules</div>';
+        h += '<strong>Plan:</strong> ' + escHtml(plan.name || store.plan) + ' | ';
+        h += '<strong>Status:</strong> ' + escHtml(store.subscriptionStatus || '') + ' | ';
+        h += '<strong>Enabled:</strong> ' + (store.enabledModules || []).length + ' modules';
+        h += '</div>';
 
         var cats = {};
         Object.keys(mods).forEach(function(k) {
@@ -612,17 +626,82 @@
         });
         Object.keys(cats).forEach(function(cat) {
           h += '<h3 style="font-size:13px;text-transform:uppercase;color:#8e8e93;margin:14px 0 6px;">' + escHtml(cat) + '</h3>';
-          h += '<table><thead><tr><th>Module</th><th>Req</th><th>Plan</th><th>Active</th></tr></thead><tbody>';
+          h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;">';
           cats[cat].forEach(function(m) {
-            h += '<tr><td>' + escHtml(m.name) + '</td>';
-            h += '<td>' + (m.required ? '✅' : '—') + '</td>';
-            h += '<td>' + (m.allowedByPlan ? '✅' : '❌') + '</td>';
-            h += '<td style="color:' + (m.enabled ? '#34c759' : '#ff3b30') + ';">' + (m.enabled ? 'YES' : 'NO') + '</td></tr>';
+            var isReq = m.required;
+            var isPlan = m.allowedByPlan;
+            var isEnabled = m.enabled;
+            var disabled = isReq ? ' disabled' : '';
+            var dimmed = !isPlan ? ' opacity:0.5;' : '';
+            h += '<label style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:#' + (isEnabled ? 'f0fdf4' : 'fef2f2') + ';font-size:13px;cursor:' + (isReq ? 'not-allowed' : 'pointer') + ';' + dimmed + '">';
+            h += '<input type="checkbox" data-module="' + m.key + '" ' + (isEnabled ? 'checked' : '') + disabled + ' onchange="onModuleToggle(this)">';
+            h += '<span style="flex:1;">' + escHtml(m.name) + '</span>';
+            h += isReq ? '<span style="font-size:10px;color:#8e8e93;">REQ</span>' : '';
+            h += !isPlan ? '<span style="font-size:10px;color:#f59e0b;">PLAN+</span>' : '';
+            h += '</label>';
           });
-          h += '</tbody></table>';
+          h += '</div>';
         });
+        h += '<p style="font-size:11px;color:#8e8e93;margin-top:14px;">REQ = Required core module (cannot disable). PLAN+ = Module not in current plan (requires upgrade). Changes apply after tenant redeploy.</p>';
         resultEl.innerHTML = h;
+        actionsEl.style.display = 'flex';
+        document.getElementById('modulesSaveMsg').style.display = 'none';
       }).catch(function(e) { resultEl.innerHTML = '<p style="color:#ff3b30;">Error: ' + escHtml(e.message) + '</p>'; });
+    };
+
+    window.onModuleToggle = function(cb) {
+      // Visual feedback only — save happens on button click
+    };
+
+    window.saveStoreModules = function() {
+      if (!_modulesStoreId) return;
+      var enabled = [];
+      document.querySelectorAll('#modulesResult input[type=checkbox]:checked').forEach(function(cb) {
+        enabled.push(cb.getAttribute('data-module'));
+      });
+      var disabled = [];
+      document.querySelectorAll('#modulesResult input[type=checkbox]:not(:checked)').forEach(function(cb) {
+        disabled.push(cb.getAttribute('data-module'));
+      });
+
+      var msgEl = document.getElementById('modulesSaveMsg');
+      msgEl.style.display = 'none';
+      fetch('/api/saas/stores/' + _modulesStoreId + '/modules', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (localStorage.getItem('saas_token') || '')
+        },
+        body: JSON.stringify({ enabledModules: enabled, disabledModules: disabled })
+      }).then(function(r) {
+        if (!r.ok) return r.json().then(function(e) { throw new Error(e.error || 'HTTP ' + r.status); });
+        return r.json();
+      }).then(function(d) {
+        msgEl.textContent = 'Saved. Redeploy tenant for changes to take effect.';
+        msgEl.style.color = d.warnings && d.warnings.length > 0 ? '#f59e0b' : '#34c759';
+        msgEl.style.display = '';
+        if (d.warnings && d.warnings.length > 0) {
+          msgEl.textContent += ' ' + d.warnings.join(' ');
+        }
+      }).catch(function(e) {
+        msgEl.textContent = 'Error: ' + e.message;
+        msgEl.style.color = '#ff3b30';
+        msgEl.style.display = '';
+      });
+    };
+
+    window.resetStoreModules = function() {
+      if (!_modulesData) return;
+      var planDefaults = (_modulesData.plan && _modulesData.plan.defaultModules) || [];
+      document.querySelectorAll('#modulesResult input[type=checkbox]').forEach(function(cb) {
+        if (cb.disabled) return; // required modules — leave checked
+        var key = cb.getAttribute('data-module');
+        cb.checked = planDefaults.indexOf(key) !== -1;
+      });
+      var msgEl = document.getElementById('modulesSaveMsg');
+      msgEl.textContent = 'Reset to plan defaults. Click Save to persist.';
+      msgEl.style.color = '#0071e3';
+      msgEl.style.display = '';
     };
   </script>
 </body>

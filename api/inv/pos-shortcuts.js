@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const PosShortcut = require('../../models/inv/PosShortcut');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
+const { requireModule } = require('../../utils/storeflow-permissions');
 
 // All routes require JWT authentication (Admin or Staff)
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
 
 // ─── GET /api/inv/pos-shortcuts ─────────────────────────────────────────────
 // 返回 1~20 号快捷按钮配置，始终返回 20 条记录
-router.get('/', async (req, res) => {
+router.get('/', requireModule('shortcuts'), async (req, res) => {
   try {
     const records = await PosShortcut.find({}).sort({ sort_no: 1 }).lean();
 
