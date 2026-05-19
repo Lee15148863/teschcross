@@ -252,7 +252,9 @@ var PERMISSION_TO_FEATURE = {
   'reports.vatReportExport': 'reportsVatExport',
   'reports.accountingReportExport': 'reportsAccountingExport',
   'reports.profitReport': 'reportsProfitReport',
-  'reports.cashLedgerReport': 'reportsCashLedgerReport'
+  'reports.cashLedgerReport': 'reportsCashLedgerReport',
+  'transactions.delete': 'transactionsDelete',
+  'transactions.void': 'transactionsVoid'
 };
 
 /**

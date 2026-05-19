@@ -8,7 +8,7 @@ const AuditLog = require('../../models/inv/AuditLog');
 const DailyClose = require('../../models/inv/DailyClose');
 const MonthlyReport = require('../../models/inv/MonthlyReport');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
-const { requireModule } = require('../../utils/storeflow-permissions');
+const { requireModule, requirePermission } = require('../../utils/storeflow-permissions');
 const { authorize, SOURCES } = require('../../utils/inv-integrity-layer');
 
 // All routes require Staff+ access
@@ -485,7 +485,7 @@ router.patch('/:id/edit-items', requireRole('root'), async (req, res) => {
 
 // ─── DELETE /api/inv/transactions/:id/delete ────────────────────────────────
 // Silent delete (Admin only)
-router.delete('/:id/delete', requireRole('root'), async (req, res) => {
+router.delete('/:id/delete', requireRole('root'), requirePermission('transactions.delete'), async (req, res) => {
   try {
     const { confirm } = req.body;
 
@@ -556,7 +556,7 @@ router.delete('/:id/delete', requireRole('root'), async (req, res) => {
 
 // ─── DELETE /api/inv/transactions/batch-delete ──────────────────────────────
 // Batch delete exported records (Admin only)
-router.delete('/batch-delete', requireRole('root'), async (req, res) => {
+router.delete('/batch-delete', requireRole('root'), requirePermission('transactions.delete'), async (req, res) => {
   try {
     const { ids, confirm } = req.body;
 

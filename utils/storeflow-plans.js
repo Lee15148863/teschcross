@@ -18,12 +18,12 @@ const STOREFLOW_PLANS = {
     ],
     defaultEnabledModules: [
       'pos', 'products', 'transactions',
-      'stock', 'reports', 'shortcuts'
+      'stock', 'reports'
     ],
     limits: {
-      users: 1,
-      products: 50,
-      monthlyTransactions: 100,
+      users: 2,
+      products: 100,
+      monthlyTransactions: null,
       stores: 1
     },
     features: {
@@ -41,6 +41,8 @@ const STOREFLOW_PLANS = {
       whatsapp: false,
       customerShare: false,
       apiAccess: false,
+      transactionsDelete: false,
+      transactionsVoid: false,
       receiptsAccess: true,
       receiptsPrint: true,
       receiptsWidth58or60mm: true,
@@ -55,10 +57,10 @@ const STOREFLOW_PLANS = {
     database: {
       storageLimitMB: 50,
       backupPolicy: 'none',
-      allowDataExport: false,
+      allowDataExport: true,
       allowByoMongo: false
     },
-    notes: 'One user. Up to 50 products. 100 transactions/month. Basic daily summary and sales visibility included. Official tax/VAT report exports not included. Receipt printing supported (58/60mm, 80mm).'
+    notes: 'Two owners. Up to 100 products. Unlimited transactions. Basic daily summary and sales visibility included. Receipt printing supported. Official tax/VAT report exports, invoice generation, and transaction deletion not included.'
   },
 
   starter: {
@@ -98,6 +100,8 @@ const STOREFLOW_PLANS = {
       whatsapp: true,
       customerShare: true,
       apiAccess: false,
+      transactionsDelete: true,
+      transactionsVoid: true,
       receiptsAccess: true,
       receiptsPrint: true,
       receiptsWidth58or60mm: true,
@@ -159,6 +163,8 @@ const STOREFLOW_PLANS = {
       apiAccess: false,
       advancedReports: true,
       csvImport: true,
+      transactionsDelete: true,
+      transactionsVoid: true,
       receiptsAccess: true,
       receiptsPrint: true,
       receiptsWidth58or60mm: true,
@@ -222,6 +228,8 @@ const STOREFLOW_PLANS = {
       csvImport: true,
       prioritySupport: true,
       customBranding: true,
+      transactionsDelete: true,
+      transactionsVoid: true,
       receiptsAccess: true,
       receiptsPrint: true,
       receiptsWidth58or60mm: true,
