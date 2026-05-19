@@ -59,18 +59,28 @@ router.get('/', function(req, res) {
     // 2. Phase 1C: env-based entitlement (preferred, avoids cross-DB query)
     var envModules = process.env.STOREFLOW_ENABLED_MODULES;
     if (envModules) {
-      var parsedModules = envModules.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+      // Split by : (new) or , (legacy) or _ (Cloud Build sanitization)
+      var sep = ':';
+      if (envModules.indexOf(':') === -1 && envModules.indexOf(',') > -1) sep = ',';
+      if (envModules.indexOf(':') === -1 && envModules.indexOf(',') === -1 && envModules.indexOf('_') > -1) sep = '_';
+      var parsedModules = envModules.split(sep).map(function(s) { return s.trim(); }).filter(Boolean);
 
       // Filter to known modules only
       var validModules = parsedModules.filter(function(k) { return !!getModule(k); });
 
-      // Parse limits
+      // Parse limits: try JSON, then key:val|key:val format, then fail gracefully
       var limits = {};
-      try {
-        var rawLimits = process.env.STOREFLOW_LIMITS_JSON;
-        if (rawLimits) limits = JSON.parse(rawLimits);
-      } catch (_) {
-        limits = {};
+      var rawLimits = process.env.STOREFLOW_LIMITS_JSON;
+      if (rawLimits) {
+        try { limits = JSON.parse(rawLimits); } catch (_) {
+          // Try key:value|key:value format
+          try {
+            rawLimits.split('|').forEach(function(pair) {
+              var parts = pair.split(':');
+              if (parts.length === 2) limits[parts[0]] = parseInt(parts[1], 10) || 0;
+            });
+          } catch (_2) { limits = {}; }
+        }
       }
 
       return res.json({
