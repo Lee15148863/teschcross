@@ -30,6 +30,8 @@ const url = require('url');
 
 const Deployment = require('../models/saas/Deployment');
 const Store = require('../models/saas/Store');
+const { getPlanDefaultModules, getPlanLimits } = require('../utils/storeflow-plans');
+const { STOREFLOW_MODULES } = require('../utils/storeflow-modules');
 const gcp = require('../utils/gcp-admin');
 const sm = require('../utils/gcp-secret-manager');
 const { validateMongoUri, maskMongoUri, parseMongoDbName } = require('../utils/mongo-uri-validator');
@@ -97,6 +99,35 @@ async function main(deployOrStoreId) {
   if (!store) {
     console.warn('⚠  Store metadata not found (may be deleted) — continuing with deployment record');
   }
+
+  // Phase 1C: compute store module entitlement for tenant env injection
+  var planKey = (store && store.plan) || 'free';
+  var planDefaults = getPlanDefaultModules(planKey);
+
+  // effectiveModules = store overrides || plan defaults - disabledModules + required core
+  var baseModules = (store && Array.isArray(store.enabledModules) && store.enabledModules.length > 0)
+    ? store.enabledModules.slice()
+    : planDefaults.slice();
+
+  var disabledList = (store && Array.isArray(store.disabledModules)) ? store.disabledModules : [];
+  var effectiveModules = baseModules.filter(function(m) { return disabledList.indexOf(m) === -1; });
+
+  // Always include required core modules (pos, products, transactions)
+  Object.values(STOREFLOW_MODULES).forEach(function(mod) {
+    if (mod.required && effectiveModules.indexOf(mod.key) === -1) {
+      effectiveModules.push(mod.key);
+    }
+  });
+
+  var moduleLimits = (store && store.limits && store.limits.size > 0) ? store.limits : getPlanLimits(planKey);
+  var limitsObj = {};
+  if (moduleLimits instanceof Map) {
+    moduleLimits.forEach(function(v, k) { limitsObj[k] = v; });
+  } else if (typeof moduleLimits === 'object') {
+    limitsObj = moduleLimits;
+  }
+
+  console.log('  Plan:', planKey, '| Modules:', effectiveModules.length, '| Limits:', JSON.stringify(limitsObj));
 
   var serviceName = dep.serviceName;
   var region = dep.region || REGION;
@@ -180,6 +211,10 @@ async function main(deployOrStoreId) {
     STORE_NAME: storeNameEnv,
     STOREFLOW_STORE_ID: store ? store._id.toString() : '',
     STORE_FROZEN: 'false',
+    STOREFLOW_PLAN: planKey,
+    STOREFLOW_ENABLED_MODULES: effectiveModules.join(','),
+    STOREFLOW_LIMITS_JSON: JSON.stringify(limitsObj),
+    STOREFLOW_MODULE_SCHEMA_VERSION: '1',
     NODE_ENV: 'production',
     DOMAIN: sanitizeEnvVal(process.env.DOMAIN || 'techcross.ie'),
     COMPANY_NAME: sanitizeEnvVal(storeName || 'StoreFlow_Store'),
@@ -194,6 +229,9 @@ async function main(deployOrStoreId) {
   console.log("  SAAS_JWT_SECRET: SET (shared with Main POS for SSO)");
   console.log('  INV_AUDIT_KEY: [' + mask(invAuditKey) + ']');
   console.log('  STORE_NAME: ' + env.STORE_NAME + ' (from URI dbName: ' + dbName + ')');
+  console.log('  STOREFLOW_PLAN: SET (' + planKey + ')');
+  console.log('  STOREFLOW_ENABLED_MODULES: SET (' + effectiveModules.length + ' modules)');
+  console.log('  STOREFLOW_LIMITS_JSON: SET');
 
   // 5. Record current revision for rollback
   var previousRevision = '';
