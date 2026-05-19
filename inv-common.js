@@ -116,6 +116,117 @@ function initPageAuth() {
   return true;
 }
 
+// ─── UI Language Mode ────────────────────────────────────────────────
+// storeflowUiMode in localStorage: 'en' (default) or 'bi' (bilingual)
+// Display-layer only — never changes stored DB values.
+
+const STOREFLOW_UI_MODE_KEY = 'storeflowUiMode';
+
+function getUiLanguageMode() {
+  return localStorage.getItem(STOREFLOW_UI_MODE_KEY) || 'en';
+}
+
+function setUiLanguageMode(mode) {
+  if (mode !== 'en' && mode !== 'bi') mode = 'en';
+  localStorage.setItem(STOREFLOW_UI_MODE_KEY, mode);
+}
+
+function toggleUiMode() {
+  var current = getUiLanguageMode();
+  setUiLanguageMode(current === 'en' ? 'bi' : 'en');
+  location.reload();
+}
+
+// ─── Bilingual Display Labels ───────────────────────────────────────────
+// Each entry: { en: 'English', bi: '中文 / English' }
+// Use bilingualLabel(value) to get text for current mode.
+
+const DISPLAY_LABELS = {
+  // Categories
+  '二手': { en: 'Used', bi: '二手 / Used' },
+  'used': { en: 'Used', bi: '二手 / Used' },
+  '新品': { en: 'New', bi: '新品 / New' },
+  'new': { en: 'New', bi: '新品 / New' },
+  '销售': { en: 'Sales', bi: '销售 / Sales' },
+  '维修': { en: 'Repair', bi: '维修 / Repair' },
+  '服务': { en: 'Service', bi: '服务 / Service' },
+  '新机': { en: 'New Device', bi: '新机 / New Device' },
+
+  // Status
+  'active': { en: 'Active', bi: '启用 / Active' },
+  '启用': { en: 'Active', bi: '启用 / Active' },
+  'disabled': { en: 'Disabled', bi: '停用 / Disabled' },
+  '停用': { en: 'Disabled', bi: '停用 / Disabled' },
+  '禁用': { en: 'Disabled', bi: '停用 / Disabled' },
+  'exported': { en: 'Exported', bi: '已导出 / Exported' },
+  '已导出': { en: 'Exported', bi: '已导出 / Exported' },
+  'not_sent': { en: 'Not Sent', bi: '未发送 / Not Sent' },
+  'sent': { en: 'Sent', bi: '已发送 / Sent' },
+  'failed': { en: 'Failed', bi: '发送失败 / Failed' },
+
+  // Payment methods
+  'cash': { en: 'Cash', bi: '现金 / Cash' },
+  'card': { en: 'Card', bi: '刷卡 / Card' },
+  'bank': { en: 'Bank', bi: '银行 / Bank' },
+  'bankTransfer': { en: 'Bank Transfer', bi: '转账 / Bank Transfer' },
+  'split': { en: '💳+💵', bi: '💳+💵' },
+
+  // Order/Transaction status
+  'refund': { en: 'Refund', bi: '退款 / Refund' },
+  'pending': { en: 'Pending', bi: '待处理 / Pending' },
+  'completed': { en: 'Completed', bi: '已完成 / Completed' },
+  'received': { en: 'Received', bi: '已收货 / Received' },
+  'cancelled': { en: 'Cancelled', bi: '已取消 / Cancelled' },
+  '待收货': { en: 'Pending', bi: '待收货 / Pending' },
+  '已收货': { en: 'Received', bi: '已收货 / Received' },
+  '已取消': { en: 'Cancelled', bi: '已取消 / Cancelled' },
+
+  // Second-hand source
+  'customer': { en: 'From Customer', bi: '从客人收购 / From Customer' },
+  'dealer': { en: 'From Dealer', bi: '从其他二手商人进货 / From Dealer' },
+  'other': { en: 'Other', bi: '其他来源 / Other' },
+
+  // Supplier levels
+  'core': { en: 'Core', bi: '核心 / Core' },
+  'normal': { en: 'Normal', bi: '普通 / Normal' },
+  'temporary': { en: 'Temporary', bi: '临时 / Temporary' },
+
+  // Stock movement types
+  'entry': { en: 'Stock In', bi: '入库 / Stock In' },
+  'exit': { en: 'Stock Out', bi: '出库 / Stock Out' },
+
+  // Modal/Page titles
+  'addProduct': { en: 'Add Product', bi: '新增商品 / Add Product' },
+  'editProduct': { en: 'Edit Product', bi: '编辑商品 / Edit Product' },
+  'addExpense': { en: 'Add Expense', bi: '新增支出 / Add Expense' },
+  'createPO': { en: 'Create Purchase Order', bi: '创建采购单 / Create PO' },
+};
+
+function bilingualLabel(value, mode) {
+  mode = mode || getUiLanguageMode();
+  var entry = DISPLAY_LABELS[value];
+  if (!entry) return value;
+  return entry[mode] || entry.en || value;
+}
+
+// ─── Apply UI Mode to Static Elements ───────────────────────────────
+// Elements with data-en / data-bi attributes get updated textContent.
+// Call on page load after DOM ready.
+function applyUiMode() {
+  var mode = getUiLanguageMode();
+  document.querySelectorAll('[data-en]').forEach(function(el) {
+    if (mode === 'en') {
+      el.textContent = el.getAttribute('data-en');
+    } else {
+      el.textContent = el.getAttribute('data-bi') || el.getAttribute('data-en');
+    }
+  });
+  var toggle = document.getElementById('uiModeToggle');
+  if (toggle) {
+    toggle.textContent = mode === 'en' ? '中 / EN' : 'EN / 中';
+  }
+}
+
 // ─── 通用工具 ────────────────────────────────────────────────────────────────
 
 function escHtml(s) {
@@ -146,4 +257,9 @@ if (typeof window !== 'undefined') {
   window.invAuth = { getToken, getUser, isLoggedIn, requireAuth, requireAdmin, logout, isAdmin, isStaff, initPageAuth };
   window.invApi = { invFetch, authHeaders, INV_API_BASE };
   window.invUtils = { escHtml, showToast };
+  window.getUiLanguageMode = getUiLanguageMode;
+  window.setUiLanguageMode = setUiLanguageMode;
+  window.toggleUiMode = toggleUiMode;
+  window.bilingualLabel = bilingualLabel;
+  window.applyUiMode = applyUiMode;
 }

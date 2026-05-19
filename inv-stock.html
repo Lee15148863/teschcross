@@ -61,52 +61,52 @@
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross" id="snLogo"><span id="snBrand">进销存管理系统</span></div>
         <nav>
-            <div class="nav-section">业务管理 / Business</div>
-            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
-            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
-            <a href="inv-stock.html" class="active" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
-            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
-            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
-            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
-            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
-            <div class="nav-section">报表与发票 / Reports</div>
-            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
-            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
-            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
-            <div class="nav-section" id="adminSection" style="display:none;">系统管理 / System</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
-            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
+            <div class="nav-section" data-en="Business" data-bi="业务管理 / Business">业务管理 / Business</div>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span><span data-en="Checkout" data-bi="POS 收银 / Checkout">POS 收银 / Checkout</span></a>
+            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span><span data-en="Products" data-bi="商品管理 / Products">商品管理 / Products</span></a>
+            <a href="inv-stock.html" class="active" data-perm="stock"><span class="icon">🏭</span><span data-en="Stock" data-bi="库存管理 / Stock">库存管理 / Stock</span></a>
+            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span><span data-en="Suppliers" data-bi="供应商 / Suppliers">供应商 / Suppliers</span></a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span><span data-en="Purchases" data-bi="采购管理 / Purchases">采购管理 / Purchases</span></a>
+            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span><span data-en="Transactions" data-bi="交易记录 / Transactions">交易记录 / Transactions</span></a>
+            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span><span data-en="Shortcuts" data-bi="POS 快捷键 / Shortcuts">POS 快捷键 / Shortcuts</span></a>
+            <div class="nav-section" data-en="Reports" data-bi="报表与发票 / Reports">报表与发票 / Reports</div>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span><span data-en="Reports" data-bi="报表中心 / Reports">报表中心 / Reports</span></a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span><span data-en="VAT Invoice" data-bi="发票管理 / VAT Invoice">发票管理 / VAT Invoice</span></a>
+            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span><span data-en="Expenses" data-bi="支出管理 / Expenses">支出管理 / Expenses</span></a>
+            <div class="nav-section" id="adminSection" style="display:none;" data-en="System" data-bi="系统管理 / System">系统管理 / System</div>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span><span data-en="Settings" data-bi="系统设置 / Settings">系统设置 / Settings</span></a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span><span data-en="Users" data-bi="用户管理 / Users">用户管理 / Users</span></a>
         </nav>
     </aside>
     <div class="main">
         <div class="topbar">
-            <h2>库存管理 / Stock</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
+            <h2><span data-en="Stock" data-bi="库存管理 / Stock">库存管理 / Stock</span></h2>
+            <div class="user-info"><span><span data-en="Welcome" data-bi="欢迎">欢迎</span>, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()"><span data-en="Logout" data-bi="退出登录">退出登录</span> / Logout</button><button class="lang-toggle-dark" id="uiModeToggle" onclick="toggleUiMode()" style="padding:4px 10px;border-radius:980px;border:1px solid #d2d2d7;background:#fff;font-size:11px;cursor:pointer;white-space:nowrap;">中/EN</button></div>
         </div>
         <div class="content">
             <div class="tabs">
-                <div class="tab active admin-stock-tab" onclick="switchTab('entry')">手动入库/出库</div>
-                <div class="tab" onclick="switchTab('history')">库存流水</div>
-                <div class="tab" onclick="switchTab('alerts')">低库存预警</div>
-                <div class="tab" onclick="switchTab('reconcile')" id="reconcileTab" style="display:none;">库存核对</div>
+                <div class="tab active admin-stock-tab" onclick="switchTab('entry')">手动入库/出库 / Stock In/Out</div>
+                <div class="tab" onclick="switchTab('history')">库存流水 / History</div>
+                <div class="tab" onclick="switchTab('alerts')">低库存预警 / Alerts</div>
+                <div class="tab" onclick="switchTab('reconcile')" id="reconcileTab" style="display:none;">库存核对 / Reconcile</div>
             </div>
 
             <!-- Entry/Exit -->
             <div class="tab-content active" id="tab-entry">
                 <div style="display:flex;gap:20px;flex-wrap:wrap;">
                     <div class="card" style="flex:1;min-width:300px;">
-                        <h3>📥 手动入库</h3>
-                        <div class="form-group"><label>商品</label><select id="entryProduct"><option value="">请选择商品</option></select></div>
-                        <div class="form-group"><label>数量</label><input type="number" id="entryQty" min="1" value="1"></div>
-                        <div class="form-group"><label>备注</label><input type="text" id="entryNote" placeholder="可选"></div>
-                        <button class="btn btn-success" onclick="doEntry()">确认入库</button>
+                        <h3>📥 手动入库 / Stock In</h3>
+                        <div class="form-group"><label>商品 / Product</label><select id="entryProduct"><option value="">请选择商品 / Select Product</option></select></div>
+                        <div class="form-group"><label>数量 / Qty</label><input type="number" id="entryQty" min="1" value="1"></div>
+                        <div class="form-group"><label>备注 / Notes</label><input type="text" id="entryNote" placeholder="可选 / Optional"></div>
+                        <button class="btn btn-success" onclick="doEntry()">确认入库 / Confirm Stock In</button>
                     </div>
                     <div class="card" style="flex:1;min-width:300px;">
-                        <h3>📤 手动出库</h3>
-                        <div class="form-group"><label>商品</label><select id="exitProduct"><option value="">请选择商品</option></select></div>
-                        <div class="form-group"><label>数量</label><input type="number" id="exitQty" min="1" value="1"></div>
-                        <div class="form-group"><label>备注</label><input type="text" id="exitNote" placeholder="可选"></div>
-                        <button class="btn btn-danger" onclick="doExit()">确认出库</button>
+                        <h3>📤 手动出库 / Stock Out</h3>
+                        <div class="form-group"><label>商品 / Product</label><select id="exitProduct"><option value="">请选择商品 / Select Product</option></select></div>
+                        <div class="form-group"><label>数量 / Qty</label><input type="number" id="exitQty" min="1" value="1"></div>
+                        <div class="form-group"><label>备注 / Notes</label><input type="text" id="exitNote" placeholder="可选 / Optional"></div>
+                        <button class="btn btn-danger" onclick="doExit()">确认出库 / Confirm Stock Out</button>
                     </div>
                 </div>
             </div>
@@ -122,7 +122,7 @@
                     </div>
                     <table>
                         <thead><tr><th>时间 / Time</th><th>类型 / Type</th><th>数量 / Qty</th><th>操作人 / Operator</th><th>来源 / Source</th><th>备注 / Notes</th></tr></thead>
-                        <tbody id="historyTable"><tr><td colspan="6" style="text-align:center;color:#86868b;padding:40px;">请选择商品后查询</td></tr></tbody>
+                        <tbody id="historyTable"><tr><td colspan="6" style="text-align:center;color:#86868b;padding:40px;">请选择商品后查询 / Select a product to view history</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -138,22 +138,23 @@
             <!-- Reconcile (Admin) -->
             <div class="tab-content" id="tab-reconcile">
                 <div class="card">
-                    <h3>📋 库存核对</h3>
-                    <p style="color:#6e6e73;margin-bottom:16px;">比对账面库存与出入库记录，生成差异报告</p>
-                    <button class="btn btn-primary" onclick="doReconcile()">开始核对</button>
+                    <h3>📋 库存核对 / Reconcile</h3>
+                    <p style="color:#6e6e73;margin-bottom:16px;">比对账面库存与出入库记录，生成差异报告 / Compare stock records and generate discrepancy report</p>
+                    <button class="btn btn-primary" onclick="doReconcile()">开始核对 / Start Check</button>
                     <div class="reconcile-report" id="reconcileReport"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script src="inv-common.js"></script>
 <script src="auth-guard.js"></script>
 <script>
 (function(){
 'use strict';
 const user = Auth.requireAuth(); if (!user) return;
 document.getElementById('displayName').textContent = Auth.getDisplayName();
-document.getElementById('roleBadge').textContent = Auth.isRoot() ? '店主':'员工';
+document.getElementById('roleBadge').innerHTML = Auth.getRoleBadgeHTML();
 if(Auth.isRoot()){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');document.getElementById('reconcileTab').style.display='';}
 else{
     // Staff: hide entry/exit tab, default to history tab
@@ -168,6 +169,7 @@ else{
 var perms=user.permissions||{};
 if(Auth.isRoot()){document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});}
 else{document.querySelectorAll('nav a[data-perm]').forEach(function(a){if(!perms[a.dataset.perm])a.style.display='none';});}
+applyUiMode();
 
 const API='/api/inv';
 const headers=()=>Auth.getHeaders();
@@ -258,11 +260,11 @@ async function loadHistory(){
             td1.textContent = new Date(m.createdAt).toLocaleString('zh-CN');
             tr.appendChild(td1);
 
-            // Type cell
+            // Type cell (bilingual)
             const td2 = document.createElement('td');
             const typeSpan = document.createElement('span');
             typeSpan.className = `badge ${m.type === 'entry' ? 'badge-entry' : 'badge-exit'}`;
-            typeSpan.textContent = m.type === 'entry' ? '入库' : '出库';
+            typeSpan.textContent = bilingualLabel(m.type);
             td2.appendChild(typeSpan);
             tr.appendChild(td2);
 
@@ -299,7 +301,7 @@ async function loadAlerts(){
         const alerts=await r.json();
         const el=document.getElementById('alertsList');
         if(!alerts||alerts.length===0){
-            el.innerHTML='<p style="color:#34c759;font-weight:500;">✅ 所有商品库存正常</p>';
+            el.innerHTML='<p style="color:#34c759;font-weight:500;">✅ 所有商品库存正常 / All stock levels OK</p>';
             return;
         }
 
@@ -330,20 +332,20 @@ async function loadAlerts(){
             const categorySpan = document.createElement('span');
             categorySpan.style.color = '#86868b';
             categorySpan.style.fontSize = '13px';
-            categorySpan.textContent = '[' + a.category + ']';
+            categorySpan.textContent = '[' + bilingualLabel(a.category) + ']';
             div1.appendChild(categorySpan);
 
             alertItem.appendChild(div1);
 
             const div2 = document.createElement('div');
-            div2.appendChild(document.createTextNode('当前: '));
+            div2.appendChild(document.createTextNode('当前/Stock: '));
 
             const stockSpan = document.createElement('span');
             stockSpan.className = 'stock';
             stockSpan.textContent = a.stock;
             div2.appendChild(stockSpan);
 
-            div2.appendChild(document.createTextNode(' / 阈值: ' + a.lowStockThreshold));
+            div2.appendChild(document.createTextNode(' / 阈值/Threshold: ' + a.lowStockThreshold));
 
             alertItem.appendChild(div2);
             el.appendChild(alertItem);
@@ -364,13 +366,13 @@ async function doReconcile(){
         const summaryP = document.createElement('p');
         summaryP.style.margin = '12px 0';
         summaryP.style.fontWeight = '500';
-        summaryP.textContent = `共 ${data.totalProducts} 个商品, ${data.discrepancyCount} 个差异`;
+        summaryP.textContent = `共 ${data.totalProducts} 个商品 / Products, ${data.discrepancyCount} 个差异 / Discrepancies`;
         el.appendChild(summaryP);
 
         if (data.discrepancies.length === 0) {
             const okP = document.createElement('p');
             okP.style.color = '#34c759';
-            okP.textContent = '✅ 所有商品库存一致';
+            okP.textContent = '✅ 所有商品库存一致 / All stock matches';
             el.appendChild(okP);
             return;
         }
@@ -386,11 +388,11 @@ async function doReconcile(){
             item.appendChild(nameSpan);
 
             const bookSpan = document.createElement('span');
-            bookSpan.textContent = `账面: ${d.actualStock}`;
+            bookSpan.textContent = `账面/Book: ${d.actualStock}`;
             item.appendChild(bookSpan);
 
             const expectedSpan = document.createElement('span');
-            expectedSpan.textContent = `计算: ${d.expectedStock}`;
+            expectedSpan.textContent = `计算/Calc: ${d.expectedStock}`;
             item.appendChild(expectedSpan);
 
             const diffSpan = document.createElement('span');

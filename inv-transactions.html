@@ -59,43 +59,43 @@
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross" id="snLogo"><span id="snBrand">进销存管理系统</span></div>
         <nav>
-            <div class="nav-section">业务管理 / Business</div>
-            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
-            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
-            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
-            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
-            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
-            <a href="inv-transactions.html" class="active" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
-            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
-            <div class="nav-section">报表与发票 / Reports</div>
-            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
-            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
-            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
-            <div class="nav-section" id="adminSection" style="display:none;">系统管理 / System</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
-            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
+            <div class="nav-section" data-en="Business" data-bi="业务管理 / Business">业务管理 / Business</div>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span><span data-en="Checkout" data-bi="POS 收银 / Checkout">POS 收银 / Checkout</span></a>
+            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span><span data-en="Products" data-bi="商品管理 / Products">商品管理 / Products</span></a>
+            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span><span data-en="Stock" data-bi="库存管理 / Stock">库存管理 / Stock</span></a>
+            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span><span data-en="Suppliers" data-bi="供应商 / Suppliers">供应商 / Suppliers</span></a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span><span data-en="Purchases" data-bi="采购管理 / Purchases">采购管理 / Purchases</span></a>
+            <a href="inv-transactions.html" class="active" data-perm="transactions"><span class="icon">📋</span><span data-en="Transactions" data-bi="交易记录 / Transactions">交易记录 / Transactions</span></a>
+            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span><span data-en="Shortcuts" data-bi="POS 快捷键 / Shortcuts">POS 快捷键 / Shortcuts</span></a>
+            <div class="nav-section" data-en="Reports" data-bi="报表与发票 / Reports">报表与发票 / Reports</div>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span><span data-en="Reports" data-bi="报表中心 / Reports">报表中心 / Reports</span></a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span><span data-en="VAT Invoice" data-bi="发票管理 / VAT Invoice">发票管理 / VAT Invoice</span></a>
+            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span><span data-en="Expenses" data-bi="支出管理 / Expenses">支出管理 / Expenses</span></a>
+            <div class="nav-section" id="adminSection" style="display:none;" data-en="System" data-bi="系统管理 / System">系统管理 / System</div>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span><span data-en="Settings" data-bi="系统设置 / Settings">系统设置 / Settings</span></a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span><span data-en="Users" data-bi="用户管理 / Users">用户管理 / Users</span></a>
         </nav>
     </aside>
     <div class="main">
         <div class="topbar">
-            <h2>Transactions / 交易记录</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()">退出登录 / Logout</button></div>
+            <h2><span data-en="Transactions" data-bi="交易记录 / Transactions">交易记录 / Transactions</span></h2>
+            <div class="user-info"><span><span data-en="Welcome" data-bi="欢迎">欢迎</span>, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" onclick="logout()"><span data-en="Logout" data-bi="退出登录">退出登录</span> / Logout</button><button class="lang-toggle-dark" id="uiModeToggle" onclick="toggleUiMode()" style="padding:4px 10px;border-radius:980px;border:1px solid #d2d2d7;background:#fff;font-size:11px;cursor:pointer;white-space:nowrap;">中/EN</button></div>
         </div>
         <div class="content">
             <div class="card">
                 <div class="toolbar">
-                    <input type="text" id="searchReceipt" placeholder="Receipt # search..." style="width:180px;" onkeydown="if(event.key==='Enter')loadTransactions()">
+                    <input type="text" id="searchReceipt" placeholder="Receipt # 搜索..." style="width:180px;" onkeydown="if(event.key==='Enter')loadTransactions()">
                     <input type="date" id="startDate">
-                    <span style="color:#86868b;">to</span>
+                    <span style="color:#86868b;">至 / to</span>
                     <input type="date" id="endDate">
-                    <button class="btn btn-primary" onclick="loadTransactions()">Search</button>
-                    <button class="btn btn-secondary" onclick="loadToday()">Today</button>
+                    <button class="btn btn-primary" onclick="loadTransactions()">搜索 / Search</button>
+                    <button class="btn btn-secondary" onclick="loadToday()">今天 / Today</button>
                     <div style="flex:1;"></div>
-                    <button class="btn btn-secondary" onclick="exportTx('csv')">Export CSV</button>
-                    <button class="btn btn-danger btn-sm admin-only" style="display:none;" onclick="batchDelete()">Batch Delete Exported</button>
+                    <button class="btn btn-secondary" onclick="exportTx('csv')">导出 CSV / Export CSV</button>
+                    <button class="btn btn-danger btn-sm admin-only" style="display:none;" onclick="batchDelete()">批量删除 / Batch Delete</button>
                 </div>
                 <table>
-                    <thead><tr><th>单号 / Receipt#</th><th>时间 / Time</th><th>商品数 / Items</th><th>总金额 / Total (€)</th><th>支付方式 / Payment</th><th>标记 / Status</th><th>操作 / Actions</th></tr></thead>
+                    <thead><tr><th data-en="Receipt #" data-bi="单号 / Receipt#">单号 / Receipt#</th><th data-en="Time" data-bi="时间 / Time">时间 / Time</th><th data-en="Items" data-bi="商品数 / Items">商品数 / Items</th><th data-en="Total (€)" data-bi="总金额 / Total (€)">总金额 / Total (€)</th><th data-en="Payment" data-bi="支付方式 / Payment">支付方式 / Payment</th><th data-en="Status" data-bi="标记 / Status">标记 / Status</th><th data-en="Actions" data-bi="操作 / Actions">操作 / Actions</th></tr></thead>
                     <tbody id="txTable"><tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">加载中...</td></tr></tbody>
                 </table>
             </div>
@@ -106,27 +106,27 @@
 <!-- Detail Modal -->
 <div class="modal-overlay" id="detailModal">
     <div class="modal">
-        <h3>交易详情</h3>
+        <h3>交易详情 / Transaction Details</h3>
         <div id="detailContent"></div>
         <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="document.getElementById('detailModal').classList.remove('show')">关闭</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('detailModal').classList.remove('show')">关闭 / Close</button>
         </div>
     </div>
 </div>
 
 <!-- Hidden batch delete trigger (admin only) -->
-<img src="logo.png" alt="" class="admin-only" style="display:none;position:fixed;bottom:16px;right:16px;width:48px;height:48px;opacity:0.2;cursor:pointer;z-index:100;border-radius:50%;transition:opacity 0.2s;" onclick="batchDelete()" onmouseover="this.style.opacity='0.5'" onmouseout="this.style.opacity='0.2'" title="">
+<img src="logo.png" alt="" class="admin-only" style="display:none;position:fixed;bottom:16px;right:16px;width:48px;height:48px;opacity:0.2;cursor:pointer;z-index:100;border-radius:50%;transition:opacity 0.2s;" onclick="batchDelete()" onmouseover="this.style.opacity='0.5'" onmouseout="this.style.opacity='0.2'" title="批量删除已导出 / Batch Delete Exported">
 
 <!-- Refund Method Dialog -->
 <div id="refundDialog" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:18px;padding:32px;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.2);">
-        <h3 style="font-size:20px;margin-bottom:8px;">↩️ Refund</h3>
+        <h3 style="font-size:20px;margin-bottom:8px;">↩️ 退款 / Refund</h3>
         <p style="font-size:14px;color:#6e6e73;margin-bottom:20px;" id="refundDialogInfo"></p>
-        <p style="font-size:14px;margin-bottom:20px;">Select refund method:</p>
+        <p style="font-size:14px;margin-bottom:20px;">选择退款方式 / Select refund method:</p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-            <button onclick="confirmRefund('cash')" style="padding:12px 24px;border:none;border-radius:12px;background:#34c759;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">💵 Cash</button>
-            <button onclick="confirmRefund('card')" style="padding:12px 24px;border:none;border-radius:12px;background:#0071e3;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">💳 Card</button>
-            <button onclick="cancelRefund()" style="padding:12px 24px;border:none;border-radius:12px;background:#f5f5f7;border:1px solid #d2d2d7;color:#1d1d1f;font-size:15px;cursor:pointer;">Cancel</button>
+            <button onclick="confirmRefund('cash')" style="padding:12px 24px;border:none;border-radius:12px;background:#34c759;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">💵 现金 / Cash</button>
+            <button onclick="confirmRefund('card')" style="padding:12px 24px;border:none;border-radius:12px;background:#0071e3;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">💳 刷卡 / Card</button>
+            <button onclick="cancelRefund()" style="padding:12px 24px;border:none;border-radius:12px;background:#f5f5f7;border:1px solid #d2d2d7;color:#1d1d1f;font-size:15px;cursor:pointer;">取消 / Cancel</button>
         </div>
     </div>
 </div>
@@ -134,25 +134,26 @@
 <!-- WhatsApp Modal -->
 <div class="modal-overlay" id="whatsAppModal">
     <div class="modal" style="max-width:380px;">
-        <h3>📱 Send via WhatsApp</h3>
-        <p style="font-size:14px;color:#6e6e73;margin-bottom:16px;">Enter customer phone number</p>
+        <h3>📱 发送 WhatsApp / Send via WhatsApp</h3>
+        <p style="font-size:14px;color:#6e6e73;margin-bottom:16px;">输入客户电话号码 / Enter customer phone number</p>
         <input id="waPhoneInput" type="tel" placeholder="0870908555" style="width:100%;padding:14px 16px;border:1.5px solid #d2d2d7;border-radius:12px;font-size:18px;margin-bottom:8px;">
         <p id="waPhoneHint" style="font-size:12px;color:#34c759;min-height:18px;"></p>
-        <p style="font-size:12px;color:#86868b;margin-bottom:16px;">Irish mobile: <strong>0870908555</strong> → <strong>+353870908555</strong><br>08xxxxxxxx converts automatically</p>
+        <p style="font-size:12px;color:#86868b;margin-bottom:16px;">爱尔兰手机: <strong>0870908555</strong> → <strong>+353870908555</strong><br>08xxxxxxxx 自动转换 / converts automatically</p>
         <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="closeWhatsAppModal()">Cancel</button>
-            <button class="btn btn-primary" onclick="sendWhatsAppReceipt()" id="waSendBtn" style="background:#25D366;">📤 Send</button>
+            <button class="btn btn-secondary" onclick="closeWhatsAppModal()">取消 / Cancel</button>
+            <button class="btn btn-primary" onclick="sendWhatsAppReceipt()" id="waSendBtn" style="background:#25D366;">📤 发送 / Send</button>
         </div>
     </div>
 </div>
 
+<script src="inv-common.js"></script>
 <script src="auth-guard.js"></script>
 <script>
 (function(){
 'use strict';
 const user = Auth.requireAuth(); if (!user) return;
 document.getElementById('displayName').textContent = Auth.getDisplayName();
-document.getElementById('roleBadge').textContent = Auth.isRoot() ? '店主':'员工';
+document.getElementById('roleBadge').innerHTML = Auth.getRoleBadgeHTML();
 const isAdmin = Auth.isRoot();
 if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
 
@@ -160,7 +161,7 @@ if(isAdmin){document.getElementById('adminSection').style.display='';document.qu
 var perms=user.permissions||{};
 if(isAdmin){document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});}
 else{document.querySelectorAll('nav a[data-perm]').forEach(function(a){if(!perms[a.dataset.perm])a.style.display='none';});}
-
+applyUiMode();
 const API='/api/inv';
 const headers=()=>Auth.getHeaders();
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success');setTimeout(()=>t.classList.add('show'),10);setTimeout(()=>t.classList.remove('show'),3000);}
@@ -240,14 +241,14 @@ async function loadTransactions(){
             td4.textContent = '€' + Number(tx.totalAmount).toFixed(2);
             tr.appendChild(td4);
 
-            // Payment method cell
+            // Payment method cell (bilingual)
             const td5 = document.createElement('td');
             if (tx.paymentMethod === 'split') {
                 td5.textContent = '💳+💵';
             } else if (tx.paymentMethod === 'cash') {
-                td5.textContent = '💵 Cash';
+                td5.textContent = '💵 ' + bilingualLabel('cash');
             } else {
-                td5.textContent = '💳 Card';
+                td5.textContent = '💳 ' + bilingualLabel('card');
             }
             tr.appendChild(td5);
 
@@ -256,7 +257,7 @@ async function loadTransactions(){
             if (tx.exported) {
                 const exportedSpan = document.createElement('span');
                 exportedSpan.className = 'badge badge-exported';
-                exportedSpan.textContent = 'Exported';
+                exportedSpan.textContent = bilingualLabel('exported');
                 td6.appendChild(exportedSpan);
             }
             if (tx.invoiceGenerated) {
@@ -281,7 +282,7 @@ async function loadTransactions(){
             // View detail button
             const viewBtn = document.createElement('button');
             viewBtn.className = 'btn btn-secondary btn-sm';
-            viewBtn.textContent = '详情';
+            viewBtn.textContent = bilingualLabel('详情');
             viewBtn.onclick = () => viewDetail(tx._id);
             td7.appendChild(viewBtn);
 
@@ -400,7 +401,7 @@ async function loadTransactions(){
                 td7.appendChild(document.createTextNode(' '));
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn btn-danger btn-sm';
-                deleteBtn.textContent = '删除';
+                deleteBtn.textContent = bilingualLabel('删除');
                 deleteBtn.onclick = () => silentDelete(tx._id);
                 td7.appendChild(deleteBtn);
             }
@@ -416,29 +417,29 @@ async function viewDetail(id){
         const r=await apiFetch('/transactions/'+id);if(!r)return;
         const tx=await r.json();
         let html=`
-            <div class="detail-row"><span class="label">单号</span><span class="value">${esc(tx.receiptNumber)}</span></div>
-            <div class="detail-row"><span class="label">时间</span><span class="value">${new Date(tx.createdAt).toLocaleString('zh-CN')}</span></div>
-            <div class="detail-row"><span class="label">支付方式</span><span class="value">${tx.paymentMethod==='cash'?'现金':tx.paymentMethod==='split'?'Card+Cash':'银行卡'}</span></div>
-            <div class="detail-row"><span class="label">总金额</span><span class="value">€${Number(tx.totalAmount).toFixed(2)}</span></div>
+            <div class="detail-row"><span class="label">单号 / Receipt#</span><span class="value">${esc(tx.receiptNumber)}</span></div>
+            <div class="detail-row"><span class="label">时间 / Time</span><span class="value">${new Date(tx.createdAt).toLocaleString('zh-CN')}</span></div>
+            <div class="detail-row"><span class="label">支付方式 / Payment</span><span class="value">${bilingualLabel(tx.paymentMethod)}</span></div>
+            <div class="detail-row"><span class="label">总金额 / Total</span><span class="value">€${Number(tx.totalAmount).toFixed(2)}</span></div>
             <div class="detail-row"><span class="label">Standard VAT</span><span class="value">€${Number(tx.standardVatTotal||0).toFixed(2)}</span></div>
             <div class="detail-row"><span class="label">Margin VAT</span><span class="value">€${Number(tx.marginVatTotal||0).toFixed(2)}</span></div>`;
         if(tx.paymentMethod==='cash'){
-            html+=`<div class="detail-row"><span class="label">实收</span><span class="value">€${Number(tx.cashReceived||0).toFixed(2)}</span></div>`;
-            html+=`<div class="detail-row"><span class="label">找零</span><span class="value">€${Number(tx.changeGiven||0).toFixed(2)}</span></div>`;
+            html+=`<div class="detail-row"><span class="label">实收 / Received</span><span class="value">€${Number(tx.cashReceived||0).toFixed(2)}</span></div>`;
+            html+=`<div class="detail-row"><span class="label">找零 / Change</span><span class="value">€${Number(tx.changeGiven||0).toFixed(2)}</span></div>`;
         }
         if(tx.orderDiscount&&tx.orderDiscount.value){
-            html+=`<div class="detail-row"><span class="label">整单折扣</span><span class="value">${tx.orderDiscount.type==='percentage'?tx.orderDiscount.value+'%':'€'+tx.orderDiscount.value}</span></div>`;
+            html+=`<div class="detail-row"><span class="label">整单折扣 / Order Discount</span><span class="value">${tx.orderDiscount.type==='percentage'?tx.orderDiscount.value+'%':'€'+tx.orderDiscount.value}</span></div>`;
         }
-        html+=`<div class="detail-items"><h4 style="margin:12px 0 8px;">商品明细</h4><table>
-            <thead><tr><th>商品</th><th>数量</th><th>单价</th><th>成本</th><th>小计</th></tr></thead>
+        html+=`<div class="detail-items"><h4 style="margin:12px 0 8px;">商品明细 / Items</h4><table>
+            <thead><tr><th>商品 / Item</th><th>数量 / Qty</th><th>单价 / Price</th><th>成本 / Cost</th><th>小计 / Subtotal</th></tr></thead>
             <tbody>${(tx.items||[]).map((it,idx)=>`<tr>
-                <td>${esc(it.name)}${it.isSecondHand?' <span class="badge" style="background:#fff3cd;color:#856404;">二手</span>':''}${it.serialNumber?' <br><small style="color:#0071e3;">SN: '+esc(it.serialNumber)+'</small>':''}</td>
+                <td>${esc(it.name)}${it.isSecondHand?' <span class="badge" style="background:#fff3cd;color:#856404;">'+bilingualLabel('二手')+'</span>':''}${it.serialNumber?' <br><small style="color:#0071e3;">SN: '+esc(it.serialNumber)+'</small>':''}</td>
                 <td>${it.quantity}</td>
-                <td>${isAdmin?'<input type="number" step="0.01" value="'+Number(it.unitPrice||0).toFixed(2)+'" data-txid="'+tx._id+'" data-idx="'+idx+'" data-field="unitPrice" class="edit-item-field" style="width:70px;padding:3px 5px;border:1px solid #d2d2d7;border-radius:6px;font-size:12px;">':'€'+Number(it.unitPrice).toFixed(2)}${it.discount&&it.discount.value?' <small style="color:#ff3b30;">(折扣: '+(it.discount.type==='percentage'?it.discount.value+'%':'€'+it.discount.value)+')</small>':''}</td>
+                <td>${isAdmin?'<input type="number" step="0.01" value="'+Number(it.unitPrice||0).toFixed(2)+'" data-txid="'+tx._id+'" data-idx="'+idx+'" data-field="unitPrice" class="edit-item-field" style="width:70px;padding:3px 5px;border:1px solid #d2d2d7;border-radius:6px;font-size:12px;">':'€'+Number(it.unitPrice).toFixed(2)}${it.discount&&it.discount.value?' <small style="color:#ff3b30;">('+bilingualLabel('折扣')+': '+(it.discount.type==='percentage'?it.discount.value+'%':'€'+it.discount.value)+')</small>':''}</td>
                 <td>${isAdmin?'<input type="number" step="0.01" value="'+Number(it.costPrice||0).toFixed(2)+'" data-txid="'+tx._id+'" data-idx="'+idx+'" data-field="costPrice" class="edit-item-field" style="width:70px;padding:3px 5px;border:1px solid #d2d2d7;border-radius:6px;font-size:12px;">':'€'+Number(it.costPrice||0).toFixed(2)}</td>
                 <td>€${Number(it.subtotal).toFixed(2)}</td>
             </tr>`).join('')}</tbody></table>
-            ${isAdmin?'<button onclick="saveItemEdits(\''+tx._id+'\')" style="margin-top:10px;padding:8px 18px;border:none;border-radius:8px;background:#0071e3;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">💾 Save Changes</button><span id="editSaveStatus" style="margin-left:10px;font-size:12px;color:#34c759;"></span>':''}
+            ${isAdmin?'<button onclick="saveItemEdits(\''+tx._id+'\')" style="margin-top:10px;padding:8px 18px;border:none;border-radius:8px;background:#0071e3;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">💾 保存 / Save Changes</button><span id="editSaveStatus" style="margin-left:10px;font-size:12px;color:#34c759;"></span>':''}
             </div>`;
         // Partial refund section (only for non-refund transactions)
         if(tx.totalAmount>=0&&(isAdmin||perms.refund)){
@@ -532,8 +533,8 @@ window.detailRefund=async function(receiptNumber,method){
 };
 
 async function silentDelete(id){
-    if(!confirm('⚠️ 无痕删除\n\n此操作将永久删除该交易记录并恢复库存。\n确定要继续吗？'))return;
-    if(!confirm('再次确认：此操作不可撤销，确定删除？'))return;
+    if(!confirm('⚠️ 无痕删除 / Silent Delete\n\n此操作将永久删除该交易记录并恢复库存。\n确定要继续吗？ / This will permanently delete the transaction and restore stock. Continue?'))return;
+    if(!confirm('再次确认：此操作不可撤销，确定删除？ / Confirm: This cannot be undone. Delete?'))return;
     try{const r=await apiFetch('/transactions/'+id+'/delete',{method:'DELETE',body:JSON.stringify({confirm:true})});if(!r)return;if(!r.ok){const e=await r.json();showToast(e.error,'error');return;}showToast('交易已删除');loadTransactions();}catch(e){showToast('删除失败','error');}
 }
 window.silentDelete=silentDelete;
@@ -559,8 +560,8 @@ async function exportTx(format){
 window.exportTx=exportTx;
 
 async function batchDelete(){
-    if(!confirm('⚠️ 批量删除已导出记录\n\n此操作将删除所有已标记为"已导出"的交易记录。\n确定要继续吗？'))return;
-    if(!confirm('再次确认：此操作不可撤销，确定批量删除？'))return;
+    if(!confirm('⚠️ 批量删除已导出记录 / Batch Delete Exported\n\n此操作将删除所有已标记为"已导出"的交易记录。\n确定要继续吗？ / This will delete all exported transactions. Continue?'))return;
+    if(!confirm('再次确认：此操作不可撤销，确定批量删除？ / Confirm: This cannot be undone. Delete?'))return;
     try{
         // 先查出当前筛选范围内所有已导出的交易ID
         const start=document.getElementById('startDate').value;

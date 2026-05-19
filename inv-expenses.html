@@ -59,27 +59,27 @@
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross" id="snLogo"><span id="snBrand">进销存管理系统</span></div>
         <nav>
-            <div class="nav-section">业务管理 / Business</div>
-            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
-            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
-            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
-            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
-            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
-            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
-            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
-            <div class="nav-section">报表与发票 / Reports</div>
-            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
-            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
-            <a href="inv-expenses.html" class="active" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
-            <div class="nav-section" id="adminSection" style="display:none;">系统管理 / System</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
-            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
+            <div class="nav-section" data-en="Business" data-bi="业务管理 / Business">业务管理 / Business</div>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span><span data-en="Checkout" data-bi="POS 收银 / Checkout">POS 收银 / Checkout</span></a>
+            <a href="inv-products.html" data-perm="products"><span class="icon">📦</span><span data-en="Products" data-bi="商品管理 / Products">商品管理 / Products</span></a>
+            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span><span data-en="Stock" data-bi="库存管理 / Stock">库存管理 / Stock</span></a>
+            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span><span data-en="Suppliers" data-bi="供应商 / Suppliers">供应商 / Suppliers</span></a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span><span data-en="Purchases" data-bi="采购管理 / Purchases">采购管理 / Purchases</span></a>
+            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span><span data-en="Transactions" data-bi="交易记录 / Transactions">交易记录 / Transactions</span></a>
+            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span><span data-en="Shortcuts" data-bi="POS 快捷键 / Shortcuts">POS 快捷键 / Shortcuts</span></a>
+            <div class="nav-section" data-en="Reports" data-bi="报表与发票 / Reports">报表与发票 / Reports</div>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span><span data-en="Reports" data-bi="报表中心 / Reports">报表中心 / Reports</span></a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span><span data-en="VAT Invoice" data-bi="发票管理 / VAT Invoice">发票管理 / VAT Invoice</span></a>
+            <a href="inv-expenses.html" class="active" data-perm="expenses"><span class="icon">💸</span><span data-en="Expenses" data-bi="支出管理 / Expenses">支出管理 / Expenses</span></a>
+            <div class="nav-section" id="adminSection" style="display:none;" data-en="System" data-bi="系统管理 / System">系统管理 / System</div>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span><span data-en="Settings" data-bi="系统设置 / Settings">系统设置 / Settings</span></a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span><span data-en="Users" data-bi="用户管理 / Users">用户管理 / Users</span></a>
         </nav>
     </aside>
     <div class="main">
         <div class="topbar">
-            <h2>支出管理 / Expenses</h2>
-            <div class="user-info"><span>欢迎, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" id="btnLogout">退出登录 / Logout</button></div>
+            <h2><span data-en="Expenses" data-bi="支出管理 / Expenses">支出管理 / Expenses</span></h2>
+            <div class="user-info"><span><span data-en="Welcome" data-bi="欢迎">欢迎</span>, <strong id="displayName">-</strong></span><span class="badge badge-active" id="roleBadge">-</span><button class="btn-logout" id="btnLogout"><span data-en="Logout" data-bi="退出登录">退出登录</span> / Logout</button><button class="lang-toggle-dark" id="uiModeToggle" onclick="toggleUiMode()" style="padding:4px 10px;border-radius:980px;border:1px solid #d2d2d7;background:#fff;font-size:11px;cursor:pointer;white-space:nowrap;">中/EN</button></div>
         </div>
         <div class="content">
             <!-- Summary Cards -->
@@ -139,9 +139,9 @@
                     <select id="filterCategory">
                         <option value="">全部分类 / All Categories</option>
                         <option value="Lyca Credit">Lyca Credit</option>
-                        <option value="收购客人商品">收购客人商品</option>
-                        <option value="店铺杂费">店铺杂费</option>
-                        <option value="其他">其他</option>
+                        <option value="收购客人商品">收购客人商品 / Customer Purchase</option>
+                        <option value="店铺杂费">店铺杂费 / Shop Misc</option>
+                        <option value="其他">其他 / Other</option>
                     </select>
                     <button class="btn btn-primary" id="btnSearch">搜索 / Search</button>
                     <button class="btn btn-secondary" id="btnToday">今天 / Today</button>
@@ -153,13 +153,13 @@
 
                 <table>
                     <thead><tr>
-                        <th>日期 / Date</th>
-                        <th>分类 / Category</th>
-                        <th>金额 / Amount</th>
-                        <th>支付 / Payment</th>
-                        <th>描述 / Description</th>
-                        <th>操作员 / Operator</th>
-                        <th>操作 / Actions</th>
+                        <th data-en="Date" data-bi="日期 / Date">日期 / Date</th>
+                        <th data-en="Category" data-bi="分类 / Category">分类 / Category</th>
+                        <th data-en="Amount" data-bi="金额 / Amount">金额 / Amount</th>
+                        <th data-en="Payment" data-bi="支付 / Payment">支付 / Payment</th>
+                        <th data-en="Description" data-bi="描述 / Description">描述 / Description</th>
+                        <th data-en="Operator" data-bi="操作员 / Operator">操作员 / Operator</th>
+                        <th data-en="Actions" data-bi="操作 / Actions">操作 / Actions</th>
                     </tr></thead>
                     <tbody id="expTable"><tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">加载中 / Loading...</td></tr></tbody>
                 </table>
@@ -168,6 +168,7 @@
     </div>
 </div>
 
+<script src="inv-common.js"></script>
 <script src="auth-guard.js"></script>
 <script>
 (function(){
@@ -175,7 +176,7 @@
 const user = Auth.requireAuth(); if (!user) return;
 // Expenses is admin-only on the API side, but we show the page to admins
 document.getElementById('displayName').textContent = Auth.getDisplayName();
-document.getElementById('roleBadge').textContent = Auth.isRoot() ? '店主':'员工';
+document.getElementById('roleBadge').innerHTML = Auth.getRoleBadgeHTML();
 const isAdmin = Auth.isRoot();
 if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
 
@@ -183,6 +184,7 @@ if(isAdmin){document.getElementById('adminSection').style.display='';document.qu
 var perms=user.permissions||{};
 if(isAdmin){document.querySelectorAll('nav a[data-perm]').forEach(function(a){a.style.display='';});}
 else{document.querySelectorAll('nav a[data-perm]').forEach(function(a){if(!perms[a.dataset.perm])a.style.display='none';});}
+applyUiMode();
 
 const API='/api/inv';
 const headers=()=>Auth.getHeaders();
@@ -256,7 +258,7 @@ async function loadExpenses(){
 
             // Category cell
             const td2 = document.createElement('td');
-            td2.textContent = e.category;
+            td2.textContent = bilingualLabel(e.category);
             tr.appendChild(td2);
 
             // Amount cell
@@ -265,14 +267,14 @@ async function loadExpenses(){
             td3.textContent = '€' + Number(e.amount).toFixed(2);
             tr.appendChild(td3);
 
-            // Payment method cell
+            // Payment method cell (bilingual)
             const td4 = document.createElement('td');
             if (e.paymentMethod === 'cash') {
-                td4.textContent = '💵 Cash';
+                td4.textContent = '💵 ' + bilingualLabel('cash');
             } else if (e.paymentMethod === 'card') {
-                td4.textContent = '💳 Card';
+                td4.textContent = '💳 ' + bilingualLabel('card');
             } else {
-                td4.textContent = '🏦 Transfer';
+                td4.textContent = '🏦 ' + bilingualLabel('bankTransfer');
             }
             tr.appendChild(td4);
 
@@ -339,7 +341,7 @@ async function loadSummary(){
         Object.keys(cats).forEach(function(k){
             var item=document.createElement('div');
             item.className='cat-item';
-            item.textContent = k + ' ';
+            item.textContent = bilingualLabel(k) + ' ';
             var strong=document.createElement('strong');
             strong.textContent = '€' + cats[k].toFixed(2);
             item.appendChild(strong);

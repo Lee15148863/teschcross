@@ -84,44 +84,45 @@
     <aside class="sidebar">
         <div class="logo"><img src="logo.png" alt="Tech Cross" id="snLogo"><span id="snBrand">进销存管理系统</span></div>
         <nav>
-            <div class="nav-section">业务管理 / Business</div>
-            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span>POS 收银 / Checkout</a>
-            <a href="inv-products.html" class="active" data-perm="products"><span class="icon">📦</span>商品管理 / Products</a>
-            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span>库存管理 / Stock</a>
-            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span>供应商 / Suppliers</a>
-            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span>采购管理 / Purchases</a>
-            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span>交易记录 / Transactions</a>
-            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span>POS 快捷键 / Shortcuts</a>
-            <div class="nav-section">报表与发票 / Reports</div>
-            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span>报表中心 / Reports</a>
-            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span>发票管理 / VAT Invoice</a>
-            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span>支出管理 / Expenses</a>
-            <div class="nav-section" id="adminSection" style="display:none;">系统管理 / System</div>
-            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span>系统设置 / Settings</a>
-            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span>用户管理 / Users</a>
+            <div class="nav-section" data-en="Business" data-bi="业务管理 / Business">业务管理 / Business</div>
+            <a href="inv-pos.html" data-perm="pos"><span class="icon">💰</span><span data-en="Checkout" data-bi="POS 收银 / Checkout">POS 收银 / Checkout</span></a>
+            <a href="inv-products.html" class="active" data-perm="products"><span class="icon">📦</span><span data-en="Products" data-bi="商品管理 / Products">商品管理 / Products</span></a>
+            <a href="inv-stock.html" data-perm="stock"><span class="icon">🏭</span><span data-en="Stock" data-bi="库存管理 / Stock">库存管理 / Stock</span></a>
+            <a href="inv-suppliers.html" data-perm="suppliers"><span class="icon">🤝</span><span data-en="Suppliers" data-bi="供应商 / Suppliers">供应商 / Suppliers</span></a>
+            <a href="inv-purchases.html" data-perm="purchases"><span class="icon">🛒</span><span data-en="Purchases" data-bi="采购管理 / Purchases">采购管理 / Purchases</span></a>
+            <a href="inv-transactions.html" data-perm="transactions"><span class="icon">📋</span><span data-en="Transactions" data-bi="交易记录 / Transactions">交易记录 / Transactions</span></a>
+            <a href="pos-shortcuts-admin.html" data-perm="pos"><span class="icon">⚡</span><span data-en="Shortcuts" data-bi="POS 快捷键 / Shortcuts">POS 快捷键 / Shortcuts</span></a>
+            <div class="nav-section" data-en="Reports" data-bi="报表与发票 / Reports">报表与发票 / Reports</div>
+            <a href="inv-reports.html" data-perm="reports"><span class="icon">📊</span><span data-en="Reports" data-bi="报表中心 / Reports">报表中心 / Reports</span></a>
+            <a href="inv-invoices.html" data-perm="invoices"><span class="icon">🧾</span><span data-en="VAT Invoice" data-bi="发票管理 / VAT Invoice">发票管理 / VAT Invoice</span></a>
+            <a href="inv-expenses.html" data-perm="expenses"><span class="icon">💸</span><span data-en="Expenses" data-bi="支出管理 / Expenses">支出管理 / Expenses</span></a>
+            <div class="nav-section" id="adminSection" style="display:none;" data-en="System" data-bi="系统管理 / System">系统管理 / System</div>
+            <a href="inv-settings.html" class="admin-only" style="display:none;" data-perm="settings"><span class="icon">⚙️</span><span data-en="Settings" data-bi="系统设置 / Settings">系统设置 / Settings</span></a>
+            <a href="inv-users.html" class="admin-only" style="display:none;" data-perm="users"><span class="icon">👥</span><span data-en="Users" data-bi="用户管理 / Users">用户管理 / Users</span></a>
         </nav>
     </aside>
     <!-- Main -->
     <div class="main">
         <div class="topbar">
-            <h2>商品管理 / Products</h2>
+            <h2><span data-en="Products" data-bi="商品管理 / Products">商品管理 / Products</span></h2>
             <div class="user-info">
-                <span>欢迎, <strong id="displayName">-</strong></span>
+                <span><span data-en="Welcome" data-bi="欢迎">欢迎</span>, <strong id="displayName">-</strong></span>
                 <span class="badge badge-active" id="roleBadge">-</span>
-                <button class="btn-logout" onclick="logout()">退出登录 / Logout</button>
+                <button class="btn-logout" onclick="logout()"><span data-en="Logout" data-bi="退出登录">退出登录</span> / Logout</button>
+                <button class="lang-toggle-dark" id="uiModeToggle" onclick="toggleUiMode()" style="padding:4px 10px;border-radius:980px;border:1px solid #d2d2d7;background:#fff;font-size:11px;cursor:pointer;white-space:nowrap;">中/EN</button>
             </div>
         </div>
         <div class="content">
             <div class="card">
                 <div class="toolbar">
                     <input type="text" id="searchInput" placeholder="搜索商品名称/SKU/Barcode..." style="width:260px;">
-                    <select id="categoryFilter"><option value="">全部分类</option></select>
-                    <select id="activeFilter"><option value="">全部状态</option><option value="true">启用</option><option value="false">停用</option></select>
+                    <select id="categoryFilter"><option value="" data-en="All Categories" data-bi="全部分类 / All Categories">全部分类 / All Categories</option></select>
+                    <select id="activeFilter"><option value="" data-en="All Status" data-bi="全部状态 / All Status">全部状态 / All Status</option><option value="true" data-en="Active" data-bi="启用 / Active">启用 / Active</option><option value="false" data-en="Disabled" data-bi="停用 / Disabled">停用 / Disabled</option></select>
                     <div style="flex:1;"></div>
                     <button class="btn btn-primary" onclick="showAddModal()">+ 新增 / Add</button>
                 </div>
                 <table>
-                    <thead><tr><th>商品名称 / Name</th><th>SKU/Barcode</th><th>分类 / Category</th><th>库存 / Stock</th><th>售价 / Price (€)</th><th>状态 / Status</th><th>操作 / Actions</th></tr></thead>
+                    <thead><tr><th data-en="Name" data-bi="商品名称 / Name">商品名称 / Name</th><th>SKU/Barcode</th><th data-en="Category" data-bi="分类 / Category">分类 / Category</th><th data-en="Stock" data-bi="库存 / Stock">库存 / Stock</th><th data-en="Price (€)" data-bi="售价 / Price (€)">售价 / Price (€)</th><th data-en="Status" data-bi="状态 / Status">状态 / Status</th><th data-en="Actions" data-bi="操作 / Actions">操作 / Actions</th></tr></thead>
                     <tbody id="productTable"><tr><td colspan="7" style="text-align:center;color:#86868b;padding:40px;">加载中...</td></tr></tbody>
                 </table>
                 <div class="pagination" id="pagination"></div>
@@ -133,16 +134,16 @@
 <!-- Add/Edit Modal -->
 <div class="modal-overlay" id="productModal">
     <div class="modal">
-        <h3 id="modalTitle">新增商品</h3>
+        <h3 id="modalTitle"></h3>
         <form id="productForm" onsubmit="return false;">
             <input type="hidden" id="editId">
             <div class="form-row">
-                <div class="form-group"><label>商品名称 <span style="color:#ff3b30;">*</span></label><input type="text" id="fName" required></div>
-                <div class="form-group"><label>SKU/Barcode <span style="color:#ff3b30;">*</span></label><input type="text" id="fSku" required><div class="hint">支持任意格式，如条码、自定义编号等</div></div>
+                <div class="form-group"><label data-en="Product Name *" data-bi="商品名称 *">商品名称 <span style="color:#ff3b30;">*</span></label><input type="text" id="fName" required></div>
+                <div class="form-group"><label data-en="SKU/Barcode *" data-bi="SKU/Barcode *">SKU/Barcode <span style="color:#ff3b30;">*</span></label><input type="text" id="fSku" required><div class="hint" data-en="Any format: barcode, custom ID" data-bi="支持任意格式，如条码、自定义编号等">支持任意格式，如条码、自定义编号等</div></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>分类 <span style="color:#ff3b30;">*</span></label>
-                    <select id="fCategory" onchange="onCategoryChange()"><option value="">请选择</option><option value="销售">销售</option><option value="维修">维修</option><option value="服务">服务</option><option value="新机">新手机平板等电器</option><option value="二手">二手手机平板等电器</option><option value="Lyca Credit">Lyca Credit</option></select>
+                <div class="form-group"><label data-en="Category *" data-bi="分类 *">分类 <span style="color:#ff3b30;">*</span></label>
+                    <select id="fCategory" onchange="onCategoryChange()"><option value="" data-en="Select" data-bi="请选择">请选择</option><option value="销售" data-en="Sales" data-bi="销售 / Sales">销售</option><option value="维修" data-en="Repair" data-bi="维修 / Repair">维修</option><option value="服务" data-en="Service" data-bi="服务 / Service">服务</option><option value="新机" data-en="New Device" data-bi="新机 / New Device">新手机平板等电器</option><option value="二手" data-en="Used" data-bi="二手 / Used">二手手机平板等电器</option><option value="Lyca Credit">Lyca Credit</option></select>
                 </div>
                 <div class="form-group"><label>VAT 税率 (%)</label>
                     <div style="display:flex;gap:8px;align-items:center;">
@@ -188,6 +189,7 @@
     </div>
 </div>
 
+<script src="inv-common.js"></script>
 <script src="auth-guard.js"></script>
 <script>
 (function(){
@@ -195,9 +197,10 @@
 const user = Auth.requireAuth(); if (!user) return;
 
 document.getElementById('displayName').textContent = Auth.getDisplayName();
-document.getElementById('roleBadge').textContent = Auth.isRoot() ? '店主':'员工';
+document.getElementById('roleBadge').innerHTML = Auth.getRoleBadgeHTML();
 var isAdmin = Auth.isRoot();
 if(isAdmin){document.getElementById('adminSection').style.display='';document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');}
+applyUiMode();
 
 // Hide sidebar items based on permissions
 var perms=user.permissions||{};
@@ -249,7 +252,7 @@ async function loadProducts(page){
             if (p.isSecondHand) {
                 const secondHandBadge = document.createElement('span');
                 secondHandBadge.className = 'badge badge-secondhand';
-                secondHandBadge.textContent = '二手';
+                secondHandBadge.textContent = bilingualLabel('二手');
                 td1.appendChild(document.createTextNode(' '));
                 td1.appendChild(secondHandBadge);
             }
@@ -260,7 +263,7 @@ async function loadProducts(page){
                 deadBadge.style.background = '#fef2f2';
                 deadBadge.style.color = '#991b1b';
                 deadBadge.style.marginLeft = '4px';
-                deadBadge.textContent = '死库存';
+                deadBadge.textContent = '死库存 / Dead Stock';
                 td1.appendChild(deadBadge);
             }
             tr.appendChild(td1);
@@ -274,7 +277,7 @@ async function loadProducts(page){
 
             // Category cell
             const td3 = document.createElement('td');
-            td3.textContent = p.category || '-';
+            td3.textContent = bilingualLabel(p.category) || '-';
             tr.appendChild(td3);
 
             // Stock cell
@@ -306,7 +309,7 @@ async function loadProducts(page){
             const td6 = document.createElement('td');
             const statusSpan = document.createElement('span');
             statusSpan.className = `badge ${p.active ? 'badge-active' : 'badge-inactive'}`;
-            statusSpan.textContent = p.active ? '启用' : '停用';
+            statusSpan.textContent = bilingualLabel(p.active ? 'active' : 'disabled');
             td6.appendChild(statusSpan);
             tr.appendChild(td6);
 
@@ -331,7 +334,7 @@ async function loadProducts(page){
             // Edit button
             const editBtn = document.createElement('button');
             editBtn.className = 'btn btn-secondary btn-sm';
-            editBtn.textContent = '编辑';
+            editBtn.textContent = bilingualLabel('编辑');
             editBtn.onclick = () => editProduct(p._id);
             td7.appendChild(editBtn);
 
@@ -341,7 +344,7 @@ async function loadProducts(page){
                 deadBtn.className = 'btn btn-sm';
                 deadBtn.style.background = p.deadStock ? '#34c759' : '#ff9500';
                 deadBtn.style.color = '#fff';
-                deadBtn.textContent = p.deadStock ? '取消死库存' : '标记死库存';
+                deadBtn.textContent = p.deadStock ? '取消死库存 / Unmark' : '标记死库存 / Mark Dead';
                 deadBtn.onclick = () => toggleDeadStock(p._id, !!p.deadStock);
                 td7.appendChild(document.createTextNode(' '));
                 td7.appendChild(deadBtn);
@@ -350,7 +353,7 @@ async function loadProducts(page){
             // Toggle active button
             const toggleBtn = document.createElement('button');
             toggleBtn.className = `btn ${p.active ? 'btn-danger' : 'btn-success'} btn-sm`;
-            toggleBtn.textContent = p.active ? '停用' : '启用';
+            toggleBtn.textContent = p.active ? bilingualLabel('禁用') : bilingualLabel('启用');
             toggleBtn.onclick = () => toggleProduct(p._id, p.active);
             td7.appendChild(document.createTextNode(' '));
             td7.appendChild(toggleBtn);
@@ -360,7 +363,7 @@ async function loadProducts(page){
             deleteBtn.className = 'btn btn-sm';
             deleteBtn.style.background = '#6e6e73';
             deleteBtn.style.color = '#fff';
-            deleteBtn.textContent = '删除';
+            deleteBtn.textContent = bilingualLabel('删除');
             deleteBtn.onclick = () => deleteProduct(p._id, p.name);
             td7.appendChild(document.createTextNode(' '));
             td7.appendChild(deleteBtn);
@@ -380,17 +383,17 @@ function renderPagination(){
 
     const prevBtn = document.createElement('button');
     prevBtn.disabled = currentPage <= 1;
-    prevBtn.textContent = '上一页';
+    prevBtn.textContent = '上一页 / Prev';
     prevBtn.onclick = () => loadProducts(currentPage - 1);
     pg.appendChild(prevBtn);
 
     const span = document.createElement('span');
-    span.textContent = `第 ${currentPage} / ${totalPages} 页`;
+    span.textContent = `第 ${currentPage} / ${totalPages} 页 (Page ${currentPage}/${totalPages})`;
     pg.appendChild(span);
 
     const nextBtn = document.createElement('button');
     nextBtn.disabled = currentPage >= totalPages;
-    nextBtn.textContent = '下一页';
+    nextBtn.textContent = '下一页 / Next';
     nextBtn.onclick = () => loadProducts(currentPage + 1);
     pg.appendChild(nextBtn);
 }
@@ -402,13 +405,13 @@ function updateCategoryFilter(){
 
     const optAll = document.createElement('option');
     optAll.value = '';
-    optAll.textContent = '全部分类';
+    optAll.textContent = '全部分类 / All Categories';
     sel.appendChild(optAll);
 
     categories.forEach(c => {
         const option = document.createElement('option');
         option.value = c;
-        option.textContent = c;
+        option.textContent = bilingualLabel(c);
         sel.appendChild(option);
     });
     sel.value = cur;
@@ -533,7 +536,7 @@ function getAttributes(){
 
 // Modal
 function showAddModal(){
-    document.getElementById('modalTitle').textContent='新增商品';
+    document.getElementById('modalTitle').textContent=bilingualLabel('addProduct');
     document.getElementById('editId').value='';
     document.getElementById('productForm').reset();
     document.getElementById('secondHandFields').classList.remove('show');
@@ -550,7 +553,7 @@ async function editProduct(id){
     try{
         const r=await apiFetch('/products/'+id);if(!r)return;
         const p=await r.json();
-        document.getElementById('modalTitle').textContent='编辑商品';
+        document.getElementById('modalTitle').textContent=bilingualLabel('editProduct');
         document.getElementById('editId').value=p._id;
         document.getElementById('fName').value=p.name;
         document.getElementById('fSku').value=p.sku;

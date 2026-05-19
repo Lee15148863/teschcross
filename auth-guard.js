@@ -117,14 +117,21 @@
       this.redirectToLogin();
     },
 
-    // ─── Get role badge HTML ───────────────────────────────────────────────
+    // ─── Get role badge HTML (mode-aware) ────────────────────────────────
     getRoleBadgeHTML: function () {
       var user = this.getUser();
       if (!user) return '<span class="badge badge-staff">-</span>';
+      var mode = (typeof getUiLanguageMode === 'function') ? getUiLanguageMode() : 'en';
       if (user.role === 'root') {
-        return '<span class="badge badge-root">店主 Root</span>';
+        var rootLabel = mode === 'bi' ? '店主 / Root' : 'Root';
+        return '<span class="badge badge-root" style="white-space:nowrap;">' + rootLabel + '</span>';
       }
-      return '<span class="badge badge-staff">员工 Staff</span>';
+      if (user.role === 'manager') {
+        var mgrLabel = mode === 'bi' ? '经理 / Manager' : 'Manager';
+        return '<span class="badge badge-manager" style="white-space:nowrap;">' + mgrLabel + '</span>';
+      }
+      var staffLabel = mode === 'bi' ? '员工 / Staff' : 'Staff';
+      return '<span class="badge badge-staff" style="white-space:nowrap;">' + staffLabel + '</span>';
     }
   };
 

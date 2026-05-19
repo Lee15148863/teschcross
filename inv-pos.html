@@ -679,6 +679,7 @@
         .cs-action-btn.cs-whatsapp:active { background: #1da851; }
     </style>
 </head>
+<script src="inv-common.js"></script>
 <script src="auth-guard.js"></script>
 <body>
     <!-- Toast -->
@@ -879,7 +880,7 @@
             <div class="pos-form-row">
                 <div class="pos-form-col"><label class="pos-form-label" id="qaLblSku">SKU/Barcode *</label><input type="text" id="qaSku" class="pos-form-input" placeholder="条码或自定义编号"></div>
                 <div class="pos-form-col"><label class="pos-form-label" id="qaLblCat">分类 *</label>
-                    <select id="qaCat" class="pos-form-select"><option value="销售">销售</option><option value="维修">维修</option><option value="服务">服务</option><option value="新机">新手机平板等电器</option><option value="二手">二手手机平板等电器</option><option value="Lyca Credit">Lyca Credit</option></select>
+                    <select id="qaCat" class="pos-form-select"><option value="销售" data-en="Sales" data-bi="销售 / Sales">销售 / Sales</option><option value="维修" data-en="Repair" data-bi="维修 / Repair">维修 / Repair</option><option value="服务" data-en="Service" data-bi="服务 / Service">服务 / Service</option><option value="新机" data-en="New Device" data-bi="新机 / New Device">新机 / New Device</option><option value="二手" data-en="Used" data-bi="二手 / Used">二手 / Used</option><option value="Lyca Credit" data-en="Lyca Credit" data-bi="Lyca Credit">Lyca Credit</option></select>
                 </div>
             </div>
             <div class="pos-form-row">
@@ -897,7 +898,7 @@
             </div>
             <div class="pos-form-group"><label class="pos-form-label-inline"><input type="checkbox" id="qaSecondHand"> <span id="qaLblSH">二手商品</span></label></div>
             <div id="qaSecondHandFields" class="qa-sh-fields">
-                <div class="qa-sh-row"><label class="pos-form-label-sm" id="qaLblSource">来源</label><select id="qaSource" class="pos-form-select-sm"><option value="customer">从客人收购</option><option value="dealer">从其他二手商人进货</option><option value="other">其他来源</option></select></div>
+                <div class="qa-sh-row"><label class="pos-form-label-sm" id="qaLblSource">来源</label><select id="qaSource" class="pos-form-select-sm"><option value="customer" data-en="From Customer" data-bi="从客人收购 / From Customer">从客人收购 / From Customer</option><option value="dealer" data-en="From Dealer" data-bi="从其他二手商人进货 / From Dealer">从其他二手商人进货 / From Dealer</option><option value="other" data-en="Other" data-bi="其他来源 / Other">其他来源 / Other</option></select></div>
                 <div class="qa-sh-row"><label class="pos-form-label-inline-sm"><input type="checkbox" id="qaMarginScheme" checked> <span id="qaLblMargin">适用 Margin Scheme VAT</span></label></div>
                 <div><label class="pos-form-label-sm">IMEI/SN *</label><input type="text" id="qaSerial" class="pos-form-input-sm"></div>
             </div>
@@ -3228,6 +3229,7 @@
     renderCart();
     searchInput.focus();
     loadShortcuts(); // 加载左侧快捷按钮
+    applyUiMode(); // Apply mode to category/source selects
 
     // ─── 左侧快捷按钮栏加载 ─────────────────────────────────────
     async function loadShortcuts() {
