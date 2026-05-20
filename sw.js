@@ -1,4 +1,4 @@
-const CACHE_NAME = 'techcross-v4';
+const CACHE_NAME = 'techcross-v5';
 const PRECACHE = ['/', '/index.html', '/pricing.html', '/styles.css', '/logo-sm.png', '/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -15,12 +15,8 @@ self.addEventListener('fetch', e => {
     var url = e.request.url;
     // External third-party URLs (CDN, analytics, images): pass through, don't cache
     if (!url.startsWith(self.location.origin)) return;
-    // API, inv-*, staff-portal, admin-*, saas-*: network only, don't cache
+    // API, inv-*, staff-portal, admin-*, saas-*: bypass SW, let browser handle
     if (url.includes('/api/') || url.includes('/inv-') || url.includes('/staff-portal') || url.includes('/admin') || url.includes('/saas/')) {
-        e.respondWith(fetch(e.request).catch(function(err) {
-            console.warn('SW network-only fetch failed for ' + url + ': ' + err.message);
-            return Response.error();
-        }));
         return;
     }
     // Same-origin static assets only: cache first
