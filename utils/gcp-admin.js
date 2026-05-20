@@ -185,6 +185,8 @@ async function triggerDeployBuild(projectId, region, serviceName, storeName, mon
         '--allow-unauthenticated',
         '--concurrency=80',
         '--timeout=300',
+        '--vpc-connector=storeflow-connector',
+        '--vpc-egress=all-traffic',
         '--labels=app=storeflow,store=' + (storeName || '').toLowerCase().replace(/[^a-z0-9_-]/g, '_') + ',managed-by=storeflow-saas',
         '--set-env-vars=' + envStr
       ]

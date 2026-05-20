@@ -48,6 +48,10 @@ steps:
       - '1'
       - '--timeout'
       - '300'
+      - '--vpc-connector'
+      - 'storeflow-connector'
+      - '--vpc-egress'
+      - 'all-traffic'
       - '--revision-suffix'
       - '$_TAG'
   
