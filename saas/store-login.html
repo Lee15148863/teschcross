@@ -93,7 +93,7 @@
 // Read slug from path /s/:slug (primary) or ?store= (compat)
 var slug = '';
 var pathMatch = window.location.pathname.match(/^\/s\/([^/]+)/);
-if (pathMatch) { slug = decodeURIComponent(pathMatch[1]); }
+if (pathMatch) { try { slug = decodeURIComponent(pathMatch[1]); } catch(e) { slug = ''; } }
 if (!slug) { slug = new URLSearchParams(window.location.search).get('store') || ''; }
 slug = slug.replace(/[^a-z0-9-]/g, '');
 

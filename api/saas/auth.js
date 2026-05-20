@@ -83,7 +83,9 @@ router.post('/login', loginLimiter, async (req, res) => {
       if (!store || !user.storeId || user.storeId.toString() !== store._id.toString()) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
-      if (store.status === 'suspended' && user.role !== 'super_admin') {
+      // Allowlist: only active/trialing stores may log in. Fail closed.
+      var allowedStatuses = ['active', 'trial', 'trialing'];
+      if (user.role !== 'super_admin' && allowedStatuses.indexOf(store.status) === -1) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
     }
