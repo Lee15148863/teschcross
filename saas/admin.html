@@ -325,7 +325,7 @@ var SA_I18N = {
     loadingModules:'Loading modules...',saveModules:'Save Modules',
     featureOverrides:'Feature Overrides',saveFeatures:'Save Features',
     mode:'Mode',dbName:'DB Name',storageLimit:'Storage Limit',storageUsed:'Storage Used',
-    backupPolicy:'Backup Policy',dataExport:'Data Export',region:'Region',byoMongo:'BYO Mongo',
+    backupPolicy:'Backup Policy',dataExport:'Data Export',region:'Region',byoMongo:'BYO Requested',byoMongoStatus:'BYO Status',byoRequestedYes:'Yes',byoRequestedNo:'No',byoNotRequested:'Not requested',byoPendingVerify:'Admin verification required',
     saved:'Saved.',redeployNote:'Redeploy for changes to take effect.',errorSaving:'Error saving modules.',
     selectStore:'Select a store.',loadModulesBtn:'Load',load:'Load',view:'View',
     selectStoreUsers:'Select a store to view users.',noUsers:'No users in this store.',
@@ -367,7 +367,7 @@ var SA_I18N = {
     loadingModules:'加载模块中...',saveModules:'保存模块',
     featureOverrides:'功能开关',saveFeatures:'保存功能',
     mode:'模式',dbName:'数据库名',storageLimit:'存储上限',storageUsed:'已用存储',
-    backupPolicy:'备份策略',dataExport:'数据导出',region:'区域',byoMongo:'自带 MongoDB',
+    backupPolicy:'备份策略',dataExport:'数据导出',region:'区域',byoMongo:'BYO 请求',byoMongoStatus:'BYO 状态',byoRequestedYes:'是',byoRequestedNo:'否',byoNotRequested:'未请求',byoPendingVerify:'等待管理员验证',
     saved:'已保存。',redeployNote:'部署后生效。',errorSaving:'保存模块失败。',
     selectStore:'请选择店铺。',loadModulesBtn:'加载',load:'加载',view:'查看',
     selectStoreUsers:'请选择店铺查看用户。',noUsers:'该店铺暂无用户。',
@@ -601,7 +601,11 @@ function renderManageStore(s) {
   h += infoCell('Backup Policy', s.backupPolicy||'none');
   h += infoCell('Data Export', s.allowDataExport ? 'Allowed' : 'Blocked');
   h += infoCell('Region', s.dataRegion||'europe-west1');
-  h += infoCell('BYO Mongo', s.byoMongoConfigured ? 'Configured' : 'Not configured');
+  h += infoCell('BYO Requested', s.byoMongoRequested ? 'Yes' : 'No');
+  h += infoCell('BYO Status', s.byoSetupStatus || (s.byoMongoConfigured ? 'Configured' : 'Not requested'));
+  if (s.byoMongoRequested && !s.byoMongoConfigured) {
+    h += '<p style="font-size:12px;color:#f59e0b;margin-top:8px;">BYO MongoDB requested — admin verification required.</p>';
+  }
   h += '</div></div></div>';
 
   document.getElementById('manageStoreContent').innerHTML = h;
@@ -761,12 +765,11 @@ function loadSignups() {
     _allSignups = signups; var el = document.getElementById('signupList');
     var pending = signups.filter(function(s) { return s.status === 'pending'; });
     if (!pending.length) { el.innerHTML = '<p style="color:#8e8e93;text-align:center;">No pending signups.</p>'; return; }
-    var h = '<table><thead><tr><th>Store</th><th>Owner</th><th>Email</th><th>Plan</th><th>Date</th><th>MongoDB</th><th>Actions</th></tr></thead><tbody>';
+    var h = '<table><thead><tr><th>Store</th><th>Owner</th><th>Email</th><th>Plan</th><th>Date</th><th>Database</th><th>Actions</th></tr></thead><tbody>';
     pending.forEach(function(s) {
-      var uriStatus = s.mongoUriValidationStatus || '';
-      var uriBadge = uriStatus === 'passed' ? 'badge-green' : (uriStatus === 'failed' ? 'badge-red' : 'badge-gray');
-      var dbPref = s.databasePreference === 'byo' ? 'BYO' : 'Managed';
-      h += '<tr><td><strong>' + escHtml(s.storeName) + '</strong></td><td>' + escHtml(s.ownerName) + '</td><td>' + escHtml(s.email) + '</td><td>' + escHtml(s.subscriptionPlan||'free') + '</td><td>' + new Date(s.createdAt).toLocaleDateString() + '</td><td>' + dbPref + '</td>';
+      var dbPref = s.databasePreference === 'byo' ? 'BYO Requested' : 'StoreFlow Managed';
+      var dbLabel = s.databasePreference === 'byo' ? '<span style="color:#f59e0b;">' + dbPref + '</span>' : '<span style="color:#34c759;">' + dbPref + '</span>';
+      h += '<tr><td><strong>' + escHtml(s.storeName) + '</strong></td><td>' + escHtml(s.ownerName) + '</td><td>' + escHtml(s.email) + '</td><td>' + escHtml(s.subscriptionPlan||'free') + '</td><td>' + new Date(s.createdAt).toLocaleDateString() + '</td><td>' + dbLabel + '</td>';
       h += '<td><button class="btn btn-primary btn-xs" onclick="approveSignup(\'' + s._id + '\')">Approve</button> <button class="btn btn-danger btn-xs" onclick="rejectSignup(\'' + s._id + '\')">Reject</button></td></tr>';
     });
     h += '</tbody></table>'; el.innerHTML = h;
@@ -774,13 +777,13 @@ function loadSignups() {
 }
 function approveSignup(id) {
   var s = (_allSignups||[]).find(function(x) { return x._id === id; });
-  if (s && (s.mongoUriValidationStatus === 'failed' || s.mongoUriValidationStatus === 'error')) { if (!confirm('MongoDB URI validation ' + s.mongoUriValidationStatus.toUpperCase() + '. Continue?')) return; }
   if (!confirm('Approve this store signup?')) return;
   fetch('/api/saas/stores/approve/' + id, { method: 'POST', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.success) {
       var msg = 'Approved! ' + d.store.name;
       if (d.credentials && d.credentials.username) msg += ' | Owner: ' + d.credentials.username;
       if (d.store.slug) msg += ' | /s/' + d.store.slug;
+      if (d.byoMongoRequested) msg += ' | BYO MongoDB requested — admin verification required';
       msg += ' | Use Store Users → Reset PW to set password.';
       showToast(msg); loadSignups(); loadStores();
     } else { showToast('Approve failed: ' + (d.error||d.message||'Unknown')); }
@@ -916,7 +919,8 @@ function loadDatabase() {
     h += infoCell('Backup', d.backupPolicy||'none');
     h += infoCell('Data Export', d.allowDataExport?'Enabled':'Disabled');
     h += infoCell('Region', d.dataRegion||'europe-west1');
-    h += infoCell('BYO Mongo', d.byoMongoConfigured?'Configured':'Not configured');
+    h += infoCell('BYO Requested', d.byoMongoRequested?'Yes':'No');
+  h += infoCell('BYO Status', d.byoSetupStatus||(d.byoMongoConfigured?'Configured':'Not requested'));
     h += '</div>';
     h += '<div style="margin-top:12px;background:#e8e8ed;border-radius:6px;height:10px;overflow:hidden;"><div style="background:'+(pct>80?'#ff3b30':pct>60?'#f59e0b':'#34c759')+';height:100%;width:'+pct+'%;border-radius:6px;"></div></div>';
     if (d.lastBackupAt) h += '<div style="font-size:12px;color:#8e8e93;margin-top:8px;">Last backup: '+new Date(d.lastBackupAt).toLocaleString()+'</div>';

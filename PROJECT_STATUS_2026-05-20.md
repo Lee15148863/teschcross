@@ -44,7 +44,7 @@
 | Profit report | disabled |
 | CashLedger report | disabled |
 | Invoices | disabled |
-| BYO MongoDB | disabled |
+| BYO MongoDB | by request (admin-verified activation) |
 | Receipts print | enabled |
 | Basic reports | enabled |
 

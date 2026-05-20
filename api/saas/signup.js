@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const StoreSignup = require('../../models/saas/StoreSignup');
 const SaaSUser = require('../../models/saas/SaaSUser');
-const { maskMongoUri, validateMongoUriFormat } = require('../../utils/mongo-uri-validator');
+const { maskMongoUri } = require('../../utils/mongo-uri-validator');
 
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 const BCRYPT_SALT_ROUNDS = 10;
@@ -25,10 +25,7 @@ router.post('/', async (req, res) => {
   try {
     const {
       storeName, ownerName, username, email, phone, country, businessType, notes, password,
-      // T20/T21 optional fields
-      timezone, currency, mongoUri, deploymentPin,
-      atlasOwnershipConfirmed, atlasResponsibilityAccepted,
-      storeflowConnectionAuthorised, legalTermsAccepted,
+      timezone, currency, mongoUri,
       subscriptionPlan, trialLengthDays
     } = req.body;
 
@@ -42,27 +39,12 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Username is required' });
     }
 
-    // If mongoUri provided, require full onboarding fields
-    let validatedPinStr = '';
-    if (mongoUri) {
-      if (!timezone) return res.status(400).json({ error: 'Timezone required when providing MongoDB URI' });
-      if (!currency) return res.status(400).json({ error: 'Currency required when providing MongoDB URI' });
-      if (!deploymentPin) return res.status(400).json({ error: 'Deployment PIN required when providing MongoDB URI' });
-      if (atlasOwnershipConfirmed !== true) {
-        return res.status(400).json({ error: 'You must confirm Atlas data ownership (checkbox 1)' });
-      }
-      if (atlasResponsibilityAccepted !== true) {
-        return res.status(400).json({ error: 'You must accept backup and data responsibility (checkbox 2)' });
-      }
-      if (storeflowConnectionAuthorised !== true) {
-        return res.status(400).json({ error: 'You must authorise StoreFlow to use this connection string (checkbox 3)' });
-      }
-      if (legalTermsAccepted !== true) {
-        return res.status(400).json({ error: 'You must accept the Terms, Privacy Notice, and Atlas Notice (checkbox 4)' });
-      }
-      validatedPinStr = String(deploymentPin).replace(/\D/g, '');
-      if (validatedPinStr.length < 4 || validatedPinStr.length > 20) {
-        return res.status(400).json({ error: 'Deployment PIN must be 4-20 digits' });
+    // MongoDB URI is optional. When provided, only basic scheme check.
+    // BYO MongoDB is requested, NOT automatically enabled.
+    var trimmedUri = mongoUri ? String(mongoUri).trim() : '';
+    if (trimmedUri) {
+      if (!trimmedUri.startsWith('mongodb+srv://') && !trimmedUri.startsWith('mongodb://')) {
+        return res.status(400).json({ error: 'MongoDB URI must start with mongodb+srv:// or mongodb://' });
       }
     }
 
@@ -85,68 +67,42 @@ router.post('/', async (req, res) => {
       businessType: businessType || '', notes: notes || '', password: hashedPw
     };
 
-    // Handle MongoDB URI onboarding fields — BYO MongoDB (optional, advanced)
-    if (mongoUri) {
+    if (timezone) signupFields.timezone = timezone;
+    if (currency) signupFields.currency = currency;
+
+    if (trimmedUri) {
+      // BYO MongoDB requested — store URI with select:false, never return
       signupFields.databasePreference = 'byo';
-      // Validate URI format (fast, no connection)
-      const fmtCheck = validateMongoUriFormat(mongoUri, {
-        mainPosDbName: process.env.STORE_NAME || 'techcross',
-        adminDbName: process.env.SAAS_DB_NAME || 'saas_admin',
-      });
-      if (!fmtCheck.ok) {
-        return res.status(400).json({ error: 'Invalid MongoDB URI: ' + fmtCheck.message, maskedUri: fmtCheck.maskedUri });
-      }
-
-      // Store masked URI, never full URI in response
-      signupFields.mongoUri = mongoUri;
-      signupFields.mongoUriMasked = maskMongoUri(mongoUri);
-      signupFields.mongoUriValidationStatus = 'pending';
-      signupFields.timezone = timezone;
-      signupFields.currency = currency;
-
-      // Hash deployment PIN immediately — never store plaintext
-      signupFields.deploymentPinHash = await bcrypt.hash(validatedPinStr, BCRYPT_SALT_ROUNDS);
-      signupFields.pinSetAt = new Date();
-
-      // Store explicit checkbox values
-      signupFields.atlasOwnershipConfirmed = true;
-      signupFields.atlasResponsibilityAccepted = true;
-      signupFields.storeflowConnectionAuthorised = true;
-      signupFields.legalTermsAccepted = true;
-      signupFields.privacyNoticeAccepted = true;
-      signupFields.dpaNoticeAccepted = true;
-
-      // Legal acceptance metadata — evidence record
-      signupFields.noticeVersionAccepted = 'mongodb-atlas-notice-v1.0';
-      signupFields.noticeAcceptedAt = new Date();
-      signupFields.noticeAcceptedIp = req.ip || req.socket.remoteAddress || '';
-      signupFields.noticeAcceptedUserAgent = (req.headers['user-agent'] || '').slice(0, 500);
-      signupFields.noticeAcceptedEmail = email.toLowerCase();
-      signupFields.noticeAcceptedByUsername = (username || '').trim();
-
-      signupFields.termsVersionAccepted = 'v1.0';
-      signupFields.privacyVersionAccepted = 'v1.0';
-      signupFields.dpaVersionAccepted = 'v1.0';
-
-      if (subscriptionPlan) signupFields.subscriptionPlan = subscriptionPlan;
-      if (trialLengthDays) signupFields.trialLengthDays = trialLengthDays;
+      signupFields.byoMongoRequested = true;
+      signupFields.byoMongoConfigured = false;
+      signupFields.byoSetupStatus = 'pending_admin_verification';
+      signupFields.mongoUri = trimmedUri;
+      signupFields.mongoUriMasked = maskMongoUri(trimmedUri);
     } else {
       // Managed DB — default, no MongoDB URI needed
       signupFields.databasePreference = 'managed';
-      if (timezone) signupFields.timezone = timezone;
-      if (currency) signupFields.currency = currency;
+      signupFields.byoMongoRequested = false;
+      signupFields.byoMongoConfigured = false;
     }
+
+    if (subscriptionPlan) signupFields.subscriptionPlan = subscriptionPlan;
+    if (trialLengthDays) signupFields.trialLengthDays = trialLengthDays;
 
     const signup = await StoreSignup.create(signupFields);
 
-    // Build response — never include mongoUri or deploymentPinHash
+    // Response — never include raw mongoUri
     const response = {
       success: true,
       message: 'Registration submitted. Awaiting approval.',
       id: signup._id,
+      databasePreference: signupFields.databasePreference
     };
     if (signup.mongoUriMasked) {
       response.mongoUriMasked = signup.mongoUriMasked;
+    }
+    if (signupFields.byoMongoRequested) {
+      response.byoMongoRequested = true;
+      response.byoNote = 'BYO MongoDB requested. TechCross/Admin verification required before activation.';
     }
 
     res.json(response);
@@ -154,6 +110,7 @@ router.post('/', async (req, res) => {
     if (e.code === 11000) {
       return res.status(409).json({ error: 'This email has already registered' });
     }
+    console.error('[signup] error:', e.name || 'Error', e.message || e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -164,6 +121,7 @@ router.get('/', superAdminAuth, async (req, res) => {
     const signups = await StoreSignup.find({}).sort({ createdAt: -1 });
     res.json(signups);
   } catch (e) {
+    console.error('[signup] list error:', e.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -25,7 +25,6 @@ const StoreSchema = new mongoose.Schema({
   currency:    { type: String, trim: true },
 
   // ─── StoreFlow Module / Plan / Permission (Phase 1A) ──────────
-  // Backward compatible: undefined = legacy all-enabled mode
   plan: {
     type: String,
     enum: ['free', 'starter', 'pro', 'enterprise'],
@@ -39,9 +38,6 @@ const StoreSchema = new mongoose.Schema({
   trialEndsAt: { type: Date },
 
   // Module control
-  // undefined → legacy (all modules available)
-  // [] → no modules (should not happen — required modules always on)
-  // ['pos','products','transactions',...] → explicit
   enabledModules:  { type: [String], default: undefined },
   disabledModules: { type: [String], default: [] },
 
@@ -63,8 +59,10 @@ const StoreSchema = new mongoose.Schema({
   storageLimitMB:  { type: Number, default: 50 },
   storageUsedMB:   { type: Number, default: 0 },
   storageLastCheckedAt: { type: Date },
-  // BYO mode (future: Secret Manager reference, never raw URI)
+  // BYO mode — admin-verified activation, never raw URI
+  byoMongoRequested:   { type: Boolean, default: false },
   byoMongoConfigured:  { type: Boolean, default: false },
+  byoSetupStatus:      { type: String, enum: ['', 'pending_admin_verification', 'configured', 'failed'], default: '' },
   byoMongoSecretName:  { type: String },
   byoMongoSecretVersion: { type: String },
   byoMongoVerifiedAt:  { type: Date },

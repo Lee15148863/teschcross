@@ -202,7 +202,27 @@ SaaS Super Admin (Lee087)
 | Accounting export | disabled |
 | Transaction delete | disabled |
 | Invoices | disabled |
-| BYO MongoDB | disabled |
+| BYO MongoDB | by request (admin-verified activation) |
+
+### BYO MongoDB Policy (Production)
+
+- BYO MongoDB is available by request for ALL plans (Free/Starter/Pro/Enterprise).
+- Managed DB is default and recommended for all stores.
+- BYO activation requires TechCross/Admin verification before activation.
+- Customer does NOT need to self-manage Atlas whitelist during normal signup.
+- StoreFlow fixed outbound IP: 104.155.83.41.
+- Full BYO activation requires:
+  - Secret Manager storage of customer URI
+  - Connectivity validation (connect + write/read/delete)
+  - Network access / Atlas allowlist / Private Endpoint setup
+  - Admin verification of ownership + permissions
+- Raw customer URI must NOT be:
+  - Returned in API response
+  - Displayed in SaaS Admin
+  - Logged to console or server logs
+  - Stored in plaintext Store/Deployment fields
+- Approval always creates managed DB store first. BYO request recorded as pending_admin_verification.
+- Temporary raw URI storage: StoreSignup.mongoUri (select:false). Must migrate to Secret Manager.
 
 ### Per-Store Login
 

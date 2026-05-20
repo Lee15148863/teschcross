@@ -28,6 +28,11 @@ const StoreSignupSchema = new mongoose.Schema({
   trialLengthDays: { type: Number },
   databasePreference: { type: String, enum: ['managed', 'byo', ''], default: '' },
 
+  // BYO MongoDB request tracking — admin-verified activation
+  byoMongoRequested:   { type: Boolean, default: false },
+  byoMongoConfigured:  { type: Boolean, default: false },
+  byoSetupStatus:      { type: String, enum: ['', 'pending_admin_verification', 'configured', 'failed'], default: '' },
+
   // T23 — Legal acceptance metadata
   noticeVersionAccepted:  { type: String },
   noticeAcceptedAt:       { type: Date },

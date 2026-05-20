@@ -144,16 +144,18 @@
     </div>
 
     <div class="section-divider"></div>
-    <h3 class="section-title">MongoDB Atlas (Required for Production)</h3>
+    <h3 class="section-title">MongoDB Atlas Connection String (Optional)</h3>
     <p class="guidance-text">
-      <strong>Production deployment requires your own MongoDB Atlas database.</strong><br>
-      Your business owns and manages the Atlas account, billing, backups, users, credentials, and all data.<br>
-      StoreFlow only connects the software to your database.<br>
-      If your Atlas username or password contains special characters such as <code>@ : / ? # %</code>, they must be <a href="https://www.mongodb.com/docs/atlas/atlas-reserved-url-encoding/" target="_blank">percent-encoded</a>.
+      <strong>Recommended: Use StoreFlow-managed database.</strong><br>
+      Most small shops do not need to manage MongoDB, Atlas, network access, backups or hosting.<br>
+      Leave blank to get started immediately with managed hosting.<br><br>
+      <strong>Advanced option:</strong> You may request to use your own MongoDB Atlas database.<br>
+      BYO MongoDB requires TechCross/Admin verification before activation.<br>
+      StoreFlow fixed outbound IP <code>104.155.83.41</code> can be provided for Atlas Network Access.
     </p>
     <div class="form-row">
       <div class="form-group">
-        <label>Timezone *</label>
+        <label>Timezone</label>
         <select id="timezone">
           <option value="Europe/Dublin">Europe/Dublin (IST/GMT)</option>
           <option value="Europe/London">Europe/London (BST/GMT)</option>
@@ -171,7 +173,7 @@
         </select>
       </div>
       <div class="form-group">
-        <label>Currency *</label>
+        <label>Currency</label>
         <select id="currency">
           <option value="EUR">EUR (&euro;)</option>
           <option value="GBP">GBP (&pound;)</option>
@@ -191,13 +193,13 @@
     <div class="form-group">
       <label>MongoDB Atlas Connection String <span style="font-weight:400;color:#8e8e93;">(Optional)</span></label>
       <input type="text" id="mongoUri" placeholder="mongodb+srv://user:password@cluster.mongodb.net/dbname" autocomplete="off" spellcheck="false" oninput="toggleByoFields()">
-      <div class="field-hint">Leave blank to use StoreFlow-managed database (recommended). Advanced users may provide their own MongoDB Atlas connection string.</div>
+      <div class="field-hint">Leave blank to use StoreFlow-managed database (recommended). BYO MongoDB requires admin verification before activation.</div>
     </div>
     <div id="byoFields" style="display:none;">
     <div class="form-group">
       <label>Deployment PIN <span style="font-weight:400;color:#8e8e93;">(4-20 digits)</span></label>
       <input type="password" id="deploymentPin" placeholder="e.g. 4825" maxlength="20" inputmode="numeric" autocomplete="off">
-      <div class="field-hint">Required for sensitive actions (suspend, delete, rollback). Store this PIN securely.</div>
+      <div class="field-hint">For future use. Required for sensitive actions (suspend, delete, rollback).</div>
     </div>
     <div class="checkbox-group">
       <label>
@@ -223,10 +225,10 @@
         <span data-i18n="saas.register.checkbox.terms">I have read and agree to the StoreFlow Terms, Privacy Notice, and the <a href="/saas/mongodb-atlas-notice.html" target="_blank">MongoDB Atlas Responsibility Notice</a>.</span>
       </label>
     </div>
-    <p style="font-size:12px;color:#8e8e93;margin:4px 0 16px;">📖 <a href="/saas/mongodb-atlas-notice.html" target="_blank">StoreFlow MongoDB Atlas User Guide and Responsibility Notice (v1.0)</a> — Read before submitting.</p>
+    <p style="font-size:12px;color:#8e8e93;margin:4px 0 16px;">&#128214; <a href="/saas/mongodb-atlas-notice.html" target="_blank">StoreFlow MongoDB Atlas User Guide and Responsibility Notice (v1.0)</a> — Read before submitting.</p>
     </div>
 
-    <button type="submit" class="btn-submit" id="submitBtn" data-i18n="saas.register.btn" disabled>Submit Registration</button>
+    <button type="submit" class="btn-submit" id="submitBtn" data-i18n="saas.register.btn">Submit Registration</button>
   </form>
 
   <div class="back-link">
@@ -249,22 +251,38 @@
 
 <script src="../lang.js"></script>
 <script>
-const API_BASE = localStorage.getItem('saas_api_base') || '';
+var API_BASE = localStorage.getItem('saas_api_base') || '';
+
+// Global: show/hide BYO fields when URI input changes
+function toggleByoFields() {
+  var uri = document.getElementById('mongoUri').value.trim();
+  var byoEl = document.getElementById('byoFields');
+  if (byoEl) byoEl.style.display = uri ? 'block' : 'none';
+  updateSubmitState();
+}
+
+// Enable submit: always enabled when no URI (managed DB).
+// When URI provided, require all 4 BYO checkboxes.
+function updateSubmitState() {
+  var uri = document.getElementById('mongoUri').value.trim();
+  var btn = document.getElementById('submitBtn');
+  if (!uri) { btn.disabled = false; return; }
+  var all4 = document.getElementById('atlasOwnershipConfirmed').checked
+          && document.getElementById('atlasResponsibilityAccepted').checked
+          && document.getElementById('storeflowConnectionAuthorised').checked
+          && document.getElementById('legalTermsAccepted').checked;
+  btn.disabled = !all4;
+}
+
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   var btn = document.getElementById('submitBtn');
   var err = document.getElementById('errorMsg');
   var email = document.getElementById('email');
 
-  btn.disabled = true; btn.textContent = __('saas.register.submitting');
+  btn.disabled = true;
+  btn.textContent = __('saas.register.submitting');
   err.classList.remove('show');
-
-  function toggleByoFields() {
-    var uri = document.getElementById('mongoUri').value.trim();
-    var byoEl = document.getElementById('byoFields');
-    if (byoEl) byoEl.style.display = uri ? 'block' : 'none';
-    updateSubmitState();
-  }
 
   async function submit(retries) {
     try {
@@ -277,24 +295,18 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         return;
       }
 
-      // Validate MongoDB Atlas fields if URI provided
       var mongoUri = document.getElementById('mongoUri').value.trim();
+
+      // Basic scheme check only when URI provided — BYO is just requested, not auto-enabled
       if (mongoUri) {
-        var tz = document.getElementById('timezone').value;
-        var cur = document.getElementById('currency').value;
-        var pin = document.getElementById('deploymentPin').value.trim();
-        var ownershipCb = document.getElementById('atlasOwnershipConfirmed').checked;
-        var responsibilityCb = document.getElementById('atlasResponsibilityAccepted').checked;
-        var connectionCb = document.getElementById('storeflowConnectionAuthorised').checked;
-        var termsCb = document.getElementById('legalTermsAccepted').checked;
-        if (!tz) { err.textContent = 'Timezone is required when providing a MongoDB URI'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
-        if (!cur) { err.textContent = 'Currency is required when providing a MongoDB URI'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
-        if (!pin) { err.textContent = 'Deployment PIN is required when providing a MongoDB URI'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
-        if (!ownershipCb) { err.textContent = 'You must confirm Atlas data ownership'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
-        if (!responsibilityCb) { err.textContent = 'You must accept backup and data responsibility'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
-        if (!connectionCb) { err.textContent = 'You must authorise StoreFlow to use this connection string'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
-        if (!termsCb) { err.textContent = 'You must accept the Terms, Privacy Notice, and Atlas Responsibility Notice'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
-        if (pin.length < 4 || pin.length > 20 || !/^\d+$/.test(pin)) { err.textContent = 'Deployment PIN must be 4-20 digits'; err.classList.add('show'); btn.disabled = false; btn.textContent = __('saas.register.btn'); return; }
+        var isSrv = mongoUri.startsWith('mongodb+srv://');
+        var isStd = mongoUri.startsWith('mongodb://');
+        if (!isSrv && !isStd) {
+          err.textContent = 'MongoDB URI must start with mongodb+srv:// or mongodb://';
+          err.classList.add('show');
+          btn.disabled = false; btn.textContent = __('saas.register.btn');
+          return;
+        }
       }
 
       var body = {
@@ -312,11 +324,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
       };
       if (mongoUri) {
         body.mongoUri = mongoUri;
-        body.deploymentPin = document.getElementById('deploymentPin').value.trim();
-        body.atlasOwnershipConfirmed = ownershipCb;
-        body.atlasResponsibilityAccepted = responsibilityCb;
-        body.storeflowConnectionAuthorised = connectionCb;
-        body.legalTermsAccepted = termsCb;
       }
 
       var res = await fetch(API_BASE + '/api/saas/signup', {
@@ -340,12 +347,13 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         document.getElementById('successCard').style.display = 'block';
         return;
       }
-      err.textContent = __('saas.register.error.duplicate');
+      // Use server error message, fallback to generic
+      err.textContent = data.error || data.message || __('saas.register.error.duplicate');
       err.classList.add('show');
     } catch(e) {
-      console.error('Signup error:', e);
+      console.error('Signup error:', (e.message||e));
       if (retries > 0) {
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(function(r) { return setTimeout(r, 2000); });
         return submit(retries - 1);
       }
       err.textContent = __('saas.register.error.network');
@@ -355,19 +363,10 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     btn.textContent = __('saas.register.btn');
   }
 
-  submit(1); // submit with 1 retry on network error
+  submit(1);
 });
 
 applyLang();
-
-// Enable submit only when all 4 checkboxes confirmed
-function updateSubmitState() {
-  var all4 = document.getElementById('atlasOwnershipConfirmed').checked
-          && document.getElementById('atlasResponsibilityAccepted').checked
-          && document.getElementById('storeflowConnectionAuthorised').checked
-          && document.getElementById('legalTermsAccepted').checked;
-  document.getElementById('submitBtn').disabled = !all4;
-}
 </script>
 
 </body>

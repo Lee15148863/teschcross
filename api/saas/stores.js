@@ -8,7 +8,7 @@ const SaaSUser = require('../../models/saas/SaaSUser');
 const { createTransporter } = require('../../utils/inv-crypto');
 const { verifyActionCode, recordAudit } = require('../../utils/deployment-security');
 const Deployment = require('../../models/saas/Deployment');
-const { maskMongoUri, validateMongoUri } = require('../../utils/mongo-uri-validator');
+const { maskMongoUri } = require('../../utils/mongo-uri-validator');
 const { getPlanDefaultModules, getPlanDatabasePolicy } = require('../../utils/storeflow-plans');
 
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
@@ -99,147 +99,18 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
     if (!signup) return res.status(404).json({ error: 'Signup not found' });
     if (signup.status !== 'pending') return res.status(400).json({ error: 'Signup already processed' });
 
+    const hasMongoUri = !!(signup.mongoUri && signup.mongoUri.trim());
+    const isByoRequested = hasMongoUri || signup.databasePreference === 'byo';
+
     // Build store data from signup
     const storeData = {
       name: signup.storeName, ownerName: signup.ownerName, email: signup.email,
       phone: signup.phone, country: signup.country, businessType: signup.businessType,
-      notes: signup.notes, status: 'active', approvedBy: req.user.userId, approvedAt: new Date()
+      notes: signup.notes || '', status: 'active', approvedBy: req.user.userId, approvedAt: new Date()
     };
 
-    // If signup has mongoUri — production onboarding path
-    if (signup.mongoUri) {
-      // Validate timezone + currency are set
-      if (!signup.timezone || !signup.currency) {
-        return res.status(400).json({ error: 'Signup missing timezone/currency for production deployment' });
-      }
-
-      // Run full URI validation (connect + write/read/delete)
-      const valResult = await validateMongoUri(signup.mongoUri, {
-        mainPosDbName: process.env.STORE_NAME || 'techcross',
-        adminDbName: process.env.SAAS_DB_NAME || 'saas_admin',
-        timeoutMs: 5000
-      });
-
-      if (!valResult.ok) {
-        // Block deployment with safe error
-        return res.status(400).json({
-          error: 'MongoDB URI validation failed: ' + (valResult.message || 'URI is not valid'),
-          code: valResult.code,
-          maskedUri: valResult.maskedUri,
-          dbName: valResult.dbName || null
-        });
-      }
-
-      // Validation passed — proceed with store + user + deployment creation
-      if (signup.timezone) storeData.timezone = signup.timezone;
-      if (signup.currency) storeData.currency = signup.currency;
-
-      // Phase 1B: initialize plan + enabledModules from signup
-      var planKey = signup.subscriptionPlan || 'free';
-      storeData.plan = planKey;
-      storeData.enabledModules = getPlanDefaultModules(planKey);
-      storeData.disabledModules = [];
-      storeData.subscriptionStatus = 'trialing';
-
-      // Phase 3A: initialize database hosting defaults from plan
-      var dbPolicy = getPlanDatabasePolicy(planKey);
-      storeData.databaseMode = 'managed';
-      storeData.storageLimitMB = dbPolicy.storageLimitMB;
-      storeData.backupPolicy = dbPolicy.backupPolicy;
-      storeData.allowDataExport = dbPolicy.allowDataExport;
-      storeData.dataRegion = signup.preferredRegion || 'europe-west1';
-
-      const store = await Store.create(storeData);
-
-      // Generate managedDbName after store creation (needs _id for uniqueness)
-      var storeSlug = store.name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 32);
-      var idSuffix = store._id.toString().slice(-6);
-      store.managedDbName = 'storeflow_' + storeSlug + '_' + idSuffix;
-      store.updatedAt = new Date();
-      await store.save();
-
-      // Create store_root user
-      const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-      let credentials;
-            const ownerPasswordHash = resolveOwnerPassword(signup.password);
-      const rootUser = await SaaSUser.create({
-        username: finalUsername, password: ownerPasswordHash, displayName: signup.ownerName,
-        email: signup.email, role: 'store_root', storeId: store._id, active: true
-      });
-      credentials = { username: rootUser.username };
-
-      // T21c — store URI in Secret Manager for production path
-      const sm = require('../../utils/gcp-secret-manager');
-      let mongoUriStorageMode = 'plaintext_admin_db';
-      let secretRef = null;
-      const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || '';
-
-      try {
-        secretRef = await sm.storeMongoUri(
-          sm.buildSecretName(store.name),
-          signup.mongoUri,
-          projectId
-        );
-        if (secretRef && !secretRef.dryRun) {
-          mongoUriStorageMode = 'secret_manager';
-        }
-      } catch (smErr) {
-        console.warn('[stores] Secret Manager write failed, falling back to plaintext:', smErr.message);
-      }
-
-      // Create deployment for this store
-      const serviceName = store.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-').replace(/^-|-$/g, '').slice(0, 63);
-      const subdomain = serviceName;
-      const maskedUri = maskMongoUri(signup.mongoUri);
-
-      const depFields = {
-        storeName: store.name,
-        storeId: store._id,
-        subdomain: subdomain,
-        serviceName: serviceName || 'store-' + store._id,
-        mongoUriStorageMode: mongoUriStorageMode,
-        mongoUriMasked: maskedUri,
-        mongoUriValidationStatus: 'passed',
-        mongoUriLastValidatedAt: new Date(),
-        mongoUriUpdatedAt: new Date(),
-        pinHash: signup.deploymentPinHash || '',
-        pinSetAt: signup.pinSetAt || new Date(),
-        timezone: signup.timezone || 'Europe/Dublin',
-        status: 'pending',
-        atlasOwnershipConfirmed: signup.atlasOwnershipConfirmed || false,
-        subscriptionStatus: 'trial',
-      };
-
-      if (mongoUriStorageMode === 'secret_manager' && secretRef) {
-        depFields.mongoUriSecretName = secretRef.name;
-        depFields.mongoUriSecretVersion = secretRef.version;
-        depFields.secretLastUpdatedAt = new Date();
-        depFields.mongoUri = '';
-      } else {
-        depFields.mongoUri = signup.mongoUri;
-      }
-
-      await Deployment.create(depFields);
-
-      // Mark signup as approved
-      signup.status = 'approved';
-      signup.reviewedBy = req.user.userId;
-      signup.reviewedAt = new Date();
-      signup.mongoUriValidationStatus = 'passed';
-      signup.mongoUriLastValidatedAt = new Date();
-      await signup.save();
-
-      return res.json({
-        success: true,
-        store: { id: store._id, name: store.name, slug: store.slug, timezone: signup.timezone, currency: signup.currency },
-        deployment: { mongoUriMasked: maskedUri, storageMode: mongoUriStorageMode, status: 'pending', validationStatus: 'passed' },
-        credentials
-      });
-    }
-
-    // Legacy path — signup without mongoUri
-    // Create store + owner user + deployment record without external MongoDB URI
-    storeData.notes = (signup.notes || '') + ' [LEGACY: no MongoDB URI]';
+    if (signup.timezone) storeData.timezone = signup.timezone;
+    if (signup.currency) storeData.currency = signup.currency;
 
     // Phase 1B: initialize plan + enabledModules from signup
     var planKey = signup.subscriptionPlan || 'free';
@@ -254,6 +125,16 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
     storeData.storageLimitMB = dbPolicy.storageLimitMB;
     storeData.backupPolicy = dbPolicy.backupPolicy;
     storeData.allowDataExport = dbPolicy.allowDataExport;
+    storeData.dataRegion = signup.preferredRegion || 'europe-west1';
+
+    // BYO MongoDB request tracking — admin-verified activation, never auto-enable
+    storeData.byoMongoRequested = isByoRequested;
+    storeData.byoMongoConfigured = false;
+    storeData.byoSetupStatus = isByoRequested ? 'pending_admin_verification' : '';
+
+    if (isByoRequested) {
+      storeData.notes = (storeData.notes || '') + ' [BYO MongoDB requested — admin verification required]';
+    }
 
     const store = await Store.create(storeData);
 
@@ -266,25 +147,32 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
 
     // Create store_root user
     const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    let credentials;
     const ownerPasswordHash = resolveOwnerPassword(signup.password);
     const rootUser = await SaaSUser.create({
       username: finalUsername, password: ownerPasswordHash, displayName: signup.ownerName,
       email: signup.email, role: 'store_root', storeId: store._id, active: true
     });
-    credentials = { username: rootUser.username };
+    var credentials = { username: rootUser.username };
 
-    // Create minimal deployment record (no mongoUri, no Cloud Run deploy)
+    // Create deployment record — managed DB mode, no raw URI
     var serviceName = store.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-').replace(/^-|-$/g, '').slice(0, 63);
-    await Deployment.create({
+    var depFields = {
       storeName: store.name,
       storeId: store._id,
+      subdomain: serviceName,
       serviceName: serviceName || 'store-' + store._id,
       mongoUriStorageMode: 'none',
       status: 'pending',
       timezone: signup.timezone || 'Europe/Dublin',
       subscriptionStatus: 'trial',
-    });
+    };
+
+    if (hasMongoUri) {
+      depFields.mongoUriMasked = maskMongoUri(signup.mongoUri);
+      depFields.mongoUriValidationStatus = 'pending';
+    }
+
+    await Deployment.create(depFields);
 
     // Mark signup as approved
     signup.status = 'approved';
@@ -292,7 +180,20 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
     signup.reviewedAt = new Date();
     await signup.save();
 
-    res.json({ success: true, store: { id: store._id, name: store.name, slug: store.slug, legacy: true }, credentials });
+    // Build safe response
+    var response = {
+      success: true,
+      store: { id: store._id, name: store.name, slug: store.slug, timezone: signup.timezone, currency: signup.currency },
+      credentials: credentials,
+      databaseMode: 'managed'
+    };
+
+    if (isByoRequested) {
+      response.byoMongoRequested = true;
+      response.byoMessage = 'BYO MongoDB requested. StoreFlow-managed database is active until admin verification.';
+    }
+
+    res.json(response);
   } catch (e) {
     console.error('[stores] approve signup error:', e.name || 'Error', e.message || e);
     if (e.code === 11000) {
@@ -1013,7 +914,7 @@ router.get('/:storeId/database', superAdminAuth, async (req, res) => {
   try {
     var store = await Store.findById(req.params.storeId).select(
       'databaseMode managedDbName storageLimitMB storageUsedMB storageLastCheckedAt ' +
-      'backupPolicy lastBackupAt byoMongoConfigured byoMongoDbName dataRegion allowDataExport plan'
+      'backupPolicy lastBackupAt byoMongoRequested byoMongoConfigured byoSetupStatus byoMongoDbName dataRegion allowDataExport plan'
     ).lean();
     if (!store) return res.status(404).json({ error: 'Store not found' });
 
@@ -1027,7 +928,9 @@ router.get('/:storeId/database', superAdminAuth, async (req, res) => {
       storageLastCheckedAt: store.storageLastCheckedAt || null,
       backupPolicy: store.backupPolicy || 'none',
       lastBackupAt: store.lastBackupAt || null,
+      byoMongoRequested: store.byoMongoRequested || false,
       byoMongoConfigured: store.byoMongoConfigured || false,
+      byoSetupStatus: store.byoSetupStatus || '',
       byoMongoDbName: store.byoMongoDbName || null,
       dataRegion: store.dataRegion || 'europe-west1',
       allowDataExport: store.allowDataExport || false

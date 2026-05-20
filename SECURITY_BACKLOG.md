@@ -83,6 +83,23 @@ Items deferred from Codex review. Do NOT fix in passing — each needs a dedicat
 
 **Fix:** Migrate to Secret Manager for raw URI storage. Validate URI connectivity and permissions. Store only secret reference in Store/Deployment. Build admin verification flow for BYO requests. Migration path for any existing raw URIs.
 
-**Current state (2026-05-20):** Signup allows BYO request with databasePreference='byo'. Raw URI stored in StoreSignup with select:false (not returned in API). Approval creates Store as managed by default. BYO activation requires admin verification. Managed DB remains default for all stores.
+**Current state (2026-05-20):**
+- Signup allows BYO request with databasePreference='byo'. Raw URI stored in StoreSignup with select:false (not returned in API).
+- Approval creates managed DB store regardless of BYO request. BYO is recorded as "requested" with `byoSetupStatus='pending_admin_verification'`.
+- Store.byoMongoRequested tracks the request. Store.byoMongoConfigured remains false.
+- Customer starts with managed DB immediately. BYO requires admin verification.
+- Deployment no longer stores raw URI. mongoUriStorageMode is 'none'.
+- SaaS Admin shows "BYO Requested" with admin verification note.
+- All plans (Free/Starter/Pro/Enterprise) allow BYO request.
 
-**Status:** Deferred. Managed DB is production default. BYO full activation pending.
+**Raw URI storage locations (2026-05-20):**
+- `StoreSignup.mongoUri` — select:false. NOT returned in API response. NOT displayed in admin UI. NOT logged. Temporary — must migrate to Secret Manager.
+- `Deployment.mongoUri` — select:false. Only used for legacy records. New approvals do NOT store raw URI in Deployment.
+
+**Migration needed:**
+- Move raw URI from StoreSignup.mongoUri to Secret Manager
+- Remove StoreSignup.mongoUri field entirely
+- BYO activation: admin-triggered flow with Secret Manager storage + connectivity validation
+- Full verification checklist: network access, Atlas allowlist (104.155.83.41), write/read/delete permissions, private endpoint if needed
+
+**Status:** Deferred. Managed DB is production default. BYO full activation pending admin verification flow.

@@ -117,7 +117,7 @@ const STOREFLOW_PLANS = {
       storageLimitMB: 500,
       backupPolicy: 'weekly',
       allowDataExport: false,
-      allowByoMongo: false
+      allowByoMongo: true
     },
     notes: 'Up to 3 staff. Full POS with reports and VAT invoices. WhatsApp messaging. One store.'
   },
@@ -180,7 +180,7 @@ const STOREFLOW_PLANS = {
       storageLimitMB: 2048,
       backupPolicy: 'daily',
       allowDataExport: false,
-      allowByoMongo: false
+      allowByoMongo: true
     },
     notes: 'Up to 10 staff. Multi-store (3). Device lifecycle. Advanced reports. CSV import.'
   },
