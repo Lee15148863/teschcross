@@ -4,6 +4,7 @@ const Product = require('../../models/inv/Product');
 const { jwtAuth, requireRole } = require('../../middleware/inv-auth');
 const { requireModule } = require('../../utils/storeflow-permissions');
 const { calculateMarginVat } = require('../../utils/inv-vat-calculator');
+const { validateRequiredFields } = require('../../utils/inv-validators');
 
 // All routes require Staff+ access
 router.use(jwtAuth, requireRole('root', 'manager', 'staff'));
@@ -232,6 +233,7 @@ router.post('/', async (req, res) => {
       const messages = Object.values(err.errors).map(e => e.message);
       return res.status(400).json({ error: messages.join('；') });
     }
+    console.error('POST /products error:', err.name || 'Unknown', err.message || err);
     res.status(500).json({ error: '服务器错误' });
   }
 });
