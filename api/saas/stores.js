@@ -149,21 +149,12 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
       // Create store_root user
       const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
       let credentials;
-      if (signup.password) {
-        const rootUser = await SaaSUser.create({
-          username: finalUsername, password: signup.password, displayName: signup.ownerName,
-          email: signup.email, role: 'store_root', storeId: store._id, active: true
-        });
-        credentials = { username: rootUser.username, message: 'Use the password you set during registration to sign in.' };
-      } else {
-        const defaultPw = require('crypto').randomBytes(4).toString('hex') + 'X1!';
-        const hashed = await bcrypt.hash(defaultPw, BCRYPT_SALT_ROUNDS);
-        const rootUser = await SaaSUser.create({
-          username: finalUsername, password: hashed, displayName: signup.ownerName,
-          email: signup.email, role: 'store_root', storeId: store._id, active: true
-        });
-        credentials = { username: rootUser.username, password: defaultPw };
-      }
+      const hashedPw = await bcrypt.hash(signup.password || (require('crypto').randomBytes(8).toString('hex')), BCRYPT_SALT_ROUNDS);
+      const rootUser = await SaaSUser.create({
+        username: finalUsername, password: hashedPw, displayName: signup.ownerName,
+        email: signup.email, role: 'store_root', storeId: store._id, active: true
+      });
+      credentials = { username: rootUser.username };
 
       // T21c — store URI in Secret Manager for production path
       const sm = require('../../utils/gcp-secret-manager');
@@ -264,38 +255,24 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
     // Create store_root user
     const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
     let credentials;
-    if (signup.password) {
-      const rootUser = await SaaSUser.create({
-        username: finalUsername, password: signup.password, displayName: signup.ownerName,
-        email: signup.email, role: 'store_root', storeId: store._id, active: true
-      });
-      credentials = { username: rootUser.username, message: 'Use the password you set during registration to sign in.' };
-    } else {
-      const defaultPw = require('crypto').randomBytes(4).toString('hex') + 'X1!';
-      const hashed = await bcrypt.hash(defaultPw, BCRYPT_SALT_ROUNDS);
-      const rootUser = await SaaSUser.create({
-        username: finalUsername, password: hashed, displayName: signup.ownerName,
-        email: signup.email, role: 'store_root', storeId: store._id, active: true
-      });
-      credentials = { username: rootUser.username, password: defaultPw };
-    }
+    const hashedPw = await bcrypt.hash(signup.password || (require('crypto').randomBytes(8).toString('hex')), BCRYPT_SALT_ROUNDS);
+    const rootUser = await SaaSUser.create({
+      username: finalUsername, password: hashedPw, displayName: signup.ownerName,
+      email: signup.email, role: 'store_root', storeId: store._id, active: true
+    });
+    credentials = { username: rootUser.username };
 
     // Create minimal deployment record (no mongoUri, no Cloud Run deploy)
     var serviceName = store.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-').replace(/^-|-$/g, '').slice(0, 63);
-    try {
-      await Deployment.create({
-        storeName: store.name,
-        storeId: store._id,
-        serviceName: serviceName || 'store-' + store._id,
-        mongoUriStorageMode: 'none',
-        status: 'pending',
-        timezone: signup.timezone || 'Europe/Dublin',
-        subscriptionStatus: 'trial',
-      });
-    } catch (depErr) {
-      console.error('[stores] Legacy deployment record creation failed:', depErr.message);
-      // Non-fatal — store and user are created
-    }
+    await Deployment.create({
+      storeName: store.name,
+      storeId: store._id,
+      serviceName: serviceName || 'store-' + store._id,
+      mongoUriStorageMode: 'none',
+      status: 'pending',
+      timezone: signup.timezone || 'Europe/Dublin',
+      subscriptionStatus: 'trial',
+    });
 
     // Mark signup as approved
     signup.status = 'approved';
@@ -307,7 +284,8 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
   } catch (e) {
     console.error('[stores] approve signup error:', e.name || 'Error', e.message || e);
     if (e.code === 11000) {
-      return res.status(400).json({ error: 'Duplicate key: ' + JSON.stringify(e.keyValue || {}) });
+      console.error('[stores] approve duplicate key:', JSON.stringify(e.keyValue || {}));
+      return res.status(409).json({ error: 'Store, email or slug already exists.' });
     }
     if (e.name === 'ValidationError') {
       var msgs = Object.values(e.errors||{}).map(function(x) { return x.message; });

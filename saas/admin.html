@@ -657,8 +657,9 @@ function approveSignup(id) {
   fetch('/api/saas/stores/approve/' + id, { method: 'POST', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.success) {
       var msg = 'Approved! ' + d.store.name;
-      if (d.credentials && d.credentials.username) msg += ' | User: ' + d.credentials.username;
+      if (d.credentials && d.credentials.username) msg += ' | Owner: ' + d.credentials.username;
       if (d.store.slug) msg += ' | /s/' + d.store.slug;
+      msg += ' | Use Store Users → Reset PW to set password.';
       showToast(msg); loadSignups(); loadStores();
     } else { showToast('Approve failed: ' + (d.error||d.message||'Unknown')); }
   }).catch(function() { showToast('Network error'); });
