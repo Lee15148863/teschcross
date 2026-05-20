@@ -159,6 +159,7 @@
   </nav>
   <div class="sidebar-footer">
     <div id="sidebarRole">-</div>
+    <button id="langToggleBtn" onclick="toggleAdminLang()" style="width:100%;padding:6px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:transparent;color:rgba(255,255,255,.7);cursor:pointer;font-size:12px;font-weight:600;margin-bottom:6px;">中</button>
     <button onclick="logout()">Sign Out</button>
   </div>
 </aside>
@@ -306,6 +307,126 @@ if (!token || userData.role !== 'super_admin') { window.location.href = '/saas/l
 document.getElementById('sidebarUser').textContent = userData.displayName || userData.username;
 document.getElementById('sidebarRole').textContent = userData.role;
 
+// ─── i18n ─────────────────────────────────────────────────────────────
+var _adminLang = localStorage.getItem('saasAdminLang') || 'en';
+var SA_I18N = {
+  en: {
+    stores:'Stores',signups:'Signups',storeUsers:'Store Users',modulesFeatures:'Modules & Features',
+    database:'Database',deployments:'Deployments',releases:'Releases',deployConsole:'Deploy Console',
+    signOut:'Sign Out',loading:'Loading...',noStores:'No stores.',failedLoad:'Failed to load.',
+    manage:'Manage',edit:'Edit',users:'Users',enter:'Enter',copyUrl:'Copy URL',suspend:'Suspend',activate:'Activate',del:'Del',
+    overview:'Overview',limits:'Limits',modules:'Modules',features:'Features',storeDb:'Database',
+    storeId:'Store ID',slug:'Slug',owner:'Owner',email:'Email',phone:'Phone',plan:'Plan',
+    status:'Status',subscription:'Subscription',trialEnds:'Trial Ends',notes:'Notes',
+    created:'Created',updated:'Updated',loginUrl:'Login URL',timezone:'Timezone',currency:'Currency',
+    quickEdit:'Quick Edit',saveOverview:'Save Overview',name:'Name',
+    customLimits:'Custom Limits',usersLabel:'Users',productsLabel:'Products',
+    monthlyTxns:'monthlyTransactions (null=unlimited)',storesLabel:'Stores',saveLimits:'Save Limits',
+    loadingModules:'Loading modules...',saveModules:'Save Modules',
+    featureOverrides:'Feature Overrides',saveFeatures:'Save Features',
+    mode:'Mode',dbName:'DB Name',storageLimit:'Storage Limit',storageUsed:'Storage Used',
+    backupPolicy:'Backup Policy',dataExport:'Data Export',region:'Region',byoMongo:'BYO Mongo',
+    saved:'Saved.',redeployNote:'Redeploy for changes to take effect.',errorSaving:'Error saving modules.',
+    selectStore:'Select a store.',loadModulesBtn:'Load',load:'Load',view:'View',
+    selectStoreUsers:'Select a store to view users.',noUsers:'No users in this store.',
+    username:'Username',displayName:'Display Name',role:'Role',activeStatus:'Active',disabledStatus:'Disabled',
+    actions:'Actions',addUser:'+ Add User',editUser:'Edit User',resetPw:'Reset PW',
+    disable:'Disable',enable:'Enable',deleteUser:'Delete',userCreated:'User created.',
+    userUpdated:'User updated.',disabledMsg:'Disabled.',enabledMsg:'Enabled.',deletedMsg:'Deleted.',
+    allFieldsReq:'All fields required.',cancel:'Cancel',create:'Create',save:'Save',
+    editStoreTitle:'Edit Store',storeUpdated:'Store updated.',networkError:'Network error.',
+    noPendingSignups:'No pending signups.',approve:'Approve',reject:'Reject',
+    approveConfirm:'Approve this store signup?',uriValidationWarn:'MongoDB URI validation FAILED/ERROR. Continue?',
+    approvedToast:'Approved!',approveFailed:'Approve failed:',rejected:'Rejected.',
+    resetPwConfirm:'Reset password for',newPwAlert:'New password for',
+    deleteConfirm:'Delete',deleteIrreversible:'This is irreversible. Continue?',
+    storeDeleted:'Store deleted.',verificationReq:'Verification required',
+    suspendConfirm:'Suspend this store?',suspendedMsg:'Suspended.',activatedMsg:'Activated.',
+    copied:'Copied:',failed:'Failed',unknown:'Unknown',
+    manageStore:'Manage Store',backToStores:'← Back to Stores',
+    storeAdmin:'StoreFlow Admin',noDeployments:'No deployments.',
+    deploymentsApiNA:'Deployments API not available.',
+    unlimited:'Unlimited',req:'REQ',
+    planLabel:'Plan:',enabledCount:'Enabled:',
+    ownerCreatedNote:'Use Store Users → Reset PW to set password.',
+    authFailed:'Auth required. Super admin only.',
+    saveChanges:'Save Changes',close:'Close'
+  },
+  zh: {
+    stores:'店铺管理',signups:'申请审批',storeUsers:'店铺用户',modulesFeatures:'模块与功能',
+    database:'数据库',deployments:'部署',releases:'版本发布',deployConsole:'部署控制台',
+    signOut:'退出登录',loading:'加载中...',noStores:'暂无店铺。',failedLoad:'加载失败。',
+    manage:'管理',edit:'编辑',users:'用户',enter:'进入',copyUrl:'复制链接',suspend:'暂停',activate:'启用',del:'删',
+    overview:'概览',limits:'限制',modules:'模块',features:'功能',storeDb:'数据库',
+    storeId:'店铺 ID',slug:'链接标识',owner:'店主',email:'邮箱',phone:'电话',plan:'套餐',
+    status:'状态',subscription:'订阅状态',trialEnds:'试用到期',notes:'备注',
+    created:'创建时间',updated:'更新时间',loginUrl:'登录链接',timezone:'时区',currency:'货币',
+    quickEdit:'快速编辑',saveOverview:'保存概览',name:'名称',
+    customLimits:'自定义限制',usersLabel:'用户数',productsLabel:'商品数',
+    monthlyTxns:'每月交易数（空=不限制）',storesLabel:'店铺数',saveLimits:'保存限制',
+    loadingModules:'加载模块中...',saveModules:'保存模块',
+    featureOverrides:'功能开关',saveFeatures:'保存功能',
+    mode:'模式',dbName:'数据库名',storageLimit:'存储上限',storageUsed:'已用存储',
+    backupPolicy:'备份策略',dataExport:'数据导出',region:'区域',byoMongo:'自带 MongoDB',
+    saved:'已保存。',redeployNote:'部署后生效。',errorSaving:'保存模块失败。',
+    selectStore:'请选择店铺。',loadModulesBtn:'加载',load:'加载',view:'查看',
+    selectStoreUsers:'请选择店铺查看用户。',noUsers:'该店铺暂无用户。',
+    username:'用户名',displayName:'显示名称',role:'角色',activeStatus:'启用',disabledStatus:'禁用',
+    actions:'操作',addUser:'+ 添加用户',editUser:'编辑用户',resetPw:'重置密码',
+    disable:'禁用',enable:'启用',deleteUser:'删除',userCreated:'用户已创建。',
+    userUpdated:'用户已更新。',disabledMsg:'已禁用。',enabledMsg:'已启用。',deletedMsg:'已删除。',
+    allFieldsReq:'请填写所有字段。',cancel:'取消',create:'创建',save:'保存',
+    editStoreTitle:'编辑店铺',storeUpdated:'店铺已更新。',networkError:'网络错误。',
+    noPendingSignups:'暂无待审批申请。',approve:'批准',reject:'拒绝',
+    approveConfirm:'确定批准该店铺申请？',uriValidationWarn:'MongoDB URI 验证失败/错误。继续？',
+    approvedToast:'批准成功！',approveFailed:'批准失败：',rejected:'已拒绝。',
+    resetPwConfirm:'确定重置密码',newPwAlert:'新密码',
+    deleteConfirm:'删除',deleteIrreversible:'此操作不可撤销。继续？',
+    storeDeleted:'店铺已删除。',verificationReq:'需要验证',
+    suspendConfirm:'确定暂停该店铺？',suspendedMsg:'已暂停。',activatedMsg:'已启用。',
+    copied:'已复制：',failed:'失败',unknown:'未知',
+    manageStore:'管理店铺',backToStores:'← 返回店铺列表',
+    storeAdmin:'StoreFlow 管理后台',noDeployments:'暂无部署。',
+    deploymentsApiNA:'部署 API 不可用。',
+    unlimited:'不限制',req:'必需',
+    planLabel:'套餐：',enabledCount:'已启用：',
+    ownerCreatedNote:'请在"店铺用户"里使用"重置密码"发放登录信息。',
+    authFailed:'需要授权。仅超级管理员可访问。',
+    saveChanges:'保存更改',close:'关闭'
+  }
+};
+function t(key) { return (SA_I18N[_adminLang]&&SA_I18N[_adminLang][key])||SA_I18N.en[key]||key; }
+function toggleAdminLang() {
+  _adminLang = _adminLang === 'en' ? 'zh' : 'en';
+  localStorage.setItem('saasAdminLang', _adminLang);
+  applyAdminI18n(); refreshCurrentView();
+}
+function applyAdminI18n() {
+  document.querySelectorAll('.sidebar-nav a[data-view]').forEach(function(a) {
+    var k = a.dataset.view;
+    var map = {stores:'stores',signups:'signups','store-users':'storeUsers',modules:'modulesFeatures',database:'database',deployments:'deployments'};
+    if (map[k]) a.childNodes[a.childNodes.length-1].textContent = ' ' + t(map[k]);
+  });
+  document.querySelectorAll('[data-i18n]').forEach(function(el) { el.textContent = t(el.dataset.i18n); });
+  var btn = document.getElementById('langToggleBtn');
+  if (btn) btn.textContent = _adminLang === 'en' ? '中' : 'EN';
+}
+function refreshCurrentView() {
+  var activeView = document.querySelector('.view.active');
+  if (activeView) {
+    var key = activeView.id.replace('view-','');
+    if (key === 'stores') loadStores();
+    else if (key === 'signups') loadSignups();
+    else if (key === 'store-users') loadStoreUsers();
+    else if (key === 'modules') populateStoreDropdowns();
+    else if (key === 'database') populateStoreDropdowns();
+    else if (key === 'deployments') loadDeployments();
+    else if (key === 'manage-store') manageStore(_manageStoreId);
+  }
+  var mv = document.getElementById('view-manage-store');
+  if (mv && mv.classList.contains('active') && _manageStoreId) manageStore(_manageStoreId);
+}
+
 // ─── Navigation ──────────────────────────────────────────────────────
 var views = {};
 document.querySelectorAll('.view').forEach(function(v) { views[v.id.replace('view-','')] = v; });
@@ -347,7 +468,7 @@ function loadStores() {
     .then(function(stores) {
       _allStores = stores; populateStoreDropdowns();
       var el = document.getElementById('storeList');
-      if (!stores.length) { el.innerHTML = '<p style="color:#8e8e93;text-align:center;">No stores.</p>'; return; }
+      if (!stores.length) { el.innerHTML = '<p style="color:#8e8e93;text-align:center;">' + t('noStores') + '</p>'; return; }
       var h = '';
       stores.forEach(function(s) {
         var sc = s.status === 'active' ? 'badge-green' : (s.status === 'suspended' ? 'badge-red' : 'badge-yellow');
@@ -357,19 +478,19 @@ function loadStores() {
         h += '<div class="meta">' + escHtml(s.ownerName||'—') + ' &middot; ' + escHtml(s.email||'—') + ' &middot; Plan: <strong>' + escHtml(s.plan||'free') + '</strong> &middot; ' + loginUrl + '</div></div>';
         h += '<div style="display:flex;align-items:center;gap:8px;"><span class="badge ' + sc + '">' + s.status + '</span></div>';
         h += '<div class="actions">';
-        h += '<button class="btn btn-primary btn-xs" onclick="manageStore(\'' + s._id + '\')">Manage</button>';
-        h += '<button class="btn btn-outline btn-xs" onclick="editStore(\'' + s._id + '\')">Edit</button>';
-        h += '<button class="btn btn-outline btn-xs" onclick="showStoreUsers(\'' + s._id + '\',\'' + escJs(s.name) + '\')">Users</button>';
-        h += '<button class="btn btn-outline btn-xs" onclick="impersonateStore(\'' + s._id + '\')">Enter</button>';
-        h += '<button class="btn btn-outline btn-xs" onclick="copyText(\'' + loginUrl + '\')">Copy URL</button>';
-        if (s.status === 'active') h += '<button class="btn btn-warn btn-xs" onclick="suspendStore(\'' + s._id + '\')">Suspend</button>';
-        if (s.status === 'suspended') h += '<button class="btn btn-outline btn-xs" onclick="activateStore(\'' + s._id + '\')">Activate</button>';
-        h += '<button class="btn btn-danger btn-xs" onclick="showDeleteModal(\'' + s._id + '\',\'' + escJs(s.name) + '\')">Del</button>';
+        h += '<button class="btn btn-primary btn-xs" onclick="manageStore(\'' + s._id + '\')">' + t('manage') + '</button>';
+        h += '<button class="btn btn-outline btn-xs" onclick="editStore(\'' + s._id + '\')">' + t('edit') + '</button>';
+        h += '<button class="btn btn-outline btn-xs" onclick="showStoreUsers(\'' + s._id + '\',\'' + escJs(s.name) + '\')">' + t('users') + '</button>';
+        h += '<button class="btn btn-outline btn-xs" onclick="impersonateStore(\'' + s._id + '\')">' + t('enter') + '</button>';
+        h += '<button class="btn btn-outline btn-xs" onclick="copyText(\'' + loginUrl + '\')">' + t('copyUrl') + '</button>';
+        if (s.status === 'active') h += '<button class="btn btn-warn btn-xs" onclick="suspendStore(\'' + s._id + '\')">' + t('suspend') + '</button>';
+        if (s.status === 'suspended') h += '<button class="btn btn-outline btn-xs" onclick="activateStore(\'' + s._id + '\')">' + t('activate') + '</button>';
+        h += '<button class="btn btn-danger btn-xs" onclick="showDeleteModal(\'' + s._id + '\',\'' + escJs(s.name) + '\')">' + t('del') + '</button>';
         h += '</div></div>';
       });
       el.innerHTML = h;
     })
-    .catch(function() { document.getElementById('storeList').innerHTML = '<p style="color:#ff3b30;text-align:center;">Failed to load.</p>'; });
+    .catch(function() { document.getElementById('storeList').innerHTML = '<p style="color:#ff3b30;text-align:center;">' + t('failedLoad') + '</p>'; });
 }
 
 function copyText(t) { navigator.clipboard.writeText(t).then(function() { showToast('Copied: ' + t); }); }
@@ -400,16 +521,16 @@ function renderManageStore(s) {
   h += '<h1 style="font-size:22px;font-weight:700;">' + escHtml(s.name) + '</h1>';
   h += '<span class="badge ' + (s.status==='active'?'badge-green':s.status==='suspended'?'badge-red':'badge-yellow') + '">' + s.status + '</span>';
   h += '<span class="badge badge-blue">' + escHtml(s.plan||'free') + '</span>';
-  h += '<button class="btn btn-outline btn-sm" onclick="navigateTo(\'stores\')">← Back to Stores</button>';
+  h += '<button class="btn btn-outline btn-sm" onclick="navigateTo(\'stores\')">' + t('backToStores') + '</button>';
   h += '</div>';
 
   // Tabs
   h += '<div class="manage-tabs">';
-  h += '<button class="manage-tab active" onclick="switchManageTab(this,\'overview\')">Overview</button>';
-  h += '<button class="manage-tab" onclick="switchManageTab(this,\'limits\')">Limits</button>';
-  h += '<button class="manage-tab" onclick="switchManageTab(this,\'modules-tab\')">Modules</button>';
-  h += '<button class="manage-tab" onclick="switchManageTab(this,\'features\')">Features</button>';
-  h += '<button class="manage-tab" onclick="switchManageTab(this,\'store-db\')">Database</button>';
+  h += '<button class="manage-tab active" onclick="switchManageTab(this,\'overview\')">' + t('overview') + '</button>';
+  h += '<button class="manage-tab" onclick="switchManageTab(this,\'limits\')">' + t('limits') + '</button>';
+  h += '<button class="manage-tab" onclick="switchManageTab(this,\'modules-tab\')">' + t('modules') + '</button>';
+  h += '<button class="manage-tab" onclick="switchManageTab(this,\'features\')">' + t('features') + '</button>';
+  h += '<button class="manage-tab" onclick="switchManageTab(this,\'store-db\')">' + t('storeDb') + '</button>';
   h += '</div>';
 
   // Overview tab
@@ -431,7 +552,7 @@ function renderManageStore(s) {
   h += infoCell('Updated', s.updatedAt ? new Date(s.updatedAt).toLocaleString() : '—');
   h += '</div></div>';
   // Quick edit form
-  h += '<div class="card"><h3>Quick Edit</h3>';
+  h += '<div class="card"><h3>' + t('quickEdit') + '</h3>';
   h += '<div class="form-row"><div class="form-group"><label>Name</label><input type="text" id="moName" value="' + escHtml(s.name||'') + '"></div><div class="form-group"><label>Owner</label><input type="text" id="moOwner" value="' + escHtml(s.ownerName||'') + '"></div></div>';
   h += '<div class="form-row"><div class="form-group"><label>Email</label><input type="email" id="moEmail" value="' + escHtml(s.email||'') + '"></div><div class="form-group"><label>Phone</label><input type="text" id="moPhone" value="' + escHtml(s.phone||'') + '"></div></div>';
   h += '<div class="form-row"><div class="form-group"><label>Plan</label><select id="moPlan">';
@@ -515,9 +636,9 @@ function saveManageOverview() {
   fetch('/api/saas/stores/' + _manageStoreId, { method: 'PATCH', headers: getAuthHeaders(), body: JSON.stringify(body) })
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      if (d.success) { showToast('Saved.'); manageStore(_manageStoreId); }
+      if (d.success) { showToast(t('saved')); manageStore(_manageStoreId); }
       else { showToast('Error: ' + (d.error||'Failed')); }
-    }).catch(function() { showToast('Network error'); });
+    }).catch(function() { showToast(t('networkError')); });
 }
 
 function saveManageLimits() {
@@ -533,7 +654,7 @@ function saveManageLimits() {
     .then(function(d) {
       if (d.success) { showToast('Limits saved.'); manageStore(_manageStoreId); }
       else { showToast('Error: ' + (d.error||'Failed')); }
-    }).catch(function() { showToast('Network error'); });
+    }).catch(function() { showToast(t('networkError')); });
 }
 
 function saveManageFeatures() {
@@ -547,7 +668,7 @@ function saveManageFeatures() {
     .then(function(d) {
       if (d.success) { showToast('Features saved.'); }
       else { showToast('Error: ' + (d.error||'Failed')); }
-    }).catch(function() { showToast('Network error'); });
+    }).catch(function() { showToast(t('networkError')); });
 }
 
 function loadManageModules() {
@@ -609,7 +730,7 @@ function closeEditStore() { document.getElementById('editStoreModal').classList.
 function saveEditStore() {
   var body = { name: document.getElementById('esName').value, ownerName: document.getElementById('esOwner').value, email: document.getElementById('esEmail').value, phone: document.getElementById('esPhone').value, plan: document.getElementById('esPlan').value, status: document.getElementById('esStatus').value, subscriptionStatus: document.getElementById('esSub').value, notes: document.getElementById('esNotes').value };
   fetch('/api/saas/stores/' + _editStoreId, { method: 'PATCH', headers: getAuthHeaders(), body: JSON.stringify(body) })
-    .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Store updated.'); closeEditStore(); loadStores(); } else { showToast('Error: ' + (d.error||'Failed')); } }).catch(function() { showToast('Network error'); });
+    .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Store updated.'); closeEditStore(); loadStores(); } else { showToast('Error: ' + (d.error||'Failed')); } }).catch(function() { showToast(t('networkError')); });
 }
 
 // ─── Store Actions ────────────────────────────────────────────────────
@@ -617,12 +738,12 @@ function impersonateStore(id) {
   fetch('/api/saas/stores/impersonate/' + id, { method: 'POST', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.token) { localStorage.setItem('saas_token', d.token); var cur = JSON.parse(localStorage.getItem('saas_user')||'{}'); cur.storeId = d.store.id; localStorage.setItem('saas_user', JSON.stringify(cur)); showToast('Entered ' + d.store.name); setTimeout(function() { window.location.href = '/saas/dashboard.html'; }, 500); }
     else { showToast('Failed: ' + (d.error||'Unknown')); }
-  }).catch(function() { showToast('Network error'); });
+  }).catch(function() { showToast(t('networkError')); });
 }
 function suspendStore(id) { if (!confirm('Suspend this store?')) return;
-  fetch('/api/saas/stores/' + id + '/suspend', { method: 'PUT', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Suspended.' : 'Error: ' + (d.error||'')); loadStores(); }).catch(function() { showToast('Network error'); }); }
+  fetch('/api/saas/stores/' + id + '/suspend', { method: 'PUT', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Suspended.' : 'Error: ' + (d.error||'')); loadStores(); }).catch(function() { showToast(t('networkError')); }); }
 function activateStore(id) {
-  fetch('/api/saas/stores/' + id + '/activate', { method: 'PUT', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Activated.' : 'Error: ' + (d.error||'')); loadStores(); }).catch(function() { showToast('Network error'); }); }
+  fetch('/api/saas/stores/' + id + '/activate', { method: 'PUT', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Activated.' : 'Error: ' + (d.error||'')); loadStores(); }).catch(function() { showToast(t('networkError')); }); }
 var _deleteStoreId = null;
 function showDeleteModal(id, name) { _deleteStoreId = id; document.getElementById('deletePw').value = ''; document.getElementById('deleteModal').classList.add('show'); var now = new Date(); var h = now.getUTCHours() + 1; if (h >= 24) h -= 24; document.getElementById('deleteHint').textContent = String(h).padStart(2,'0') + String(now.getUTCMinutes()).padStart(2,'0'); }
 function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('show'); _deleteStoreId = null; }
@@ -630,7 +751,7 @@ function confirmDeleteStore() {
   var pw = document.getElementById('deletePw').value; if (!pw) { showToast('Verification required'); return; }
   if (!confirm('This is irreversible. Continue?')) return;
   fetch('/api/saas/stores/' + _deleteStoreId, { method: 'DELETE', headers: getAuthHeaders(), body: JSON.stringify({ actionCode: pw, reason: 'Admin delete' }) })
-    .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Store deleted.'); closeDeleteModal(); loadStores(); loadSignups(); } else { showToast('Error: ' + (d.error||'Failed')); } }).catch(function() { showToast('Network error'); });
+    .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Store deleted.'); closeDeleteModal(); loadStores(); loadSignups(); } else { showToast('Error: ' + (d.error||'Failed')); } }).catch(function() { showToast(t('networkError')); });
 }
 
 // ─── Signups ───────────────────────────────────────────────────────────
@@ -662,12 +783,12 @@ function approveSignup(id) {
       msg += ' | Use Store Users → Reset PW to set password.';
       showToast(msg); loadSignups(); loadStores();
     } else { showToast('Approve failed: ' + (d.error||d.message||'Unknown')); }
-  }).catch(function() { showToast('Network error'); });
+  }).catch(function() { showToast(t('networkError')); });
 }
 function rejectSignup(id) { if (!confirm('Reject this signup?')) return;
   fetch('/api/saas/stores/reject/' + id, { method: 'POST', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) {
     showToast(d.success ? 'Rejected.' : 'Error: ' + (d.error||'')); loadSignups();
-  }).catch(function() { showToast('Network error'); }); }
+  }).catch(function() { showToast(t('networkError')); }); }
 
 // ─── Store Users ──────────────────────────────────────────────────────
 function showStoreUsers(storeId, storeName) {
@@ -712,7 +833,7 @@ function doAddStoreUser() {
   var body = { username: document.getElementById('auUser').value.trim(), password: document.getElementById('auPass').value, displayName: document.getElementById('auName').value.trim(), email: document.getElementById('auEmail').value.trim(), role: document.getElementById('auRole').value };
   if (!body.username || !body.password || !body.displayName) { showToast('All fields required.'); return; }
   fetch('/api/saas/stores/' + storeId + '/users', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(body) })
-    .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('User created.'); closeAddUser(); loadStoreUsers(); } else { showToast('Error: ' + (d.error||'Failed')); } }).catch(function() { showToast('Network error'); });
+    .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('User created.'); closeAddUser(); loadStoreUsers(); } else { showToast('Error: ' + (d.error||'Failed')); } }).catch(function() { showToast(t('networkError')); });
 }
 var _euStoreId, _euUserId;
 function editStoreUser(uid, username, displayName, email) {
@@ -726,16 +847,16 @@ function saveEditUser() {
   var body = { username: document.getElementById('euUser').value, displayName: document.getElementById('euName').value, email: document.getElementById('euEmail').value };
   var pw = document.getElementById('euPass').value; if (pw) body.password = pw;
   fetch('/api/saas/stores/' + _euStoreId + '/users/' + _euUserId, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(body) })
-    .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('User updated.'); closeEditUser(); loadStoreUsers(); } else { showToast('Error: ' + (d.error||'Failed')); } }).catch(function() { showToast('Network error'); });
+    .then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('User updated.'); closeEditUser(); loadStoreUsers(); } else { showToast('Error: ' + (d.error||'Failed')); } }).catch(function() { showToast(t('networkError')); });
 }
 function disableStoreUser(uid, name) { if (!confirm('Disable ' + name + '?')) return;
-  fetch('/api/saas/stores/' + document.getElementById('suStoreSelect').value + '/users/' + uid + '/disable', { method: 'PUT', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Disabled.' : 'Error: ' + (d.error||'')); loadStoreUsers(); }).catch(function() { showToast('Network error'); }); }
+  fetch('/api/saas/stores/' + document.getElementById('suStoreSelect').value + '/users/' + uid + '/disable', { method: 'PUT', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Disabled.' : 'Error: ' + (d.error||'')); loadStoreUsers(); }).catch(function() { showToast(t('networkError')); }); }
 function enableStoreUser(uid) {
-  fetch('/api/saas/stores/' + document.getElementById('suStoreSelect').value + '/users/' + uid + '/enable', { method: 'PUT', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Enabled.' : 'Error: ' + (d.error||'')); loadStoreUsers(); }).catch(function() { showToast('Network error'); }); }
+  fetch('/api/saas/stores/' + document.getElementById('suStoreSelect').value + '/users/' + uid + '/enable', { method: 'PUT', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Enabled.' : 'Error: ' + (d.error||'')); loadStoreUsers(); }).catch(function() { showToast(t('networkError')); }); }
 function deleteStoreUser(uid, name) { if (!confirm('Delete ' + name + '? This cannot be undone.')) return;
-  fetch('/api/saas/stores/' + document.getElementById('suStoreSelect').value + '/users/' + uid, { method: 'DELETE', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Deleted.' : 'Error: ' + (d.error||'')); loadStoreUsers(); }).catch(function() { showToast('Network error'); }); }
+  fetch('/api/saas/stores/' + document.getElementById('suStoreSelect').value + '/users/' + uid, { method: 'DELETE', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { showToast(d.success ? 'Deleted.' : 'Error: ' + (d.error||'')); loadStoreUsers(); }).catch(function() { showToast(t('networkError')); }); }
 function resetStoreUserPw(uid, name) { if (!confirm('Reset password for ' + name + '?')) return;
-  fetch('/api/saas/stores/' + document.getElementById('suStoreSelect').value + '/users/' + uid + '/reset-password', { method: 'POST', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Reset done.'); alert('New password for ' + d.username + ':\n\n' + d.newPassword); } else { showToast('Error: ' + (d.error||'')); } }).catch(function() { showToast('Network error'); }); }
+  fetch('/api/saas/stores/' + document.getElementById('suStoreSelect').value + '/users/' + uid + '/reset-password', { method: 'POST', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) { if (d.success) { showToast('Reset done.'); alert('New password for ' + d.username + ':\n\n' + d.newPassword); } else { showToast('Error: ' + (d.error||'')); } }).catch(function() { showToast(t('networkError')); }); }
 
 // ─── Modules View ─────────────────────────────────────────────────────
 var _modStoreId, _modData;
@@ -804,7 +925,7 @@ function loadDatabase() {
 
 // ─── Deployments View ─────────────────────────────────────────────────
 function loadDeployments() {
-  document.getElementById('deployList').innerHTML = '<p style="color:#8e8e93;text-align:center;">Loading...</p>';
+  document.getElementById('deployList').innerHTML = '<p style="color:#8e8e93;text-align:center;">' + t('loading') + '</p>';
   fetch('/api/saas/deployments', { headers: getAuthHeaders() }).then(function(r) {
     if (!r.ok) { document.getElementById('deployList').innerHTML = '<p style="color:#8e8e93;text-align:center;">Deployments API not available.</p>'; return; }
     return r.json();
