@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const StoreSchema = new mongoose.Schema({
   name:         { type: String, required: true, trim: true },
+  slug:         { type: String, unique: true, sparse: true, trim: true, lowercase: true },
   ownerName:    { type: String, trim: true },
   email:        { type: String, trim: true, lowercase: true },
   phone:        { type: String, trim: true },
@@ -78,7 +79,14 @@ const StoreSchema = new mongoose.Schema({
   updatedAt:  { type: Date, default: Date.now }
 });
 
+StoreSchema.pre('save', function () {
+  if (!this.slug && this.name) {
+    this.slug = this.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
+  }
+});
+
 StoreSchema.index({ email: 1 });
 StoreSchema.index({ status: 1 });
+StoreSchema.index({ slug: 1 });
 
 module.exports = mongoose.model('SaaStore', StoreSchema);

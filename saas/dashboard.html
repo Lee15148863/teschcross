@@ -95,6 +95,16 @@
     <p style="font-size:11px;color:#8e8e93;margin-top:10px;" id="posUrlDisplay"></p>
   </div>
 
+  <!-- Staff login entrance card -->
+  <div id="staffLoginCard" class="card" style="display:none;text-align:center;">
+    <h2 class="section-title">Staff &amp; Store Login</h2>
+    <p style="font-size:13px;color:#8e8e93;margin-bottom:14px;">Share this link with your staff to sign in. Each staff member needs their own account.</p>
+    <div style="background:#f2f2f7;border-radius:12px;padding:14px;display:inline-block;min-width:280px;">
+      <code id="staffLoginUrl" style="font-size:15px;font-weight:600;color:#0071e3;word-break:break-all;">techcross.ie/s/--</code>
+    </div>
+    <p style="font-size:11px;color:#8e8e93;margin-top:10px;">Bookmark this link or share it. Staff use this page to log in to the store POS.</p>
+  </div>
+
   <!-- Store settings card (hidden for super_admin without impersonation) -->
   <div id="settingsCard" class="card" style="display:none;">
     <h2 class="section-title" data-i18n="saas.dash.settings.title">Store Settings</h2>
@@ -207,7 +217,7 @@
     }
 
     // Show POS entrance for any user with a storeId
-    if (user.storeId) { loadPOSEntrance(); }
+    if (user.storeId) { loadPOSEntrance(); loadStaffLoginUrl(); }
 
     // Logo file upload handler
     document.getElementById('logoInput').addEventListener('change', function(e) {
@@ -403,6 +413,22 @@
         .catch(function(e) {
           console.log('POS entrance load failed:', e);
         });
+    }
+
+    function loadStaffLoginUrl() {
+      var storeId = user.storeId;
+      if (!storeId) return;
+      fetch('/api/saas/stores/' + storeId, { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); })
+        .then(function(s) {
+          if (s.slug) {
+            var url = 'techcross.ie/s/' + s.slug;
+            document.getElementById('staffLoginUrl').textContent = url;
+            document.getElementById('staffLoginUrl').href = 'https://' + url;
+            document.getElementById('staffLoginCard').style.display = 'block';
+          }
+        })
+        .catch(function(e) { console.log('Staff login URL load failed:', e); });
     }
 
     function logout() {

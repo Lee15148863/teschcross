@@ -83,6 +83,11 @@ app.get('/api/app-version', (req, res) => {
   });
 });
 
+// ─── Store login portal (per-store branded entry) ──────────────────────────
+app.get('/s/:slug', function(req, res) {
+  res.sendFile(path.join(__dirname, 'saas', 'store-login.html'));
+});
+
 // ─── No-store cache headers for HTML pages ──────────────────────────────────
 app.use(function(req, res, next) {
   if (req.path.match(/\.html$/) || req.path.match(/^\/saas\/[a-z-]*$/)) {

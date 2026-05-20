@@ -34,12 +34,19 @@ router.get('/', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
-// GET /api/saas/stores/:id — single store detail (super_admin only)
-router.get('/:id', superAdminAuth, async (req, res) => {
+// GET /api/saas/stores/:id — single store detail (super_admin + store user)
+router.get('/:id', storeOrSuperAuth, async (req, res) => {
   try {
-    const store = await Store.findById(req.params.id).lean();
+    const store = await Store.findById(req.params.id);
     if (!store) return res.status(404).json({ error: 'Store not found' });
-    res.json(store);
+
+    // Auto-generate slug for existing stores (backfill)
+    if (!store.slug && store.name) {
+      store.slug = store.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
+      await store.save();
+    }
+
+    res.json(store.toObject());
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -1037,6 +1044,16 @@ router.put('/:storeId/modules', superAdminAuth, async (req, res) => {
     console.error('[stores] modules PUT error:', e.message);
     res.status(500).json({ error: e.message });
   }
+});
+
+// ─── Public Store Info by Slug ───────────────────────────────────────
+// GET /api/saas/stores/slug/:slug — public, no auth, returns store branding
+router.get('/slug/:slug', async (req, res) => {
+  try {
+    const store = await Store.findOne({ slug: req.params.slug }).select('name slug logo plan status').lean();
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+    res.json({ name: store.name, slug: store.slug, logo: store.logo || null, plan: store.plan, status: store.status });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;

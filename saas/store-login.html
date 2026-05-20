@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Store Login — StoreFlow</title>
+  <link rel="icon" type="image/png" href="../logo-sm.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif; font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { background: #f2f2f7; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+
+    .login-card { background: #fff; border-radius: 24px; padding: 40px 32px; width: 100%; max-width: 420px; box-shadow: 0 2px 20px rgba(0,0,0,.06); position: relative; }
+    .login-logo { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 8px; }
+    .login-logo img { height: 36px; }
+    .login-logo span { font-size: 22px; font-weight: 700; color: #1d1d1f; }
+    .store-badge { text-align: center; margin-bottom: 24px; }
+    .store-badge .store-name { font-size: 18px; font-weight: 700; color: #1d1d1f; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .store-badge .store-name .dot { width: 8px; height: 8px; border-radius: 50%; background: #34c759; flex-shrink: 0; }
+    .store-badge .store-url { font-size: 12px; color: #8e8e93; margin-top: 4px; font-family: monospace; }
+    .lang-btn { position: absolute; top: 16px; right: 16px; padding: 6px 12px; border: 1.5px solid #d2d2d7; background: #fff; color: #1d1d1f; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .lang-btn:hover { background: #f2f2f7; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #3a3a3c; margin-bottom: 6px; }
+    .form-group input { width: 100%; padding: 14px 16px; border: 1.5px solid #d2d2d7; border-radius: 12px; font-size: 15px; background: #f9f9fb; outline: none; transition: all .2s; }
+    .form-group input:focus { border-color: #0071e3; box-shadow: 0 0 0 3px rgba(0,113,227,.15); }
+
+    .btn-login { width: 100%; padding: 14px; background: #0071e3; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .btn-login:hover { background: #0077ed; }
+    .btn-login:disabled { opacity: .5; cursor: not-allowed; }
+
+    .error-msg { background: #fef2f2; color: #dc2626; padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 18px; display: none; }
+    .error-msg.show { display: block; }
+
+    .store-not-found { text-align: center; padding: 40px 20px; }
+    .store-not-found h2 { font-size: 20px; margin-bottom: 8px; }
+    .store-not-found p { color: #8e8e93; font-size: 14px; margin-bottom: 20px; }
+    .store-not-found a { color: #0071e3; text-decoration: none; font-weight: 500; }
+
+    @media (max-width: 480px) {
+      .login-card { padding: 28px 20px; border-radius: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-card" id="loginCard">
+  <button class="lang-btn" id="langToggle" onclick="toggleLang()">中</button>
+  <div class="login-logo">
+    <a href="/" style="text-decoration:none;display:flex;align-items:center;gap:8px;">
+      <span>StoreFlow</span>
+    </a>
+  </div>
+  <div class="store-badge" id="storeBadge">
+    <div class="store-name"><span class="dot"></span><span id="storeName">Loading...</span></div>
+    <div class="store-url" id="storeUrl"></div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <form id="loginForm">
+    <div class="form-group">
+      <label data-i18n="saas.login.username">Username</label>
+      <input type="text" id="username" placeholder="Enter your username" autocomplete="username" required>
+    </div>
+    <div class="form-group">
+      <label data-i18n="saas.login.password">Password</label>
+      <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+    </div>
+    <div class="form-group" id="captchaGroup">
+      <label>Verify / 验证</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="captchaQuestion" style="font-size:18px;font-weight:700;background:#f2f2f7;padding:8px 16px;border-radius:10px;min-width:80px;text-align:center;user-select:none;"></span>
+        <span style="font-size:16px;color:#8e8e93;">=</span>
+        <input type="text" id="captchaAnswer" inputmode="numeric" pattern="[0-9\-]*" style="width:100px;text-align:center;font-size:18px;font-weight:600;padding:12px;border:1.5px solid #d2d2d7;border-radius:12px;outline:none;" placeholder="?" autocomplete="off" required>
+        <button type="button" id="captchaRefresh" style="background:none;border:1.5px solid #d2d2d7;border-radius:10px;padding:10px;cursor:pointer;font-size:18px;line-height:1;" title="Refresh">🔄</button>
+      </div>
+      <input type="hidden" id="captchaToken">
+    </div>
+    <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+  </form>
+</div>
+
+<div class="store-not-found" id="notFound" style="display:none;">
+  <h2>Store Not Found</h2>
+  <p>The store you're looking for doesn't exist or is no longer active.</p>
+  <a href="/saas">← Back to StoreFlow</a>
+</div>
+
+<script src="../lang.js"></script>
+<script>
+var slug = new URLSearchParams(window.location.search).get('store') || '';
+
+async function loadCaptcha() {
+  try {
+    var r = await fetch('/api/saas/auth/captcha');
+    var d = await r.json();
+    document.getElementById('captchaQuestion').textContent = d.question;
+    document.getElementById('captchaToken').value = d.token;
+    document.getElementById('captchaAnswer').value = '';
+  } catch(e) {
+    document.getElementById('captchaQuestion').textContent = '? + ?';
+  }
+}
+
+async function initStore() {
+  if (!slug) {
+    document.getElementById('storeName').textContent = 'StoreFlow';
+    document.getElementById('storeUrl').textContent = 'techcross.ie/s/your-store';
+    return;
+  }
+  try {
+    var r = await fetch('/api/saas/stores/slug/' + encodeURIComponent(slug));
+    if (!r.ok) throw new Error('not found');
+    var s = await r.json();
+    document.getElementById('storeName').textContent = s.name;
+    document.getElementById('storeUrl').textContent = 'techcross.ie/s/' + s.slug;
+    document.title = s.name + ' — StoreFlow';
+  } catch(e) {
+    document.getElementById('loginCard').style.display = 'none';
+    document.getElementById('notFound').style.display = 'block';
+  }
+}
+
+document.getElementById('captchaRefresh').addEventListener('click', loadCaptcha);
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('loginBtn');
+  var err = document.getElementById('errorMsg');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  err.classList.remove('show');
+  try {
+    var res = await fetch('/api/saas/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value,
+        captchaAnswer: document.getElementById('captchaAnswer').value,
+        captchaToken: document.getElementById('captchaToken').value
+      })
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      err.textContent = data.error || 'Invalid credentials';
+      err.classList.add('show');
+      btn.disabled = false; btn.textContent = 'Sign In';
+      loadCaptcha();
+      return;
+    }
+    localStorage.setItem('saas_token', data.token);
+    localStorage.setItem('saas_user', JSON.stringify(data.user));
+    window.location.href = data.user && data.user.role === 'super_admin' ? '/saas/admin.html' : '/saas/dashboard.html';
+  } catch(ex) {
+    err.textContent = 'Network error. Please try again.';
+    err.classList.add('show');
+    btn.disabled = false; btn.textContent = 'Sign In';
+    loadCaptcha();
+  }
+});
+
+loadCaptcha();
+initStore();
+applyLang();
+</script>
+
+</body>
+</html>
