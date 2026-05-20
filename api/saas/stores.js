@@ -14,6 +14,18 @@ const { getPlanDefaultModules, getPlanDatabasePolicy } = require('../../utils/st
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 const BCRYPT_SALT_ROUNDS = 10;
 
+function isBcryptHash(val) {
+  return typeof val === 'string' && /^\$2[aby]\$\d{2}\$/.test(val);
+}
+
+function resolveOwnerPassword(signupPassword) {
+  if (signupPassword) {
+    if (isBcryptHash(signupPassword)) return signupPassword;
+    return bcrypt.hashSync(signupPassword, BCRYPT_SALT_ROUNDS);
+  }
+  return bcrypt.hashSync(require('crypto').randomBytes(16).toString('hex'), BCRYPT_SALT_ROUNDS);
+}
+
 // Super admin auth middleware
 function superAdminAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -149,9 +161,9 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
       // Create store_root user
       const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
       let credentials;
-      const hashedPw = await bcrypt.hash(signup.password || (require('crypto').randomBytes(8).toString('hex')), BCRYPT_SALT_ROUNDS);
+            const ownerPasswordHash = resolveOwnerPassword(signup.password);
       const rootUser = await SaaSUser.create({
-        username: finalUsername, password: hashedPw, displayName: signup.ownerName,
+        username: finalUsername, password: ownerPasswordHash, displayName: signup.ownerName,
         email: signup.email, role: 'store_root', storeId: store._id, active: true
       });
       credentials = { username: rootUser.username };
@@ -255,9 +267,9 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
     // Create store_root user
     const finalUsername = signup.username || 'admin_' + store.name.toLowerCase().replace(/[^a-z0-9]/g, '');
     let credentials;
-    const hashedPw = await bcrypt.hash(signup.password || (require('crypto').randomBytes(8).toString('hex')), BCRYPT_SALT_ROUNDS);
+    const ownerPasswordHash = resolveOwnerPassword(signup.password);
     const rootUser = await SaaSUser.create({
-      username: finalUsername, password: hashedPw, displayName: signup.ownerName,
+      username: finalUsername, password: ownerPasswordHash, displayName: signup.ownerName,
       email: signup.email, role: 'store_root', storeId: store._id, active: true
     });
     credentials = { username: rootUser.username };
