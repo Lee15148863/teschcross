@@ -81,7 +81,12 @@ router.get('/', function(req, res) {
             if (pairs.length > 1) {
               pairs.forEach(function(pair) {
                 var parts = pair.split(':');
-                if (parts.length === 2) { limits[parts[0]] = parseInt(parts[1], 10) || 0; parsed = true; }
+                if (parts.length === 2) {
+                  var v = parts[1];
+                  if (v === 'null' || v === '') limits[parts[0]] = null;
+                  else { var n = parseInt(v, 10); limits[parts[0]] = isNaN(n) ? null : n; }
+                  parsed = true;
+                }
               });
             }
           } catch (_2) { /* continue */ }
@@ -90,7 +95,12 @@ router.get('/', function(req, res) {
             try {
               rawLimits.split('_').forEach(function(pair) {
                 var parts = pair.split(':');
-                if (parts.length === 2) { limits[parts[0]] = parseInt(parts[1], 10) || 0; parsed = true; }
+                if (parts.length === 2) {
+                  var v = parts[1];
+                  if (v === 'null' || v === '') limits[parts[0]] = null;
+                  else { var n = parseInt(v, 10); limits[parts[0]] = isNaN(n) ? null : n; }
+                  parsed = true;
+                }
               });
             } catch (_3) { /* continue */ }
           }
