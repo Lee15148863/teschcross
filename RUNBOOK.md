@@ -140,4 +140,77 @@ It is a financial system.
 
 ---
 
+---
+
+## 7. SAAS STOREFLOW LAYER (L4)
+
+The SaaS layer manages tenant stores on top of the POS/ERP system.
+
+**L4 — SaaS Management Layer**
+- Store registration, approval, deployment
+- Tenant isolation (separate Cloud Run + MongoDB per store)
+- Super admin platform management
+- Per-store login portal `/s/:slug`
+- Module/plan entitlement enforcement
+
+### Permission Hierarchy
+
+```
+SaaS Super Admin (Lee087)
+  └─ Store Owner (store_root)
+       └─ Manager
+            └─ Staff
+```
+
+### Store Owner Permissions
+
+| Action | Allowed |
+|--------|---------|
+| Manage own store staff/manager | Yes |
+| Create staff/manager | Yes |
+| Reset staff password | Yes |
+| Disable/delete own staff/manager | Yes |
+| Create store_root | NO |
+| Create super_admin | NO |
+| Promote to store_root | NO |
+| Manage other stores | NO |
+| Delete self | NO |
+| Delete last active store_root | NO |
+| Change plan/modules/database/deployment | NO |
+| Write store settings | Yes (own store) |
+| Access SaaS Admin panel | NO |
+
+### Staff/Manager Defaults
+
+**Manager:** POS, products view/edit, transactions view, basic reports. No staff mgmt, no settings write, no txn delete, no VAT export, no SaaS admin.
+
+**Staff:** POS, products read, transactions view. No staff mgmt, no settings write, no txn delete, no invoice, no SaaS admin.
+
+### Free Plan Policy (Production)
+
+| Field | Value |
+|-------|-------|
+| Users | 2 |
+| Products | 100 |
+| Monthly transactions | null (unlimited) |
+| Storage | 50MB |
+| Modules | pos, products, transactions, stock, reports |
+| Shortcuts | false (manual tick by SaaS Admin only) |
+| Refund | enabled |
+| Reports basic | enabled |
+| VAT export | disabled |
+| Accounting export | disabled |
+| Transaction delete | disabled |
+| Invoices | disabled |
+| BYO MongoDB | disabled |
+
+### Per-Store Login
+
+- `/s/:slug` — branded store login portal
+- Only active/trial/trialing stores may log in (allowlist, fail closed)
+- Super admin bypass for troubleshooting
+- Main `/inv-login.html` NOT affected
+
+---
+
 **END OF RUNBOOK**

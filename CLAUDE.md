@@ -235,4 +235,48 @@ staff
 
 - **Static site**: push to `main` → GitHub Actions deploys to GitHub Pages
 - **Backend (Cloud Run)**: Docker build via Cloud Build → Artifact Registry → Cloud Run (`europe-west3`)
-- AI assistant must NEVER auto-deploy; always ask for explicit approval before git push or deploy
+- **Correct deploy command**: `gcloud builds submit --config=cloudbuild.yaml --substitutions=_TAG=<tag> .`
+- **FORBIDDEN**: `gcloud run deploy --source=.`, `--set-env-vars`, `--update-env-vars`, `--env-vars-file`
+- AI assistant must NEVER auto-deploy; always ask for explicit approval before deploy
+- **VPC required**: `--vpc-connector=storeflow-connector --vpc-egress=all-traffic`
+- **Static IP**: 104.155.83.41 (Cloud NAT)
+- **Main push → production**: NO auto-deploy trigger configured
+- See [PROJECT_STATUS_2026-05-20.md](PROJECT_STATUS_2026-05-20.md) for current deployment state
+
+## AI Workflow — Every Session Start
+
+1. `git status && git branch --show-current && git log --oneline -8`
+2. Confirm current production revision: `gcloud run services describe teschcross-git --region=europe-west1`
+3. Confirm this task allows code changes / deploy / env changes
+4. Check if any files touch [protected areas](#critical-constraints)
+5. Read [PROJECT_STATUS_2026-05-20.md](PROJECT_STATUS_2026-05-20.md) for latest state
+
+## Before Every Commit
+
+1. `git diff --name-only` — verify only expected files
+2. `node --check` on changed JS files
+3. Confirm no protected area changes
+4. Confirm no secrets in diff
+
+## Hotfix Protocol
+
+- Branch from current production base commit
+- Cherry-pick only approved fixes
+- Verify `git diff <base> --name-only`
+- Deploy with cloudbuild.yaml (preserves VPC)
+- Rollback: `gcloud run services update-traffic --to-revisions=<prev>`
+
+## Protected Areas — NEVER Modify Without Explicit Approval
+
+- VAT calculation (23%, 13.5%, margin VAT)
+- Checkout calculation
+- Refund calculation logic
+- CashLedger model/calculation
+- Invoice generation/numbering
+- Accounting reports
+- VAT report export calculation
+- Profit/margin calculation
+- Device lifecycle
+- Pricing editors, brand/quote/product pricing data
+- Receipt financial totals
+- DB data, env vars, Cloud Run env, Secret Manager

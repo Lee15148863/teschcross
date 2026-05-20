@@ -332,4 +332,82 @@ See [CLOUD_RUN_ENV_SAFETY_RULES.md](CLOUD_RUN_ENV_SAFETY_RULES.md) for:
 - Required env keys checklist for Main POS and tenant services
 - Post-deploy login smoke test requirements
 - Rollback protocol for login failures
+
+---
+
+# VPC / Cloud NAT / MongoDB Atlas Connectivity (2026-05-20)
+
+## Permanent Fix Applied
+
+Cloud Run dynamic outbound IPs caused intermittent MongoDB Atlas connection failures.
+Permanent infrastructure fix deployed:
+
+| Resource | Name | Detail |
+|----------|------|--------|
+| Static IP | storeflow-nat-ip | 104.155.83.41 |
+| VPC | storeflow-vpc | custom mode |
+| Cloud Router | storeflow-router | europe-west1 |
+| Cloud NAT | storeflow-nat | ALL_SUBNETWORKS_ALL_IP_RANGES |
+| VPC Connector | storeflow-connector | europe-west1, 10.8.0.0/28 |
+
+## Required Deploy Flags
+
+All Cloud Run deployments MUST include:
+```
+--vpc-connector=storeflow-connector
+--vpc-egress=all-traffic
+```
+
+cloudbuild.yaml and gcp-admin.js already configured.
+
+## Atlas Network Access
+
+Static IP `104.155.83.41/32` added to MongoDB Atlas project. No dynamic IP dependency.
+
+---
+
+# Hotfix Protocol
+
+1. Hotfix branch must be created from current production base commit
+2. Only cherry-pick approved fixes
+3. Verify `git diff base --name-only` only contains expected files
+4. Deploy with cloudbuild.yaml (preserves VPC config)
+5. Verify traffic switches to new revision
+6. Rollback: `gcloud run services update-traffic --to-revisions=<prev>`
+
+---
+
+# Post-Deploy Verification Checklist
+
+**Main:**
+- [ ] mongo operational
+- [ ] Lee087 login OK
+- [ ] /api/app-version 200
+- [ ] /api/inv/modules 200
+- [ ] inv-login.html 200
+- [ ] inv-pos.html 200
+- [ ] boss.html 200
+- [ ] boss-audit.html 200
+- [ ] saas/admin.html 200
+
+**StoreFlow Test Tenant:**
+- [ ] mongo operational
+- [ ] plan=free
+- [ ] modules: pos/products/transactions/stock/reports
+- [ ] shortcuts=false
+- [ ] users=2, products=100, monthlyTransactions=null
+- [ ] transactionsDelete=false, vatExport=false
+
+---
+
+# Auto-Deploy Triggers (2026-05-20)
+
+| Trigger | Status |
+|---------|--------|
+| Main push → production | NOT configured (permanently disabled) |
+| Staging push → test tenant | Planned (cloudbuild-staging.yaml ready) |
+| Release tag → production | NOT configured (deferred) |
+
+Two legacy git-triggered Cloud Build triggers deleted on 2026-05-20.
+All production deploys are manual via `gcloud builds submit`.
 - Known good/broken revision tracking
