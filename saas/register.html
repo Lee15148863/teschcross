@@ -49,7 +49,6 @@
     .section-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: #1d1d1f; }
     .guidance-text { font-size: 13px; color: #8e8e93; margin-bottom: 16px; line-height: 1.5; }
     .guidance-text strong { color: #555; }
-    .guidance-text code { background: #f2f2f7; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
     .guidance-text a { color: #0071e3; }
     .checkbox-group { margin-bottom: 20px; }
     .checkbox-group label { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #555; line-height: 1.5; cursor: pointer; }
@@ -60,19 +59,8 @@
       .register-card { padding: 24px 18px; border-radius: 16px; }
       .form-row { flex-direction: column; gap: 0; }
     }
-
-    .disclaimer-box { border: 1.5px solid #d2d2d7; border-radius: 12px; padding: 16px; margin: 18px 0 12px; background: #f9f9fb; max-height: 300px; overflow-y: auto; font-size: 12px; line-height: 1.6; color: #3a3a3c; }
-    .disclaimer-box::-webkit-scrollbar { width: 4px; }
-    .disclaimer-box::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
-    .disclaimer-box h4 { font-size: 13px; margin-bottom: 8px; color: #1d1d1f; }
-    .disclaimer-box p { margin-bottom: 6px; }
-    .disclaimer-box ol { margin-bottom: 8px; }
-    .disclaimer-box ol li { margin-bottom: 3px; }
-    .disclaimer-box hr { margin: 12px 0; }
-    .agree-row { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 18px; font-size: 13px; color: #1d1d1f; }
-    .agree-row input { margin-top: 2px; width: auto; }
   </style>
-    <link rel="stylesheet" href="styles-saas.css?v=4">
+  <link rel="stylesheet" href="styles-saas.css?v=4">
 </head>
 <body>
 
@@ -144,19 +132,20 @@
     </div>
 
     <div class="section-divider"></div>
-    <h3 class="section-title">MongoDB Atlas Connection String (Optional)</h3>
+    <h3 class="section-title">Database</h3>
     <p class="guidance-text">
-      <strong>Recommended: Use StoreFlow-managed database.</strong><br>
+      <strong>StoreFlow-managed database is recommended.</strong><br>
       Most small shops do not need to manage MongoDB, Atlas, network access, backups or hosting.<br>
-      Leave blank to get started immediately with managed hosting.<br><br>
-      <strong>Advanced option:</strong> You may request to use your own MongoDB Atlas database.<br>
+      Get started immediately with managed hosting.<br><br>
+      <strong>BYO MongoDB:</strong> You may request to use your own MongoDB Atlas database.<br>
       BYO MongoDB requires TechCross/Admin verification before activation.<br>
-      StoreFlow fixed outbound IP <code>104.155.83.41</code> can be provided for Atlas Network Access.
+      You do not need to configure MongoDB to submit this signup.
     </p>
     <div class="form-row">
       <div class="form-group">
         <label>Timezone</label>
         <select id="timezone">
+          <option value="">—</option>
           <option value="Europe/Dublin">Europe/Dublin (IST/GMT)</option>
           <option value="Europe/London">Europe/London (BST/GMT)</option>
           <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
@@ -175,6 +164,7 @@
       <div class="form-group">
         <label>Currency</label>
         <select id="currency">
+          <option value="">—</option>
           <option value="EUR">EUR (&euro;)</option>
           <option value="GBP">GBP (&pound;)</option>
           <option value="USD">USD ($)</option>
@@ -190,42 +180,12 @@
         </select>
       </div>
     </div>
-    <div class="form-group">
-      <label>MongoDB Atlas Connection String <span style="font-weight:400;color:#8e8e93;">(Optional)</span></label>
-      <input type="text" id="mongoUri" placeholder="mongodb+srv://user:password@cluster.mongodb.net/dbname" autocomplete="off" spellcheck="false" oninput="toggleByoFields()">
-      <div class="field-hint">Leave blank to use StoreFlow-managed database (recommended). BYO MongoDB requires admin verification before activation.</div>
-    </div>
-    <div id="byoFields" style="display:none;">
-    <div class="form-group">
-      <label>Deployment PIN <span style="font-weight:400;color:#8e8e93;">(4-20 digits)</span></label>
-      <input type="password" id="deploymentPin" placeholder="e.g. 4825" maxlength="20" inputmode="numeric" autocomplete="off">
-      <div class="field-hint">For future use. Required for sensitive actions (suspend, delete, rollback).</div>
-    </div>
-    <div class="checkbox-group">
+    <div class="checkbox-group" style="margin-top:12px;">
       <label>
-        <input type="checkbox" id="atlasOwnershipConfirmed" onchange="updateSubmitState()">
-        <span data-i18n="saas.register.checkbox.ownership">I confirm that this MongoDB Atlas account and database are owned by, or lawfully controlled by, my business. I am responsible for Atlas billing, account security, MFA, database users, passwords, network access rules, backups, exports, and all data stored in this database.</span>
+        <input type="checkbox" id="byoMongoRequested" onchange="updateSubmitState()">
+        <span><strong>I want to use my own MongoDB Atlas database.</strong><br>
+        <span style="font-size:12px;color:#8e8e93;">BYO MongoDB requires TechCross/Admin verification before activation. StoreFlow-managed database will be used by default until BYO is configured.</span></span>
       </label>
-    </div>
-    <div class="checkbox-group">
-      <label>
-        <input type="checkbox" id="atlasResponsibilityAccepted" onchange="updateSubmitState()">
-        <span data-i18n="saas.register.checkbox.responsibility">I understand that MongoDB Atlas free clusters have limited storage and features. I am responsible for backing up and exporting my own sales, invoice, cash ledger, inventory, repair, report, and business records. StoreFlow does not guarantee recovery of lost, deleted, corrupted, or unavailable Atlas data.</span>
-      </label>
-    </div>
-    <div class="checkbox-group">
-      <label>
-        <input type="checkbox" id="storeflowConnectionAuthorised" onchange="updateSubmitState()">
-        <span data-i18n="saas.register.checkbox.connection">I authorise StoreFlow to validate this MongoDB connection string and, if my account is approved, to use it only to deploy, connect, operate, secure, maintain, and support my StoreFlow service.</span>
-      </label>
-    </div>
-    <div class="checkbox-group">
-      <label>
-        <input type="checkbox" id="legalTermsAccepted" onchange="updateSubmitState()">
-        <span data-i18n="saas.register.checkbox.terms">I have read and agree to the StoreFlow Terms, Privacy Notice, and the <a href="/saas/mongodb-atlas-notice.html" target="_blank">MongoDB Atlas Responsibility Notice</a>.</span>
-      </label>
-    </div>
-    <p style="font-size:12px;color:#8e8e93;margin:4px 0 16px;">&#128214; <a href="/saas/mongodb-atlas-notice.html" target="_blank">StoreFlow MongoDB Atlas User Guide and Responsibility Notice (v1.0)</a> — Read before submitting.</p>
     </div>
 
     <button type="submit" class="btn-submit" id="submitBtn" data-i18n="saas.register.btn">Submit Registration</button>
@@ -253,25 +213,9 @@
 <script>
 var API_BASE = localStorage.getItem('saas_api_base') || '';
 
-// Global: show/hide BYO fields when URI input changes
-function toggleByoFields() {
-  var uri = document.getElementById('mongoUri').value.trim();
-  var byoEl = document.getElementById('byoFields');
-  if (byoEl) byoEl.style.display = uri ? 'block' : 'none';
-  updateSubmitState();
-}
-
-// Enable submit: always enabled when no URI (managed DB).
-// When URI provided, require all 4 BYO checkboxes.
+// Always enable submit. BYO checkbox just records intent.
 function updateSubmitState() {
-  var uri = document.getElementById('mongoUri').value.trim();
-  var btn = document.getElementById('submitBtn');
-  if (!uri) { btn.disabled = false; return; }
-  var all4 = document.getElementById('atlasOwnershipConfirmed').checked
-          && document.getElementById('atlasResponsibilityAccepted').checked
-          && document.getElementById('storeflowConnectionAuthorised').checked
-          && document.getElementById('legalTermsAccepted').checked;
-  btn.disabled = !all4;
+  document.getElementById('submitBtn').disabled = false;
 }
 
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
@@ -295,20 +239,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         return;
       }
 
-      var mongoUri = document.getElementById('mongoUri').value.trim();
-
-      // Basic scheme check only when URI provided — BYO is just requested, not auto-enabled
-      if (mongoUri) {
-        var isSrv = mongoUri.startsWith('mongodb+srv://');
-        var isStd = mongoUri.startsWith('mongodb://');
-        if (!isSrv && !isStd) {
-          err.textContent = 'MongoDB URI must start with mongodb+srv:// or mongodb://';
-          err.classList.add('show');
-          btn.disabled = false; btn.textContent = __('saas.register.btn');
-          return;
-        }
-      }
-
       var body = {
         storeName: document.getElementById('storeName').value,
         ownerName: document.getElementById('ownerName').value,
@@ -320,11 +250,9 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         notes: document.getElementById('notes').value,
         password: pw,
         timezone: document.getElementById('timezone').value,
-        currency: document.getElementById('currency').value
+        currency: document.getElementById('currency').value,
+        byoMongoRequested: document.getElementById('byoMongoRequested').checked
       };
-      if (mongoUri) {
-        body.mongoUri = mongoUri;
-      }
 
       var res = await fetch(API_BASE + '/api/saas/signup', {
         method: 'POST',
@@ -347,7 +275,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         document.getElementById('successCard').style.display = 'block';
         return;
       }
-      // Use server error message, fallback to generic
       err.textContent = data.error || data.message || __('saas.register.error.duplicate');
       err.classList.add('show');
     } catch(e) {

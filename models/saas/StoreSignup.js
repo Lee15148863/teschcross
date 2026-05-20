@@ -18,7 +18,7 @@ const StoreSignupSchema = new mongoose.Schema({
   // T20/T21 — customer-owned MongoDB Atlas onboarding
   timezone:     { type: String, trim: true },
   currency:     { type: String, trim: true },
-  mongoUri:     { type: String, select: false },
+  mongoUri:     { type: String, select: false },  // DEPRECATED — new signups DO NOT write here. Legacy data only. Migrate to Secret Manager.
   mongoUriMasked: { type: String },
   mongoUriValidationStatus: { type: String, enum: ['', 'pending', 'passed', 'failed', 'error'], default: '' },
   mongoUriLastValidatedAt: { type: Date },

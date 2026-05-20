@@ -8,7 +8,6 @@ const SaaSUser = require('../../models/saas/SaaSUser');
 const { createTransporter } = require('../../utils/inv-crypto');
 const { verifyActionCode, recordAudit } = require('../../utils/deployment-security');
 const Deployment = require('../../models/saas/Deployment');
-const { maskMongoUri } = require('../../utils/mongo-uri-validator');
 const { getPlanDefaultModules, getPlanDatabasePolicy } = require('../../utils/storeflow-plans');
 
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
@@ -94,13 +93,13 @@ router.patch('/:id', superAdminAuth, async (req, res) => {
 // POST /api/saas/stores/approve/:signupId — approve a store signup (super_admin)
 router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
   try {
-    // Load signup — need mongoUri explicitly since select:false
-    const signup = await StoreSignup.findById(req.params.signupId).select('+mongoUri +deploymentPinHash');
+    // Load signup — mongoUri is NOT loaded (new signups don't store raw URI)
+    const signup = await StoreSignup.findById(req.params.signupId);
     if (!signup) return res.status(404).json({ error: 'Signup not found' });
     if (signup.status !== 'pending') return res.status(400).json({ error: 'Signup already processed' });
 
-    const hasMongoUri = !!(signup.mongoUri && signup.mongoUri.trim());
-    const isByoRequested = hasMongoUri || signup.databasePreference === 'byo';
+    // BYO is tracked via byoMongoRequested flag, not raw URI
+    const isByoRequested = signup.byoMongoRequested || signup.databasePreference === 'byo';
 
     // Build store data from signup
     const storeData = {
@@ -166,11 +165,6 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
       timezone: signup.timezone || 'Europe/Dublin',
       subscriptionStatus: 'trial',
     };
-
-    if (hasMongoUri) {
-      depFields.mongoUriMasked = maskMongoUri(signup.mongoUri);
-      depFields.mongoUriValidationStatus = 'pending';
-    }
 
     await Deployment.create(depFields);
 

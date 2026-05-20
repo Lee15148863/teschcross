@@ -4,7 +4,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const StoreSignup = require('../../models/saas/StoreSignup');
 const SaaSUser = require('../../models/saas/SaaSUser');
-const { maskMongoUri } = require('../../utils/mongo-uri-validator');
 
 const JWT_SECRET = process.env.SAAS_JWT_SECRET;
 const BCRYPT_SALT_ROUNDS = 10;
@@ -25,7 +24,7 @@ router.post('/', async (req, res) => {
   try {
     const {
       storeName, ownerName, username, email, phone, country, businessType, notes, password,
-      timezone, currency, mongoUri,
+      timezone, currency, byoMongoRequested,
       subscriptionPlan, trialLengthDays
     } = req.body;
 
@@ -37,15 +36,6 @@ router.post('/', async (req, res) => {
     }
     if (!username || !username.trim()) {
       return res.status(400).json({ error: 'Username is required' });
-    }
-
-    // MongoDB URI is optional. When provided, only basic scheme check.
-    // BYO MongoDB is requested, NOT automatically enabled.
-    var trimmedUri = mongoUri ? String(mongoUri).trim() : '';
-    if (trimmedUri) {
-      if (!trimmedUri.startsWith('mongodb+srv://') && !trimmedUri.startsWith('mongodb://')) {
-        return res.status(400).json({ error: 'MongoDB URI must start with mongodb+srv:// or mongodb://' });
-      }
     }
 
     // Check username uniqueness across SaaS users
@@ -61,7 +51,7 @@ router.post('/', async (req, res) => {
 
     const hashedPw = await bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
 
-    // Build signup fields
+    // Build signup fields — no raw mongoUri collected at signup
     const signupFields = {
       storeName, ownerName, username: username.trim(), email, phone: phone || '', country: country || '',
       businessType: businessType || '', notes: notes || '', password: hashedPw
@@ -70,16 +60,13 @@ router.post('/', async (req, res) => {
     if (timezone) signupFields.timezone = timezone;
     if (currency) signupFields.currency = currency;
 
-    if (trimmedUri) {
-      // BYO MongoDB requested — store URI with select:false, never return
+    var byoIntent = byoMongoRequested === true || byoMongoRequested === 'true';
+    if (byoIntent) {
       signupFields.databasePreference = 'byo';
       signupFields.byoMongoRequested = true;
       signupFields.byoMongoConfigured = false;
       signupFields.byoSetupStatus = 'pending_admin_verification';
-      signupFields.mongoUri = trimmedUri;
-      signupFields.mongoUriMasked = maskMongoUri(trimmedUri);
     } else {
-      // Managed DB — default, no MongoDB URI needed
       signupFields.databasePreference = 'managed';
       signupFields.byoMongoRequested = false;
       signupFields.byoMongoConfigured = false;
@@ -90,17 +77,15 @@ router.post('/', async (req, res) => {
 
     const signup = await StoreSignup.create(signupFields);
 
-    // Response — never include raw mongoUri
+    // Response — never include raw mongoUri or maskedUri
     const response = {
       success: true,
       message: 'Registration submitted. Awaiting approval.',
       id: signup._id,
       databasePreference: signupFields.databasePreference
     };
-    if (signup.mongoUriMasked) {
-      response.mongoUriMasked = signup.mongoUriMasked;
-    }
-    if (signupFields.byoMongoRequested) {
+
+    if (byoIntent) {
       response.byoMongoRequested = true;
       response.byoNote = 'BYO MongoDB requested. TechCross/Admin verification required before activation.';
     }

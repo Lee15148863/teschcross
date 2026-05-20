@@ -83,18 +83,19 @@ Items deferred from Codex review. Do NOT fix in passing — each needs a dedicat
 
 **Fix:** Migrate to Secret Manager for raw URI storage. Validate URI connectivity and permissions. Store only secret reference in Store/Deployment. Build admin verification flow for BYO requests. Migration path for any existing raw URIs.
 
-**Current state (2026-05-20):**
-- Signup allows BYO request with databasePreference='byo'. Raw URI stored in StoreSignup with select:false (not returned in API).
+**Current state (2026-05-21):**
+- Public signup does NOT collect raw Mongo URI. BYO is tracked via byoMongoRequested boolean only.
+- Signup allows BYO request with databasePreference='byo'. No URI collected or stored for new signups.
 - Approval creates managed DB store regardless of BYO request. BYO is recorded as "requested" with `byoSetupStatus='pending_admin_verification'`.
 - Store.byoMongoRequested tracks the request. Store.byoMongoConfigured remains false.
 - Customer starts with managed DB immediately. BYO requires admin verification.
-- Deployment no longer stores raw URI. mongoUriStorageMode is 'none'.
+- Deployment never stores raw URI. mongoUriStorageMode is 'none'.
 - SaaS Admin shows "BYO Requested" with admin verification note.
 - All plans (Free/Starter/Pro/Enterprise) allow BYO request.
 
-**Raw URI storage locations (2026-05-20):**
-- `StoreSignup.mongoUri` — select:false. NOT returned in API response. NOT displayed in admin UI. NOT logged. Temporary — must migrate to Secret Manager.
-- `Deployment.mongoUri` — select:false. Only used for legacy records. New approvals do NOT store raw URI in Deployment.
+**Raw URI storage locations (2026-05-21):**
+- `StoreSignup.mongoUri` — DEPRECATED. New signups DO NOT write here. Legacy data for old signups only (select:false). Must migrate existing legacy URIs to Secret Manager and remove field.
+- `Deployment.mongoUri` — select:false. Only legacy records. New approvals do NOT store raw URI.
 
 **Migration needed:**
 - Move raw URI from StoreSignup.mongoUri to Secret Manager
