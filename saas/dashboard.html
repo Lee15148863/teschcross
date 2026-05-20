@@ -48,6 +48,20 @@
     .btn-outline { display: inline-block; padding: 8px 16px; background: transparent; color: #0071e3; border: 1.5px solid #0071e3; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
     .btn-outline:hover { background: #f0f7ff; }
     .btn-danger { padding: 8px 16px; background: #ff3b30; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; margin-top: 20px; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+    .btn-danger.btn-sm { margin-top: 0; }
+    .btn-outline { display: inline-block; padding: 8px 16px; background: transparent; color: #0071e3; border: 1.5px solid #0071e3; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-outline.btn-sm { padding: 4px 10px; font-size: 11px; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-green { background: #e8f5e9; color: #2e7d32; }
+    .badge-red { background: #fef2f2; color: #dc2626; }
+    .badge-gray { background: #f2f2f7; color: #555; }
+    .badge-blue { background: #e3f2fd; color: #1565c0; }
+
+    .user-table { width: 100%; border-collapse: collapse; }
+    .user-table th, .user-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e8e8ed; font-size: 13px; }
+    .user-table th { color: #8e8e93; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
 
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1d1d1f; color: #fff; padding: 12px 24px; border-radius: 12px; font-size: 14px; font-weight: 500; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 100; }
     .toast.show { opacity: 1; }
@@ -103,6 +117,36 @@
       <code id="staffLoginUrl" style="font-size:15px;font-weight:600;color:#0071e3;word-break:break-all;">techcross.ie/s/--</code>
     </div>
     <p style="font-size:11px;color:#8e8e93;margin-top:10px;">Bookmark this link or share it. Staff use this page to log in to the store POS.</p>
+  </div>
+
+  <!-- Staff Management card (store owner only) -->
+  <div id="staffMgmtCard" class="card" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 class="section-title" style="margin:0;">Staff Management</h2>
+      <button class="btn-primary btn-sm" onclick="showAddStaff()" style="padding:6px 14px;font-size:13px;">+ Add Staff</button>
+    </div>
+    <div id="staffList"><p style="color:#8e8e93;text-align:center;">Loading...</p></div>
+  </div>
+
+  <!-- Add Staff Modal -->
+  <div id="addStaffModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center;" onclick="if(event.target===this)closeAddStaff()">
+    <div style="background:#fff; border-radius:20px; padding:24px; width:90%; max-width:420px;" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h2 style="font-size:18px;font-weight:600;">Add Staff</h2>
+        <button onclick="closeAddStaff()" style="border:none;background:#f2f2f7;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;">&times;</button>
+      </div>
+      <div class="form-group"><label>Username</label><input type="text" id="asUsername" placeholder="staff login name"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="asPassword" placeholder="min 6 characters"></div>
+      <div class="form-group"><label>Display Name</label><input type="text" id="asDisplayName" placeholder="e.g. John"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="asEmail" placeholder="staff@store.com"></div>
+      <div class="form-group"><label>Role</label>
+        <select id="asRole"><option value="staff">Staff</option><option value="manager">Manager</option></select>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn-outline" onclick="closeAddStaff()">Cancel</button>
+        <button class="btn-primary" id="addStaffBtn" onclick="doAddStaff()">Create</button>
+      </div>
+    </div>
   </div>
 
   <!-- Store settings card (hidden for super_admin without impersonation) -->
@@ -209,7 +253,9 @@
     if (!isSuperAdmin && user.storeId) {
       document.getElementById('settingsCard').style.display = 'block';
       document.getElementById('pwCard').style.display = 'block';
+      document.getElementById('staffMgmtCard').style.display = 'block';
       loadSettings();
+      loadStaff();
     } else if (isSuperAdmin && user.storeId) {
       // Super admin impersonating a store — show read-only info
       document.getElementById('storeInfoCard').style.display = 'block';
@@ -361,6 +407,27 @@
       t._hide = setTimeout(function() { t.classList.remove('show'); }, 3000);
     }
 
+    function escJs(s) { return (s||'').replace(/'/g, "\\'").replace(/\\/g, '\\\\'); }
+
+    function showConfirm(title, bodyHtml, onConfirm, confirmText) {
+      var id = 'confirmModal';
+      var existing = document.getElementById(id);
+      if (existing) existing.remove();
+      var div = document.createElement('div');
+      div.id = id;
+      div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;';
+      div.onclick = function(e) { if (e.target === div) div.remove(); };
+      div.innerHTML = '<div style="background:#fff;border-radius:20px;padding:24px;width:90%;max-width:440px;" onclick="event.stopPropagation()">' +
+        '<h2 style="font-size:18px;font-weight:600;margin-bottom:12px;">' + escHtml(title) + '</h2>' +
+        '<div style="margin-bottom:16px;">' + bodyHtml + '</div>' +
+        '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+          '<button class="btn-outline" onclick="this.closest(\'#' + id + '\').remove()">Cancel</button>' +
+          '<button class="btn-danger" id="' + id + 'Confirm">' + escHtml(confirmText||'Confirm') + '</button>' +
+        '</div></div>';
+      document.body.appendChild(div);
+      document.getElementById(id + 'Confirm').addEventListener('click', function() { div.remove(); onConfirm(); });
+    }
+
     function changePassword() {
       var current = document.getElementById('pwCurrent').value;
       var newPw = document.getElementById('pwNew').value;
@@ -429,6 +496,162 @@
           }
         })
         .catch(function(e) { console.log('Staff login URL load failed:', e); });
+    }
+
+    // ─── Staff Management ──────────────────────────────────────────────────
+
+    function loadStaff() {
+      var storeId = user.storeId;
+      fetch('/api/saas/stores/' + storeId + '/users', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); })
+        .then(function(users) {
+          var el = document.getElementById('staffList');
+          if (!Array.isArray(users) || !users.length) {
+            el.innerHTML = '<p style="color:#8e8e93;text-align:center;">No staff users yet. Click + Add Staff.</p>';
+            return;
+          }
+          var h = '<table class="user-table"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+          users.forEach(function(u) {
+            var rb = u.role === 'store_root' ? 'badge-blue' : (u.role === 'manager' ? 'badge-green' : 'badge-gray');
+            var sb = u.active ? 'badge-green' : 'badge-red';
+            var isSelf = u._id === user.id;
+            h += '<tr><td><strong>' + escHtml(u.username) + '</strong>' + (isSelf ? ' <span style="font-size:10px;color:#8e8e93;">(you)</span>' : '') + '</td>';
+            h += '<td>' + escHtml(u.displayName) + '</td>';
+            h += '<td><span class="badge ' + rb + '">' + u.role + '</span></td>';
+            h += '<td><span class="badge ' + sb + '">' + (u.active ? 'Active' : 'Disabled') + '</span></td>';
+            h += '<td>';
+            if (u.role !== 'store_root') {
+              h += '<button class="btn-outline btn-sm" onclick="editStaffUser(\'' + u._id + '\',\'' + escJs(u.username) + '\',\'' + escJs(u.displayName) + '\',\'' + escJs(u.email||'') + '\')">Edit</button> ';
+            }
+            if (!isSelf) {
+              h += u.active
+                ? '<button class="btn-outline btn-sm" style="color:#f59e0b;" onclick="toggleStaffActive(\'' + u._id + '\',true,\'' + escJs(u.username) + '\')">Disable</button> '
+                : '<button class="btn-outline btn-sm" style="color:#34c759;" onclick="toggleStaffActive(\'' + u._id + '\',false,\'' + escJs(u.username) + '\')">Enable</button> ';
+              h += '<button class="btn-outline btn-sm" onclick="resetStaffPw(\'' + u._id + '\',\'' + escJs(u.username) + '\')">Reset PW</button> ';
+              if (u.role !== 'store_root') {
+                h += '<button class="btn-danger btn-sm" onclick="deleteStaffUser(\'' + u._id + '\',\'' + escJs(u.username) + '\')">Delete</button>';
+              }
+            }
+            h += '</td></tr>';
+          });
+          h += '</tbody></table>';
+          el.innerHTML = h;
+        })
+        .catch(function() { document.getElementById('staffList').innerHTML = '<p style="color:#ff3b30;">Failed to load staff.</p>'; });
+    }
+
+    function showAddStaff() {
+      document.getElementById('asUsername').value = '';
+      document.getElementById('asPassword').value = '';
+      document.getElementById('asDisplayName').value = '';
+      document.getElementById('asEmail').value = '';
+      document.getElementById('asRole').value = 'staff';
+      document.getElementById('addStaffBtn').disabled = false;
+      document.getElementById('addStaffBtn').textContent = 'Create';
+      document.getElementById('addStaffModal').style.display = 'flex';
+    }
+
+    function closeAddStaff() { document.getElementById('addStaffModal').style.display = 'none'; }
+
+    function doAddStaff() {
+      var btn = document.getElementById('addStaffBtn');
+      var body = {
+        username: document.getElementById('asUsername').value.trim(),
+        password: document.getElementById('asPassword').value,
+        displayName: document.getElementById('asDisplayName').value.trim(),
+        email: document.getElementById('asEmail').value.trim(),
+        role: document.getElementById('asRole').value
+      };
+      if (!body.username || !body.password || !body.displayName) {
+        showToast('Username, password, and display name required.', 'error'); return;
+      }
+      btn.disabled = true; btn.textContent = 'Creating...';
+      fetch('/api/saas/stores/' + user.storeId + '/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.success) { showToast('Staff created.', 'success'); closeAddStaff(); loadStaff(); }
+          else { showToast('Error: ' + (d.error || 'Failed'), 'error'); btn.disabled = false; btn.textContent = 'Create'; }
+        })
+        .catch(function() { showToast('Network error', 'error'); btn.disabled = false; btn.textContent = 'Create'; });
+    }
+
+    function editStaffUser(userId, username, displayName, email) {
+      var np = '<div class="form-group"><label>Display Name</label><input type="text" id="esuName" value="' + escHtml(displayName) + '"></div>' +
+        '<div class="form-group"><label>Email</label><input type="email" id="esuEmail" value="' + escHtml(email) + '"></div>' +
+        '<div class="form-group"><label>New Password (leave blank to keep)</label><input type="password" id="esuPw" placeholder="Optional">';
+      showConfirm('Edit: ' + escHtml(username), np, function() {
+        var b = { displayName: document.getElementById('esuName').value.trim() };
+        var em = document.getElementById('esuEmail').value.trim();
+        if (em) b.email = em;
+        var pw = document.getElementById('esuPw').value;
+        if (pw) b.password = pw;
+        fetch('/api/saas/stores/' + user.storeId + '/users/' + userId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(b)
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.success) { showToast('User updated.', 'success'); loadStaff(); }
+            else { showToast('Error: ' + (d.error || 'Failed'), 'error'); }
+          })
+          .catch(function() { showToast('Network error', 'error'); });
+      }, 'Save');
+    }
+
+    function toggleStaffActive(userId, currentlyActive, username) {
+      var action = currentlyActive ? 'disable' : 'enable';
+      var msg = currentlyActive ? 'Disable ' + username + '? They will lose access.' : 'Enable ' + username + '?';
+      showConfirm(currentlyActive ? 'Disable Staff' : 'Enable Staff', '<p>' + msg + '</p>', function() {
+        fetch('/api/saas/stores/' + user.storeId + '/users/' + userId + '/' + action, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.success) { showToast('User ' + action + 'd.', 'success'); loadStaff(); }
+            else { showToast('Error: ' + (d.error || 'Failed'), 'error'); }
+          })
+          .catch(function() { showToast('Network error', 'error'); });
+      }, currentlyActive ? 'Disable' : 'Enable');
+    }
+
+    function deleteStaffUser(userId, username) {
+      showConfirm('Delete Staff', '<p style="color:#ff3b30;">Delete <strong>' + escHtml(username) + '</strong>? This cannot be undone.</p>', function() {
+        fetch('/api/saas/stores/' + user.storeId + '/users/' + userId, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.success) { showToast('User deleted.', 'success'); loadStaff(); }
+            else { showToast('Error: ' + (d.error || 'Failed'), 'error'); }
+          })
+          .catch(function() { showToast('Network error', 'error'); });
+      }, 'Delete');
+    }
+
+    function resetStaffPw(userId, username) {
+      showConfirm('Reset Password', '<p>Reset password for <strong>' + escHtml(username) + '</strong>? A new random password will be generated.</p>', function() {
+        fetch('/api/saas/stores/' + user.storeId + '/users/' + userId + '/reset-password', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.success) {
+              showToast('Password reset for ' + d.username, 'success');
+              alert('New password for ' + d.username + ':\n\n' + d.newPassword + '\n\nShare this securely with the user.');
+              loadStaff();
+            }
+            else { showToast('Error: ' + (d.error || 'Failed'), 'error'); }
+          })
+          .catch(function() { showToast('Network error', 'error'); });
+      }, 'Reset');
     }
 
     function logout() {
