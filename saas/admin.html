@@ -160,6 +160,21 @@
     </div>
   </div>
 
+  <!-- Edit Store Modal -->
+  <div id="editStoreModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center;" onclick="if(event.target===this)closeEditStore()">
+    <div style="background:#fff; border-radius:20px; padding:24px; width:90%; max-width:560px; max-height:85vh; overflow-y:auto;" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="font-size:18px; font-weight:600;">Edit Store</h2>
+        <button onclick="closeEditStore()" style="border:none; background:#f2f2f7; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:16px;">&times;</button>
+      </div>
+      <div id="editStoreBody">Loading...</div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+        <button class="btn-outline" onclick="closeEditStore()">Cancel</button>
+        <button class="btn-primary" id="editStoreSaveBtn" onclick="saveEditStore()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Delete Store Confirmation Modal -->
   <div id="deleteModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; align-items:center; justify-content:center;" onclick="if(event.target===this)closeDeleteModal()">
     <div style="background:#fff; border-radius:20px; padding:24px; width:90%; max-width:420px;" onclick="event.stopPropagation()">
@@ -262,7 +277,8 @@
               '<div class="store-meta">' + escHtml(s.ownerName || '-') + ' &middot; ' + escHtml(s.email) + '</div>' +
               '<div><span class="store-status ' + statusClass + '">' + __('saas.admin.status.' + s.status) + '</span></div>' +
               '<div class="actions">' +
-                '<button class="btn-primary btn-sm" onclick="impersonateStore(\'' + s._id + '\')">' + __('saas.admin.btn.enter') + '</button>' +
+                '<button class="btn-primary btn-sm" onclick="editStore(\'' + s._id + '\')">Manage</button>' +
+                '<button class="btn-outline btn-sm" onclick="impersonateStore(\'' + s._id + '\')">' + __('saas.admin.btn.enter') + '</button>' +
                 '<button class="btn-outline btn-sm" onclick="showUsers(\'' + s._id + '\',\'' + escJs(s.name) + '\')">' + __('saas.admin.btn.users') + '</button>' +
                 (s.status === 'active' ? '<button class="btn-danger btn-sm" onclick="suspendStore(\'' + s._id + '\')">' + __('saas.admin.btn.suspend') + '</button>' : '') +
                 (s.status === 'suspended' ? '<button class="btn-primary btn-sm" onclick="activateStore(\'' + s._id + '\')">' + __('saas.admin.btn.activate') + '</button>' : '') +
@@ -290,6 +306,121 @@
           }
         })
         .catch(function() { showToast(__('saas.admin.toast.networkError')); });
+    }
+
+    // ─── Edit Store ─────────────────────────────────────────────────────────
+
+    var _editStoreId = null;
+
+    function editStore(storeId) {
+      _editStoreId = storeId;
+      document.getElementById('editStoreModal').style.display = 'flex';
+      document.getElementById('editStoreBody').innerHTML = '<p style="color:#8e8e93;">Loading...</p>';
+      fetch('/api/saas/stores/' + storeId, { headers: getAuthHeaders() })
+        .then(function(r) { return r.json(); })
+        .then(function(s) {
+          var h = '';
+          h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+          // Left column
+          h += '<div>';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Store Name</label>';
+          h += '<input type="text" id="esName" value="' + escHtml(s.name) + '" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Owner Name</label>';
+          h += '<input type="text" id="esOwner" value="' + escHtml(s.ownerName || '') + '" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Email</label>';
+          h += '<input type="email" id="esEmail" value="' + escHtml(s.email || '') + '" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Phone</label>';
+          h += '<input type="text" id="esPhone" value="' + escHtml(s.phone || '') + '" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Notes</label>';
+          h += '<textarea id="esNotes" rows="2" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;resize:vertical;">' + escHtml(s.notes || '') + '</textarea>';
+          h += '</div>';
+          // Right column
+          h += '<div>';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Plan</label>';
+          h += '<select id="esPlan" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          ['free','starter','pro','enterprise'].forEach(function(p) {
+            h += '<option value="' + p + '"' + (s.plan === p ? ' selected' : '') + '>' + p + '</option>';
+          });
+          h += '</select>';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Subscription Status</label>';
+          h += '<select id="esSubStatus" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          ['trialing','active','past_due','canceled','expired','none'].forEach(function(st) {
+            h += '<option value="' + st + '"' + (s.subscriptionStatus === st ? ' selected' : '') + '>' + st + '</option>';
+          });
+          h += '</select>';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Status</label>';
+          h += '<select id="esStatus" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          ['active','suspended','frozen','pending'].forEach(function(st) {
+            h += '<option value="' + st + '"' + (s.status === st ? ' selected' : '') + '>' + st + '</option>';
+          });
+          h += '</select>';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Timezone</label>';
+          h += '<input type="text" id="esTz" value="' + escHtml(s.timezone || '') + '" placeholder="Europe/Dublin" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Currency</label>';
+          h += '<input type="text" id="esCurrency" value="' + escHtml(s.currency || '') + '" placeholder="EUR" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;margin-bottom:8px;">';
+          // Limits as simple key=value text
+          var limitsStr = '';
+          if (s.limits && typeof s.limits === 'object') {
+            limitsStr = Object.entries(s.limits).map(function(e) { return e[0] + '=' + e[1]; }).join('\n');
+          }
+          h += '<label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Custom Limits (key=value, one per line)</label>';
+          h += '<textarea id="esLimits" rows="3" placeholder="users=2\nproducts=100" style="width:100%;padding:8px 10px;border:1.5px solid #d2d2d7;border-radius:8px;font-size:13px;resize:vertical;">' + escHtml(limitsStr) + '</textarea>';
+          h += '</div>';
+          h += '</div>';
+          document.getElementById('editStoreBody').innerHTML = h;
+          document.getElementById('editStoreSaveBtn').disabled = false;
+          document.getElementById('editStoreSaveBtn').textContent = 'Save Changes';
+        })
+        .catch(function() { document.getElementById('editStoreBody').innerHTML = '<p style="color:#ff3b30;">Failed to load store.</p>'; });
+    }
+
+    function closeEditStore() {
+      document.getElementById('editStoreModal').style.display = 'none';
+      _editStoreId = null;
+    }
+
+    function saveEditStore() {
+      var btn = document.getElementById('editStoreSaveBtn');
+      btn.disabled = true; btn.textContent = 'Saving...';
+      var body = {
+        name: document.getElementById('esName').value,
+        ownerName: document.getElementById('esOwner').value,
+        email: document.getElementById('esEmail').value,
+        phone: document.getElementById('esPhone').value,
+        notes: document.getElementById('esNotes').value,
+        plan: document.getElementById('esPlan').value,
+        subscriptionStatus: document.getElementById('esSubStatus').value,
+        status: document.getElementById('esStatus').value,
+        timezone: document.getElementById('esTz').value,
+        currency: document.getElementById('esCurrency').value
+      };
+      var limitsStr = document.getElementById('esLimits').value.trim();
+      if (limitsStr) {
+        var limits = {};
+        limitsStr.split('\n').forEach(function(line) {
+          var parts = line.split('=');
+          if (parts.length === 2) limits[parts[0].trim()] = parseInt(parts[1].trim()) || 0;
+        });
+        body.limits = limits;
+      }
+      fetch('/api/saas/stores/' + _editStoreId, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.success) {
+            showToast('Store updated.');
+            closeEditStore();
+            loadStores();
+            loadSignups();
+          } else {
+            showToast('Error: ' + (d.error || 'Unknown'));
+            btn.disabled = false; btn.textContent = 'Save Changes';
+          }
+        })
+        .catch(function() { showToast('Network error'); btn.disabled = false; btn.textContent = 'Save Changes'; });
     }
 
     function suspendStore(id) {

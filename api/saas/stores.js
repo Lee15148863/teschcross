@@ -34,6 +34,44 @@ router.get('/', superAdminAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Internal server error' }); }
 });
 
+// GET /api/saas/stores/:id — single store detail (super_admin only)
+router.get('/:id', superAdminAuth, async (req, res) => {
+  try {
+    const store = await Store.findById(req.params.id).lean();
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+    res.json(store);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PATCH /api/saas/stores/:id — update store SaaS config (super_admin only)
+router.patch('/:id', superAdminAuth, async (req, res) => {
+  try {
+    const allowed = [
+      'plan', 'subscriptionStatus', 'trialEndsAt', 'status',
+      'ownerName', 'email', 'phone', 'notes',
+      'timezone', 'currency', 'businessType', 'country',
+      'storageLimitMB', 'backupPolicy', 'allowDataExport', 'dataRegion'
+    ];
+    const updates = {};
+    for (const field of allowed) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+    // Map-type fields
+    if (req.body.limits !== undefined && typeof req.body.limits === 'object') {
+      updates.limits = new Map(Object.entries(req.body.limits));
+    }
+    if (req.body.featureOverrides !== undefined && typeof req.body.featureOverrides === 'object') {
+      updates.featureOverrides = new Map(Object.entries(req.body.featureOverrides));
+    }
+    updates.updatedAt = new Date();
+
+    const store = await Store.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
+    if (!store) return res.status(404).json({ error: 'Store not found' });
+
+    res.json({ success: true, store });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // POST /api/saas/stores/approve/:signupId — approve a store signup (super_admin)
 router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
   try {
