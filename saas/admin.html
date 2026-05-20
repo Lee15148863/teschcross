@@ -655,8 +655,12 @@ function approveSignup(id) {
   if (s && (s.mongoUriValidationStatus === 'failed' || s.mongoUriValidationStatus === 'error')) { if (!confirm('MongoDB URI validation ' + s.mongoUriValidationStatus.toUpperCase() + '. Continue?')) return; }
   if (!confirm('Approve this store signup?')) return;
   fetch('/api/saas/stores/approve/' + id, { method: 'POST', headers: getAuthHeaders() }).then(function(r) { return r.json(); }).then(function(d) {
-    if (d.success) { showToast('Approved! Store: ' + d.store.name + ', User: ' + (d.credentials?d.credentials.username:'created')); loadSignups(); loadStores(); }
-    else { showToast('Approval failed: ' + (d.error||'Unknown')); }
+    if (d.success) {
+      var msg = 'Approved! ' + d.store.name;
+      if (d.credentials && d.credentials.username) msg += ' | User: ' + d.credentials.username;
+      if (d.store.slug) msg += ' | /s/' + d.store.slug;
+      showToast(msg); loadSignups(); loadStores();
+    } else { showToast('Approve failed: ' + (d.error||d.message||'Unknown')); }
   }).catch(function() { showToast('Network error'); });
 }
 function rejectSignup(id) { if (!confirm('Reject this signup?')) return;

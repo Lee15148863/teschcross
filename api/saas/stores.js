@@ -228,18 +228,14 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
 
       return res.json({
         success: true,
-        store: { id: store._id, name: store.name, timezone: signup.timezone, currency: signup.currency },
+        store: { id: store._id, name: store.name, slug: store.slug, timezone: signup.timezone, currency: signup.currency },
         deployment: { mongoUriMasked: maskedUri, storageMode: mongoUriStorageMode, status: 'pending', validationStatus: 'passed' },
         credentials
       });
     }
 
-    // Production gate: reject legacy approval unless ALLOW_LEGACY_SIGNUP=true
-    if (process.env.ALLOW_LEGACY_SIGNUP !== 'true') {
-      return res.status(400).json({ error: 'Legacy signup (without MongoDB URI) rejected. Set ALLOW_LEGACY_SIGNUP=true for development.' });
-    }
-
-    // Legacy path — signup without mongoUri (existing behavior)
+    // Legacy path — signup without mongoUri
+    // Create store + owner user + deployment record without external MongoDB URI
     storeData.notes = (signup.notes || '') + ' [LEGACY: no MongoDB URI]';
 
     // Phase 1B: initialize plan + enabledModules from signup
@@ -284,14 +280,41 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
       credentials = { username: rootUser.username, password: defaultPw };
     }
 
+    // Create minimal deployment record (no mongoUri, no Cloud Run deploy)
+    var serviceName = store.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-').replace(/^-|-$/g, '').slice(0, 63);
+    try {
+      await Deployment.create({
+        storeName: store.name,
+        storeId: store._id,
+        serviceName: serviceName || 'store-' + store._id,
+        mongoUriStorageMode: 'none',
+        status: 'pending',
+        timezone: signup.timezone || 'Europe/Dublin',
+        subscriptionStatus: 'trial',
+      });
+    } catch (depErr) {
+      console.error('[stores] Legacy deployment record creation failed:', depErr.message);
+      // Non-fatal — store and user are created
+    }
+
     // Mark signup as approved
     signup.status = 'approved';
     signup.reviewedBy = req.user.userId;
     signup.reviewedAt = new Date();
     await signup.save();
 
-    res.json({ success: true, store: { id: store._id, name: store.name, legacy: true }, credentials });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    res.json({ success: true, store: { id: store._id, name: store.name, slug: store.slug, legacy: true }, credentials });
+  } catch (e) {
+    console.error('[stores] approve signup error:', e.name || 'Error', e.message || e);
+    if (e.code === 11000) {
+      return res.status(400).json({ error: 'Duplicate key: ' + JSON.stringify(e.keyValue || {}) });
+    }
+    if (e.name === 'ValidationError') {
+      var msgs = Object.values(e.errors||{}).map(function(x) { return x.message; });
+      return res.status(400).json({ error: 'Validation: ' + msgs.join('; ') });
+    }
+    res.status(500).json({ error: e.message || 'Internal error' });
+  }
 });
 
 // POST /api/saas/stores/reject/:signupId — reject a store signup (super_admin)
