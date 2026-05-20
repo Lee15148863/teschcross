@@ -26,6 +26,7 @@ const StoreSignupSchema = new mongoose.Schema({
   pinSetAt:     { type: Date },
   subscriptionPlan: { type: String, trim: true },
   trialLengthDays: { type: Number },
+  databasePreference: { type: String, enum: ['managed', 'byo', ''], default: '' },
 
   // T23 — Legal acceptance metadata
   noticeVersionAccepted:  { type: String },

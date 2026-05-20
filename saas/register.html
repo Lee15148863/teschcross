@@ -189,10 +189,11 @@
       </div>
     </div>
     <div class="form-group">
-      <label>MongoDB Atlas Connection String</label>
-      <input type="text" id="mongoUri" placeholder="mongodb+srv://user:password@cluster.mongodb.net/dbname" autocomplete="off" spellcheck="false">
-      <div class="field-hint">Enter your MongoDB Atlas SRV connection string using a dedicated database for StoreFlow.</div>
+      <label>MongoDB Atlas Connection String <span style="font-weight:400;color:#8e8e93;">(Optional)</span></label>
+      <input type="text" id="mongoUri" placeholder="mongodb+srv://user:password@cluster.mongodb.net/dbname" autocomplete="off" spellcheck="false" oninput="toggleByoFields()">
+      <div class="field-hint">Leave blank to use StoreFlow-managed database (recommended). Advanced users may provide their own MongoDB Atlas connection string.</div>
     </div>
+    <div id="byoFields" style="display:none;">
     <div class="form-group">
       <label>Deployment PIN <span style="font-weight:400;color:#8e8e93;">(4-20 digits)</span></label>
       <input type="password" id="deploymentPin" placeholder="e.g. 4825" maxlength="20" inputmode="numeric" autocomplete="off">
@@ -222,9 +223,8 @@
         <span data-i18n="saas.register.checkbox.terms">I have read and agree to the StoreFlow Terms, Privacy Notice, and the <a href="/saas/mongodb-atlas-notice.html" target="_blank">MongoDB Atlas Responsibility Notice</a>.</span>
       </label>
     </div>
-
-
     <p style="font-size:12px;color:#8e8e93;margin:4px 0 16px;">📖 <a href="/saas/mongodb-atlas-notice.html" target="_blank">StoreFlow MongoDB Atlas User Guide and Responsibility Notice (v1.0)</a> — Read before submitting.</p>
+    </div>
 
     <button type="submit" class="btn-submit" id="submitBtn" data-i18n="saas.register.btn" disabled>Submit Registration</button>
   </form>
@@ -258,6 +258,13 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 
   btn.disabled = true; btn.textContent = __('saas.register.submitting');
   err.classList.remove('show');
+
+  function toggleByoFields() {
+    var uri = document.getElementById('mongoUri').value.trim();
+    var byoEl = document.getElementById('byoFields');
+    if (byoEl) byoEl.style.display = uri ? 'block' : 'none';
+    updateSubmitState();
+  }
 
   async function submit(retries) {
     try {

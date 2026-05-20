@@ -76,3 +76,13 @@ Items deferred from Codex review. Do NOT fix in passing — each needs a dedicat
 **Fix:** Future: printer width profiles, auto-detect, multi-width CSS.
 
 **Status:** Deferred. 80mm with 4ch gutter is current production standard.
+
+## 10. BYO MongoDB Secure Activation
+
+**What:** Raw MongoDB URI is stored in `StoreSignup.mongoUri` (select:false). Full BYO activation flow not implemented.
+
+**Fix:** Migrate to Secret Manager for raw URI storage. Validate URI connectivity and permissions. Store only secret reference in Store/Deployment. Build admin verification flow for BYO requests. Migration path for any existing raw URIs.
+
+**Current state (2026-05-20):** Signup allows BYO request with databasePreference='byo'. Raw URI stored in StoreSignup with select:false (not returned in API). Approval creates Store as managed by default. BYO activation requires admin verification. Managed DB remains default for all stores.
+
+**Status:** Deferred. Managed DB is production default. BYO full activation pending.

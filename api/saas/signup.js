@@ -85,8 +85,9 @@ router.post('/', async (req, res) => {
       businessType: businessType || '', notes: notes || '', password: hashedPw
     };
 
-    // Handle MongoDB URI onboarding fields
+    // Handle MongoDB URI onboarding fields — BYO MongoDB (optional, advanced)
     if (mongoUri) {
+      signupFields.databasePreference = 'byo';
       // Validate URI format (fast, no connection)
       const fmtCheck = validateMongoUriFormat(mongoUri, {
         mainPosDbName: process.env.STORE_NAME || 'techcross',
@@ -130,11 +131,8 @@ router.post('/', async (req, res) => {
       if (subscriptionPlan) signupFields.subscriptionPlan = subscriptionPlan;
       if (trialLengthDays) signupFields.trialLengthDays = trialLengthDays;
     } else {
-      // Production gate: reject legacy signup unless ALLOW_LEGACY_SIGNUP=true
-      if (process.env.ALLOW_LEGACY_SIGNUP !== 'true') {
-        return res.status(400).json({ error: 'MongoDB Atlas URI required. Set ALLOW_LEGACY_SIGNUP=true for development mode.' });
-      }
-      // Legacy signup — mark timezone/currency if provided
+      // Managed DB — default, no MongoDB URI needed
+      signupFields.databasePreference = 'managed';
       if (timezone) signupFields.timezone = timezone;
       if (currency) signupFields.currency = currency;
     }

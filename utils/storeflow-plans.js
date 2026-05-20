@@ -58,7 +58,7 @@ const STOREFLOW_PLANS = {
       storageLimitMB: 50,
       backupPolicy: 'none',
       allowDataExport: true,
-      allowByoMongo: false
+      allowByoMongo: true
     },
     notes: 'Two owners. Up to 100 products. Unlimited transactions. Basic daily summary and sales visibility included. Receipt printing supported. Official tax/VAT report exports, invoice generation, and transaction deletion not included.'
   },

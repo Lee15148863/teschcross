@@ -765,7 +765,8 @@ function loadSignups() {
     pending.forEach(function(s) {
       var uriStatus = s.mongoUriValidationStatus || '';
       var uriBadge = uriStatus === 'passed' ? 'badge-green' : (uriStatus === 'failed' ? 'badge-red' : 'badge-gray');
-      h += '<tr><td><strong>' + escHtml(s.storeName) + '</strong></td><td>' + escHtml(s.ownerName) + '</td><td>' + escHtml(s.email) + '</td><td>' + escHtml(s.subscriptionPlan||'free') + '</td><td>' + new Date(s.createdAt).toLocaleDateString() + '</td><td><span class="badge '+uriBadge+'">'+(uriStatus||'—')+'</span></td>';
+      var dbPref = s.databasePreference === 'byo' ? 'BYO' : 'Managed';
+      h += '<tr><td><strong>' + escHtml(s.storeName) + '</strong></td><td>' + escHtml(s.ownerName) + '</td><td>' + escHtml(s.email) + '</td><td>' + escHtml(s.subscriptionPlan||'free') + '</td><td>' + new Date(s.createdAt).toLocaleDateString() + '</td><td>' + dbPref + '</td>';
       h += '<td><button class="btn btn-primary btn-xs" onclick="approveSignup(\'' + s._id + '\')">Approve</button> <button class="btn btn-danger btn-xs" onclick="rejectSignup(\'' + s._id + '\')">Reject</button></td></tr>';
     });
     h += '</tbody></table>'; el.innerHTML = h;
