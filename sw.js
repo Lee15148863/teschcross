@@ -17,7 +17,10 @@ self.addEventListener('fetch', e => {
     if (!url.startsWith(self.location.origin)) return;
     // API, inv-*, staff-portal, admin-*, saas-*: network only, don't cache
     if (url.includes('/api/') || url.includes('/inv-') || url.includes('/staff-portal') || url.includes('/admin') || url.includes('/saas/')) {
-        e.respondWith(fetch(e.request));
+        e.respondWith(fetch(e.request).catch(function(err) {
+            console.warn('SW network-only fetch failed for ' + url + ': ' + err.message);
+            return Response.error();
+        }));
         return;
     }
     // Same-origin static assets only: cache first
