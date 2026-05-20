@@ -536,8 +536,12 @@ router.get('/:id/settings', storeOrSuperAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT /api/saas/stores/:id/settings — update store display settings
+// PUT /api/saas/stores/:id/settings — update store display settings (super_admin + store_root only)
 router.put('/:id/settings', storeOrSuperAuth, async (req, res) => {
+  // manager/staff cannot write store settings
+  if (req.user.role !== 'super_admin' && req.user.role !== 'store_root') {
+    return res.status(403).json({ error: 'Only store owner can modify settings' });
+  }
   try {
     const allowed = ['name', 'logo', 'address', 'phone', 'email', 'vatNumber', 'receiptTC'];
     const updates = {};
@@ -609,6 +613,21 @@ router.post('/:storeId/users', storeUserAdminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid role' });
     }
 
+    // Enforce plan user limit for store_root (super_admin override)
+    if (req.user.role === 'store_root') {
+      const store = await Store.findById(req.params.storeId).select('plan').lean();
+      if (store) {
+        var planLimits = getPlanLimits(store.plan);
+        var userLimit = planLimits ? planLimits.users : null;
+        if (userLimit != null) {
+          var activeCount = await SaaSUser.countDocuments({ storeId: req.params.storeId, active: true });
+          if (activeCount >= userLimit) {
+            return res.status(403).json({ error: 'User limit reached for ' + store.plan + ' plan (' + userLimit + ' users)' });
+          }
+        }
+      }
+    }
+
     const existing = await SaaSUser.findOne({ username: username.trim() });
     if (existing) return res.status(409).json({ error: 'Username already taken' });
 
@@ -630,7 +649,7 @@ router.post('/:storeId/users', storeUserAdminAuth, async (req, res) => {
 // DELETE /api/saas/stores/:storeId/users/:userId — delete a store user
 router.delete('/:storeId/users/:userId', storeUserAdminAuth, async (req, res) => {
   try {
-    const targetUser = await SaaSUser.findById(req.params.userId);
+    const targetUser = await SaaSUser.findOne({ _id: req.params.userId, storeId: req.params.storeId });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
     if (targetUser.role === 'super_admin') {
       return res.status(403).json({ error: 'Cannot delete super admin' });
@@ -658,7 +677,7 @@ router.delete('/:storeId/users/:userId', storeUserAdminAuth, async (req, res) =>
       }
     }
 
-    await SaaSUser.findByIdAndDelete(req.params.userId);
+    await SaaSUser.deleteOne({ _id: req.params.userId, storeId: req.params.storeId });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -666,7 +685,7 @@ router.delete('/:storeId/users/:userId', storeUserAdminAuth, async (req, res) =>
 // PUT /api/saas/stores/:storeId/users/:userId — update user
 router.put('/:storeId/users/:userId', storeUserAdminAuth, async (req, res) => {
   try {
-    const targetUser = await SaaSUser.findById(req.params.userId);
+    const targetUser = await SaaSUser.findOne({ _id: req.params.userId, storeId: req.params.storeId });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
     if (targetUser.role === 'super_admin') {
       return res.status(403).json({ error: 'Cannot edit super admin' });
@@ -717,7 +736,7 @@ router.put('/:storeId/users/:userId', storeUserAdminAuth, async (req, res) => {
 // PUT /api/saas/stores/:storeId/users/:userId/disable
 router.put('/:storeId/users/:userId/disable', storeUserAdminAuth, async (req, res) => {
   try {
-    const targetUser = await SaaSUser.findById(req.params.userId);
+    const targetUser = await SaaSUser.findOne({ _id: req.params.userId, storeId: req.params.storeId });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
     if (targetUser.role === 'super_admin') {
       return res.status(403).json({ error: 'Cannot disable super admin' });
@@ -748,8 +767,15 @@ router.put('/:storeId/users/:userId/disable', storeUserAdminAuth, async (req, re
 // PUT /api/saas/stores/:storeId/users/:userId/enable
 router.put('/:storeId/users/:userId/enable', storeUserAdminAuth, async (req, res) => {
   try {
-    const targetUser = await SaaSUser.findById(req.params.userId);
+    const targetUser = await SaaSUser.findOne({ _id: req.params.userId, storeId: req.params.storeId });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    if (targetUser.role === 'super_admin') {
+      return res.status(403).json({ error: 'Cannot enable super admin' });
+    }
+    if (req.user.role === 'store_root') {
+      var forbid = forbidElevatedRole(targetUser, 'store_root');
+      if (forbid) return res.status(403).json({ error: forbid });
+    }
     targetUser.active = true;
     targetUser.updatedAt = new Date();
     await targetUser.save();
@@ -762,7 +788,7 @@ router.put('/:storeId/users/:userId/enable', storeUserAdminAuth, async (req, res
 // POST /api/saas/stores/:storeId/users/:userId/reset-password
 router.post('/:storeId/users/:userId/reset-password', storeUserAdminAuth, async (req, res) => {
   try {
-    const targetUser = await SaaSUser.findById(req.params.userId);
+    const targetUser = await SaaSUser.findOne({ _id: req.params.userId, storeId: req.params.storeId });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
     if (targetUser.role === 'super_admin') {
       return res.status(403).json({ error: 'Cannot reset super admin password' });
@@ -788,7 +814,7 @@ router.post('/:storeId/users/:userId/reset-password', storeUserAdminAuth, async 
 // POST /api/saas/stores/:storeId/users/:userId/email-credentials
 router.post('/:storeId/users/:userId/email-credentials', storeUserAdminAuth, async (req, res) => {
   try {
-    const targetUser = await SaaSUser.findById(req.params.userId);
+    const targetUser = await SaaSUser.findOne({ _id: req.params.userId, storeId: req.params.storeId });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
     if (targetUser.role === 'super_admin') {
       return res.status(403).json({ error: 'Cannot reset super admin' });

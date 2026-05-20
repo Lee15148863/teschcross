@@ -33,7 +33,7 @@ router.get('/captcha', (req, res) => {
 // POST /api/saas/auth/login
 router.post('/login', loginLimiter, async (req, res) => {
   try {
-    const { username, password, captchaAnswer, captchaToken } = req.body;
+    const { username, password, captchaAnswer, captchaToken, storeSlug } = req.body;
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
@@ -76,6 +76,18 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Per-store login: verify user belongs to the store from /s/:slug
+    if (storeSlug) {
+      const Store = require('../../models/saas/Store');
+      const store = await Store.findOne({ slug: storeSlug });
+      if (!store || !user.storeId || user.storeId.toString() !== store._id.toString()) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      if (store.status === 'suspended' && user.role !== 'super_admin') {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+    }
+
     // Success — reset attempts
     await SaaSUser.findByIdAndUpdate(user._id, {
       loginAttempts: 0,
@@ -97,9 +109,16 @@ router.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
-// POST /api/saas/auth/register — create initial super_admin (one-time bootstrap)
+// POST /api/saas/auth/register — bootstrap only, disabled in production
 router.post('/register', async (req, res) => {
+  if (process.env.ALLOW_BOOTSTRAP_REGISTER !== 'true') {
+    return res.status(403).json({ error: 'Registration disabled' });
+  }
   try {
+    const existingSuperAdmin = await SaaSUser.findOne({ role: 'super_admin' });
+    if (existingSuperAdmin) {
+      return res.status(403).json({ error: 'Super admin already exists' });
+    }
     const { username, password, displayName, email } = req.body;
     if (!username || !password || !displayName || !email) {
       return res.status(400).json({ error: 'All fields required' });

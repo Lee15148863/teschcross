@@ -90,7 +90,12 @@
 
 <script src="../lang.js"></script>
 <script>
-var slug = new URLSearchParams(window.location.search).get('store') || '';
+// Read slug from path /s/:slug (primary) or ?store= (compat)
+var slug = '';
+var pathMatch = window.location.pathname.match(/^\/s\/([^/]+)/);
+if (pathMatch) { slug = decodeURIComponent(pathMatch[1]); }
+if (!slug) { slug = new URLSearchParams(window.location.search).get('store') || ''; }
+slug = slug.replace(/[^a-z0-9-]/g, '');
 
 async function loadCaptcha() {
   try {
@@ -138,7 +143,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         username: document.getElementById('username').value,
         password: document.getElementById('password').value,
         captchaAnswer: document.getElementById('captchaAnswer').value,
-        captchaToken: document.getElementById('captchaToken').value
+        captchaToken: document.getElementById('captchaToken').value,
+        storeSlug: slug || undefined
       })
     });
     var data = await res.json();

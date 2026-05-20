@@ -1160,6 +1160,10 @@ router.delete('/devices/trusted/:id', async (req, res) => {
 // Warning: breaks financial audit trail.
 // modes: ids[], dateRange, or orphaned=true (auto-finds entries with deleted transactions)
 router.post('/ledger/delete', requireRole('root'), async (req, res) => {
+  // Production safety lock: force-delete disabled unless explicitly enabled
+  if (process.env.ALLOW_LEDGER_DELETE !== 'true') {
+    return res.status(403).json({ error: 'Emergency ledger deletion disabled in production', code: 'FORBIDDEN' });
+  }
   try {
     const { ids, fromDate, toDate, orphaned, confirm } = req.body;
     if (!confirm) {

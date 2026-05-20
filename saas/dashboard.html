@@ -253,10 +253,13 @@
     if (!isSuperAdmin && user.storeId) {
       document.getElementById('settingsCard').style.display = 'block';
       document.getElementById('pwCard').style.display = 'block';
-      document.getElementById('staffMgmtCard').style.display = 'block';
       loadSettings();
+    }
+    if (user.role === 'store_root' && user.storeId) {
+      document.getElementById('staffMgmtCard').style.display = 'block';
       loadStaff();
-    } else if (isSuperAdmin && user.storeId) {
+    }
+    if (isSuperAdmin && user.storeId) {
       // Super admin impersonating a store — show read-only info
       document.getElementById('storeInfoCard').style.display = 'block';
       loadSettings();
