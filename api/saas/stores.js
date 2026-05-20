@@ -101,6 +101,22 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
     // BYO is tracked via byoMongoRequested flag, not raw URI
     const isByoRequested = signup.byoMongoRequested || signup.databasePreference === 'byo';
 
+    // ── Idempotent: if Store exists for this email, reconcile ──
+    var existingStore = await Store.findOne({ email: signup.email.toLowerCase() }).lean();
+    if (existingStore) {
+      signup.status = 'approved';
+      signup.reviewedBy = req.user.userId;
+      signup.reviewedAt = new Date();
+      await signup.save();
+      return res.json({
+        success: true,
+        store: { id: existingStore._id, name: existingStore.name, slug: existingStore.slug },
+        databaseMode: 'managed',
+        recovered: true,
+        message: 'Store already exists. Signup approved and linked.'
+      });
+    }
+
     // Build store data from signup
     const storeData = {
       name: signup.storeName, ownerName: signup.ownerName, email: signup.email,
@@ -155,12 +171,15 @@ router.post('/approve/:signupId', superAdminAuth, async (req, res) => {
 
     // Create deployment record — managed DB mode, no raw URI
     var serviceName = store.name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/--+/g, '-').replace(/^-|-$/g, '').slice(0, 63);
+    if (!serviceName) {
+      serviceName = 'store-' + store._id;
+    }
     var depFields = {
       storeName: store.name,
       storeId: store._id,
       subdomain: serviceName,
-      serviceName: serviceName || 'store-' + store._id,
-      mongoUriStorageMode: 'none',
+      serviceName: serviceName,
+      mongoUriStorageMode: '',  // empty = managed mode, no raw URI stored
       status: 'pending',
       timezone: signup.timezone || 'Europe/Dublin',
       subscriptionStatus: 'trial',
